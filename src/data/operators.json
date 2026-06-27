@@ -1,0 +1,473 @@
+[
+  {
+    "id": "char_002_amiya",
+    "name": "アーミヤ",
+    "rarity": 5,
+    "profession": "術師",
+    "skills": [
+      {
+        "id": "amiya-control-1",
+        "name": "共同作業",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "control",
+            "efficiency": 0.07,
+            "tags": ["control"],
+            "description": "制御中枢配置時、全貿易所の受注効率を補助する。"
+          }
+        ]
+      },
+      {
+        "id": "amiya-control-2",
+        "name": "精神感応",
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "control",
+            "efficiency": 0.14,
+            "tags": ["control", "global-trading"],
+            "description": "昇進2で制御中枢支援を強化する。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_017_huang",
+    "name": "ブレイズ",
+    "rarity": 6,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "blaze-factory",
+        "name": "火力発電α",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "battleRecord",
+            "efficiency": 0.25,
+            "tags": ["battle-record"],
+            "description": "製造所で作戦記録の生産効率を上げる。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_103_angel",
+    "name": "エクシア",
+    "rarity": 6,
+    "profession": "狙撃",
+    "skills": [
+      {
+        "id": "exusiai-trading",
+        "name": "ペンギン急便α",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "trading",
+            "product": "lmd",
+            "efficiency": 0.30,
+            "tags": ["order"],
+            "description": "貿易所で受注効率を上げる。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_106_franka",
+    "name": "フランカ",
+    "rarity": 5,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "franka-factory-gold",
+        "name": "金属工芸α",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "gold",
+            "efficiency": 0.25,
+            "tags": ["gold"],
+            "description": "製造所で純金の生産効率を上げる。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_112_siege",
+    "name": "シージ",
+    "rarity": 6,
+    "profession": "先鋒",
+    "skills": [
+      {
+        "id": "siege-control",
+        "name": "リーダーシップ",
+        "unlockPhase": 1,
+        "effects": [
+          {
+            "facility": "control",
+            "efficiency": 0.11,
+            "tags": ["control", "global-factory"],
+            "description": "制御中枢から製造系の効率を支援する。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_124_kroos",
+    "name": "クルース",
+    "rarity": 3,
+    "profession": "狙撃",
+    "skills": [
+      {
+        "id": "kroos-factory",
+        "name": "標準化β",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "battleRecord",
+            "efficiency": 0.15,
+            "tags": ["battle-record"],
+            "description": "製造所で作戦記録の生産効率を上げる。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_126_shotst",
+    "name": "メテオ",
+    "rarity": 4,
+    "profession": "狙撃",
+    "skills": [
+      {
+        "id": "meteor-factory",
+        "name": "製造管理β",
+        "unlockPhase": 1,
+        "effects": [
+          {
+            "facility": "factory",
+            "efficiency": 0.25,
+            "tags": ["generic-factory"],
+            "description": "製造所の生産効率を上げる。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_130_doberm",
+    "name": "ドーベルマン",
+    "rarity": 4,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "dobermann-factory",
+        "name": "新人教官",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "battleRecord",
+            "efficiency": 0.20,
+            "tags": ["battle-record"],
+            "description": "作戦記録の製造に向く。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_133_mm",
+    "name": "メイヤー",
+    "rarity": 5,
+    "profession": "補助",
+    "skills": [
+      {
+        "id": "meyer-factory",
+        "name": "ミーボ製造",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "factory",
+            "efficiency": 0.30,
+            "tags": ["generic-factory"],
+            "description": "製造所の生産効率を大きく上げる。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_136_hsguma",
+    "name": "ホシグマ",
+    "rarity": 6,
+    "profession": "重装",
+    "skills": [
+      {
+        "id": "hoshiguma-trading",
+        "name": "龍門近衛局",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "trading",
+            "product": "lmd",
+            "efficiency": 0.20,
+            "tags": ["order"],
+            "description": "貿易所で受注効率を上げる。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_143_ghost",
+    "name": "スペクター",
+    "rarity": 5,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "specter-dorm",
+        "name": "自己回復",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "dormitory",
+            "product": "morale",
+            "efficiency": 0.20,
+            "tags": ["recovery"],
+            "description": "宿舎で自身または周囲の体力回復を補助する。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_151_myrtle",
+    "name": "テンニンカ",
+    "rarity": 4,
+    "profession": "先鋒",
+    "skills": [
+      {
+        "id": "myrtle-trading",
+        "name": "交渉",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "trading",
+            "product": "lmd",
+            "efficiency": 0.25,
+            "tags": ["order"],
+            "description": "貿易所で受注効率を上げる。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_181_flower",
+    "name": "パフューマー",
+    "rarity": 4,
+    "profession": "医療",
+    "skills": [
+      {
+        "id": "perfumer-dorm",
+        "name": "ラベンダー",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "dormitory",
+            "product": "morale",
+            "efficiency": 0.25,
+            "tags": ["recovery"],
+            "description": "宿舎の回復効率を上げる。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_187_ccheal",
+    "name": "ガヴィル",
+    "rarity": 4,
+    "profession": "医療",
+    "skills": [
+      {
+        "id": "gavial-dorm",
+        "name": "医療支援",
+        "unlockPhase": 1,
+        "effects": [
+          {
+            "facility": "dormitory",
+            "product": "morale",
+            "efficiency": 0.30,
+            "tags": ["recovery"],
+            "description": "昇進1で宿舎の回復効率を高める。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_199_yak",
+    "name": "マッターホルン",
+    "rarity": 4,
+    "profession": "重装",
+    "skills": [
+      {
+        "id": "matterhorn-trading",
+        "name": "注文管理β",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "trading",
+            "product": "lmd",
+            "efficiency": 0.25,
+            "tags": ["order"],
+            "description": "貿易所で受注効率を上げる。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_201_moeshd",
+    "name": "イフリータ",
+    "rarity": 6,
+    "profession": "術師",
+    "skills": [
+      {
+        "id": "ifrit-power",
+        "name": "ラインテクα",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "power",
+            "product": "power",
+            "efficiency": 0.15,
+            "tags": ["power"],
+            "description": "発電所のドローン回復速度を高める。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_211_adnach",
+    "name": "アドナキエル",
+    "rarity": 3,
+    "profession": "狙撃",
+    "skills": [
+      {
+        "id": "adnachiel-trading",
+        "name": "注文管理α",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "trading",
+            "product": "lmd",
+            "efficiency": 0.10,
+            "tags": ["order"],
+            "description": "貿易所で受注効率を少し上げる。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_235_jesica",
+    "name": "ジェシカ",
+    "rarity": 4,
+    "profession": "狙撃",
+    "skills": [
+      {
+        "id": "jessica-factory-gold",
+        "name": "金属工芸β",
+        "unlockPhase": 1,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "gold",
+            "efficiency": 0.30,
+            "tags": ["gold"],
+            "description": "昇進1で純金製造に向く。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_237_gravel",
+    "name": "グラベル",
+    "rarity": 4,
+    "profession": "特殊",
+    "skills": [
+      {
+        "id": "gravel-factory-gold",
+        "name": "金属工芸α",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "gold",
+            "efficiency": 0.25,
+            "tags": ["gold"],
+            "description": "製造所で純金の生産効率を上げる。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_253_greyy",
+    "name": "グレイ",
+    "rarity": 4,
+    "profession": "術師",
+    "skills": [
+      {
+        "id": "greyy-power",
+        "name": "静電場",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "power",
+            "product": "power",
+            "efficiency": 0.15,
+            "tags": ["power"],
+            "description": "発電所のドローン回復速度を高める。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_328_cammou",
+    "name": "カシャ",
+    "rarity": 4,
+    "profession": "術師",
+    "skills": [
+      {
+        "id": "click-factory",
+        "name": "映像編集",
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "battleRecord",
+            "efficiency": 0.20,
+            "tags": ["battle-record"],
+            "description": "作戦記録の製造に向く。"
+          }
+        ]
+      }
+    ]
+  }
+]
