@@ -112,7 +112,7 @@ export function App() {
     const matchesProfession = professionFilter === "all" || operator.profession === professionFilter;
     return matchesQuery && matchesProfession;
   });
-  const groupedOperators = groupOperatorsByProfessionAndRarity(filteredOperators);
+  const groupedOperators = groupOperatorsByProfessionAndRarity(filteredOperators, state.roster);
 
   function updateRoster(operatorId: string, patch: Partial<RosterEntry>) {
     setState((current) => ({
@@ -276,7 +276,7 @@ export function App() {
                         {professionCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
                         <span>{professionGroup.profession}</span>
                         <span className="collapse-count" aria-hidden="true">
-                          {professionGroup.total}名
+                          {professionGroup.ownedTotal} / {professionGroup.total}名
                         </span>
                       </button>
                     </h3>
@@ -303,7 +303,7 @@ export function App() {
                                   {rarityCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
                                   <span>★{rarityGroup.rarity}</span>
                                   <span className="collapse-count" aria-hidden="true">
-                                    {rarityGroup.operators.length}名
+                                    {rarityGroup.ownedTotal} / {rarityGroup.operators.length}名
                                   </span>
                                 </button>
                               </h4>
@@ -526,7 +526,7 @@ function OperatorCard({
   );
 }
 
-function groupOperatorsByProfessionAndRarity(operatorList: Operator[]) {
+function groupOperatorsByProfessionAndRarity(operatorList: Operator[], roster: Record<string, RosterEntry>) {
   const professions = Array.from(new Set(operatorList.map((operator) => operator.profession))).sort(
     (a, b) => professionSortIndex(a) - professionSortIndex(b)
   );
@@ -534,18 +534,29 @@ function groupOperatorsByProfessionAndRarity(operatorList: Operator[]) {
   return professions.map((profession) => {
     const professionOperators = operatorList.filter((operator) => operator.profession === profession);
     const rarities = Array.from(new Set(professionOperators.map((operator) => operator.rarity))).sort((a, b) => b - a);
+    const ownedTotal = countOwnedOperators(professionOperators, roster);
 
     return {
       profession,
       total: professionOperators.length,
-      rarityGroups: rarities.map((rarity) => ({
-        rarity,
-        operators: professionOperators
+      ownedTotal,
+      rarityGroups: rarities.map((rarity) => {
+        const rarityOperators = professionOperators
           .filter((operator) => operator.rarity === rarity)
-          .sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"))
-      }))
+          .sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"));
+
+        return {
+          rarity,
+          ownedTotal: countOwnedOperators(rarityOperators, roster),
+          operators: rarityOperators
+        };
+      })
     };
   });
+}
+
+function countOwnedOperators(operatorList: Operator[], roster: Record<string, RosterEntry>) {
+  return operatorList.filter((operator) => roster[operator.id]?.owned).length;
 }
 
 function toggleSetValue(current: Set<string>, value: string) {

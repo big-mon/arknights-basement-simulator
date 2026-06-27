@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "./App";
-import { operators } from "./data/defaults";
+import { createDefaultState, operators } from "./data/defaults";
 
 const amiya = operators.find((operator) => operator.id === "char_002_amiya")!;
 
@@ -15,7 +15,7 @@ describe("App", () => {
     const user = userEvent.setup();
     const { unmount } = render(<App />);
     const amiyaCard = screen.getByText(amiya.name).closest("article")!;
-    const checkbox = within(amiyaCard).getByRole("checkbox", { name: amiya.name });
+    const checkbox = within(amiyaCard).getByRole("checkbox", { name: amiya.name }) as HTMLInputElement;
 
     await user.click(checkbox);
     expect(checkbox).toBeChecked();
@@ -29,16 +29,32 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
     const amiyaCard = screen.getByText(amiya.name).closest("article")!;
-    const checkbox = within(amiyaCard).getByRole("checkbox", { name: amiya.name });
+    const checkbox = within(amiyaCard).getByRole("checkbox", { name: amiya.name }) as HTMLInputElement;
+    const defaultState = createDefaultState();
+    const professionTotal = operators.filter((operator) => operator.profession === amiya.profession).length;
+    const rarityTotal = operators.filter((operator) => operator.profession === amiya.profession && operator.rarity === amiya.rarity).length;
+    const initialProfessionOwned = operators.filter(
+      (operator) => operator.profession === amiya.profession && defaultState.roster[operator.id]?.owned
+    ).length;
+    const initialRarityOwned = operators.filter(
+      (operator) => operator.profession === amiya.profession && operator.rarity === amiya.rarity && defaultState.roster[operator.id]?.owned
+    ).length;
+    const expectedOwnedDelta = checkbox.checked ? -1 : 1;
 
     await user.click(amiyaCard);
     expect(checkbox).toBeChecked();
+    const professionSection = screen.getByRole("heading", { name: amiya.profession }).closest("section")!;
+    const raritySection = within(professionSection).getByRole("heading", { name: `★${amiya.rarity}` }).closest("section")!;
+    expect(within(professionSection).getByText(`${initialProfessionOwned + expectedOwnedDelta} / ${professionTotal}名`)).toBeInTheDocument();
+    expect(within(raritySection).getByText(`${initialRarityOwned + expectedOwnedDelta} / ${rarityTotal}名`)).toBeInTheDocument();
 
     await user.selectOptions(within(amiyaCard).getByRole("combobox"), "2");
     expect(checkbox).toBeChecked();
 
     await user.click(amiyaCard);
     expect(checkbox).not.toBeChecked();
+    expect(within(professionSection).getByText(`${initialProfessionOwned} / ${professionTotal}名`)).toBeInTheDocument();
+    expect(within(raritySection).getByText(`${initialRarityOwned} / ${rarityTotal}名`)).toBeInTheDocument();
   });
 
   it("groups owned roster by profession and rarity", () => {
