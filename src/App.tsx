@@ -244,11 +244,10 @@ export function App() {
           >
             {(Object.keys(layoutPresets) as BaseLayout[]).map((layout) => (
               <option key={layout} value={layout}>
-                {layoutLabels[language][layout].label}
+                {layoutLabels[language][layout].label} ({layoutLabels[language][layout].description})
               </option>
             ))}
           </select>
-          <small className="layout-description">{layoutLabels[language][selectedLayout].description}</small>
         </label>
         <div className="summary-control">
           <span className="summary-control-label">{text.plan.rotationCount}</span>

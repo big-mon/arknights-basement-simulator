@@ -200,6 +200,7 @@ describe("App", () => {
     expect(within(summary).queryByText("総合スコア")).not.toBeInTheDocument();
     const layoutSelect = screen.getByRole("combobox", { name: /基地構成/ }) as HTMLSelectElement;
     expect(layoutSelect).toHaveValue("243");
+    expect(screen.getByRole("option", { name: /243型.*貿易所2・製造所4・発電所3/ })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /提案/ }));
     expect(screen.getAllByText("貿易所 B").length).toBeGreaterThan(0);

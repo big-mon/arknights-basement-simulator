@@ -205,12 +205,6 @@ h4 {
   cursor: pointer;
 }
 
-.layout-description {
-  color: #65605b;
-  font-size: 0.78rem;
-  line-height: 1.35;
-}
-
 .notice,
 .warning {
   padding: 12px 14px;
