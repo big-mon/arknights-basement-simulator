@@ -24,9 +24,19 @@ const defaultOwnedGoldFactoryOperator = operators.find((operator) =>
   )
 )!;
 
+function ownBaselineRoster(state: ReturnType<typeof createDefaultState>) {
+  for (const operator of operators) {
+    if (operator.rarity <= 4) {
+      state.roster[operator.id].owned = true;
+      state.roster[operator.id].elite = operator.rarity <= 3 ? 1 : 0;
+    }
+  }
+}
+
 describe("optimizer", () => {
   it("filters candidates by facility type and unlocked elite phase", () => {
     const state = createDefaultState();
+    ownBaselineRoster(state);
     const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
     const candidates = findCandidates(factory, state);
 
@@ -45,6 +55,7 @@ describe("optimizer", () => {
 
   it("changes score priority when material weights change", () => {
     const state = createDefaultState();
+    ownBaselineRoster(state);
     const baselinePlan = generateAssignmentPlan(state);
     const baselineGoldScore = baselinePlan.facilityPlans.find((plan) => plan.facility.id === "factory-1")!.score;
 
@@ -92,6 +103,7 @@ describe("optimizer", () => {
 
   it("uses a two-window rotation plan by default", () => {
     const state = createDefaultState();
+    ownBaselineRoster(state);
     const plan = generateAssignmentPlan(state);
 
     expect(state.rotationCount).toBe(2);
@@ -102,6 +114,7 @@ describe("optimizer", () => {
 
   it("excludes dormitories from production assignment plans", () => {
     const state = createDefaultState();
+    ownBaselineRoster(state);
     const plan = generateAssignmentPlan(state);
 
     expect(state.facilities.some((facility) => facility.type === "dormitory")).toBe(true);

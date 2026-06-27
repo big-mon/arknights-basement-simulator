@@ -87,8 +87,8 @@ export function createDefaultRoster(): Roster {
     operators.map((operator) => [
       operator.id,
       {
-        owned: operator.rarity <= 4,
-        elite: operator.rarity <= 3 ? 1 : 0,
+        owned: false,
+        elite: 0,
         level: 1,
         potential: 1,
         moduleEnabled: false

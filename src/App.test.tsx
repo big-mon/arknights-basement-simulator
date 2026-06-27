@@ -25,6 +25,13 @@ describe("App", () => {
     expect(within(screen.getByText(amiya.name).closest("article")!).getByRole("checkbox", { name: amiya.name })).toBeChecked();
   });
 
+  it("starts with no owned operators selected", () => {
+    render(<App />);
+
+    expect(screen.getByText(`0/${operators.length}`)).toBeInTheDocument();
+    expect(screen.getAllByRole("checkbox").every((checkbox) => !(checkbox as HTMLInputElement).checked)).toBe(true);
+  });
+
   it("switches the app language from the top toolbar", async () => {
     const user = userEvent.setup();
     render(<App />);
