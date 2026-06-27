@@ -27,6 +27,15 @@ const defaultOwnedGoldFactoryOperator = operators.find((operator) =>
 const texas = operators.find((operator) => operator.id === "char_102_texas")!;
 const lappland = operators.find((operator) => operator.id === "char_140_whitew")!;
 const texasLapplandSkill = texas.skills.find((skill) => skill.id === "trade_ord_spd&cost_P[000]")!;
+const threeStarOperator = operators.find((operator) => operator.rarity === 3)!;
+const lowRarityOperator = operators.find((operator) => operator.rarity <= 2)!;
+const lowRarityPowerOperator = operators.find(
+  (operator) =>
+    operator.rarity <= 2 &&
+    operator.skills.some((skill) =>
+      skill.effects.some((effect) => effect.facility === "power" && (!effect.product || effect.product === "power"))
+    )
+)!;
 const leto = operators.find((operator) => operator.id === "char_194_leto")!;
 const gummy = operators.find((operator) => operator.id === "char_196_sunbr")!;
 const letoGummySkill = leto.skills.find((skill) => skill.id === "manu_formula_spd_P[000]")!;
@@ -177,6 +186,19 @@ describe("optimizer", () => {
     expect(maxedScore).toBe(baseScore);
   });
 
+  it("does not apply elite bonuses beyond rarity limits", () => {
+    const state = createDefaultState();
+    const power = state.facilities.find((facility) => facility.id === "power-1")!;
+    state.roster[lowRarityPowerOperator.id].owned = true;
+    state.roster[lowRarityPowerOperator.id].elite = 0;
+    const baseScore = findCandidates(power, state).find((candidate) => candidate.operatorId === lowRarityPowerOperator.id)!.score;
+
+    state.roster[lowRarityPowerOperator.id].elite = 2;
+    const cappedScore = findCandidates(power, state).find((candidate) => candidate.operatorId === lowRarityPowerOperator.id)!.score;
+
+    expect(cappedScore).toBe(baseScore);
+  });
+
   it("uses a two-window rotation plan by default", () => {
     const state = createDefaultState();
     ownBaselineRoster(state);
@@ -214,5 +236,16 @@ describe("optimizer", () => {
     expect(restored.layout).toBe("153");
     expect(restored.rotationCount).toBe(2);
     expect(restored.facilities).toHaveLength(state.facilities.length);
+  });
+
+  it("clamps imported elite phases to rarity limits", () => {
+    const state = createDefaultState();
+    state.roster[threeStarOperator.id].elite = 2;
+    state.roster[lowRarityOperator.id].elite = 2;
+
+    const restored = importState(exportState(state));
+
+    expect(restored.roster[threeStarOperator.id].elite).toBe(1);
+    expect(restored.roster[lowRarityOperator.id].elite).toBe(0);
   });
 });

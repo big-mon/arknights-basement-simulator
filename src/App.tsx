@@ -31,6 +31,7 @@ import {
   professionLabels,
   uiText
 } from "./i18n";
+import { clampEliteForOperator } from "./lib/elite";
 import { languageLocale } from "./lib/localization";
 import { generateAssignmentPlan } from "./lib/optimizer";
 import {
@@ -109,13 +110,17 @@ export function App() {
   const groupedOperators = groupOperatorsByProfessionAndRarity(filteredOperators, state.roster, language);
 
   function updateRoster(operatorId: string, patch: Partial<RosterEntry>) {
+    const operator = operators.find((candidate) => candidate.id === operatorId);
+    const normalizedPatch =
+      operator && "elite" in patch ? { ...patch, elite: clampEliteForOperator(operator, patch.elite) } : patch;
+
     setState((current) => ({
       ...current,
       roster: {
         ...current.roster,
         [operatorId]: {
           ...current.roster[operatorId],
-          ...patch
+          ...normalizedPatch
         }
       }
     }));

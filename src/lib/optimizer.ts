@@ -1,4 +1,5 @@
 import { operators } from "../data/defaults";
+import { clampEliteForOperator } from "./elite";
 import { localizeText } from "./localization";
 import type {
   AppState,
@@ -172,9 +173,10 @@ function bestSkillForFacility(
   context?: AssignmentEvaluationContext
 ): Assignment[] {
   const assignments: Assignment[] = [];
+  const elite = clampEliteForOperator(operator, rosterEntry.elite);
 
   for (const skill of operator.skills) {
-    if (skill.unlockPhase > rosterEntry.elite) {
+    if (skill.unlockPhase > elite) {
       continue;
     }
 
@@ -184,7 +186,7 @@ function bestSkillForFacility(
       }
 
       const productMultiplier = productWeight(facility.product, preference);
-      const eliteBonus = rosterEntry.elite * 0.015;
+      const eliteBonus = elite * 0.015;
       const effectiveEfficiency = effect.efficiency + eliteBonus + globalBonus;
       assignments.push({
         facilityId: facility.id,
@@ -273,8 +275,9 @@ function calculateGlobalBonus(state: AppState): number {
       return sum;
     }
 
+    const elite = clampEliteForOperator(operator, rosterEntry.elite);
     const activeControlEffects = operator.skills
-      .filter((skill: BaseSkill) => skill.unlockPhase <= rosterEntry.elite)
+      .filter((skill: BaseSkill) => skill.unlockPhase <= elite)
       .flatMap((skill) => skill.effects)
       .filter((effect) => effect.facility === "control" && effect.tags?.some((tag) => tag.startsWith("global-")));
 

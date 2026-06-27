@@ -7,6 +7,8 @@ import { localizeText } from "./lib/localization";
 
 const amiya = operators.find((operator) => operator.id === "char_002_amiya")!;
 const amiyaName = localizeText(amiya.name, "ja");
+const threeStarOperator = operators.find((operator) => operator.rarity === 3)!;
+const lowRarityOperator = operators.find((operator) => operator.rarity <= 2)!;
 const missingJapaneseNameOperator = operators.find((operator) => !operator.name.ja)!;
 const missingJapaneseFallbackName = localizeText(missingJapaneseNameOperator.name, "ja");
 
@@ -186,6 +188,18 @@ describe("App", () => {
     await user.selectOptions(within(amiyaCard).getByRole("combobox"), "2");
 
     expect(within(skillList).getAllByText("解放済み")).toHaveLength(2);
+  });
+
+  it("limits elite phase options by operator rarity", () => {
+    render(<App />);
+
+    const threeStarCard = screen.getByText(operatorNameJa(threeStarOperator)).closest("article")!;
+    const threeStarEliteSelect = within(threeStarCard).getByRole("combobox") as HTMLSelectElement;
+    expect(Array.from(threeStarEliteSelect.options).map((option) => option.value)).toEqual(["0", "1"]);
+
+    const lowRarityCard = screen.getByText(operatorNameJa(lowRarityOperator)).closest("article")!;
+    const lowRarityEliteSelect = within(lowRarityCard).getByRole("combobox") as HTMLSelectElement;
+    expect(Array.from(lowRarityEliteSelect.options).map((option) => option.value)).toEqual(["0"]);
   });
 
   it("shows assignment suggestions after switching to recommendation tab", async () => {

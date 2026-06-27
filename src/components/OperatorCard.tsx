@@ -1,6 +1,7 @@
 import type { MouseEvent } from "react";
 import { CircleHelp } from "lucide-react";
 import { facilityLabels, productLabels, professionLabels, uiText } from "../i18n";
+import { clampEliteForOperator, eliteOptionsForOperator } from "../lib/elite";
 import { hasLocalizedText, localizeText } from "../lib/localization";
 import type { LanguageCode, Operator, RosterEntry } from "../types";
 
@@ -15,7 +16,8 @@ export function OperatorCard({
   language: LanguageCode;
   onUpdateRoster: (operatorId: string, patch: Partial<RosterEntry>) => void;
 }) {
-  const unlockedSkills = operator.skills.filter((skill) => skill.unlockPhase <= entry.elite).length;
+  const elite = clampEliteForOperator(operator, entry.elite);
+  const unlockedSkills = operator.skills.filter((skill) => skill.unlockPhase <= elite).length;
   const text = uiText[language];
   const operatorName = localizeText(operator.name, language);
   const missingSelectedLanguageName = !hasLocalizedText(operator.name, language);
@@ -55,19 +57,21 @@ export function OperatorCard({
           <label>
             {text.roster.elite}
             <select
-              value={entry.elite}
+              value={elite}
               onChange={(event) => onUpdateRoster(operator.id, { elite: Number(event.target.value) as 0 | 1 | 2 })}
             >
-              <option value={0}>0</option>
-              <option value={1}>1</option>
-              <option value={2}>2</option>
+              {eliteOptionsForOperator(operator).map((eliteOption) => (
+                <option key={eliteOption} value={eliteOption}>
+                  {eliteOption}
+                </option>
+              ))}
             </select>
           </label>
         </div>
       </div>
       <ul className="base-skill-list" aria-label={text.roster.skillListLabel(operatorName)}>
         {operator.skills.map((skill) => {
-          const unlocked = skill.unlockPhase <= entry.elite;
+          const unlocked = skill.unlockPhase <= elite;
           const skillName = localizeText(skill.name, language);
           return (
             <li key={skill.id} className={unlocked ? "base-skill unlocked" : "base-skill locked"}>

@@ -1,6 +1,7 @@
-import { createDefaultState, createFacilitiesForLayout, isBaseLayout, isRotationCount } from "../data/defaults";
+import { createDefaultState, createFacilitiesForLayout, isBaseLayout, isRotationCount, operators } from "../data/defaults";
 import { defaultLanguage, isLanguageCode } from "../i18n";
-import type { AppState, BaseLayout, FacilitySlot, LanguageCode, RotationCount } from "../types";
+import { clampEliteForOperator } from "./elite";
+import type { AppState, BaseLayout, FacilitySlot, LanguageCode, Roster, RosterEntry, RotationCount } from "../types";
 
 const storageKey = "arknights-basement-state-v1";
 
@@ -22,7 +23,7 @@ export function loadState(): AppState {
       language: normalizeLanguage(parsed.language, defaults.language),
       layout,
       rotationCount: normalizeRotationCount(parsed.rotationCount, defaults.rotationCount),
-      roster: { ...defaults.roster, ...parsed.roster },
+      roster: normalizeRoster({ ...defaults.roster, ...parsed.roster }),
       facilities: createFacilitiesForLayout(layout, parsed.facilities),
       preference: { ...defaults.preference, ...parsed.preference }
     };
@@ -60,10 +61,30 @@ export function importState(raw: string): AppState {
     language: normalizeLanguage(maybeState.language, defaultLanguage),
     layout,
     rotationCount: normalizeRotationCount(maybeState.rotationCount, 2),
-    roster: maybeState.roster,
+    roster: normalizeRoster(maybeState.roster),
     facilities: createFacilitiesForLayout(layout, maybeState.facilities),
     preference: maybeState.preference
   };
+}
+
+function normalizeRoster(roster: Partial<Roster> | undefined): Roster {
+  const defaults = createDefaultState().roster;
+
+  return Object.fromEntries(
+    operators.map((operator) => {
+      const defaultEntry = defaults[operator.id];
+      const entry = roster?.[operator.id] ?? defaultEntry;
+
+      return [
+        operator.id,
+        {
+          ...defaultEntry,
+          ...entry,
+          elite: clampEliteForOperator(operator, entry.elite)
+        } satisfies RosterEntry
+      ];
+    })
+  );
 }
 
 function inferLayout(facilities?: FacilitySlot[]): BaseLayout | undefined {
