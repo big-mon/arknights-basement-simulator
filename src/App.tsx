@@ -230,24 +230,6 @@ export function App() {
                         <option value={2}>2</option>
                       </select>
                     </label>
-                    <label>
-                      レベル
-                      <input
-                        type="number"
-                        min={1}
-                        max={90}
-                        value={entry.level}
-                        onChange={(event) => updateRoster(operator.id, { level: Number(event.target.value) })}
-                      />
-                    </label>
-                    <label className="checkbox-line compact">
-                      <input
-                        type="checkbox"
-                        checked={entry.moduleEnabled}
-                        onChange={(event) => updateRoster(operator.id, { moduleEnabled: event.target.checked })}
-                      />
-                      <span>モジュール</span>
-                    </label>
                   </div>
                 </article>
               );

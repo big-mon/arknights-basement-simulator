@@ -46,6 +46,20 @@ describe("optimizer", () => {
     expect(maxPotentialScore).toBe(baseScore);
   });
 
+  it("does not change base scores from level or module state", () => {
+    const state = createDefaultState();
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    state.roster.char_237_gravel.level = 1;
+    state.roster.char_237_gravel.moduleEnabled = false;
+    const baseScore = findCandidates(factory, state).find((candidate) => candidate.operatorId === "char_237_gravel")!.score;
+
+    state.roster.char_237_gravel.level = 90;
+    state.roster.char_237_gravel.moduleEnabled = true;
+    const maxedScore = findCandidates(factory, state).find((candidate) => candidate.operatorId === "char_237_gravel")!.score;
+
+    expect(maxedScore).toBe(baseScore);
+  });
+
   it("includes fatigue and recovery windows in the rotation plan", () => {
     const state = createDefaultState();
     const plan = generateAssignmentPlan(state);
