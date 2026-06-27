@@ -45,6 +45,8 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
     facilityPlans = nextFacilityPlans;
   }
 
+  facilityPlans = attachRotationAlternatives(state, facilityPlans, globalBonus);
+
   const activeAssignments = facilityPlans.flatMap((plan) => plan.assignments);
   const restAssignments = activeAssignments
     .filter((assignment) => assignment.fatigueHours > 0)
@@ -93,11 +95,34 @@ function buildFacilityPlans(
       assignments,
       expectedEfficiency,
       score: assignments.reduce((sum, assignment) => sum + assignment.score, 0),
-      alternatives: candidates.slice(facility.slotCount, facility.slotCount + 3)
+      alternatives: []
     });
   }
 
   return facilityPlans;
+}
+
+function attachRotationAlternatives(state: AppState, facilityPlans: FacilityPlan[], globalBonus: number): FacilityPlan[] {
+  const firstRotationOperatorIds = new Set(facilityPlans.flatMap((plan) => plan.assignments.map((assignment) => assignment.operatorId)));
+  const secondRotationOperatorIds = new Set<string>();
+  const context: AssignmentEvaluationContext = {
+    assignments: facilityPlans.flatMap((plan) => plan.assignments),
+    facilities: state.facilities
+  };
+
+  return facilityPlans.map((plan) => {
+    const alternatives = findCandidates(plan.facility, state, globalBonus, context)
+      .filter((candidate) => !firstRotationOperatorIds.has(candidate.operatorId))
+      .filter((candidate) => !secondRotationOperatorIds.has(candidate.operatorId))
+      .slice(0, plan.facility.slotCount);
+
+    alternatives.forEach((assignment) => secondRotationOperatorIds.add(assignment.operatorId));
+
+    return {
+      ...plan,
+      alternatives
+    };
+  });
 }
 
 function assignmentSignature(facilityPlans: FacilityPlan[]) {

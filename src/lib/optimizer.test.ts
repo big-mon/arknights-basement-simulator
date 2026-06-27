@@ -52,6 +52,13 @@ function ownBaselineRoster(state: ReturnType<typeof createDefaultState>) {
   }
 }
 
+function ownAllRoster(state: ReturnType<typeof createDefaultState>) {
+  for (const operator of operators) {
+    state.roster[operator.id].owned = true;
+    state.roster[operator.id].elite = operator.rarity <= 2 ? 0 : operator.rarity === 3 ? 1 : 2;
+  }
+}
+
 function ownOperators(state: ReturnType<typeof createDefaultState>, operatorIds: string[]) {
   for (const operatorId of operatorIds) {
     state.roster[operatorId].owned = true;
@@ -208,6 +215,21 @@ describe("optimizer", () => {
     expect(plan.rotation).toHaveLength(2);
     expect(plan.rotation[0].assignments.length).toBeGreaterThan(0);
     expect(plan.rotation[1].recovery.length).toBeGreaterThan(0);
+  });
+
+  it("does not reuse operators between first and second rotation assignments", () => {
+    const state = createDefaultState();
+    ownAllRoster(state);
+    const plan = generateAssignmentPlan(state);
+    const firstRotationIds = new Set(plan.facilityPlans.flatMap((facilityPlan) => facilityPlan.assignments.map((assignment) => assignment.operatorId)));
+    const secondRotationAssignments = plan.facilityPlans.flatMap((facilityPlan) =>
+      facilityPlan.alternatives.slice(0, facilityPlan.facility.slotCount)
+    );
+    const secondRotationIds = secondRotationAssignments.map((assignment) => assignment.operatorId);
+
+    expect(secondRotationAssignments.length).toBeGreaterThan(0);
+    expect(secondRotationIds.every((operatorId) => !firstRotationIds.has(operatorId))).toBe(true);
+    expect(new Set(secondRotationIds).size).toBe(secondRotationIds.length);
   });
 
   it("excludes dormitories from production assignment plans", () => {
