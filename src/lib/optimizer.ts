@@ -25,7 +25,8 @@ const fatigueHoursByFacility: Record<FacilitySlot["type"], number> = {
   trading: 12,
   power: 18,
   control: 24,
-  dormitory: 0
+  dormitory: 0,
+  reception: 24
 };
 
 const recoveryBaseHours = 8;

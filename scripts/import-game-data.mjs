@@ -72,6 +72,8 @@ function roomTypeToFacility(roomType) {
       return "control";
     case "DORMITORY":
       return "dormitory";
+    case "MEETING":
+      return "reception";
     default:
       return null;
   }
@@ -79,6 +81,7 @@ function roomTypeToFacility(roomType) {
 
 function inferProduct(description, roomType) {
   const text = String(description);
+  if (roomType === "MEETING") return "clue";
   if (/贵金属|赤金|金属|纯金|gold/i.test(text)) return "gold";
   if (/作战记录|战斗记录|经验|Battle Record|EXP/i.test(text)) return "battleRecord";
   if (/龙门币|订单|贸易站|LMD|order/i.test(text)) return "lmd";
@@ -154,7 +157,8 @@ const facilityPhraseMap = [
   { facility: "trading", phrases: ["貿易所", "Trading Post", "贸易站"] },
   { facility: "power", phrases: ["発電所", "Power Plant", "发电站"] },
   { facility: "control", phrases: ["制御中枢", "Control Center", "控制中枢"] },
-  { facility: "dormitory", phrases: ["宿舎", "Dormitory", "宿舍"] }
+  { facility: "dormitory", phrases: ["宿舎", "Dormitory", "宿舍"] },
+  { facility: "reception", phrases: ["応接室", "Reception Room", "会客室"] }
 ];
 
 const affiliationPhraseMap = [

@@ -119,6 +119,7 @@ export function App() {
       roster: {
         ...current.roster,
         [operatorId]: {
+          ...defaultRosterEntry(),
           ...current.roster[operatorId],
           ...normalizedPatch
         }
@@ -426,7 +427,7 @@ export function App() {
                                   <OperatorCard
                                     key={operator.id}
                                     operator={operator}
-                                    entry={state.roster[operator.id]}
+                                    entry={state.roster[operator.id] ?? defaultRosterEntry()}
                                     language={language}
                                     onUpdateRoster={updateRoster}
                                   />
@@ -528,6 +529,16 @@ export function App() {
 function formatCount(owned: number, total: number, language: LanguageCode) {
   const suffix = uiText[language].roster.countSuffix;
   return `${owned} / ${total}${suffix}`;
+}
+
+function defaultRosterEntry(): RosterEntry {
+  return {
+    owned: false,
+    elite: 0,
+    level: 1,
+    potential: 1,
+    moduleEnabled: false
+  };
 }
 
 function localizeWarning(warning: string, language: LanguageCode) {

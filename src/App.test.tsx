@@ -11,6 +11,7 @@ const threeStarOperator = operators.find((operator) => operator.rarity === 3)!;
 const lowRarityOperator = operators.find((operator) => operator.rarity <= 2)!;
 const phonor = operators.find((operator) => operator.id === "char_4136_phonor")!;
 const silverashAlter = operators.find((operator) => operator.id === "char_1045_svash2")!;
+const makiri = operators.find((operator) => operator.id === "char_4199_makiri")!;
 const missingJapaneseNameOperator = operators.find((operator) => !operator.name.ja)!;
 const missingJapaneseFallbackName = localizeText(missingJapaneseNameOperator.name, "ja");
 
@@ -143,6 +144,19 @@ describe("App", () => {
     expect(silverashAlter.name.zh).toBeTruthy();
     expect(silverashAlter.name.ja).toBeUndefined();
     expect(silverashAlter.skills.length).toBeGreaterThan(0);
+  });
+
+  it("includes reception-only operators in the roster", async () => {
+    const user = userEvent.setup();
+    expect(makiri.rarity).toBe(5);
+    expect(makiri.skills.some((skill) => skill.effects.some((effect) => effect.facility === "reception"))).toBe(true);
+
+    render(<App />);
+    await user.type(screen.getByPlaceholderText("名前で検索"), makiri.id);
+
+    const makiriCard = screen.getByText(localizeText(makiri.name, "ja")).closest("article")!;
+    expect(within(makiriCard).getByText(/★5/)).toBeInTheDocument();
+    expect(within(makiriCard).getAllByText(/応接室/).length).toBeGreaterThan(0);
   });
 
   it("filters the owned roster with profession and rarity radio options", async () => {

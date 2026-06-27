@@ -1,6 +1,6 @@
-export type FacilityType = "factory" | "trading" | "power" | "control" | "dormitory";
+export type FacilityType = "factory" | "trading" | "power" | "control" | "dormitory" | "reception";
 
-export type ProductType = "gold" | "battleRecord" | "lmd" | "power" | "morale";
+export type ProductType = "gold" | "battleRecord" | "lmd" | "power" | "morale" | "clue";
 
 export type BaseLayout = "243" | "153";
 

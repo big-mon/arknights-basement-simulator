@@ -208,21 +208,24 @@ export const facilityLabels: Record<LanguageCode, Record<FacilityType, string>> 
     trading: "貿易所",
     power: "発電所",
     control: "制御中枢",
-    dormitory: "宿舎"
+    dormitory: "宿舎",
+    reception: "応接室"
   },
   zh: {
     factory: "制造站",
     trading: "贸易站",
     power: "发电站",
     control: "控制中枢",
-    dormitory: "宿舍"
+    dormitory: "宿舍",
+    reception: "会客室"
   },
   en: {
     factory: "Factory",
     trading: "Trading Post",
     power: "Power Plant",
     control: "Control Center",
-    dormitory: "Dormitory"
+    dormitory: "Dormitory",
+    reception: "Reception Room"
   }
 };
 
@@ -232,21 +235,24 @@ export const productLabels: Record<LanguageCode, Record<ProductType, string>> = 
     battleRecord: "作戦記録",
     lmd: "龍門幣",
     power: "ドローン",
-    morale: "体力回復"
+    morale: "体力回復",
+    clue: "手がかり"
   },
   zh: {
     gold: "赤金",
     battleRecord: "作战记录",
     lmd: "龙门币",
     power: "无人机",
-    morale: "心情恢复"
+    morale: "心情恢复",
+    clue: "线索"
   },
   en: {
     gold: "Gold",
     battleRecord: "Battle Records",
     lmd: "LMD",
     power: "Drones",
-    morale: "Morale recovery"
+    morale: "Morale recovery",
+    clue: "Clues"
   }
 };
 

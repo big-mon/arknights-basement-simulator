@@ -1,5 +1,46 @@
 [
   {
+    "id": "char_009_12fce",
+    "name": {
+      "zh": "12F",
+      "ja": "12F",
+      "en": "12F"
+    },
+    "affiliations": [
+      "rhodes"
+    ],
+    "rarity": 2,
+    "profession": "術師",
+    "skills": [
+      {
+        "id": "meet_spd[020]",
+        "name": {
+          "zh": "线索搜集·β",
+          "ja": "情報収集β",
+          "en": "Clue Search β"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.2,
+            "tags": [
+              "reception",
+              "bskill_meet_spd2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升20%",
+              "ja": "応接室配置時、手がかり捜索速度+20%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 20%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_225_haak",
     "name": {
       "zh": "阿",
@@ -682,6 +723,73 @@
     ]
   },
   {
+    "id": "char_291_aglina",
+    "name": {
+      "zh": "安洁莉娜",
+      "ja": "アンジェリーナ",
+      "en": "Angelina"
+    },
+    "affiliations": [
+      "siracusa"
+    ],
+    "rarity": 6,
+    "profession": "補助",
+    "skills": [
+      {
+        "id": "meet_spd&team[000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&team[060]",
+        "name": {
+          "zh": "信使·罗德岛制药",
+          "ja": "トランスポーター・ロドス",
+          "en": "Messenger - Rhodes Island"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_rhodes2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，且更容易获得罗德岛制药线索（工作时长影响概率）",
+              "ja": "応接室配置時、手がかり捜索速度+10%、ロドス製薬の手がかりを入手しやすい（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10% and it's easier to obtain the clues of Rhodes Island"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_212_ansel",
     "name": {
       "zh": "安赛尔",
@@ -805,6 +913,32 @@
     "profession": "特殊",
     "skills": [
       {
+        "id": "meet_spd[020]",
+        "name": {
+          "zh": "线索搜集·β",
+          "ja": "情報収集β",
+          "en": "Clue Search β"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.2,
+            "tags": [
+              "reception",
+              "bskill_meet_spd2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升20%",
+              "ja": "応接室配置時、手がかり捜索速度+20%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 20%"
+            }
+          }
+        ]
+      },
+      {
         "id": "trade_ord_limit&cost[000]",
         "name": {
           "zh": "谈判",
@@ -826,6 +960,99 @@
               "zh": "进驻贸易站时，订单上限+5，心情每小时消耗-0.25",
               "ja": "貿易所配置時、注文上限+5、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, order limit +5 and Morale consumed per hour -0.25"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_4131_odda",
+    "name": {
+      "zh": "奥达",
+      "ja": "オッダ",
+      "en": "Odda"
+    },
+    "affiliations": [
+      "rhodes"
+    ],
+    "rarity": 5,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "meet_spd&cost_condChar[001]",
+        "name": {
+          "zh": "“职业操守”·α",
+          "ja": "「プロ意識」α",
+          "en": "'Professional Ethics' α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.15,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&cost_condChar2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，如果会客室内只有自身处于工作状态时，线索搜集速度提升15%，心情每小时消耗+1",
+              "ja": "応接室配置時、自身だけが仕事中であると、手がかり捜索速度15%、1時間ごとの体力消費量+1",
+              "en": "When this Operator is assigned to the Reception Room, if no other Operators are working in the Reception Room, increases Clue search speed by 15%, and Morale consumed per hour +1"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&cost_condChar[011]",
+        "name": {
+          "zh": "“职业操守”·β",
+          "ja": "「プロ意識」β",
+          "en": "'Professional Ethics' β"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.35,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&cost_condChar3",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，如果会客室内只有自身处于工作状态时，线索搜集速度提升35%，心情每小时消耗+1",
+              "ja": "応接室配置時、自身だけが仕事中であると、手がかり捜索速度35%、1時間ごとの体力消費量+1",
+              "en": "When this Operator is assigned to the Reception Room, if no other Operators are working in the Reception Room, increases Clue search speed by 35%, and Morale consumed per hour +1"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&condChar_mustget[100]",
+        "name": {
+          "zh": "暗线",
+          "ja": "諜報員",
+          "en": "Secret Clue"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&condChar_mustget2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，如果会客室内只有自身处于工作状态时，连续消耗超过16点心情下一次必定获得罗德岛制药的线索",
+              "ja": "応接室配置時、自身だけが仕事中であると、連続で16を超える体力を消費した後、次で必ずロドスの手がかりを入手できる",
+              "en": "When this Operator is assigned to the Reception Room, if only this Operator is working in the Reception Room, for every 16 consecutive Morale spent, a Rhodes Island Pharmaceuticals clue is guaranteed next."
             }
           }
         ]
@@ -967,6 +1194,32 @@
     "rarity": 4,
     "profession": "狙撃",
     "skills": [
+      {
+        "id": "meet_spd[020]",
+        "name": {
+          "zh": "线索搜集·β",
+          "ja": "情報収集β",
+          "en": "Clue Search β"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.2,
+            "tags": [
+              "reception",
+              "bskill_meet_spd2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升20%",
+              "ja": "応接室配置時、手がかり捜索速度+20%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 20%"
+            }
+          }
+        ]
+      },
       {
         "id": "manu_formula_spd[010]",
         "name": {
@@ -2071,6 +2324,32 @@
             }
           }
         ]
+      },
+      {
+        "id": "meet_spd&team[100]",
+        "name": {
+          "zh": "警司",
+          "ja": "警視",
+          "en": "Police Superintendent"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.25,
+            "tags": [
+              "reception",
+              "bskill_meet_spd3",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升25%",
+              "ja": "応接室配置時、手がかり捜索速度+25%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 25%"
+            }
+          }
+        ]
       }
     ]
   },
@@ -2209,6 +2488,73 @@
     ]
   },
   {
+    "id": "char_445_wscoot",
+    "name": {
+      "zh": "骋风",
+      "ja": "ウィンドスクート",
+      "en": "Windscoot"
+    },
+    "affiliations": [
+      "yan"
+    ],
+    "rarity": 4,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "meet_spd&clue[000]",
+        "name": {
+          "zh": "广交义友",
+          "ja": "義侠の人脈",
+          "en": "Making Friends"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_spd_clue",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，每个招募位（不包含初始招募位）提升5%线索搜集速度",
+              "ja": "応接室配置時、公開求人の最大同時求人可能数が2より1多いごとに、事務連絡速度+5%",
+              "en": "When this Operator is assigned to the Reception Room, every Recruit slot (Default slots do not count) increases Clue search speed by 5%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd_notOwned&exchange[000]",
+        "name": {
+          "zh": "眼观六路",
+          "ja": "鋭い観察眼",
+          "en": "On the Alert"
+        },
+        "unlockPhase": 1,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_spd_notOwned_exchange",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，处于线索交流时更容易获得线索板上尚未拥有的线索",
+              "ja": "応接室配置時、情報共有中にボード上未入手の手がかりを入手しやすい",
+              "en": "When this Operator is assigned to the Reception Room, if in Clue Exchange, increases the likelihood of obtaining clues that are not on the Clue Board"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_4065_judge",
     "name": {
       "zh": "斥罪",
@@ -2243,6 +2589,63 @@
               "zh": "进驻宿舍时，该宿舍内所有干员心情每小时恢复+0.15，同时每个招募位（不包含初始招募位）额外+0.05恢复效果（叠加后的最终值同种效果取最高）",
               "ja": "配置宿舎内、全員の1時間ごとの体力回復量+0.15、公開求人の最大同時求人可能数が2より1多いごとに、体力回復量が追加で+0.05（重複後の最終値を基に同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory, and every recruit slot (excluding initial slot), restores another +0.05 (Only the strongest stacked effect of this type takes place)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1050_chen3",
+    "name": {
+      "zh": "赤刃明霄陈"
+    },
+    "affiliations": [
+      "yan"
+    ],
+    "rarity": 6,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "meet_spd_notOwned[003]",
+        "name": {
+          "zh": "萍踪浪迹"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_spdNotOwned1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，更容易获得线索板上尚未拥有的线索"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd_bd[002]",
+        "name": {
+          "zh": "扶危行侠"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.2,
+            "tags": [
+              "reception",
+              "bskill_meet_bd_to_spd",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升20%，同时每10点人间烟火额外提升1%"
             }
           }
         ]
@@ -2344,6 +2747,32 @@
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
+      {
+        "id": "meet_spd[032]",
+        "name": {
+          "zh": "领袖外交",
+          "ja": "統率者の外交術",
+          "en": "Don Diplomacy"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.25,
+            "tags": [
+              "reception",
+              "bskill_meet_spd3",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升25%",
+              "ja": "応接室配置時、手がかり捜索速度+25%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 25%"
+            }
+          }
+        ]
+      },
       {
         "id": "trade_ord_spd&meet[000]",
         "name": {
@@ -3262,6 +3691,73 @@
     ]
   },
   {
+    "id": "char_294_ayer",
+    "name": {
+      "zh": "断崖",
+      "ja": "エアースカーペ",
+      "en": "Ayerscarpe"
+    },
+    "affiliations": [
+      "rim"
+    ],
+    "rarity": 5,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "meet_spd[000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd[020]",
+        "name": {
+          "zh": "线索搜集·β",
+          "ja": "情報収集β",
+          "en": "Clue Search β"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.2,
+            "tags": [
+              "reception",
+              "bskill_meet_spd2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升20%",
+              "ja": "応接室配置時、手がかり捜索速度+20%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 20%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_159_peacok",
     "name": {
       "zh": "断罪者",
@@ -3824,6 +4320,73 @@
     ]
   },
   {
+    "id": "char_4016_kazema",
+    "name": {
+      "zh": "风丸",
+      "ja": "カゼマル",
+      "en": "Kazemaru"
+    },
+    "affiliations": [
+      "higashi"
+    ],
+    "rarity": 5,
+    "profession": "特殊",
+    "skills": [
+      {
+        "id": "meet_spd[010]",
+        "name": {
+          "zh": "化影",
+          "ja": "影に潜む",
+          "en": "Avatar"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.15,
+            "tags": [
+              "reception",
+              "bskill_meet_spd2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升15%",
+              "ja": "応接室配置時、手がかり捜索速度+15%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 15%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd_condChar[000]",
+        "name": {
+          "zh": "得心应手",
+          "ja": "仕事上手",
+          "en": "Proficient Artistry"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.35,
+            "tags": [
+              "reception",
+              "bskill_meet_condChar",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，如果会客室内只有自身处于工作状态时，线索搜集速度提升35%",
+              "ja": "応接室配置時、自身だけが仕事中であると、手がかり捜索速度35%",
+              "en": "When this Operator is assigned to the Reception Room, if no other Operators are working in the Reception Room, increases Clue search speed by 35%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_4222_taraxa",
     "name": {
       "zh": "风絮"
@@ -3885,6 +4448,74 @@
     ]
   },
   {
+    "id": "char_106_franka",
+    "name": {
+      "zh": "芙兰卡",
+      "ja": "フランカ",
+      "en": "Franka"
+    },
+    "affiliations": [
+      "columbia",
+      "blacksteel"
+    ],
+    "rarity": 5,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "meet_spd&team[000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&team[031]",
+        "name": {
+          "zh": "B.P.R.S.",
+          "ja": "B.P.R.S.",
+          "en": "B.P.R.S."
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_blacksteel2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，且更容易获得黑钢国际线索（工作时长影响概率）",
+              "ja": "応接室配置時、手がかり捜索速度+10%、BSWの手がかりを入手しやすい（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10% and it's easier to obtain the clues of Blacksteel Worldwide"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_120_hibisc",
     "name": {
       "zh": "芙蓉",
@@ -3920,6 +4551,63 @@
               "zh": "进驻宿舍时，使该宿舍内除自身以外心情未满的某个干员每小时恢复+0.55（同种效果取最高）",
               "ja": "配置宿舎内、自身以外のオペレーター1人の1時間ごとの体力回復量+0.55（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to a Dormitory, restores +0.55 Morale per hour to another Operator assigned to that Dormitory whose Morale is not full (Only the strongest effect of this type takes place)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_4031_liesel",
+    "name": {
+      "zh": "复奏"
+    },
+    "affiliations": [
+      "siracusa"
+    ],
+    "rarity": 5,
+    "profession": "術師",
+    "skills": [
+      {
+        "id": "meet_spd&cost_condChar[020]",
+        "name": {
+          "zh": "专业经理·α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.15,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&cost_condChargoat",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，如果会客室内只有自身处于工作状态时，线索搜集速度提升15%，心情每小时消耗+1"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&cost_condChar[021]",
+        "name": {
+          "zh": "专业经理·β"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.35,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&cost_condChargoat2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，如果会客室内只有自身处于工作状态时，线索搜集速度提升35%，心情每小时消耗+1"
             }
           }
         ]
@@ -4282,6 +4970,73 @@
     ]
   },
   {
+    "id": "char_4114_harold",
+    "name": {
+      "zh": "哈洛德",
+      "ja": "ハロルド",
+      "en": "Harold"
+    },
+    "affiliations": [
+      "victoria"
+    ],
+    "rarity": 5,
+    "profession": "医療",
+    "skills": [
+      {
+        "id": "meet_spd[000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_team&char[000]",
+        "name": {
+          "zh": "交个朋友",
+          "ja": "交友巧者",
+          "en": "Making Friends"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskil_meet_team&char",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，提升会客室内另一干员所属派系的线索倾向效果（如会客室没有另一干员则不提升）",
+              "ja": "応接室配置時、同室するもう一人のオペレーターの手がかり捜索の傾向を強める（配属人数が1のみの場合は発動しない）",
+              "en": "When this Operator is assigned to the Reception Room,increases the likelihood of finding clues related to the faction of the other Operator in Reception (no effect if there is no other Operator)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_4045_heidi",
     "name": {
       "zh": "海蒂",
@@ -4623,6 +5378,32 @@
               "zh": "进驻宿舍时，自身心情每小时恢复+0.7",
               "ja": "宿舎休養時、自身の1時間ごとの体力回復量+0.7",
               "en": "When this Operator is assigned to a Dormitory, self Morale recovered +0.7 per hour"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&cost_condChar[000]",
+        "name": {
+          "zh": "双面间谍",
+          "ja": "二重スパイ",
+          "en": "Double Agent"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.5,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&cost_condChar",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，如果会客室内只有自身处于工作状态时，线索搜集速度提升50%，心情每小时消耗+2",
+              "ja": "応接室配置時、自身だけが仕事中であると、手がかり捜索速度50%、1時間ごとの体力消費量+2",
+              "en": "When this Operator is assigned to the Reception Room, if no other Operators are working in the Reception Room, increases Clue search speed by 50%, and Morale consumed per hour +2"
             }
           }
         ]
@@ -5267,6 +6048,32 @@
               "zh": "进驻控制中枢时，控制中枢内所有干员的心情每小时恢复+0.05",
               "ja": "制御中枢配置時、制御中枢内全員の体力が1時間ごとに+0.05回復",
               "en": "When this Operator is assigned to the Control Center, increases Morale of all Operators in the Control Center by +0.05 per hour."
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd[031]",
+        "name": {
+          "zh": "追踪者",
+          "ja": "追跡者",
+          "en": "Tracker"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.25,
+            "tags": [
+              "reception",
+              "bskill_meet_spd3",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升25%",
+              "ja": "応接室配置時、手がかり捜索速度+25%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 25%"
             }
           }
         ]
@@ -6024,6 +6831,99 @@
     ]
   },
   {
+    "id": "char_4027_heyak",
+    "name": {
+      "zh": "霍尔海雅",
+      "ja": "ホルハイヤ",
+      "en": "Ho'olheyak"
+    },
+    "affiliations": [
+      "columbia"
+    ],
+    "rarity": 6,
+    "profession": "術師",
+    "skills": [
+      {
+        "id": "meet_spd&cost_condChar[001]",
+        "name": {
+          "zh": "“职业操守”·α",
+          "ja": "「プロ意識」α",
+          "en": "'Professional Ethics' α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.15,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&cost_condChar2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，如果会客室内只有自身处于工作状态时，线索搜集速度提升15%，心情每小时消耗+1",
+              "ja": "応接室配置時、自身だけが仕事中であると、手がかり捜索速度15%、1時間ごとの体力消費量+1",
+              "en": "When this Operator is assigned to the Reception Room, if no other Operators are working in the Reception Room, increases Clue search speed by 15%, and Morale consumed per hour +1"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&cost_condChar[011]",
+        "name": {
+          "zh": "“职业操守”·β",
+          "ja": "「プロ意識」β",
+          "en": "'Professional Ethics' β"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.35,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&cost_condChar3",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，如果会客室内只有自身处于工作状态时，线索搜集速度提升35%，心情每小时消耗+1",
+              "ja": "応接室配置時、自身だけが仕事中であると、手がかり捜索速度35%、1時間ごとの体力消費量+1",
+              "en": "When this Operator is assigned to the Reception Room, if no other Operators are working in the Reception Room, increases Clue search speed by 35%, and Morale consumed per hour +1"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&condChar_mustget[000]",
+        "name": {
+          "zh": "文献学顾问",
+          "ja": "文献学顧問",
+          "en": "Bibliography Consultant"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&condChar_mustget",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，如果会客室内只有自身处于工作状态时，连续消耗超过16点心情下一次必定获得莱茵生命的线索",
+              "ja": "応接室配置時、自身だけが仕事中の状態にある場合、連続で16を超える体力を消費した後、次で必ずライン生命の手がかりを入手できる",
+              "en": "When this Operator is assigned to the Reception Room, if only this Operator is working in the Reception Room, for every 16 consecutive Morale spent, a Rhine Lab clue is guaranteed next"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_4203_kichi",
     "name": {
       "zh": "吉星"
@@ -6074,6 +6974,73 @@
             ],
             "description": {
               "zh": "进驻贸易站时，贸易站内除自身以外每名处于工作状态的干员+20%订单获取效率"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_401_elysm",
+    "name": {
+      "zh": "极境",
+      "ja": "エリジウム",
+      "en": "Elysium"
+    },
+    "affiliations": [
+      "rhodes"
+    ],
+    "rarity": 5,
+    "profession": "先鋒",
+    "skills": [
+      {
+        "id": "meet_team[060]",
+        "name": {
+          "zh": "通讯员",
+          "ja": "通信員",
+          "en": "Correspondent"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_rhodes1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，更容易获得罗德岛制药线索（工作时长影响概率）",
+              "ja": "応接室配置時、ロドス製薬の手がかりを入手しやすい（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, increases the likelihood of obtaining Rhodes Island clues (Rate is influenced by length of work time)"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_flag[060]",
+        "name": {
+          "zh": "插旗",
+          "ja": "旗印",
+          "en": "Pioneer"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_flag_rhodes",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室后，每当新搜集到的线索不是罗德岛制药时，则额外增加罗德岛制药线索的出现概率（工作时长影响概率）",
+              "ja": "応接室配置時、捜索で入手した手がかりがロドス製薬でない時、ロドス製薬の手がかりを入手する確率が更に増加（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, every time that a non-Rhodes Island clue is collected, increases the likelihood of obtaining Rhodes Island clues (Rate is influenced by length of work time)"
             }
           }
         ]
@@ -6209,6 +7176,73 @@
               "zh": "进驻贸易站时，当前贸易站内干员提升的每5个订单上限，提供25%订单获取效率，最多提供100%效率",
               "ja": "貿易所配置時、配置貿易所の注文上限増加量5につき、受注効率+25%、最大+100%まで",
               "en": "When this Operator is assigned to a Trading Post, for every 5 order limit increase provided by Operators in the Trading Post, provides 25% order acquisition efficiency, up to a maximum of 100%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_4036_forcer",
+    "name": {
+      "zh": "见行者",
+      "ja": "エンフォーサー",
+      "en": "Enforcer"
+    },
+    "affiliations": [
+      "laterano"
+    ],
+    "rarity": 5,
+    "profession": "特殊",
+    "skills": [
+      {
+        "id": "meet_spd&cost[000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&cost[100]",
+        "name": {
+          "zh": "逻辑推理",
+          "ja": "ロジックシンキング",
+          "en": "Logical Deduction"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.35,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&cost",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升35%，心情每小时消耗+2",
+              "ja": "応接室配置時、手がかり捜索速度+35%、1時間ごとの体力消費量+2",
+              "en": "When this Operator is assigned to the Reception Room, increases Clue search speed by 35%, and Morale consumed per hour by +2"
             }
           }
         ]
@@ -6362,6 +7396,32 @@
             }
           }
         ]
+      },
+      {
+        "id": "meet_spd[0020]",
+        "name": {
+          "zh": "线索搜集·β",
+          "ja": "情報収集β",
+          "en": "Clue Search β"
+        },
+        "unlockPhase": 1,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.2,
+            "tags": [
+              "reception",
+              "bskill_meet_spd2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升20%",
+              "ja": "応接室配置時、手がかり捜索速度+20%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 20%"
+            }
+          }
+        ]
       }
     ]
   },
@@ -6400,6 +7460,32 @@
               "zh": "进驻制造站时，生产力+25%",
               "ja": "製造所配置時、製造効率+25%",
               "en": "When this Operator is assigned to a Factory, productivity +25%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&team[030]",
+        "name": {
+          "zh": "联络员",
+          "ja": "連絡員",
+          "en": "Liaison"
+        },
+        "unlockPhase": 1,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_blacksteel2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，且更容易获得黑钢国际线索（工作时长影响概率）",
+              "ja": "応接室配置時、手がかり捜索速度+10%、BSWの手がかりを入手しやすい（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10% and it's easier to obtain the clues of Blacksteel Worldwide"
             }
           }
         ]
@@ -7399,6 +8485,74 @@
     ]
   },
   {
+    "id": "char_405_absin",
+    "name": {
+      "zh": "苦艾",
+      "ja": "アブサント",
+      "en": "Absinthe"
+    },
+    "affiliations": [
+      "ursus",
+      "student"
+    ],
+    "rarity": 5,
+    "profession": "術師",
+    "skills": [
+      {
+        "id": "meet_team[050]",
+        "name": {
+          "zh": "秘密搜查",
+          "ja": "秘密調査",
+          "en": "Secret Inquiry"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_ursus1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，更容易获得乌萨斯学生自治团线索（工作时长影响概率）",
+              "ja": "応接室配置時、ウルサス学生自治団の手がかりを入手しやすい（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, the likelihood of obtaining Ursus Student Self-Governing Group clues is increased (working time improves the likelihood)."
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_flag[050]",
+        "name": {
+          "zh": "甄别",
+          "ja": "選別",
+          "en": "Screening"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_flag_ursus",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室后，每当新搜集到的线索不是乌萨斯学生自治团时，则额外增加乌萨斯学生自治团线索的出现概率（工作时长影响概率）",
+              "ja": "応接室配置時、捜索で入手した手がかりがウルサス学生自治団でない時、ウルサス学生自治団の手がかりを入手する確率が更に増加（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, increases the likelihood of obtaining Ursus Student Self-Governing Group clues for every newly-obtained Clue that is not from Ursus Student Self-Governing Group (working time improves this likelihood)."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_140_whitew",
     "name": {
       "zh": "拉普兰德",
@@ -7475,6 +8629,73 @@
               "zh": "当与德克萨斯在同一个贸易站时，心情每小时消耗-0.1，订单上限+4",
               "ja": "テキサスと同じ貿易所に配置時、1時間ごとの体力消費量-0.1、注文上限+4",
               "en": "When this Operator is assigned to the same Trading Post as Texas, Morale consumed each hour -0.1, and order limit +4"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_4142_laios",
+    "name": {
+      "zh": "莱欧斯",
+      "ja": "ライオス",
+      "en": "Laios"
+    },
+    "affiliations": [
+      "laios"
+    ],
+    "rarity": 5,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "meet_spd[021]",
+        "name": {
+          "zh": "好奇心",
+          "ja": "好奇心",
+          "en": "Curiosity"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.2,
+            "tags": [
+              "reception",
+              "bskill_meet_spd2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升20%",
+              "ja": "応接室配置時、手がかり捜索速度+20%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 20%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd_bd[001]",
+        "name": {
+          "zh": "饱餐的干劲",
+          "ja": "満腹時の意気込み",
+          "en": "Gourmand"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.02,
+            "tags": [
+              "reception",
+              "bskill_meet_bd_dungeon",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，每拥有1点魔物料理，线索搜集速度额外提升2%",
+              "ja": "応接室配置時、魔物料理1つにつき手がかり捜索速度+2%",
+              "en": "When this Operator is assigned to the Reception Room, increases Clue search speed by an additional 2% for every 1 Monster Meal"
             }
           }
         ]
@@ -8153,6 +9374,91 @@
     ]
   },
   {
+    "id": "char_4102_threye",
+    "name": {
+      "zh": "凛视",
+      "ja": "ヴァラルクビン",
+      "en": "Valarqvin"
+    },
+    "affiliations": [
+      "sami"
+    ],
+    "rarity": 5,
+    "profession": "補助",
+    "skills": [
+      {
+        "id": "meet_spd&bd[000]",
+        "name": {
+          "zh": "远见",
+          "ja": "先見",
+          "en": "Foresight"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&bd",
+              "meeting"
+            ],
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "reception",
+                "operatorIds": [
+                  "char_2012_typhon"
+                ]
+              }
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，当与提丰进驻会客室一起工作时，线索搜集速度额外提升15%，自身心情每小时消耗+0.5",
+              "ja": "応接室配置時、手がかり捜索速度+10%。ティフォンと同時に応接室に配置された場合、追加で手がかり捜索速度+15%、自身の1時間ごとの体力消費量+0.5",
+              "en": "When this Operator is assigned to the Reception Room, increases Clue search speed by 10%, and when assigned together with Typhon, increases Clue search speed by an additional 15% while self Morale loss per hour +0.5"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&bd[010]",
+        "name": {
+          "zh": "未来之途",
+          "ja": "未来の道",
+          "en": "Pilgrimage to the Future"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&bd&notOwned",
+              "meeting"
+            ],
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "reception",
+                "operatorIds": [
+                  "char_2012_typhon"
+                ]
+              }
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，当与提丰进驻会客室一起工作时，线索搜集速度额外提升15%，自身心情每小时消耗+0.5，且更容易获得线索板上尚未拥有的线索",
+              "ja": "応接室配置時、手がかり捜索速度+10%。ティフォンと同時に応接室に配置された場合、追加で手がかり捜索速度+15%、自身の1時間ごとの体力消費量+0.5、ボード上で未入手の手がかりを入手しやすい",
+              "en": "When this Operator is assigned to the Reception Room, increases Clue search speed by 10%, and when assigned together with Typhon, increases Clue search speed by an additional 15% while self Morale loss per hour +0.5, and increases the likelihood of obtaining clues that are not on the Clue Board"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_1045_svash2",
     "name": {
       "zh": "凛御银灰"
@@ -8728,6 +10034,44 @@
             }
           }
         ]
+      },
+      {
+        "id": "meet_spd_notOwned_P[000]",
+        "name": {
+          "zh": "隐秘专家"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_buddy",
+              "meeting"
+            ],
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "control",
+                "operatorIds": [
+                  "char_1048_orchd2"
+                ]
+              },
+              {
+                "type": "facilityOperator",
+                "facility": "control",
+                "operatorIds": [
+                  "char_278_orchid"
+                ]
+              }
+            ],
+            "description": {
+              "zh": "进驻会客室时，更容易获得线索板上尚未拥有的线索，若焰狐龙梓兰进驻控制中枢，则线索搜集速度提升10%"
+            }
+          }
+        ]
       }
     ]
   },
@@ -8931,6 +10275,73 @@
     ]
   },
   {
+    "id": "char_133_mm",
+    "name": {
+      "zh": "梅",
+      "ja": "メイ",
+      "en": "May"
+    },
+    "affiliations": [
+      "victoria"
+    ],
+    "rarity": 4,
+    "profession": "狙撃",
+    "skills": [
+      {
+        "id": "meet_spd[0020]",
+        "name": {
+          "zh": "线索搜集·β",
+          "ja": "情報収集β",
+          "en": "Clue Search β"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.2,
+            "tags": [
+              "reception",
+              "bskill_meet_spd2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升20%",
+              "ja": "応接室配置時、手がかり捜索速度+20%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 20%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_team[020]",
+        "name": {
+          "zh": "皇家探员（自称）",
+          "ja": "皇室探偵（自称）",
+          "en": "Royal Detective (Self Proclaimed)"
+        },
+        "unlockPhase": 1,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_penguin1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，更容易获得企鹅物流线索（工作时长影响概率）",
+              "ja": "応接室配置時、ペンギン急便の手がかりを入手しやすい（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, the likelihood of obtaining Penguin Logistics clues is increased (working time improves the likelihood)."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_242_otter",
     "name": {
       "zh": "梅尔",
@@ -9057,6 +10468,73 @@
               "zh": "进驻制造站时，每1点思维链环+1%生产力",
               "ja": "製造所配置時、思念連鎖1につき、製造効率+1%",
               "en": "When this Operator is assigned to Factory, for every 1 points of Chain of Thought, productivity +1%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_4017_puzzle",
+    "name": {
+      "zh": "谜图",
+      "ja": "パズル",
+      "en": "Puzzle"
+    },
+    "affiliations": [
+      "victoria"
+    ],
+    "rarity": 5,
+    "profession": "先鋒",
+    "skills": [
+      {
+        "id": "meet_spd&team[000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd_notOwned[001]",
+        "name": {
+          "zh": "情报分析",
+          "ja": "情報分析",
+          "en": "Intel Analysis"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_spdNotOwned1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，更容易获得线索板上尚未拥有的线索",
+              "ja": "応接室配置時、ボード上未入手の手がかりを入手しやすい",
+              "en": "When this Operator is assigned to the Reception Room, increases the likelihood of obtaining clues that are not on the Clue Board."
             }
           }
         ]
@@ -9474,6 +10952,73 @@
               "zh": "进驻宿舍时，使该宿舍内除自身以外心情未满的某个干员每小时恢复+0.55（同种效果取最高）",
               "ja": "配置宿舎内、自身以外のオペレーター1人の1時間ごとの体力回復量+0.55（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to a Dormitory, restores +0.55 Morale per hour to another Operator assigned to that Dormitory whose Morale is not full (Only the strongest effect of this type takes place)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_213_mostma",
+    "name": {
+      "zh": "莫斯提马",
+      "ja": "モスティマ",
+      "en": "Mostima"
+    },
+    "affiliations": [
+      "laterano"
+    ],
+    "rarity": 6,
+    "profession": "術師",
+    "skills": [
+      {
+        "id": "meet_spd&team[000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&team[020]",
+        "name": {
+          "zh": "信使·企鹅物流",
+          "ja": "トランスポーター・ペンギン急便",
+          "en": "Messenger - Penguin Logistics"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_penguin2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，且更容易获得企鹅物流线索（工作时长影响概率）",
+              "ja": "応接室配置時、手がかり捜索速度+10%、ペンギン急便の手がかりを入手しやすい（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10% and it's easier to obtain the clues of Penguin Logistics"
             }
           }
         ]
@@ -10797,6 +12342,108 @@
     ]
   },
   {
+    "id": "char_4026_vulpis",
+    "name": {
+      "zh": "忍冬",
+      "ja": "ウルピスフォリア",
+      "en": "Vulpisfoglia"
+    },
+    "affiliations": [
+      "siracusa"
+    ],
+    "rarity": 6,
+    "profession": "先鋒",
+    "skills": [
+      {
+        "id": "meet_spd[1000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd[1010]",
+        "name": {
+          "zh": "线索搜集·β",
+          "ja": "情報収集β",
+          "en": "Clue Search β"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.2,
+            "tags": [
+              "reception",
+              "bskill_meet_spd2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升20%",
+              "ja": "応接室配置時、手がかり捜索速度+20%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 20%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&bd[100]",
+        "name": {
+          "zh": "杀手的假期",
+          "ja": "殺し屋の休暇",
+          "en": "Assassin's Holiday"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.3,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&bd2",
+              "meeting"
+            ],
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "reception",
+                "operatorIds": [
+                  "char_358_lisa"
+                ]
+              }
+            ],
+            "description": {
+              "zh": "进驻会客室时，当与铃兰进驻会客室一起工作时，线索搜集速度额外提升30%",
+              "ja": "応接室配置時、スズランと同時に応接室に配置された場合、追加で手がかり捜索速度+30%",
+              "en": "When this Operator is assigned to the Reception room together with Suzuran, increases Clue search speed by an additional 30%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_4183_mortis",
     "name": {
       "zh": "若叶睦"
@@ -10847,6 +12494,74 @@
             ],
             "description": {
               "zh": "当与丰川祥子一起进驻控制中枢时，消除自身心情消耗的影响"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_202_demkni",
+    "name": {
+      "zh": "塞雷娅",
+      "ja": "サリア",
+      "en": "Saria"
+    },
+    "affiliations": [
+      "columbia",
+      "rhine"
+    ],
+    "rarity": 6,
+    "profession": "重装",
+    "skills": [
+      {
+        "id": "meet_spd&team[000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&team[010]",
+        "name": {
+          "zh": "守望者",
+          "ja": "ウォッチマン",
+          "en": "Watchman"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_rhine2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，且更容易获得莱茵生命线索（工作时长影响概率）",
+              "ja": "応接室配置時、手がかり捜索速度+10%、ライン生命の手がかりを入手しやすい（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10% and it's easier to obtain the clues of Rhine Lab(rate is influenced by length of worktime)"
             }
           }
         ]
@@ -11073,6 +12788,47 @@
               "zh": "进驻宿舍时，当前宿舍每级提供1层魔物料理",
               "ja": "宿舎配置時、配置宿舎のレベル1につき、魔物料理+1",
               "en": "When this Operator is assigned to a Dormitory, provide 1 Monster Meal for every level of the current Dormitory"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_264_f12yin",
+    "name": {
+      "zh": "山",
+      "ja": "マウンテン",
+      "en": "Mountain"
+    },
+    "affiliations": [
+      "columbia"
+    ],
+    "rarity": 6,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "meet_flag[010]",
+        "name": {
+          "zh": "哥伦比亚史",
+          "ja": "クルビア史",
+          "en": "Columbian History"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_flag_rhine",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室后，每当新搜集到的线索不是莱茵生命时，则额外增加莱茵生命线索的出现概率（工作时长影响概率）",
+              "ja": "応接室配置時、捜索で入手した手がかりがライン生命でない時、ライン生命の手がかりを入手する確率が更に増加（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, every time that a non-Rhine Lab clue is collected, the likelihood of obtaining Rhine Lab clues is increased (working time improves the likelihood)"
             }
           }
         ]
@@ -11898,6 +13654,73 @@
     ]
   },
   {
+    "id": "char_158_milu",
+    "name": {
+      "zh": "守林人",
+      "ja": "ファイヤーウォッチ",
+      "en": "Firewatch"
+    },
+    "affiliations": [
+      "rhodes"
+    ],
+    "rarity": 5,
+    "profession": "狙撃",
+    "skills": [
+      {
+        "id": "meet_spd[000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd[020]",
+        "name": {
+          "zh": "线索搜集·β",
+          "ja": "情報収集β",
+          "en": "Clue Search β"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.2,
+            "tags": [
+              "reception",
+              "bskill_meet_spd2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升20%",
+              "ja": "応接室配置時、手がかり捜索速度+20%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 20%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_2025_shu",
     "name": {
       "zh": "黍",
@@ -11958,6 +13781,47 @@
               "zh": "进驻制造站时，每3点人间烟火+1%生产力",
               "ja": "製造所配置時、俗世之憂3につき、製造効率+1%",
               "en": "When this Operator is assigned to a Factory, for every 3 Worldly Plight, Productivity +1%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_4124_iana",
+    "name": {
+      "zh": "双月",
+      "ja": "Iana",
+      "en": "Iana"
+    },
+    "affiliations": [
+      "rainbow"
+    ],
+    "rarity": 5,
+    "profession": "特殊",
+    "skills": [
+      {
+        "id": "meet_spd_bd[000]",
+        "name": {
+          "zh": "情报专家",
+          "ja": "情報エキスパート",
+          "en": "Intel Expert"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_iana",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升5%，同时每1点情报储备额外提升5%",
+              "ja": "応接室配置時、手がかり捜索速度+5%。また、情報備蓄1につき、さらに+5%",
+              "en": "When this Operator is assigned to the Reception Room, increases Clue search speed by 5%, with an additional 5% for every 1 Intelligence Reserve"
             }
           }
         ]
@@ -12327,6 +14191,67 @@
               "zh": "进驻宿舍时，该宿舍内所有干员的心情每小时恢复+0.1（同种效果取最高）",
               "ja": "配置宿舎内、全員の1時間ごとの体力回復量+0.1（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to a Dormitory, restores +0.1 Morale per hour to all Operators assigned to that Dormitory (Only the strongest effect of this type takes place)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_4199_makiri",
+    "name": {
+      "zh": "松桐"
+    },
+    "affiliations": [
+      "higashi"
+    ],
+    "rarity": 5,
+    "profession": "先鋒",
+    "skills": [
+      {
+        "id": "meet_spd[1000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd_notOwned[002]",
+        "name": {
+          "zh": "见微知著"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_spdNotOwned1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，更容易获得线索板上尚未拥有的线索"
             }
           }
         ]
@@ -12717,6 +14642,47 @@
     ]
   },
   {
+    "id": "char_2012_typhon",
+    "name": {
+      "zh": "提丰",
+      "ja": "ティフォン",
+      "en": "Typhon"
+    },
+    "affiliations": [
+      "sami"
+    ],
+    "rarity": 6,
+    "profession": "狙撃",
+    "skills": [
+      {
+        "id": "meet_spd&sami[000]",
+        "name": {
+          "zh": "冰原游弋",
+          "ja": "氷原の足跡",
+          "en": "Icefield Navigation"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&sami",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，与其他萨米干员进驻会客室一起工作时，线索搜集速度额外提升5%，自身心情每小时消耗+0.5",
+              "ja": "応接室配置時、手がかり捜索速度+10%。他のサーミオペレーターと同時に応接室に配置された場合、追加で手がかり捜索速度+5%、自身の1時間ごとの体力消費量+0.5",
+              "en": "When this Operator is assigned to the Reception Room, increases Clue search speed by 10%, and when assigned together with another Sami Operator, increases Clue search speed by an additional 5% while self Morale loss per hour +0.5"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_4213_skybx",
     "name": {
       "zh": "天空盒"
@@ -12923,6 +14889,73 @@
     ]
   },
   {
+    "id": "char_275_breeze",
+    "name": {
+      "zh": "微风",
+      "ja": "ブリーズ",
+      "en": "Breeze"
+    },
+    "affiliations": [
+      "victoria"
+    ],
+    "rarity": 5,
+    "profession": "医療",
+    "skills": [
+      {
+        "id": "meet_spd&team[000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&team[071]",
+        "name": {
+          "zh": "没落贵族",
+          "ja": "没落貴族",
+          "en": "Fallen Noble"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_glasgow2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，且更容易获得格拉斯哥帮线索（工作时长影响概率）",
+              "ja": "応接室配置時、手がかり捜索速度+10%、グラスゴーの手がかりを入手しやすい（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10% and it's easier to obtain the clues of Glasgow"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_4098_vvana",
     "name": {
       "zh": "薇薇安娜",
@@ -13093,6 +15126,13 @@
                 "operatorIds": [
                   "char_4088_hodrer"
                 ]
+              },
+              {
+                "type": "facilityOperator",
+                "facility": "reception",
+                "operatorIds": [
+                  "char_4087_ines"
+                ]
               }
             ],
             "description": {
@@ -13127,6 +15167,13 @@
                 "facility": "trading",
                 "operatorIds": [
                   "char_4088_hodrer"
+                ]
+              },
+              {
+                "type": "facilityOperator",
+                "facility": "reception",
+                "operatorIds": [
+                  "char_4087_ines"
                 ]
               }
             ],
@@ -13711,6 +15758,73 @@
     ]
   },
   {
+    "id": "char_492_quercu",
+    "name": {
+      "zh": "夏栎",
+      "ja": "クエルクス",
+      "en": "Quercus"
+    },
+    "affiliations": [
+      "rhodes"
+    ],
+    "rarity": 5,
+    "profession": "補助",
+    "skills": [
+      {
+        "id": "meet_team[070]",
+        "name": {
+          "zh": "风声",
+          "ja": "風の便り",
+          "en": "Sound of the Wind"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_glasgow1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，更容易获得格拉斯哥帮线索（工作时长影响概率）",
+              "ja": "応接室配置時、グラスゴーの手がかりを入手しやすい（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, the likelihood of obtaining Glasgow clues is increased (working time improves the likelihood)"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_flag[070]",
+        "name": {
+          "zh": "情报整理",
+          "ja": "情報整理",
+          "en": "Information Collation"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_flag_glasgow",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室后，每当新搜集到的线索不是格拉斯哥帮时，则额外增加格拉斯哥帮线索的出现概率（工作时长影响概率）",
+              "ja": "応接室配置時、捜索で入手した手がかりがグラスゴーでない時、グラスゴーの手がかりを入手する確率が更に増加（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, every time that a non-Glasgow clue is collected, the likelihood of obtaining Glasgow clues is increased (working time improves the likelihood)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_240_wyvern",
     "name": {
       "zh": "香草",
@@ -13831,6 +15945,28 @@
             }
           }
         ]
+      },
+      {
+        "id": "meet_spd&exchange[001]",
+        "name": {
+          "zh": "特殊渠道顾问"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.3,
+            "tags": [
+              "reception",
+              "bskill_meet_exchange2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，处于线索交流时线索搜集速度提升30%"
+            }
+          }
+        ]
       }
     ]
   },
@@ -13895,6 +16031,73 @@
               "zh": "进驻宿舍时，该宿舍内所有干员的心情每小时恢复+0.15（同种效果取最高）",
               "ja": "配置宿舎内、全員の1時間ごとの体力回復量+0.15（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory (Only the strongest effect of this type takes place)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_497_ctable",
+    "name": {
+      "zh": "晓歌",
+      "ja": "カンタービレ",
+      "en": "Cantabile"
+    },
+    "affiliations": [
+      "rhodes"
+    ],
+    "rarity": 5,
+    "profession": "先鋒",
+    "skills": [
+      {
+        "id": "meet_spd_notOwned[000]",
+        "name": {
+          "zh": "不容遗漏·α",
+          "ja": "しらみ潰しα",
+          "en": "Overlook Nothing α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_spdNotOwned1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，更容易获得线索板上尚未拥有的线索",
+              "ja": "応接室配置時、ボード上未入手の手がかりを入手しやすい",
+              "en": "When this Operator is assigned to the Reception Room, increases the likelihood of obtaining clues that are not on the Clue Board."
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd_notOwned[010]",
+        "name": {
+          "zh": "不容遗漏·β",
+          "ja": "しらみ潰しβ",
+          "en": "Overlook Nothing β"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spdNotOwned2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，且更容易获得线索板上尚未拥有的线索",
+              "ja": "応接室配置時、手がかり捜索速度+10%、ボード上未入手の手がかりを入手しやすい",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%, and increases the likelihood of obtaining clues that are not on the Clue Board."
             }
           }
         ]
@@ -14141,6 +16344,175 @@
     ]
   },
   {
+    "id": "char_4194_rmixer",
+    "name": {
+      "zh": "信仰搅拌机",
+      "ja": "サンクタ・ミキサー",
+      "en": "Sankta Miksaparato"
+    },
+    "affiliations": [
+      "laterano"
+    ],
+    "rarity": 6,
+    "profession": "重装",
+    "skills": [
+      {
+        "id": "meet_spd[011]",
+        "name": {
+          "zh": "泡茶高手",
+          "ja": "お茶入れマスター",
+          "en": "Tea Master"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.15,
+            "tags": [
+              "reception",
+              "bskill_meet_spd2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升15%",
+              "ja": "応接室配置時、手がかり捜索速度+15%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 15%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd[022]",
+        "name": {
+          "zh": "社交达人",
+          "ja": "社交の達人",
+          "en": "Expert Socializer"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.2,
+            "tags": [
+              "reception",
+              "bskill_meet_spd3",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升20%",
+              "ja": "応接室配置時、手がかり捜索速度+20%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 20%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd_ext&P[000]",
+        "name": {
+          "zh": "不泯童心",
+          "ja": "不滅の童心",
+          "en": "Eternal Youth"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd_confes1",
+              "meeting"
+            ],
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "dormitory",
+                "operatorIds": [
+                  "char_300_phenxi"
+                ]
+              }
+            ],
+            "description": {
+              "zh": "进驻会客室时，如果菲亚梅塔进驻在宿舍，则线索搜集速度额外提升10%",
+              "ja": "応接室配置時、フィアメッタが宿舎に配置されている場合、追加で手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, if Fiammetta is assigned to a Dormitory, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_274_astesi",
+    "name": {
+      "zh": "星极",
+      "ja": "アステシア",
+      "en": "Astesia"
+    },
+    "affiliations": [
+      "columbia"
+    ],
+    "rarity": 5,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "meet_spd&team[000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&team[110]",
+        "name": {
+          "zh": "星象学",
+          "ja": "占星学",
+          "en": "Astrology"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.25,
+            "tags": [
+              "reception",
+              "bskill_meet_spd3",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升25%",
+              "ja": "応接室配置時、手がかり捜索速度+25%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 25%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_135_halo",
     "name": {
       "zh": "星源",
@@ -14200,6 +16572,47 @@
               "zh": "进驻制造站时，生产力+25%",
               "ja": "製造所配置時、製造効率+25%",
               "en": "When this Operator is assigned to a Factory, productivity +25%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_4172_xingzh",
+    "name": {
+      "zh": "行箸",
+      "ja": "シィンズゥ",
+      "en": "Xingzhu"
+    },
+    "affiliations": [
+      "yan"
+    ],
+    "rarity": 5,
+    "profession": "補助",
+    "skills": [
+      {
+        "id": "meet_spd[1020]",
+        "name": {
+          "zh": "线索搜集·β",
+          "ja": "情報収集β",
+          "en": "Clue Search β"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.2,
+            "tags": [
+              "reception",
+              "bskill_meet_spd3",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升20%",
+              "ja": "応接室配置時、手がかり捜索速度+20%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 20%"
             }
           }
         ]
@@ -14399,6 +16812,74 @@
     ]
   },
   {
+    "id": "char_4052_surfer",
+    "name": {
+      "zh": "寻澜",
+      "ja": "サーファー",
+      "en": "Surfer"
+    },
+    "affiliations": [
+      "columbia",
+      "blacksteel"
+    ],
+    "rarity": 5,
+    "profession": "先鋒",
+    "skills": [
+      {
+        "id": "meet_spd&sami[100]",
+        "name": {
+          "zh": "人情练达",
+          "ja": "対話力",
+          "en": "Networking Expert"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&blacksteel1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，与其他黑钢国际干员进驻会客室一起工作时，线索搜集速度额外提升15%，自身心情每小时消耗+0.5",
+              "ja": "応接室配置時、手がかり捜索速度+10%。他のBSWオペレーターと同時に応接室に配置された場合、追加で手がかり捜索速度15%、自身の1時間ごとの体力消費量+0.5",
+              "en": "When this Operator is assigned to the Reception Room, increases Clue search speed by 10%, and when assigned together with another Blacksteel Worldwide Operator, increases Clue search speed by an additional 15% while self Morale loss per hour +0.5"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&sami[110]",
+        "name": {
+          "zh": "情报探查",
+          "ja": "情報収集",
+          "en": "Information Gathering"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd&blacksteel2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，与其他黑钢国际干员进驻会客室一起工作时，线索搜集速度额外提升20%",
+              "ja": "応接室配置時、手がかり捜索速度+10%。他のBSWオペレーターと同時に応接室に配置された場合、追加で手がかり捜索速度+20%",
+              "en": "When this Operator is assigned to the Reception Room, increases Clue search speed by 10%, and when assigned together with another Blacksteel Worldwide Operator, increases Clue search speed by an additional 20%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_198_blackd",
     "name": {
       "zh": "讯使",
@@ -14434,6 +16915,32 @@
               "zh": "进驻贸易站时，订单获取效率+15%，且订单上限+2",
               "ja": "貿易所配置時、受注効率+15%、注文上限+2",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +15% and the order limit +2"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&team[040]",
+        "name": {
+          "zh": "讯使",
+          "ja": "クーリエ",
+          "en": "Courier"
+        },
+        "unlockPhase": 1,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_kjerag2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，且更容易获得喀兰贸易线索（工作时长影响概率）",
+              "ja": "応接室配置時、手がかり捜索速度+10%、カランド貿易の手がかりを入手しやすい（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10% and it's easier to obtain the clues of Karlan Trade"
             }
           }
         ]
@@ -14635,6 +17142,47 @@
               "zh": "进驻发电站时，无人机充能速度+20%",
               "ja": "発電所配置時、ドローンの回復速度+20%",
               "en": "When this Operator is assigned to a Power Plant, increases the drone recovery rate by +20%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_337_utage",
+    "name": {
+      "zh": "宴",
+      "ja": "ウタゲ",
+      "en": "Utage"
+    },
+    "affiliations": [
+      "higashi"
+    ],
+    "rarity": 4,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "meet_spd[020]",
+        "name": {
+          "zh": "线索搜集·β",
+          "ja": "情報収集β",
+          "en": "Clue Search β"
+        },
+        "unlockPhase": 1,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.2,
+            "tags": [
+              "reception",
+              "bskill_meet_spd2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升20%",
+              "ja": "応接室配置時、手がかり捜索速度+20%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 20%"
             }
           }
         ]
@@ -14913,6 +17461,99 @@
             ],
             "description": {
               "zh": "进驻宿舍时，该宿舍内所有干员的心情每小时恢复+0.15（同种效果取最高）"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_4013_kjera",
+    "name": {
+      "zh": "耶拉",
+      "ja": "イェラ",
+      "en": "Kjera"
+    },
+    "affiliations": [
+      "kjerag"
+    ],
+    "rarity": 5,
+    "profession": "術師",
+    "skills": [
+      {
+        "id": "meet_spd&team[000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&team[041]",
+        "name": {
+          "zh": "雪境守望",
+          "ja": "雪境の守護者",
+          "en": "Snow Watcher"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_kjerag2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，且更容易获得喀兰贸易线索（工作时长影响概率）",
+              "ja": "応接室配置時、手がかり捜索速度+10%、カランド貿易の手がかりを入手しやすい（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10% and it's easier to obtain the clues of Karlan Trade"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_flag[040]",
+        "name": {
+          "zh": "耶拉冈德",
+          "ja": "イェラガンド",
+          "en": "Kjeragandr"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_flag_kjerag",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室后，每当新搜集到的线索不是喀兰贸易时，则额外增加喀兰贸易线索的出现概率（工作时长影响概率）",
+              "ja": "応接室配置時、捜索で入手した手がかりがカランド貿易でない時、カランド貿易の手がかりを入手する確率が更に増加（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, every time that a non-Karlan Trade clue is collected, the likelihood of obtaining Karlan Trade clues is increased (working time improves the likelihood)"
             }
           }
         ]
@@ -15255,6 +17896,47 @@
     ]
   },
   {
+    "id": "char_4087_ines",
+    "name": {
+      "zh": "伊内丝",
+      "ja": "イネス",
+      "en": "Ines"
+    },
+    "affiliations": [
+      "babel"
+    ],
+    "rarity": 6,
+    "profession": "先鋒",
+    "skills": [
+      {
+        "id": "meet_spd_hast[000]",
+        "name": {
+          "zh": "聚影",
+          "ja": "集まる影",
+          "en": "Shadow Gathering"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.2,
+            "tags": [
+              "reception",
+              "bskill_meet_spd_hast1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升20%，此后每小时提升2%，最终达到30%",
+              "ja": "応接室配置時、手がかり捜索速度+20%。その後、さらに1時間ごとに+2%（最大+30%まで）",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 20%, then by another 2% per hour, up to a maximum of 30%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_355_ethan",
     "name": {
       "zh": "伊桑",
@@ -15423,6 +18105,74 @@
               "zh": "进驻制造站时，当前制造站内其他干员提供的生产力全部归零（不包含根据设施数量提供加成的生产力），每个发电站为当前制造站+5%的生产力",
               "ja": "製造所配置時、自身以外の配属オペレーター全員の製造効率を０にする（施設の数量による製造効率上昇に影響なし）。発電所1か所につき、製造効率+5%",
               "en": "When this Operator is assigned to a Factory, the productivity contributed by all other Operators in that Factory becomes 0 (excluding productivity granted based on facility count), but each Power Plant increases that Factory's productivity by +5%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_155_tiger",
+    "name": {
+      "zh": "因陀罗",
+      "ja": "インドラ",
+      "en": "Indra"
+    },
+    "affiliations": [
+      "victoria",
+      "glasgow"
+    ],
+    "rarity": 5,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "meet_spd&team[000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&team[070]",
+        "name": {
+          "zh": "传讯者",
+          "ja": "メッセンジャー",
+          "en": "Arraigner"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_glasgow2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，且更容易获得格拉斯哥帮线索（工作时长影响概率）",
+              "ja": "応接室配置時、手がかり捜索速度+10%、グラスゴーの手がかりを入手しやすい（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10% and it's easier to obtain the clues of Glasgow"
             }
           }
         ]
@@ -15876,6 +18626,32 @@
             }
           }
         ]
+      },
+      {
+        "id": "meet_spd[030]",
+        "name": {
+          "zh": "占卜",
+          "ja": "占い",
+          "en": "Divination"
+        },
+        "unlockPhase": 1,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.25,
+            "tags": [
+              "reception",
+              "bskill_meet_spd3",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升25%",
+              "ja": "応接室配置時、手がかり捜索速度+25%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 25%"
+            }
+          }
+        ]
       }
     ]
   },
@@ -16032,6 +18808,73 @@
               "zh": "进驻制造站时，源石类配方的生产力+30%",
               "ja": "製造所配置時、源石製造の製造効率+30%",
               "en": "When this Operator is assigned to a Factory, Originium formula related productivity +30%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_4100_caper",
+    "name": {
+      "zh": "跃跃",
+      "ja": "ケイパー",
+      "en": "Caper"
+    },
+    "affiliations": [
+      "bolivar"
+    ],
+    "rarity": 4,
+    "profession": "狙撃",
+    "skills": [
+      {
+        "id": "meet_spd&team[000]",
+        "name": {
+          "zh": "线索搜集·α",
+          "ja": "情報収集α",
+          "en": "Clue Search α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_spd1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%",
+              "ja": "応接室配置時、手がかり捜索速度+10%",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd&exchange[000]",
+        "name": {
+          "zh": "无辜笑脸",
+          "ja": "無垢な笑顔",
+          "en": "Innocent Smile"
+        },
+        "unlockPhase": 1,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.3,
+            "tags": [
+              "reception",
+              "bskill_meet_exchange",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，处于线索交流时线索搜集速度提升30%",
+              "ja": "応接室配置時、情報共有中の手がかり捜索速度+30%",
+              "en": "When this Operator is assigned to the Reception Room, if in Clue Exchange, increases Clue search speed by 30%"
             }
           }
         ]
@@ -16263,6 +19106,48 @@
               "zh": "进驻贸易站时，提升当前贸易站高品质贵金属订单的出现概率（工作时长影响概率），心情每小时消耗-0.25",
               "ja": "貿易所配置時、配置貿易所の高価値な金属オーダーの獲得率が上昇（勤務時間が確率に影響する）、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_195_glassb",
+    "name": {
+      "zh": "真理",
+      "ja": "イースチナ",
+      "en": "Istina"
+    },
+    "affiliations": [
+      "ursus",
+      "student"
+    ],
+    "rarity": 5,
+    "profession": "補助",
+    "skills": [
+      {
+        "id": "meet_spd&team[050]",
+        "name": {
+          "zh": "军师",
+          "ja": "参謀",
+          "en": "Military Advisor"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.1,
+            "tags": [
+              "reception",
+              "bskill_meet_ursus2",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，线索搜集速度提升10%，且更容易获得乌萨斯学生自治团线索（工作时长影响概率）",
+              "ja": "応接室配置時、手がかり捜索速度+10%、ウルサス学生自治団の手がかりを入手しやすい（勤務時間が確率に影響する）",
+              "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 10% and it's easier to obtain the clues of Ursus Student Self-Governing Group"
             }
           }
         ]
@@ -17398,6 +20283,32 @@
               "zh": "进驻贸易站时，订单获取效率+10%，当前贸易站赤金订单的赤金交付数必定为2（不视作违约订单）",
               "ja": "貿易所配置時、受注効率+10%。配置貿易所の金属オーダーの純金の納品数が必ず2になる（違約オーダーと見なされない）",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +10%, but all Pure Gold orders in that Trading Post will only trade 2 Pure Gold (not considered as defaulted trade)"
+            }
+          }
+        ]
+      },
+      {
+        "id": "meet_spd_Owned[000]",
+        "name": {
+          "zh": "显眼的调查者",
+          "ja": "目立つ調査人",
+          "en": "Conspicuous Investigator"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "reception",
+            "product": "clue",
+            "efficiency": 0.05,
+            "tags": [
+              "reception",
+              "bskill_meet_spdOwned1",
+              "meeting"
+            ],
+            "description": {
+              "zh": "进驻会客室时，更容易获得线索板上已经拥有的线索",
+              "ja": "応接室配置時、ボード上入手済の手がかりを入手しやすい",
+              "en": "When this Operator is assigned to the Reception Room, increases the likelihood of obtaining clues that are already on the Clue Board."
             }
           }
         ]
