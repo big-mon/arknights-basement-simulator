@@ -44,6 +44,11 @@ const letoGummySkill = leto.skills.find((skill) => skill.id === "manu_formula_sp
 const delphine = operators.find((operator) => operator.id === "char_4110_delphn")!;
 const glasgowOperator = operators.find((operator) => operator.id === "char_154_morgan")!;
 const delphineGlasgowSkill = delphine.skills.find((skill) => skill.id === "control_tra_limit&spd[010]")!;
+const gladiia = operators.find((operator) => operator.id === "char_474_glady")!;
+const andreana = operators.find((operator) => operator.id === "char_218_cuttle")!;
+const morgan = operators.find((operator) => operator.id === "char_154_morgan")!;
+const siege = operators.find((operator) => operator.id === "char_112_siege")!;
+const morganGlasgowSkill = morgan.skills.find((skill) => skill.id === "trade_ord_spd_par[000]")!;
 const lemuen = operators.find((operator) => operator.id === "char_4193_lemuen")!;
 const exusiai = operators.find((operator) => operator.id === "char_103_angel")!;
 const lemuenExusiaiSkill = lemuen.skills.find((skill) => skill.id === "trade_ord_spd&multiPar[100]")!;
@@ -181,6 +186,41 @@ describe("optimizer", () => {
         facilities: state.facilities,
         assignments: [contextAssignment(trading, glasgowOperator.id)]
       }).some((candidate) => candidate.skillId === delphineGlasgowSkill.id)
+    ).toBe(true);
+  });
+
+  it("keeps Abyssal Hunter affiliation data without gating Gladiia's control recovery effect", () => {
+    expect(gladiia.affiliations).toEqual(expect.arrayContaining(["egir", "abyssal"]));
+    expect(andreana.affiliations).toContain("abyssal");
+
+    const groupHuntingEffects = gladiia.skills
+      .filter((skill) => skill.id.startsWith("control_mp_aegir2"))
+      .flatMap((skill) => skill.effects);
+
+    expect(groupHuntingEffects.length).toBe(2);
+    expect(
+      groupHuntingEffects.every(
+        (effect) =>
+          !effect.conditions?.some(
+            (condition) => "affiliations" in condition && condition.affiliations.includes("abyssal")
+          )
+      )
+    ).toBe(true);
+  });
+
+  it("requires same-facility affiliation matches for same-room faction skills", () => {
+    const state = createDefaultState();
+    ownOperators(state, [morgan.id, siege.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+
+    expect(morgan.affiliations).toContain("glasgow");
+    expect(siege.affiliations).toContain("glasgow");
+    expect(findCandidates(trading, state).some((candidate) => candidate.skillId === morganGlasgowSkill.id)).toBe(false);
+    expect(
+      findCandidates(trading, state, 0, {
+        facilities: state.facilities,
+        assignments: [contextAssignment(trading, siege.id)]
+      }).some((candidate) => candidate.skillId === morganGlasgowSkill.id)
     ).toBe(true);
   });
 

@@ -4684,15 +4684,6 @@
               "bskill_ctrl_aegir",
               "control"
             ],
-            "conditions": [
-              {
-                "type": "facilityAffiliation",
-                "affiliations": [
-                  "abyssal"
-                ],
-                "min": 1
-              }
-            ],
             "description": {
               "zh": "进驻控制中枢时，控制中枢内所有干员的心情每小时恢复+0.05；基建内（不包含副手及活动室使用者）深海猎人干员获得特殊加成（与部分技能有特殊叠加规则）",
               "ja": "制御中枢配置時、制御中枢内全員の体力が1時間ごとに+0.05回復。基地内（補佐と活動室利用者を除く）のアビサルハンター所属オペレーターが特殊効果を得る（一部のスキルに対して特殊加算制限がある）",
@@ -4718,15 +4709,6 @@
               "control",
               "bskill_ctrl_aegir2",
               "control"
-            ],
-            "conditions": [
-              {
-                "type": "facilityAffiliation",
-                "affiliations": [
-                  "abyssal"
-                ],
-                "min": 1
-              }
             ],
             "description": {
               "zh": "进驻控制中枢时，控制中枢内所有干员的心情每小时恢复+0.05；基建内（不包含副手及活动室使用者）深海猎人干员获得特殊加成（与部分技能有特殊叠加规则）",

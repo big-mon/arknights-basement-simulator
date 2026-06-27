@@ -274,7 +274,9 @@ function inferConditions(localizedDescription, nameIndex, currentCharId) {
       }
     }
 
+    const grantsSpecialAffiliationBonus = texts.some((text) => /gain Special Bonuses|特殊効果|特殊加成/i.test(text));
     if (
+      !grantsSpecialAffiliationBonus &&
       texts.some((text) =>
         phrases.some(
           (affiliationPhrase) =>
