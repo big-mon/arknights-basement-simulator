@@ -32,4 +32,18 @@ describe("App", () => {
     expect(screen.getByText("製造所 A")).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "ローテーション" })).toBeInTheDocument();
   });
+
+  it("switches base layout between 243 and 153 presets", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /基地/ }));
+    expect(screen.getByText("貿易所 B")).toBeInTheDocument();
+    expect(screen.getByText("製造所 D")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /153型/ }));
+
+    expect(screen.queryByText("貿易所 B")).not.toBeInTheDocument();
+    expect(screen.getByText("製造所 E")).toBeInTheDocument();
+  });
 });

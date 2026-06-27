@@ -2,6 +2,8 @@ export type FacilityType = "factory" | "trading" | "power" | "control" | "dormit
 
 export type ProductType = "gold" | "battleRecord" | "lmd" | "power" | "morale";
 
+export type BaseLayout = "243" | "153";
+
 export type OperatorProfession =
   | "先鋒"
   | "前衛"
@@ -52,7 +54,6 @@ export interface FacilitySlot {
   name: string;
   slotCount: number;
   product: ProductType;
-  enabled: boolean;
 }
 
 export interface OptimizationPreference {
@@ -62,6 +63,7 @@ export interface OptimizationPreference {
 }
 
 export interface AppState {
+  layout: BaseLayout;
   roster: Roster;
   facilities: FacilitySlot[];
   preference: OptimizationPreference;

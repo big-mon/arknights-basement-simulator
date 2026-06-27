@@ -13,10 +13,10 @@ import {
   Upload,
   Users
 } from "lucide-react";
-import { createDefaultState, operators } from "./data/defaults";
+import { createDefaultState, createFacilitiesForLayout, layoutPresets, operators } from "./data/defaults";
 import { generateAssignmentPlan } from "./lib/optimizer";
 import { exportState, importState, loadState, saveState } from "./lib/storage";
-import type { AppState, FacilitySlot, FacilityType, OptimizationPreference, ProductType, RosterEntry } from "./types";
+import type { AppState, BaseLayout, FacilitySlot, FacilityType, OptimizationPreference, ProductType, RosterEntry } from "./types";
 
 type TabId = "roster" | "base" | "plan";
 
@@ -84,6 +84,14 @@ export function App() {
     }));
   }
 
+  function updateLayout(layout: BaseLayout) {
+    setState((current) => ({
+      ...current,
+      layout,
+      facilities: createFacilitiesForLayout(layout, current.facilities)
+    }));
+  }
+
   function updatePreference(key: keyof OptimizationPreference, value: number) {
     setState((current) => ({
       ...current,
@@ -144,7 +152,7 @@ export function App() {
 
       <section className="summary-strip" aria-label="現在の概要">
         <Stat icon={Users} label="所有" value={`${ownedCount}/${operators.length}`} />
-        <Stat icon={Factory} label="稼働施設" value={`${state.facilities.filter((facility) => facility.enabled).length}`} />
+        <Stat icon={Factory} label="構成" value={`${state.layout}型`} />
         <Stat icon={SlidersHorizontal} label="日次価値" value={plan.dailyValue.toFixed(1)} />
         <Stat icon={Archive} label="総合スコア" value={plan.totalScore.toFixed(1)} />
       </section>
@@ -257,6 +265,23 @@ export function App() {
             </div>
           </div>
 
+          <div className="layout-selector" aria-label="基地構成">
+            {(Object.keys(layoutPresets) as BaseLayout[]).map((layout) => (
+              <button
+                key={layout}
+                type="button"
+                className={state.layout === layout ? "layout-option active" : "layout-option"}
+                onClick={() => updateLayout(layout)}
+              >
+                <Home size={18} />
+                <span>
+                  {layoutPresets[layout].label}
+                  <small>{layoutPresets[layout].description}</small>
+                </span>
+              </button>
+            ))}
+          </div>
+
           <div className="preference-grid">
             <PreferenceSlider
               label="純金"
@@ -278,25 +303,9 @@ export function App() {
           <div className="facility-list">
             {state.facilities.map((facility) => (
               <article key={facility.id} className="facility-row">
-                <label className="checkbox-line">
-                  <input
-                    type="checkbox"
-                    checked={facility.enabled}
-                    onChange={(event) => updateFacility(facility.id, { enabled: event.target.checked })}
-                  />
-                  <span>{facility.name}</span>
-                </label>
+                <strong>{facility.name}</strong>
                 <span className="pill">{facilityLabels[facility.type]}</span>
-                <label>
-                  スロット
-                  <input
-                    type="number"
-                    min={1}
-                    max={5}
-                    value={facility.slotCount}
-                    onChange={(event) => updateFacility(facility.id, { slotCount: Number(event.target.value) })}
-                  />
-                </label>
+                <span className="room-meta">{facility.slotCount}枠</span>
                 <label>
                   生産
                   <select

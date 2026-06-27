@@ -1,5 +1,5 @@
-import { createDefaultState } from "../data/defaults";
-import type { AppState } from "../types";
+import { createDefaultState, createFacilitiesForLayout } from "../data/defaults";
+import type { AppState, BaseLayout, FacilitySlot } from "../types";
 
 const storageKey = "arknights-basement-state-v1";
 
@@ -16,9 +16,11 @@ export function loadState(): AppState {
   try {
     const parsed = JSON.parse(raw) as Partial<AppState>;
     const defaults = createDefaultState();
+    const layout = parsed.layout ?? inferLayout(parsed.facilities) ?? defaults.layout;
     return {
+      layout,
       roster: { ...defaults.roster, ...parsed.roster },
-      facilities: parsed.facilities?.length ? parsed.facilities : defaults.facilities,
+      facilities: createFacilitiesForLayout(layout, parsed.facilities),
       preference: { ...defaults.preference, ...parsed.preference }
     };
   } catch {
@@ -50,11 +52,27 @@ export function importState(raw: string): AppState {
     throw new Error("インポートJSONに必要な保存データがありません。");
   }
 
+  const layout = maybeState.layout ?? inferLayout(maybeState.facilities) ?? "243";
   return {
+    layout,
     roster: maybeState.roster,
-    facilities: maybeState.facilities,
+    facilities: createFacilitiesForLayout(layout, maybeState.facilities),
     preference: maybeState.preference
   };
+}
+
+function inferLayout(facilities?: FacilitySlot[]): BaseLayout | undefined {
+  const tradingCount = facilities?.filter((facility) => facility.type === "trading").length;
+  const factoryCount = facilities?.filter((facility) => facility.type === "factory").length;
+  const powerCount = facilities?.filter((facility) => facility.type === "power").length;
+
+  if (tradingCount === 1 && factoryCount === 5 && powerCount === 3) {
+    return "153";
+  }
+  if (tradingCount === 2 && factoryCount === 4 && powerCount === 3) {
+    return "243";
+  }
+  return undefined;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

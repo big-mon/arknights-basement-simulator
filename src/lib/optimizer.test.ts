@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createDefaultState } from "../data/defaults";
+import { createDefaultState, createFacilitiesForLayout } from "../data/defaults";
 import { exportState, importState } from "./storage";
 import { findCandidates, generateAssignmentPlan } from "./optimizer";
 
@@ -59,11 +59,14 @@ describe("optimizer", () => {
     const state = createDefaultState();
     state.roster.char_002_amiya.owned = true;
     state.roster.char_002_amiya.elite = 2;
+    state.layout = "153";
+    state.facilities = createFacilitiesForLayout("153", state.facilities);
 
     const restored = importState(exportState(state));
 
     expect(restored.roster.char_002_amiya.owned).toBe(true);
     expect(restored.roster.char_002_amiya.elite).toBe(2);
+    expect(restored.layout).toBe("153");
     expect(restored.facilities).toHaveLength(state.facilities.length);
   });
 });

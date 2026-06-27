@@ -26,7 +26,7 @@ const recoveryBaseHours = 8;
 export function generateAssignmentPlan(state: AppState): AssignmentPlan {
   const usedOperatorIds = new Set<string>();
   const facilityPlans: FacilityPlan[] = [];
-  const enabledFacilities = state.facilities.filter((facility) => facility.enabled);
+  const enabledFacilities = state.facilities;
   const globalBonus = calculateGlobalBonus(state);
 
   for (const facility of enabledFacilities) {
@@ -198,10 +198,6 @@ function buildWarnings(enabledFacilities: FacilitySlot[], facilityPlans: Facilit
 
   if (shortPlans.length > 0) {
     warnings.push("一部施設でスロット数に対して候補オペレーターが不足しています。所有設定か昇進段階を見直してください。");
-  }
-
-  if (!enabledFacilities.some((facility) => facility.type === "dormitory")) {
-    warnings.push("宿舎が無効なため、疲労回復ローテーションは概算のみになります。");
   }
 
   return warnings;

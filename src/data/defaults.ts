@@ -1,19 +1,69 @@
-import type { AppState, FacilitySlot, OptimizationPreference, Operator, Roster } from "../types";
+import type { AppState, BaseLayout, FacilitySlot, OptimizationPreference, Operator, ProductType, Roster } from "../types";
 import operatorsData from "./operators.json";
 
 export const operators = operatorsData as Operator[];
 
-export const defaultFacilities: FacilitySlot[] = [
-  { id: "factory-1", type: "factory", name: "製造所 A", slotCount: 3, product: "gold", enabled: true },
-  { id: "factory-2", type: "factory", name: "製造所 B", slotCount: 3, product: "battleRecord", enabled: true },
-  { id: "factory-3", type: "factory", name: "製造所 C", slotCount: 3, product: "battleRecord", enabled: true },
-  { id: "trading-1", type: "trading", name: "貿易所 A", slotCount: 3, product: "lmd", enabled: true },
-  { id: "trading-2", type: "trading", name: "貿易所 B", slotCount: 3, product: "lmd", enabled: true },
-  { id: "power-1", type: "power", name: "発電所 A", slotCount: 1, product: "power", enabled: true },
-  { id: "power-2", type: "power", name: "発電所 B", slotCount: 1, product: "power", enabled: true },
-  { id: "control-1", type: "control", name: "制御中枢", slotCount: 5, product: "lmd", enabled: true },
-  { id: "dormitory-1", type: "dormitory", name: "宿舎 A", slotCount: 5, product: "morale", enabled: true }
-];
+export const defaultLayout: BaseLayout = "243";
+
+export const layoutPresets: Record<
+  BaseLayout,
+  { label: string; description: string; trading: number; factory: number; power: number }
+> = {
+  "243": {
+    label: "243型",
+    description: "貿易所2・製造所4・発電所3",
+    trading: 2,
+    factory: 4,
+    power: 3
+  },
+  "153": {
+    label: "153型",
+    description: "貿易所1・製造所5・発電所3",
+    trading: 1,
+    factory: 5,
+    power: 3
+  }
+};
+
+const roomSuffixes = ["A", "B", "C", "D", "E"];
+
+export function createFacilitiesForLayout(layout: BaseLayout, existingFacilities: FacilitySlot[] = []): FacilitySlot[] {
+  const preset = layoutPresets[layout];
+  const existingFactoryProducts = existingFacilities
+    .filter((facility) => facility.type === "factory")
+    .map((facility) => facility.product);
+  const defaultFactoryProducts: ProductType[] = ["gold", "battleRecord", "battleRecord", "battleRecord", "battleRecord"];
+
+  return [
+    ...createRoomSeries("trading", preset.trading, "貿易所", "lmd"),
+    ...createRoomSeries(
+      "factory",
+      preset.factory,
+      "製造所",
+      "battleRecord",
+      existingFactoryProducts.length ? existingFactoryProducts : defaultFactoryProducts
+    ),
+    ...createRoomSeries("power", preset.power, "発電所", "power"),
+    { id: "control-1", type: "control", name: "制御中枢", slotCount: 5, product: "lmd" },
+    { id: "dormitory-1", type: "dormitory", name: "宿舎", slotCount: 5, product: "morale" }
+  ];
+}
+
+function createRoomSeries(
+  type: "trading" | "factory" | "power",
+  count: number,
+  label: string,
+  defaultProduct: ProductType,
+  preferredProducts: ProductType[] = []
+): FacilitySlot[] {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `${type}-${index + 1}`,
+    type,
+    name: `${label} ${roomSuffixes[index]}`,
+    slotCount: type === "power" ? 1 : 3,
+    product: preferredProducts[index] ?? defaultProduct
+  }));
+}
 
 export const defaultPreference: OptimizationPreference = {
   gold: 0.35,
@@ -38,8 +88,9 @@ export function createDefaultRoster(): Roster {
 
 export function createDefaultState(): AppState {
   return {
+    layout: defaultLayout,
     roster: createDefaultRoster(),
-    facilities: defaultFacilities,
+    facilities: createFacilitiesForLayout(defaultLayout),
     preference: defaultPreference
   };
 }
