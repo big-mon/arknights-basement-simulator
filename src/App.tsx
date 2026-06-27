@@ -25,7 +25,6 @@ import { exportState, importState, loadState, saveState } from "./lib/storage";
 import type {
   AppState,
   BaseLayout,
-  FacilitySlot,
   FacilityType,
   FacilityPlan,
   Assignment,
@@ -125,13 +124,6 @@ export function App() {
           ...patch
         }
       }
-    }));
-  }
-
-  function updateFacility(facilityId: string, patch: Partial<FacilitySlot>) {
-    setState((current) => ({
-      ...current,
-      facilities: current.facilities.map((facility) => (facility.id === facilityId ? { ...facility, ...patch } : facility))
     }));
   }
 
@@ -371,29 +363,6 @@ export function App() {
               </div>
             </div>
 
-            <div className="facility-list compact">
-              {state.facilities.map((facility) => (
-                <article key={facility.id} className="facility-row">
-                  <strong>{facility.name}</strong>
-                  <span className="pill">{facilityLabels[facility.type]}</span>
-                  <span className="room-meta">{facility.slotCount}枠</span>
-                  <label>
-                    生産
-                    <select
-                      value={facility.product}
-                      disabled={facility.type !== "factory"}
-                      onChange={(event) => updateFacility(facility.id, { product: event.target.value as ProductType })}
-                    >
-                      <option value="gold">純金</option>
-                      <option value="battleRecord">作戦記録</option>
-                      <option value="lmd">龍門幣</option>
-                      <option value="power">ドローン</option>
-                      <option value="morale">体力回復</option>
-                    </select>
-                  </label>
-                </article>
-              ))}
-            </div>
           </div>
 
           {plan.warnings.map((warning) => (
@@ -561,9 +530,6 @@ function FacilityPlanCard({ facilityPlan, assignments }: { facilityPlan: Facilit
       <div className="plan-card-heading">
         <div>
           <h4>{facilityPlan.facility.name}</h4>
-          <p>
-            {facilityLabels[facilityPlan.facility.type]} / {productLabels[facilityPlan.facility.product]}
-          </p>
         </div>
         <strong>+{Math.round(expectedEfficiency * 100)}%</strong>
       </div>

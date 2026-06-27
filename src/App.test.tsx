@@ -76,6 +76,9 @@ describe("App", () => {
     expect(within(rotationSuggestions).getAllByText("製造所 A")[0].closest("article")).toHaveClass("plan-card-factory");
     expect(within(rotationSuggestions).getAllByText("発電所 A")[0].closest("article")).toHaveClass("plan-card-power");
     expect(within(rotationSuggestions).queryByText("宿舎")).not.toBeInTheDocument();
+    expect(screen.queryByText("3枠")).not.toBeInTheDocument();
+    expect(screen.queryByText("生産")).not.toBeInTheDocument();
+    expect(within(rotationSuggestions).queryByText(/貿易所 \/ 龍門幣/)).not.toBeInTheDocument();
   });
 
   it("switches layout between 243 and 153 presets from the recommendation tab", async () => {

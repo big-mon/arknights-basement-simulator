@@ -38,7 +38,6 @@ button {
 .topbar,
 .section-heading,
 .summary-strip,
-.facility-row,
 .plan-card-heading,
 .operator-card {
   display: flex;
@@ -352,8 +351,7 @@ input[type="checkbox"] {
   justify-content: flex-end;
 }
 
-.operator-controls label,
-.facility-row label {
+.operator-controls label {
   color: #65605b;
   font-size: 0.78rem;
   display: grid;
@@ -560,41 +558,6 @@ input[type="checkbox"] {
   line-height: 1.4;
 }
 
-.facility-list {
-  display: grid;
-  gap: 10px;
-}
-
-.facility-list.compact {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.facility-row {
-  min-height: 68px;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border: 1px solid #e0d8cd;
-  border-radius: 8px;
-  background: #fff;
-}
-
-.pill {
-  min-width: 84px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #eef2ee;
-  color: #325546;
-  font-size: 0.82rem;
-  text-align: center;
-}
-
-.room-meta {
-  color: #65605b;
-  font-size: 0.86rem;
-  white-space: nowrap;
-}
-
 .plan-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -781,14 +744,9 @@ input[type="checkbox"] {
     padding: 16px;
   }
 
-  .operator-card-top,
-  .facility-row {
+  .operator-card-top {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .facility-list.compact {
-    grid-template-columns: 1fr;
   }
 
   .operator-controls {
