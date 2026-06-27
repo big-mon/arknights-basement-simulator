@@ -7,6 +7,8 @@ import { localizeText } from "./lib/localization";
 
 const amiya = operators.find((operator) => operator.id === "char_002_amiya")!;
 const amiyaName = localizeText(amiya.name, "ja");
+const missingJapaneseNameOperator = operators.find((operator) => !operator.name.ja)!;
+const missingJapaneseFallbackName = localizeText(missingJapaneseNameOperator.name, "ja");
 
 function operatorNameJa(operator: (typeof operators)[number]) {
   return localizeText(operator.name, "ja");
@@ -36,6 +38,22 @@ describe("App", () => {
 
     expect(screen.getByText(`0/${operators.length}`)).toBeInTheDocument();
     expect(screen.getAllByRole("checkbox").every((checkbox) => !(checkbox as HTMLInputElement).checked)).toBe(true);
+  });
+
+  it("marks missing selected-language names without excluding operators", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(screen.getByPlaceholderText("名前で検索"), missingJapaneseNameOperator.id);
+
+    const operatorCard = screen.getByText(missingJapaneseFallbackName).closest("article")!;
+    const checkbox = within(operatorCard).getByRole("checkbox", { name: missingJapaneseFallbackName }) as HTMLInputElement;
+
+    expect(within(operatorCard).getByLabelText("選択中の言語名未収録")).toBeInTheDocument();
+
+    await user.click(checkbox);
+
+    expect(checkbox).toBeChecked();
   });
 
   it("switches the app language from the top toolbar", async () => {

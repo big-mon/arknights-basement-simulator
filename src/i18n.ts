@@ -45,6 +45,7 @@ export const uiText = {
       elite: "昇進",
       unlocked: "解放済み",
       unlockAtElite: (phase: number) => `昇進${phase}で解放`,
+      missingLocalizedName: "選択中の言語名未収録",
       skillListLabel: (name: string) => `${name}の基地スキル`
     },
     plan: {
@@ -107,6 +108,7 @@ export const uiText = {
       elite: "精英化",
       unlocked: "已解锁",
       unlockAtElite: (phase: number) => `精英化${phase}解锁`,
+      missingLocalizedName: "当前语言名称未收录",
       skillListLabel: (name: string) => `${name}的基建技能`
     },
     plan: {
@@ -168,6 +170,7 @@ export const uiText = {
       elite: "Elite",
       unlocked: "Unlocked",
       unlockAtElite: (phase: number) => `Unlocks at E${phase}`,
+      missingLocalizedName: "Name missing for selected language",
       skillListLabel: (name: string) => `${name} base skills`
     },
     plan: {

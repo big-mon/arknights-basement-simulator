@@ -24,6 +24,14 @@ export function localizedTextValues(value: LocalizedText | string | undefined): 
   return Array.from(new Set(Object.values(value).filter(Boolean)));
 }
 
+export function hasLocalizedText(value: LocalizedText | string | undefined, language: LanguageCode): boolean {
+  if (typeof value === "string") {
+    return true;
+  }
+
+  return Boolean(value?.[language]);
+}
+
 export function languageLocale(language: LanguageCode): string {
   if (language === "zh") {
     return "zh-CN";

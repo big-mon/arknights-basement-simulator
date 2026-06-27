@@ -455,6 +455,13 @@ input[type="number"] {
   min-width: 0;
 }
 
+.operator-name-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
 .operator-card-top {
   display: flex;
   align-items: flex-start;
@@ -480,6 +487,21 @@ input[type="number"] {
 
 .checkbox-line.compact {
   font-size: 0.84rem;
+}
+
+.localization-warning {
+  width: 18px;
+  height: 18px;
+  color: #9a6a1f;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+}
+
+.localization-warning svg {
+  width: 16px;
+  height: 16px;
 }
 
 input[type="checkbox"] {

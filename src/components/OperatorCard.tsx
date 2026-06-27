@@ -1,6 +1,7 @@
 import type { MouseEvent } from "react";
+import { CircleHelp } from "lucide-react";
 import { facilityLabels, productLabels, professionLabels, uiText } from "../i18n";
-import { localizeText } from "../lib/localization";
+import { hasLocalizedText, localizeText } from "../lib/localization";
 import type { LanguageCode, Operator, RosterEntry } from "../types";
 
 export function OperatorCard({
@@ -17,6 +18,7 @@ export function OperatorCard({
   const unlockedSkills = operator.skills.filter((skill) => skill.unlockPhase <= entry.elite).length;
   const text = uiText[language];
   const operatorName = localizeText(operator.name, language);
+  const missingSelectedLanguageName = !hasLocalizedText(operator.name, language);
 
   function toggleOwnedFromCard(event: MouseEvent<HTMLElement>) {
     if (isInteractiveCardTarget(event.target)) {
@@ -30,14 +32,21 @@ export function OperatorCard({
     <article className={entry.owned ? "operator-card owned" : "operator-card"} onClick={toggleOwnedFromCard}>
       <div className="operator-card-top">
         <div className="operator-card-main">
-          <label className="checkbox-line">
-            <input
-              type="checkbox"
-              checked={entry.owned}
-              onChange={(event) => onUpdateRoster(operator.id, { owned: event.target.checked })}
-            />
-            <span>{operatorName}</span>
-          </label>
+          <div className="operator-name-line">
+            <label className="checkbox-line">
+              <input
+                type="checkbox"
+                checked={entry.owned}
+                onChange={(event) => onUpdateRoster(operator.id, { owned: event.target.checked })}
+              />
+              <span>{operatorName}</span>
+            </label>
+            {missingSelectedLanguageName ? (
+              <span className="localization-warning" role="img" aria-label={text.roster.missingLocalizedName} title={text.roster.missingLocalizedName}>
+                <CircleHelp size={16} />
+              </span>
+            ) : null}
+          </div>
           <p>
             {`★${operator.rarity} / ${professionLabels[language][operator.profession]} / ${text.roster.baseSkill} ${unlockedSkills}/${operator.skills.length}`}
           </p>
