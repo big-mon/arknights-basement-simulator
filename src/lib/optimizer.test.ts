@@ -100,6 +100,14 @@ describe("optimizer", () => {
     expect(plan.rotation[1].recovery.length).toBeGreaterThan(0);
   });
 
+  it("excludes dormitories from production assignment plans", () => {
+    const state = createDefaultState();
+    const plan = generateAssignmentPlan(state);
+
+    expect(state.facilities.some((facility) => facility.type === "dormitory")).toBe(true);
+    expect(plan.facilityPlans.every((facilityPlan) => facilityPlan.facility.type !== "dormitory")).toBe(true);
+  });
+
   it("round-trips exported state json", () => {
     const state = createDefaultState();
     state.roster.char_002_amiya.owned = true;

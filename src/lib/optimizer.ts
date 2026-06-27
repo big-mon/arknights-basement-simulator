@@ -26,7 +26,7 @@ const recoveryBaseHours = 8;
 export function generateAssignmentPlan(state: AppState): AssignmentPlan {
   const usedOperatorIds = new Set<string>();
   const facilityPlans: FacilityPlan[] = [];
-  const enabledFacilities = state.facilities;
+  const enabledFacilities = state.facilities.filter((facility) => facility.type !== "dormitory");
   const globalBonus = calculateGlobalBonus(state);
 
   for (const facility of enabledFacilities) {
