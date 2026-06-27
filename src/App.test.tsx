@@ -39,12 +39,33 @@ describe("App", () => {
 
     expect(screen.queryByRole("button", { name: /基地/ })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /提案/ }));
+    expect(screen.getByRole("button", { name: /243型/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getAllByText("貿易所 B").length).toBeGreaterThan(0);
     expect(screen.getAllByText("製造所 D").length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole("button", { name: /153型/ }));
 
+    expect(screen.getByRole("button", { name: /153型/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByText("貿易所 B")).not.toBeInTheDocument();
     expect(screen.getAllByText("製造所 E").length).toBeGreaterThan(0);
+  });
+
+  it("normalizes an invalid saved layout back to 243", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem(
+      "arknights-basement-state-v1",
+      JSON.stringify({
+        layout: "unknown",
+        roster: {},
+        facilities: [],
+        preference: { gold: 0.35, battleRecord: 0.35, lmd: 0.3 }
+      })
+    );
+
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /提案/ }));
+
+    expect(screen.getByRole("button", { name: /243型/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("構成").nextSibling).toHaveTextContent("243型");
   });
 });

@@ -1,4 +1,4 @@
-import { createDefaultState, createFacilitiesForLayout } from "../data/defaults";
+import { createDefaultState, createFacilitiesForLayout, isBaseLayout } from "../data/defaults";
 import type { AppState, BaseLayout, FacilitySlot } from "../types";
 
 const storageKey = "arknights-basement-state-v1";
@@ -16,7 +16,7 @@ export function loadState(): AppState {
   try {
     const parsed = JSON.parse(raw) as Partial<AppState>;
     const defaults = createDefaultState();
-    const layout = parsed.layout ?? inferLayout(parsed.facilities) ?? defaults.layout;
+    const layout = normalizeLayout(parsed.layout, parsed.facilities, defaults.layout);
     return {
       layout,
       roster: { ...defaults.roster, ...parsed.roster },
@@ -52,7 +52,7 @@ export function importState(raw: string): AppState {
     throw new Error("インポートJSONに必要な保存データがありません。");
   }
 
-  const layout = maybeState.layout ?? inferLayout(maybeState.facilities) ?? "243";
+  const layout = normalizeLayout(maybeState.layout, maybeState.facilities, "243");
   return {
     layout,
     roster: maybeState.roster,
@@ -73,6 +73,10 @@ function inferLayout(facilities?: FacilitySlot[]): BaseLayout | undefined {
     return "243";
   }
   return undefined;
+}
+
+function normalizeLayout(layout: unknown, facilities: FacilitySlot[] | undefined, fallback: BaseLayout): BaseLayout {
+  return isBaseLayout(layout) ? layout : inferLayout(facilities) ?? fallback;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

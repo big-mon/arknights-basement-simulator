@@ -12,7 +12,14 @@ import {
   Upload,
   Users
 } from "lucide-react";
-import { createDefaultState, createFacilitiesForLayout, layoutPresets, operators } from "./data/defaults";
+import {
+  createDefaultState,
+  createFacilitiesForLayout,
+  defaultLayout,
+  isBaseLayout,
+  layoutPresets,
+  operators
+} from "./data/defaults";
 import { generateAssignmentPlan } from "./lib/optimizer";
 import { exportState, importState, loadState, saveState } from "./lib/storage";
 import type { AppState, BaseLayout, FacilitySlot, FacilityType, OptimizationPreference, ProductType, RosterEntry } from "./types";
@@ -53,6 +60,7 @@ export function App() {
   }, [state]);
 
   const plan = useMemo(() => generateAssignmentPlan(state), [state]);
+  const selectedLayout = isBaseLayout(state.layout) ? state.layout : defaultLayout;
   const ownedCount = Object.values(state.roster).filter((entry) => entry.owned).length;
   const professions = Array.from(new Set(operators.map((operator) => operator.profession))).sort();
 
@@ -150,7 +158,7 @@ export function App() {
 
       <section className="summary-strip" aria-label="現在の概要">
         <Stat icon={Users} label="所有" value={`${ownedCount}/${operators.length}`} />
-        <Stat icon={Factory} label="構成" value={`${state.layout}型`} />
+        <Stat icon={Factory} label="構成" value={`${selectedLayout}型`} />
         <Stat icon={SlidersHorizontal} label="日次価値" value={plan.dailyValue.toFixed(1)} />
         <Stat icon={Archive} label="総合スコア" value={plan.totalScore.toFixed(1)} />
       </section>
@@ -252,7 +260,8 @@ export function App() {
                 <button
                   key={layout}
                   type="button"
-                  className={state.layout === layout ? "layout-option active" : "layout-option"}
+                  aria-pressed={selectedLayout === layout}
+                  className={selectedLayout === layout ? "layout-option active" : "layout-option"}
                   onClick={() => updateLayout(layout)}
                 >
                   <Home size={18} />

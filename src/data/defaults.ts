@@ -5,6 +5,10 @@ export const operators = operatorsData as Operator[];
 
 export const defaultLayout: BaseLayout = "243";
 
+export function isBaseLayout(value: unknown): value is BaseLayout {
+  return value === "243" || value === "153";
+}
+
 export const layoutPresets: Record<
   BaseLayout,
   { label: string; description: string; trading: number; factory: number; power: number }
@@ -28,7 +32,8 @@ export const layoutPresets: Record<
 const roomSuffixes = ["A", "B", "C", "D", "E"];
 
 export function createFacilitiesForLayout(layout: BaseLayout, existingFacilities: FacilitySlot[] = []): FacilitySlot[] {
-  const preset = layoutPresets[layout];
+  const normalizedLayout = isBaseLayout(layout) ? layout : defaultLayout;
+  const preset = layoutPresets[normalizedLayout];
   const existingFactoryProducts = existingFacilities
     .filter((facility) => facility.type === "factory")
     .map((facility) => facility.product);

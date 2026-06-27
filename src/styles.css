@@ -340,6 +340,11 @@ input[type="checkbox"] {
 .layout-option.active {
   border-color: #b94c2d;
   background: #fff6ef;
+  box-shadow: inset 0 0 0 2px #b94c2d;
+}
+
+.layout-option.active svg {
+  color: #b94c2d;
 }
 
 .layout-option span {
