@@ -1,12 +1,17 @@
-import type { AppState, BaseLayout, FacilitySlot, OptimizationPreference, Operator, ProductType, Roster } from "../types";
+import type { AppState, BaseLayout, FacilitySlot, OptimizationPreference, Operator, ProductType, Roster, RotationCount } from "../types";
 import operatorsData from "./operators.json";
 
 export const operators = operatorsData as Operator[];
 
 export const defaultLayout: BaseLayout = "243";
+export const defaultRotationCount: RotationCount = 2;
 
 export function isBaseLayout(value: unknown): value is BaseLayout {
   return value === "243" || value === "153";
+}
+
+export function isRotationCount(value: unknown): value is RotationCount {
+  return value === 2;
 }
 
 export const layoutPresets: Record<
@@ -94,6 +99,7 @@ export function createDefaultRoster(): Roster {
 export function createDefaultState(): AppState {
   return {
     layout: defaultLayout,
+    rotationCount: defaultRotationCount,
     roster: createDefaultRoster(),
     facilities: createFacilitiesForLayout(defaultLayout),
     preference: defaultPreference

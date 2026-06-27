@@ -90,13 +90,14 @@ describe("optimizer", () => {
     expect(maxedScore).toBe(baseScore);
   });
 
-  it("includes fatigue and recovery windows in the rotation plan", () => {
+  it("uses a two-window rotation plan by default", () => {
     const state = createDefaultState();
     const plan = generateAssignmentPlan(state);
 
-    expect(plan.rotation).toHaveLength(3);
+    expect(state.rotationCount).toBe(2);
+    expect(plan.rotation).toHaveLength(2);
     expect(plan.rotation[0].assignments.length).toBeGreaterThan(0);
-    expect(plan.rotation[2].recovery.length).toBeGreaterThan(0);
+    expect(plan.rotation[1].recovery.length).toBeGreaterThan(0);
   });
 
   it("round-trips exported state json", () => {
@@ -104,6 +105,7 @@ describe("optimizer", () => {
     state.roster.char_002_amiya.owned = true;
     state.roster.char_002_amiya.elite = 2;
     state.layout = "153";
+    state.rotationCount = 2;
     state.facilities = createFacilitiesForLayout("153", state.facilities);
 
     const restored = importState(exportState(state));
@@ -111,6 +113,7 @@ describe("optimizer", () => {
     expect(restored.roster.char_002_amiya.owned).toBe(true);
     expect(restored.roster.char_002_amiya.elite).toBe(2);
     expect(restored.layout).toBe("153");
+    expect(restored.rotationCount).toBe(2);
     expect(restored.facilities).toHaveLength(state.facilities.length);
   });
 });

@@ -63,28 +63,49 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
     totalScore,
     dailyValue,
     facilityPlans,
-    rotation: [
+    rotation: buildRotationWindows(activeAssignments, restAssignments, state.rotationCount),
+    warnings
+  };
+}
+
+function buildRotationWindows(activeAssignments: Assignment[], restAssignments: Assignment[], rotationCount = 2) {
+  if (rotationCount === 3) {
+    return [
       {
-        label: "第1シフト",
-        hours: 12,
+        label: "第1ローテーション",
+        hours: 8,
         assignments: activeAssignments.filter((assignment) => assignment.fatigueHours > 0),
         recovery: []
       },
       {
-        label: "第2シフト",
-        hours: 12,
-        assignments: restAssignments.filter((assignment) => assignment.fatigueHours >= 18),
+        label: "第2ローテーション",
+        hours: 8,
+        assignments: restAssignments.filter((assignment) => assignment.fatigueHours >= 12),
         recovery: restAssignments.filter((assignment) => assignment.fatigueHours <= 12)
       },
       {
-        label: "回復枠",
-        hours: recoveryBaseHours,
-        assignments: [],
+        label: "第3ローテーション",
+        hours: 8,
+        assignments: restAssignments.filter((assignment) => assignment.fatigueHours >= 18),
         recovery: restAssignments
       }
-    ],
-    warnings
-  };
+    ];
+  }
+
+  return [
+    {
+      label: "第1ローテーション",
+      hours: 12,
+      assignments: activeAssignments.filter((assignment) => assignment.fatigueHours > 0),
+      recovery: []
+    },
+    {
+      label: "第2ローテーション",
+      hours: 12,
+      assignments: restAssignments.filter((assignment) => assignment.fatigueHours >= 18),
+      recovery: restAssignments.filter((assignment) => assignment.fatigueHours <= 12)
+    }
+  ];
 }
 
 export function findCandidates(facility: FacilitySlot, state: AppState, globalBonus = 0): Assignment[] {

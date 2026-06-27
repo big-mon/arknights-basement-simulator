@@ -1,5 +1,5 @@
-import { createDefaultState, createFacilitiesForLayout, isBaseLayout } from "../data/defaults";
-import type { AppState, BaseLayout, FacilitySlot } from "../types";
+import { createDefaultState, createFacilitiesForLayout, isBaseLayout, isRotationCount } from "../data/defaults";
+import type { AppState, BaseLayout, FacilitySlot, RotationCount } from "../types";
 
 const storageKey = "arknights-basement-state-v1";
 
@@ -19,6 +19,7 @@ export function loadState(): AppState {
     const layout = normalizeLayout(parsed.layout, parsed.facilities, defaults.layout);
     return {
       layout,
+      rotationCount: normalizeRotationCount(parsed.rotationCount, defaults.rotationCount),
       roster: { ...defaults.roster, ...parsed.roster },
       facilities: createFacilitiesForLayout(layout, parsed.facilities),
       preference: { ...defaults.preference, ...parsed.preference }
@@ -55,6 +56,7 @@ export function importState(raw: string): AppState {
   const layout = normalizeLayout(maybeState.layout, maybeState.facilities, "243");
   return {
     layout,
+    rotationCount: normalizeRotationCount(maybeState.rotationCount, 2),
     roster: maybeState.roster,
     facilities: createFacilitiesForLayout(layout, maybeState.facilities),
     preference: maybeState.preference
@@ -77,6 +79,10 @@ function inferLayout(facilities?: FacilitySlot[]): BaseLayout | undefined {
 
 function normalizeLayout(layout: unknown, facilities: FacilitySlot[] | undefined, fallback: BaseLayout): BaseLayout {
   return isBaseLayout(layout) ? layout : inferLayout(facilities) ?? fallback;
+}
+
+function normalizeRotationCount(rotationCount: unknown, fallback: RotationCount): RotationCount {
+  return isRotationCount(rotationCount) ? rotationCount : fallback;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

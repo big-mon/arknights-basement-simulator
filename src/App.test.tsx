@@ -51,6 +51,11 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "推奨配置とローテーション" })).toBeInTheDocument();
     expect(screen.getAllByText("製造所 A").length).toBeGreaterThan(0);
     expect(screen.getByRole("table", { name: "ローテーション" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^2回$/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /3回/ })).toBeDisabled();
+    expect(screen.getByText("第1ローテーション")).toBeInTheDocument();
+    expect(screen.getByText("第2ローテーション")).toBeInTheDocument();
+    expect(screen.queryByText("第3ローテーション")).not.toBeInTheDocument();
   });
 
   it("switches layout between 243 and 153 presets from the recommendation tab", async () => {
@@ -76,6 +81,7 @@ describe("App", () => {
       "arknights-basement-state-v1",
       JSON.stringify({
         layout: "unknown",
+        rotationCount: 3,
         roster: {},
         facilities: [],
         preference: { gold: 0.35, battleRecord: 0.35, lmd: 0.3 }

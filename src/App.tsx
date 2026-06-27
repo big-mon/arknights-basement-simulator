@@ -22,7 +22,16 @@ import {
 } from "./data/defaults";
 import { generateAssignmentPlan } from "./lib/optimizer";
 import { exportState, importState, loadState, saveState } from "./lib/storage";
-import type { AppState, BaseLayout, FacilitySlot, FacilityType, OptimizationPreference, ProductType, RosterEntry } from "./types";
+import type {
+  AppState,
+  BaseLayout,
+  FacilitySlot,
+  FacilityType,
+  OptimizationPreference,
+  ProductType,
+  RosterEntry,
+  RotationCount
+} from "./types";
 
 type TabId = "roster" | "plan";
 
@@ -105,6 +114,13 @@ export function App() {
         ...current.preference,
         [key]: value
       }
+    }));
+  }
+
+  function updateRotationCount(rotationCount: RotationCount) {
+    setState((current) => ({
+      ...current,
+      rotationCount
     }));
   }
 
@@ -292,6 +308,27 @@ export function App() {
                   </span>
                 </button>
               ))}
+            </div>
+
+            <div className="rotation-selector" aria-label="ローテーション回数">
+              <button
+                type="button"
+                className={state.rotationCount === 2 ? "rotation-option active" : "rotation-option"}
+                aria-pressed={state.rotationCount === 2}
+                onClick={() => updateRotationCount(2)}
+              >
+                2回
+              </button>
+              <button
+                type="button"
+                className={state.rotationCount === 3 ? "rotation-option active" : "rotation-option"}
+                aria-pressed={state.rotationCount === 3}
+                disabled
+                title="今後対応予定"
+              >
+                3回
+                <small>準備中</small>
+              </button>
             </div>
 
             <div className="preference-grid">

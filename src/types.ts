@@ -4,6 +4,8 @@ export type ProductType = "gold" | "battleRecord" | "lmd" | "power" | "morale";
 
 export type BaseLayout = "243" | "153";
 
+export type RotationCount = 2 | 3;
+
 export type OperatorProfession =
   | "先鋒"
   | "前衛"
@@ -64,6 +66,7 @@ export interface OptimizationPreference {
 
 export interface AppState {
   layout: BaseLayout;
+  rotationCount: RotationCount;
   roster: Roster;
   facilities: FacilitySlot[];
   preference: OptimizationPreference;
