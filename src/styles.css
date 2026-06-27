@@ -769,6 +769,13 @@ input[type="radio"] {
   white-space: nowrap;
 }
 
+.plan-card-product {
+  margin: 3px 0 0;
+  color: #6d6862;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
 .assignment-list {
   list-style: none;
   padding: 0;

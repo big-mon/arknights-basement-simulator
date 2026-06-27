@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "./App";
 import { createDefaultState, operators } from "./data/defaults";
+import { productLabels } from "./i18n";
 import { localizeText } from "./lib/localization";
 
 const amiya = operators.find((operator) => operator.id === "char_002_amiya")!;
@@ -282,6 +283,22 @@ describe("App", () => {
     expect(screen.queryByText("3枠")).not.toBeInTheDocument();
     expect(screen.queryByText("生産")).not.toBeInTheDocument();
     expect(within(rotationSuggestions).queryByText(/貿易所 \/ 龍門幣/)).not.toBeInTheDocument();
+  });
+
+  it("shows target products on trading and factory recommendation cards", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<App />);
+
+    const planTab = container.querySelectorAll(".tabs .tab")[1] as HTMLElement;
+    await user.click(planTab);
+
+    const tradingCard = container.querySelector(".plan-card-trading") as HTMLElement;
+    const factoryCard = container.querySelector(".plan-card-factory") as HTMLElement;
+    const powerCard = container.querySelector(".plan-card-power") as HTMLElement;
+
+    expect(within(tradingCard).getByText(productLabels.ja.lmd)).toBeInTheDocument();
+    expect(within(factoryCard).getByText(productLabels.ja.gold)).toBeInTheDocument();
+    expect(within(powerCard).queryByText(productLabels.ja.power)).not.toBeInTheDocument();
   });
 
   it("switches layout between 243 and 153 presets from the top controls", async () => {

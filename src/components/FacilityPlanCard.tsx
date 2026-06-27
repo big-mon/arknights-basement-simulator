@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { facilityLabels, uiText } from "../i18n";
+import { facilityLabels, productLabels, uiText } from "../i18n";
 import type { Assignment, FacilityPlan, FacilitySlot, LanguageCode } from "../types";
 
 export function FacilityPlanCard({
@@ -21,6 +21,9 @@ export function FacilityPlanCard({
       <div className="plan-card-heading">
         <div>
           <h4>{formatFacilityName(facilityPlan.facility, language)}</h4>
+          {showsTargetProduct(facilityPlan.facility) ? (
+            <p className="plan-card-product">{productLabels[language][facilityPlan.facility.product]}</p>
+          ) : null}
         </div>
         <strong>+{Math.round(expectedEfficiency * 100)}%</strong>
       </div>
@@ -42,6 +45,10 @@ export function FacilityPlanCard({
       )}
     </article>
   );
+}
+
+function showsTargetProduct(facility: FacilitySlot) {
+  return facility.type === "factory" || facility.type === "trading";
 }
 
 function formatFacilityName(facility: FacilitySlot, language: LanguageCode) {
