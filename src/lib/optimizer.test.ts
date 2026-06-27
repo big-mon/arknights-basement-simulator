@@ -34,6 +34,18 @@ describe("optimizer", () => {
     expect(goldFocusedScore).toBeGreaterThan(baselineGoldScore);
   });
 
+  it("does not change base scores from potential", () => {
+    const state = createDefaultState();
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    state.roster.char_237_gravel.potential = 1;
+    const baseScore = findCandidates(factory, state).find((candidate) => candidate.operatorId === "char_237_gravel")!.score;
+
+    state.roster.char_237_gravel.potential = 6;
+    const maxPotentialScore = findCandidates(factory, state).find((candidate) => candidate.operatorId === "char_237_gravel")!.score;
+
+    expect(maxPotentialScore).toBe(baseScore);
+  });
+
   it("includes fatigue and recovery windows in the rotation plan", () => {
     const state = createDefaultState();
     const plan = generateAssignmentPlan(state);

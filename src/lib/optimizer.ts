@@ -121,9 +121,8 @@ function bestSkillForFacility(
 
       const productMultiplier = productWeight(facility.product, preference);
       const eliteBonus = rosterEntry.elite * 0.015;
-      const potentialBonus = Math.max(0, rosterEntry.potential - 1) * 0.003;
       const moduleBonus = rosterEntry.moduleEnabled ? 0.015 : 0;
-      const effectiveEfficiency = effect.efficiency + eliteBonus + potentialBonus + moduleBonus + globalBonus;
+      const effectiveEfficiency = effect.efficiency + eliteBonus + moduleBonus + globalBonus;
       assignments.push({
         facilityId: facility.id,
         operatorId: operator.id,
