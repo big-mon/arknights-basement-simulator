@@ -3,6 +3,8 @@ import {
   Activity,
   Archive,
   Check,
+  ChevronDown,
+  ChevronRight,
   Download,
   Factory,
   Home,
@@ -94,6 +96,8 @@ export function App() {
   const [activeTab, setActiveTab] = useState<TabId>("roster");
   const [query, setQuery] = useState("");
   const [professionFilter, setProfessionFilter] = useState("all");
+  const [collapsedProfessions, setCollapsedProfessions] = useState<Set<string>>(() => new Set());
+  const [collapsedRarityGroups, setCollapsedRarityGroups] = useState<Set<string>>(() => new Set());
   const [notice, setNotice] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -125,6 +129,14 @@ export function App() {
         }
       }
     }));
+  }
+
+  function toggleProfession(profession: string) {
+    setCollapsedProfessions((current) => toggleSetValue(current, profession));
+  }
+
+  function toggleRarityGroup(profession: string, rarity: number) {
+    setCollapsedRarityGroups((current) => toggleSetValue(current, rarityGroupKey(profession, rarity)));
   }
 
   function updateLayout(layout: BaseLayout) {
@@ -252,32 +264,73 @@ export function App() {
           </div>
 
           <div className="operator-sections">
-            {groupedOperators.map((professionGroup) => (
-              <section key={professionGroup.profession} className="operator-profession-section">
-                <div className="operator-section-heading">
-                  <h3>{professionGroup.profession}</h3>
-                  <span>{professionGroup.total}名</span>
-                </div>
-                {professionGroup.rarityGroups.map((rarityGroup) => (
-                  <section key={`${professionGroup.profession}-${rarityGroup.rarity}`} className="operator-rarity-section">
-                    <div className="operator-rarity-heading">
-                      <h4>★{rarityGroup.rarity}</h4>
-                      <span>{rarityGroup.operators.length}名</span>
-                    </div>
-                    <div className="operator-grid">
-                      {rarityGroup.operators.map((operator) => (
-                        <OperatorCard
-                          key={operator.id}
-                          operator={operator}
-                          entry={state.roster[operator.id]}
-                          onUpdateRoster={updateRoster}
-                        />
-                      ))}
-                    </div>
-                  </section>
-                ))}
-              </section>
-            ))}
+            {groupedOperators.map((professionGroup) => {
+              const professionCollapsed = collapsedProfessions.has(professionGroup.profession);
+
+              return (
+                <section key={professionGroup.profession} className="operator-profession-section">
+                  <div className="operator-section-heading">
+                    <h3>
+                      <button
+                        type="button"
+                        className="collapse-toggle"
+                        aria-expanded={!professionCollapsed}
+                        onClick={() => toggleProfession(professionGroup.profession)}
+                      >
+                        {professionCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
+                        <span>{professionGroup.profession}</span>
+                        <span className="collapse-count" aria-hidden="true">
+                          {professionGroup.total}名
+                        </span>
+                      </button>
+                    </h3>
+                  </div>
+                  {!professionCollapsed
+                    ? professionGroup.rarityGroups.map((rarityGroup) => {
+                        const rarityCollapsed = collapsedRarityGroups.has(
+                          rarityGroupKey(professionGroup.profession, rarityGroup.rarity)
+                        );
+
+                        return (
+                          <section
+                            key={`${professionGroup.profession}-${rarityGroup.rarity}`}
+                            className="operator-rarity-section"
+                          >
+                            <div className="operator-rarity-heading">
+                              <h4>
+                                <button
+                                  type="button"
+                                  className="collapse-toggle"
+                                  aria-expanded={!rarityCollapsed}
+                                  onClick={() => toggleRarityGroup(professionGroup.profession, rarityGroup.rarity)}
+                                >
+                                  {rarityCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                                  <span>★{rarityGroup.rarity}</span>
+                                  <span className="collapse-count" aria-hidden="true">
+                                    {rarityGroup.operators.length}名
+                                  </span>
+                                </button>
+                              </h4>
+                            </div>
+                            {!rarityCollapsed ? (
+                              <div className="operator-grid">
+                                {rarityGroup.operators.map((operator) => (
+                                  <OperatorCard
+                                    key={operator.id}
+                                    operator={operator}
+                                    entry={state.roster[operator.id]}
+                                    onUpdateRoster={updateRoster}
+                                  />
+                                ))}
+                              </div>
+                            ) : null}
+                          </section>
+                        );
+                      })
+                    : null}
+                </section>
+              );
+            })}
           </div>
         </section>
       ) : null}
@@ -490,6 +543,22 @@ function groupOperatorsByProfessionAndRarity(operatorList: Operator[]) {
       }))
     };
   });
+}
+
+function toggleSetValue(current: Set<string>, value: string) {
+  const next = new Set(current);
+
+  if (next.has(value)) {
+    next.delete(value);
+  } else {
+    next.add(value);
+  }
+
+  return next;
+}
+
+function rarityGroupKey(profession: string, rarity: number) {
+  return `${profession}-${rarity}`;
 }
 
 function professionSortIndex(profession: OperatorProfession) {

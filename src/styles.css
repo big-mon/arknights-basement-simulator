@@ -260,10 +260,7 @@ input[type="number"] {
 
 .operator-section-heading,
 .operator-rarity-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+  display: block;
 }
 
 .operator-section-heading {
@@ -274,12 +271,42 @@ input[type="number"] {
 .operator-section-heading h3,
 .operator-rarity-heading h4 {
   margin: 0;
+  width: 100%;
 }
 
-.operator-section-heading span,
-.operator-rarity-heading span {
+.collapse-toggle {
+  width: 100%;
+  min-height: 36px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.collapse-toggle:hover,
+.collapse-toggle:focus-visible {
+  color: #a64028;
+  background: #f8f1e7;
+}
+
+.collapse-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.collapse-count {
+  justify-self: end;
   color: #65605b;
   font-size: 0.84rem;
+  font-weight: 500;
 }
 
 .operator-rarity-section {

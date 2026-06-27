@@ -35,6 +35,36 @@ describe("App", () => {
     expect(within(vanguardSection).getByRole("heading", { name: "★5" })).toBeInTheDocument();
   });
 
+  it("collapses profession and rarity groups in the owned roster", async () => {
+    const user = userEvent.setup();
+    const profession = "先鋒";
+    const professionOperators = operators.filter((operator) => operator.profession === profession);
+    const highestRarity = Math.max(...professionOperators.map((operator) => operator.rarity));
+    const firstOperator = professionOperators.find((operator) => operator.rarity === highestRarity)!;
+    render(<App />);
+
+    const professionSection = screen.getByRole("heading", { name: profession }).closest("section")!;
+    const professionToggle = within(professionSection).getByRole("button", { name: profession });
+
+    expect(within(professionSection).getByText(firstOperator.name)).toBeInTheDocument();
+    expect(professionToggle).toHaveAttribute("aria-expanded", "true");
+
+    await user.click(professionToggle);
+
+    expect(professionToggle).toHaveAttribute("aria-expanded", "false");
+    expect(within(professionSection).queryByText(firstOperator.name)).not.toBeInTheDocument();
+
+    await user.click(professionToggle);
+
+    const rarityToggle = within(professionSection).getByRole("button", { name: `★${highestRarity}` });
+    expect(rarityToggle).toHaveAttribute("aria-expanded", "true");
+
+    await user.click(rarityToggle);
+
+    expect(rarityToggle).toHaveAttribute("aria-expanded", "false");
+    expect(within(professionSection).queryByText(firstOperator.name)).not.toBeInTheDocument();
+  });
+
   it("shows base skill names, targets, and unlock state on operator cards", async () => {
     const user = userEvent.setup();
     render(<App />);
