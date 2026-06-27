@@ -23,3 +23,13 @@ export function localizedTextValues(value: LocalizedText | string | undefined): 
 
   return Array.from(new Set(Object.values(value).filter(Boolean)));
 }
+
+export function languageLocale(language: LanguageCode): string {
+  if (language === "zh") {
+    return "zh-CN";
+  }
+  if (language === "en") {
+    return "en-US";
+  }
+  return "ja-JP";
+}
