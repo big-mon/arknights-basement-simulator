@@ -25,6 +25,13 @@ export interface BaseSkillEffect {
   facility: FacilityType;
   product?: ProductType;
   efficiency: number;
+  scaling?: {
+    type: "affiliation";
+    affiliations: string[];
+    facility?: FacilityType;
+    includeSelf?: boolean;
+    max?: number;
+  };
   tags?: string[];
   conditions?: BaseSkillCondition[];
   description: LocalizedText;

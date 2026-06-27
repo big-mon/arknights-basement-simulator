@@ -213,7 +213,8 @@ function bestSkillForFacility(
 
       const productMultiplier = productWeight(facility.product, preference);
       const eliteBonus = elite * 0.015;
-      const effectiveEfficiency = effect.efficiency + eliteBonus + globalBonus;
+      const scalingMultiplier = effectScalingMultiplier(effect, operator, facility, context);
+      const effectiveEfficiency = effect.efficiency * scalingMultiplier + eliteBonus + globalBonus;
       assignments.push({
         facilityId: facility.id,
         operatorId: operator.id,
@@ -228,6 +229,36 @@ function bestSkillForFacility(
   }
 
   return assignments.sort((a, b) => b.score - a.score).slice(0, 1);
+}
+
+function effectScalingMultiplier(
+  effect: BaseSkillEffect,
+  operator: Operator,
+  facility: FacilitySlot,
+  context?: AssignmentEvaluationContext
+) {
+  if (!effect.scaling) {
+    return 1;
+  }
+
+  const assignedMatches =
+    context?.assignments.filter((assignment) => {
+      if (assignment.operatorId === operator.id) {
+        return false;
+      }
+      const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
+      const matchesFacility = effect.scaling?.facility ? assignedFacility?.type === effect.scaling.facility : true;
+      return matchesFacility && operatorHasAnyAffiliation(assignment.operatorId, effect.scaling?.affiliations ?? []);
+    }).length ?? 0;
+  const selfMatches =
+    effect.scaling.includeSelf &&
+    (!effect.scaling.facility || effect.scaling.facility === facility.type) &&
+    operator.affiliations?.some((affiliation) => effect.scaling?.affiliations.includes(affiliation))
+      ? 1
+      : 0;
+  const count = assignedMatches + selfMatches;
+
+  return effect.scaling.max ? Math.min(count, effect.scaling.max) : count;
 }
 
 function effectMatchesFacility(effect: BaseSkillEffect, facility: FacilitySlot): boolean {

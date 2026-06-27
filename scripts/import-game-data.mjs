@@ -93,13 +93,22 @@ function inferProduct(description, roomType) {
 }
 
 function inferEfficiency(description) {
-  const percentages = [...String(description).matchAll(/([+-]?\d+(?:\.\d+)?)%/g)].map((match) => Number(match[1]));
-  const positivePercentages = percentages.filter((value) => value > 0);
+  const positivePercentages = positivePercentagesFromDescription(description);
   if (positivePercentages.length > 1 && /额外|追加|additional|additionally|extra/i.test(String(description))) {
     return positivePercentages.reduce((sum, value) => sum + value, 0) / 100;
   }
   const positive = positivePercentages[0];
   return positive ? positive / 100 : 0.05;
+}
+
+function inferBaseEfficiency(description) {
+  const positive = positivePercentagesFromDescription(description)[0];
+  return positive ? positive / 100 : 0.05;
+}
+
+function positivePercentagesFromDescription(description) {
+  const percentages = [...String(description).matchAll(/([+-]?\d+(?:\.\d+)?)%/g)].map((match) => Number(match[1]));
+  return percentages.filter((value) => value > 0);
 }
 
 function cleanDescription(description) {
@@ -189,6 +198,8 @@ const facilityPhraseMap = [
 ];
 
 const affiliationPhraseMap = [
+  { affiliations: ["sami"], phrases: ["Sami"] },
+  { affiliations: ["durin"], phrases: ["Durin"] },
   { affiliations: ["rainbow"], phrases: ["レインボー小隊", "Rainbow", "彩虹小队"] },
   { affiliations: ["student"], phrases: ["ウルサス学生自治団", "Ursus Student Self-Governing Group", "乌萨斯学生自治团"] },
   { affiliations: ["lgd"], phrases: ["龍門近衛局", "L.G.D.", "龙门近卫局"] },
@@ -251,7 +262,8 @@ function inferConditions(localizedDescription, nameIndex, currentCharId) {
             facilityPhrases.some(
               (facilityPhrase) =>
                 text.includes(`同じ${facilityPhrase}に配置されている${affiliationPhrase}`) ||
-                text.includes(`${affiliationPhrase} assigned to the same ${facilityPhrase}`)
+                text.includes(`${affiliationPhrase} assigned to the same ${facilityPhrase}`) ||
+                text.includes(`assigned together with another ${affiliationPhrase} Operator`)
             )
           )
         )
@@ -290,6 +302,29 @@ function inferConditions(localizedDescription, nameIndex, currentCharId) {
   }
 
   return dedupeConditions(conditions);
+}
+
+function inferScaling(localizedDescription) {
+  const texts = Object.values(localizedDescription).filter(Boolean);
+
+  for (const { affiliations, phrases } of affiliationPhraseMap) {
+    for (const { facility, phrases: facilityPhrases } of facilityPhraseMap) {
+      if (
+        texts.some((text) =>
+          phrases.some((affiliationPhrase) =>
+            facilityPhrases.some(
+              (facilityPhrase) =>
+                text.includes(`each Operator from ${affiliationPhrase}`) && text.includes(facilityPhrase)
+            )
+          )
+        )
+      ) {
+        return { type: "affiliation", affiliations, facility, includeSelf: true };
+      }
+    }
+  }
+
+  return undefined;
 }
 
 function hasNamePhrase(text, name, suffix) {
@@ -357,21 +392,44 @@ function normalize(languages, nameOverrides) {
             description
           );
           const conditions = inferConditions(localizedBuffDescription, nameIndex, charId);
+          const scaling = inferScaling(localizedBuffDescription);
+          const efficiency = inferEfficiency(description);
+          const baseEfficiency = inferBaseEfficiency(description);
+          const effectBase = {
+            facility,
+            product: inferProduct(description, buff.roomType),
+            tags: [facility, buff.skillIcon, buff.buffIcon].filter(Boolean),
+            description: localizedBuffDescription
+          };
+          const effects =
+            conditions.length && baseEfficiency < efficiency
+              ? [
+                  {
+                    ...effectBase,
+                    efficiency: baseEfficiency,
+                    ...(scaling ? { scaling } : {})
+                  },
+                  {
+                    ...effectBase,
+                    efficiency,
+                    ...(scaling ? { scaling } : {}),
+                    conditions
+                  }
+                ]
+              : [
+                  {
+                    ...effectBase,
+                    efficiency,
+                    ...(scaling ? { scaling } : {}),
+                    ...(conditions.length ? { conditions } : {})
+                  }
+                ];
 
           return {
             id: String(buff.buffId ?? `${charId}-base-${index}`),
             name: localizedBuffName,
             unlockPhase: phaseToElite(rawBuff.cond?.phase),
-            effects: [
-              {
-                facility,
-                product: inferProduct(description, buff.roomType),
-                efficiency: inferEfficiency(description),
-                tags: [facility, buff.skillIcon, buff.buffIcon].filter(Boolean),
-                ...(conditions.length ? { conditions } : {}),
-                description: localizedBuffDescription
-              }
-            ]
+            effects
           };
         })
         .filter(Boolean);

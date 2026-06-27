@@ -49,6 +49,10 @@ const andreana = operators.find((operator) => operator.id === "char_218_cuttle")
 const morgan = operators.find((operator) => operator.id === "char_154_morgan")!;
 const siege = operators.find((operator) => operator.id === "char_112_siege")!;
 const morganGlasgowSkill = morgan.skills.find((skill) => skill.id === "trade_ord_spd_par[000]")!;
+const typhon = operators.find((operator) => operator.id === "char_2012_typhon")!;
+const valarqvin = operators.find((operator) => operator.id === "char_4102_threye")!;
+const rosa = operators.find((operator) => operator.id === "char_197_poca")!;
+const zima = operators.find((operator) => operator.id === "char_115_headbr")!;
 const lemuen = operators.find((operator) => operator.id === "char_4193_lemuen")!;
 const exusiai = operators.find((operator) => operator.id === "char_103_angel")!;
 const lemuenExusiaiSkill = lemuen.skills.find((skill) => skill.id === "trade_ord_spd&multiPar[100]")!;
@@ -222,6 +226,46 @@ describe("optimizer", () => {
         assignments: [contextAssignment(trading, siege.id)]
       }).some((candidate) => candidate.skillId === morganGlasgowSkill.id)
     ).toBe(true);
+  });
+
+  it("applies Sami reception bonuses only when another Sami operator is assigned together", () => {
+    const state = createDefaultState();
+    ownOperators(state, [typhon.id, valarqvin.id]);
+    const reception: FacilitySlot = { id: "reception-1", type: "reception", name: "Reception", slotCount: 2, product: "clue" };
+    const facilities = [...state.facilities, reception];
+    const typhonBase = findCandidates(reception, state).find((candidate) => candidate.operatorId === typhon.id)!;
+    const typhonWithSami = findCandidates(reception, state, 0, {
+      facilities,
+      assignments: [contextAssignment(reception, valarqvin.id)]
+    }).find((candidate) => candidate.operatorId === typhon.id)!;
+    const valarqvinBase = findCandidates(reception, state).find((candidate) => candidate.operatorId === valarqvin.id)!;
+    const valarqvinWithTyphon = findCandidates(reception, state, 0, {
+      facilities,
+      assignments: [contextAssignment(reception, typhon.id)]
+    }).find((candidate) => candidate.operatorId === valarqvin.id)!;
+
+    expect(typhon.affiliations).toContain("sami");
+    expect(valarqvin.affiliations).toContain("sami");
+    expect(typhonBase.efficiency).toBeCloseTo(0.13);
+    expect(typhonWithSami.efficiency).toBeCloseTo(0.18);
+    expect(valarqvinBase.efficiency).toBeCloseTo(0.13);
+    expect(valarqvinWithTyphon.efficiency).toBeCloseTo(0.28);
+  });
+
+  it("scales Rosa's control recovery by Ursus Student operators in the control center", () => {
+    const state = createDefaultState();
+    ownOperators(state, [rosa.id, zima.id]);
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const rosaBase = findCandidates(control, state).find((candidate) => candidate.operatorId === rosa.id)!;
+    const rosaWithStudent = findCandidates(control, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(control, zima.id)]
+    }).find((candidate) => candidate.operatorId === rosa.id)!;
+
+    expect(rosa.affiliations).toContain("student");
+    expect(zima.affiliations).toContain("student");
+    expect(rosaBase.efficiency).toBeCloseTo(0.08);
+    expect(rosaWithStudent.efficiency).toBeCloseTo(0.13);
   });
 
   it("adds Lemuen's Exusiai same-trading-post bonus when evaluating candidates", () => {
