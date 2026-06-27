@@ -451,15 +451,28 @@ input[type="checkbox"] {
   border-radius: 8px;
   background: #ffffff;
   color: #232527;
-  display: inline-grid;
+  display: grid;
+  grid-template-columns: 16px auto;
+  gap: 4px 7px;
   place-items: center;
 }
 
 .rotation-option.active {
   border-color: #b94c2d;
-  background: #fff6ef;
-  box-shadow: inset 0 0 0 2px #b94c2d;
+  background: #fff2e8;
+  box-shadow:
+    inset 0 0 0 2px #b94c2d,
+    0 4px 12px rgba(185, 76, 45, 0.14);
+  color: #8e351d;
   font-weight: 800;
+}
+
+.rotation-option svg {
+  grid-row: 1 / span 2;
+}
+
+.rotation-option:not(.active) svg {
+  display: none;
 }
 
 .rotation-option:disabled {
@@ -469,6 +482,7 @@ input[type="checkbox"] {
 }
 
 .rotation-option small {
+  grid-column: 2;
   font-size: 0.68rem;
 }
 

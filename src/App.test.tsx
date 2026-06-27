@@ -52,7 +52,7 @@ describe("App", () => {
     expect(screen.getAllByText("製造所 A").length).toBeGreaterThan(0);
     const rotationSuggestions = screen.getByLabelText("ローテーション別提案");
     expect(rotationSuggestions).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^2回$/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /2回.*選択中/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: /3回/ })).toBeDisabled();
     expect(screen.getByText("生産物の優先度")).toBeInTheDocument();
     expect(screen.getByText("選んだ方針に合わせて、対応する基地スキルと施設配置を強く評価します。")).toBeInTheDocument();

@@ -100,6 +100,7 @@ export function App() {
 
   const plan = useMemo(() => generateAssignmentPlan(state), [state]);
   const selectedLayout = isBaseLayout(state.layout) ? state.layout : defaultLayout;
+  const selectedRotationCount = state.rotationCount === 2 ? 2 : 2;
   const ownedCount = Object.values(state.roster).filter((entry) => entry.owned).length;
   const professions = Array.from(new Set(operators.map((operator) => operator.profession))).sort();
 
@@ -345,11 +346,13 @@ export function App() {
             <div className="rotation-selector" aria-label="ローテーション回数">
               <button
                 type="button"
-                className={state.rotationCount === 2 ? "rotation-option active" : "rotation-option"}
-                aria-pressed={state.rotationCount === 2}
+                className={selectedRotationCount === 2 ? "rotation-option active" : "rotation-option"}
+                aria-pressed={selectedRotationCount === 2}
                 onClick={() => updateRotationCount(2)}
               >
-                2回
+                <Check size={16} />
+                <span>2回</span>
+                <small>選択中</small>
               </button>
               <button
                 type="button"
