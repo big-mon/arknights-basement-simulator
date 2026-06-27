@@ -168,6 +168,8 @@ describe("App", () => {
     expect(screen.getAllByText("製造所 A").length).toBeGreaterThan(0);
     const rotationSuggestions = screen.getByLabelText("ローテーション別提案");
     expect(rotationSuggestions).toBeInTheDocument();
+    expect(screen.getByText("日次価値")).toBeInTheDocument();
+    expect(screen.getByText("総合スコア")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /2回.*選択中/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: /3回/ })).toBeDisabled();
     expect(screen.getByText("生産物の優先度")).toBeInTheDocument();
@@ -189,13 +191,16 @@ describe("App", () => {
     expect(within(rotationSuggestions).queryByText(/貿易所 \/ 龍門幣/)).not.toBeInTheDocument();
   });
 
-  it("switches layout between 243 and 153 presets from the recommendation tab", async () => {
+  it("switches layout between 243 and 153 presets from the top controls", async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    expect(screen.queryByRole("button", { name: /基地/ })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /提案/ }));
+    const summary = screen.getByLabelText("現在の概要");
+    expect(within(summary).queryByText("日次価値")).not.toBeInTheDocument();
+    expect(within(summary).queryByText("総合スコア")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /243型/ })).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(screen.getByRole("button", { name: /提案/ }));
     expect(screen.getAllByText("貿易所 B").length).toBeGreaterThan(0);
     expect(screen.getAllByText("製造所 D").length).toBeGreaterThan(0);
 
@@ -223,6 +228,6 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: /提案/ }));
 
     expect(screen.getByRole("button", { name: /243型/ })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText("構成").nextSibling).toHaveTextContent("243型");
+    expect(screen.getByRole("button", { name: /2回.*選択中/ })).toHaveAttribute("aria-pressed", "true");
   });
 });

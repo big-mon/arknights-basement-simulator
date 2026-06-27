@@ -140,7 +140,14 @@ h4 {
 .summary-strip {
   margin: 28px 0 16px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: minmax(160px, 0.72fr) minmax(310px, 1.45fr) minmax(220px, 1fr);
+  gap: 12px;
+}
+
+.plan-metrics {
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -169,6 +176,22 @@ h4 {
 
 .stat strong {
   font-size: 1.18rem;
+}
+
+.summary-control {
+  min-height: 78px;
+  padding: 14px;
+  border: 1px solid #ded5c7;
+  border-radius: 8px;
+  background: #fffdf9;
+  display: grid;
+  gap: 10px;
+}
+
+.summary-control-label {
+  color: #64605a;
+  font-size: 0.84rem;
+  font-weight: 800;
 }
 
 .notice,
@@ -556,6 +579,10 @@ input[type="radio"] {
   margin-bottom: 18px;
 }
 
+.layout-selector.compact {
+  margin-bottom: 0;
+}
+
 .layout-option {
   min-height: 76px;
   padding: 14px 16px;
@@ -568,6 +595,7 @@ input[type="radio"] {
   gap: 10px;
   align-items: center;
   text-align: left;
+  cursor: pointer;
 }
 
 .layout-option.active {
@@ -597,6 +625,10 @@ input[type="radio"] {
   margin-bottom: 18px;
 }
 
+.rotation-selector.compact {
+  margin-bottom: 0;
+}
+
 .rotation-option {
   min-width: 92px;
   min-height: 40px;
@@ -609,6 +641,7 @@ input[type="radio"] {
   grid-template-columns: 16px auto;
   gap: 4px 7px;
   place-items: center;
+  cursor: pointer;
 }
 
 .rotation-option.active {
@@ -815,6 +848,7 @@ input[type="radio"] {
   .summary-strip,
   .operator-grid,
   .layout-selector,
+  .plan-metrics,
   .preference-grid,
   .plan-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -840,6 +874,7 @@ input[type="radio"] {
   .summary-strip,
   .operator-grid,
   .layout-selector,
+  .plan-metrics,
   .preference-grid,
   .plan-grid {
     grid-template-columns: 1fr;

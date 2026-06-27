@@ -6,7 +6,6 @@ import {
   ChevronDown,
   ChevronRight,
   Download,
-  Factory,
   Home,
   Languages,
   RotateCcw,
@@ -233,9 +232,51 @@ export function App() {
 
       <section className="summary-strip" aria-label={text.summaryLabel}>
         <Stat icon={Users} label={text.stats.owned} value={`${ownedCount}/${operators.length}`} />
-        <Stat icon={Factory} label={text.stats.layout} value={`${selectedLayout}${text.layoutSuffix}`} />
-        <Stat icon={SlidersHorizontal} label={text.stats.dailyValue} value={plan.dailyValue.toFixed(1)} />
-        <Stat icon={Archive} label={text.stats.totalScore} value={plan.totalScore.toFixed(1)} />
+        <div className="summary-control">
+          <span className="summary-control-label">{text.plan.baseLayout}</span>
+          <div className="layout-selector compact" aria-label={text.plan.baseLayout}>
+            {(Object.keys(layoutPresets) as BaseLayout[]).map((layout) => (
+              <button
+                key={layout}
+                type="button"
+                aria-pressed={selectedLayout === layout}
+                className={selectedLayout === layout ? "layout-option active" : "layout-option"}
+                onClick={() => updateLayout(layout)}
+              >
+                <Home size={18} />
+                <span>
+                  {layoutLabels[language][layout].label}
+                  <small>{layoutLabels[language][layout].description}</small>
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="summary-control">
+          <span className="summary-control-label">{text.plan.rotationCount}</span>
+          <div className="rotation-selector compact" aria-label={text.plan.rotationCount}>
+            <button
+              type="button"
+              className={selectedRotationCount === 2 ? "rotation-option active" : "rotation-option"}
+              aria-pressed={selectedRotationCount === 2}
+              onClick={() => updateRotationCount(2)}
+            >
+              <Check size={16} />
+              <span>{text.plan.rotationOption(2)}</span>
+              <small>{text.plan.selected}</small>
+            </button>
+            <button
+              type="button"
+              className={state.rotationCount === 3 ? "rotation-option active" : "rotation-option"}
+              aria-pressed={state.rotationCount === 3}
+              disabled
+              title={text.plan.futureSupport}
+            >
+              {text.plan.rotationOption(3)}
+              <small>{text.plan.planned}</small>
+            </button>
+          </div>
+        </div>
       </section>
 
       {notice ? <p className="notice">{notice}</p> : null}
@@ -415,48 +456,12 @@ export function App() {
             </p>
           </div>
 
+          <div className="plan-metrics" aria-label={`${text.stats.dailyValue} / ${text.stats.totalScore}`}>
+            <Stat icon={SlidersHorizontal} label={text.stats.dailyValue} value={plan.dailyValue.toFixed(1)} />
+            <Stat icon={Archive} label={text.stats.totalScore} value={plan.totalScore.toFixed(1)} />
+          </div>
+
           <div className="recommendation-controls" aria-label={text.plan.conditions}>
-            <div className="layout-selector" aria-label={text.plan.baseLayout}>
-              {(Object.keys(layoutPresets) as BaseLayout[]).map((layout) => (
-                <button
-                  key={layout}
-                  type="button"
-                  aria-pressed={selectedLayout === layout}
-                  className={selectedLayout === layout ? "layout-option active" : "layout-option"}
-                  onClick={() => updateLayout(layout)}
-                >
-                  <Home size={18} />
-                  <span>
-                    {layoutLabels[language][layout].label}
-                    <small>{layoutLabels[language][layout].description}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            <div className="rotation-selector" aria-label={text.plan.rotationCount}>
-              <button
-                type="button"
-                className={selectedRotationCount === 2 ? "rotation-option active" : "rotation-option"}
-                aria-pressed={selectedRotationCount === 2}
-                onClick={() => updateRotationCount(2)}
-              >
-                <Check size={16} />
-                <span>{text.plan.rotationOption(2)}</span>
-                <small>{text.plan.selected}</small>
-              </button>
-              <button
-                type="button"
-                className={state.rotationCount === 3 ? "rotation-option active" : "rotation-option"}
-                aria-pressed={state.rotationCount === 3}
-                disabled
-                title={text.plan.futureSupport}
-              >
-                {text.plan.rotationOption(3)}
-                <small>{text.plan.planned}</small>
-              </button>
-            </div>
-
             <div className="preference-section">
               <div className="preference-heading">
                 <h3>{text.plan.productionPriority}</h3>
