@@ -8,6 +8,7 @@ import {
   Download,
   Factory,
   Home,
+  Languages,
   RotateCcw,
   Search,
   SlidersHorizontal,
@@ -22,42 +23,35 @@ import {
   layoutPresets,
   operators
 } from "./data/defaults";
+import {
+  facilityLabels,
+  languageOptions,
+  layoutLabels,
+  preferenceLabels,
+  productLabels,
+  professionLabels,
+  uiText
+} from "./i18n";
 import { generateAssignmentPlan } from "./lib/optimizer";
 import { exportState, importState, loadState, saveState } from "./lib/storage";
 import type {
   AppState,
   BaseLayout,
-  FacilityType,
+  FacilitySlot,
   FacilityPlan,
   Assignment,
+  LanguageCode,
   Operator,
   OperatorProfession,
-  ProductType,
   RosterEntry,
   RotationCount
 } from "./types";
 
 type TabId = "roster" | "plan";
 
-const facilityLabels: Record<FacilityType, string> = {
-  factory: "製造所",
-  trading: "貿易所",
-  power: "発電所",
-  control: "制御中枢",
-  dormitory: "宿舎"
-};
-
-const productLabels: Record<ProductType, string> = {
-  gold: "純金",
-  battleRecord: "作戦記録",
-  lmd: "龍門幣",
-  power: "ドローン",
-  morale: "体力回復"
-};
-
-const tabs: Array<{ id: TabId; label: string; icon: typeof Users }> = [
-  { id: "roster", label: "所有", icon: Users },
-  { id: "plan", label: "提案", icon: Activity }
+const tabs: Array<{ id: TabId; icon: typeof Users }> = [
+  { id: "roster", icon: Users },
+  { id: "plan", icon: Activity }
 ];
 
 const professionOrder: OperatorProfession[] = ["先鋒", "前衛", "重装", "狙撃", "術師", "医療", "補助", "特殊", "その他"];
@@ -65,22 +59,18 @@ const professionOrder: OperatorProfession[] = ["先鋒", "前衛", "重装", "�
 const preferencePresets = [
   {
     id: "balanced",
-    label: "バランス",
     preference: { gold: 0.35, battleRecord: 0.35, lmd: 0.3 }
   },
   {
     id: "gold",
-    label: "純金優先",
     preference: { gold: 0.7, battleRecord: 0.15, lmd: 0.15 }
   },
   {
     id: "battleRecord",
-    label: "作戦記録優先",
     preference: { gold: 0.15, battleRecord: 0.7, lmd: 0.15 }
   },
   {
     id: "lmd",
-    label: "龍門幣優先",
     preference: { gold: 0.15, battleRecord: 0.15, lmd: 0.7 }
   }
 ] as const;
@@ -105,7 +95,11 @@ export function App() {
   const selectedLayout = isBaseLayout(state.layout) ? state.layout : defaultLayout;
   const selectedRotationCount = state.rotationCount === 2 ? 2 : 2;
   const ownedCount = Object.values(state.roster).filter((entry) => entry.owned).length;
-  const professions = Array.from(new Set(operators.map((operator) => operator.profession))).sort();
+  const language = state.language;
+  const text = uiText[language];
+  const professions = Array.from(new Set(operators.map((operator) => operator.profession))).sort(
+    (a, b) => professionSortIndex(a) - professionSortIndex(b)
+  );
 
   const filteredOperators = operators.filter((operator) => {
     const matchesQuery = `${operator.name} ${operator.id}`.toLowerCase().includes(query.toLowerCase());
@@ -124,6 +118,13 @@ export function App() {
           ...patch
         }
       }
+    }));
+  }
+
+  function updateLanguage(language: LanguageCode) {
+    setState((current) => ({
+      ...current,
+      language
     }));
   }
 
@@ -170,7 +171,7 @@ export function App() {
     anchor.download = "arknights-basement-roster.json";
     anchor.click();
     URL.revokeObjectURL(url);
-    setNotice("所有情報と基地設定をJSONに書き出しました。");
+    setNotice(text.notices.exported);
   }
 
   async function importJson(event: ChangeEvent<HTMLInputElement>) {
@@ -181,9 +182,9 @@ export function App() {
 
     try {
       setState(importState(await file.text()));
-      setNotice("JSONから設定を読み込みました。");
+      setNotice(text.notices.imported);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "JSONを読み込めませんでした。");
+      setNotice(error instanceof Error ? error.message : text.notices.importFailed);
     } finally {
       event.target.value = "";
     }
@@ -194,32 +195,48 @@ export function App() {
       <header className="topbar">
         <div>
           <p className="eyebrow">ARKNIGHTS BASEMENT</p>
-          <h1>基地ローテーションシミュレーター</h1>
+          <h1>{text.appTitle}</h1>
         </div>
-        <div className="toolbar" aria-label="保存データ操作">
-          <button type="button" className="icon-button" onClick={downloadJson} title="JSONを書き出す">
+        <div className="toolbar" aria-label={text.toolbarLabel}>
+          <label className="language-selector">
+            <Languages size={18} />
+            <span>{text.language}</span>
+            <select value={language} onChange={(event) => updateLanguage(event.target.value as LanguageCode)}>
+              {languageOptions.map((option) => (
+                <option key={option.code} value={option.code}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="button" className="icon-button" onClick={downloadJson} title={text.exportJson}>
             <Download size={18} />
           </button>
-          <button type="button" className="icon-button" onClick={() => fileInputRef.current?.click()} title="JSONを読み込む">
+          <button type="button" className="icon-button" onClick={() => fileInputRef.current?.click()} title={text.importJson}>
             <Upload size={18} />
           </button>
-          <button type="button" className="icon-button" onClick={() => setState(createDefaultState())} title="初期状態に戻す">
+          <button
+            type="button"
+            className="icon-button"
+            onClick={() => setState((current) => ({ ...createDefaultState(), language: current.language }))}
+            title={text.reset}
+          >
             <RotateCcw size={18} />
           </button>
           <input ref={fileInputRef} className="sr-only" type="file" accept="application/json" onChange={importJson} />
         </div>
       </header>
 
-      <section className="summary-strip" aria-label="現在の概要">
-        <Stat icon={Users} label="所有" value={`${ownedCount}/${operators.length}`} />
-        <Stat icon={Factory} label="構成" value={`${selectedLayout}型`} />
-        <Stat icon={SlidersHorizontal} label="日次価値" value={plan.dailyValue.toFixed(1)} />
-        <Stat icon={Archive} label="総合スコア" value={plan.totalScore.toFixed(1)} />
+      <section className="summary-strip" aria-label={text.summaryLabel}>
+        <Stat icon={Users} label={text.stats.owned} value={`${ownedCount}/${operators.length}`} />
+        <Stat icon={Factory} label={text.stats.layout} value={`${selectedLayout}${text.layoutSuffix}`} />
+        <Stat icon={SlidersHorizontal} label={text.stats.dailyValue} value={plan.dailyValue.toFixed(1)} />
+        <Stat icon={Archive} label={text.stats.totalScore} value={plan.totalScore.toFixed(1)} />
       </section>
 
       {notice ? <p className="notice">{notice}</p> : null}
 
-      <nav className="tabs" aria-label="主要画面">
+      <nav className="tabs" aria-label={text.tabsLabel}>
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -230,7 +247,7 @@ export function App() {
               onClick={() => setActiveTab(tab.id)}
             >
               <Icon size={18} />
-              {tab.label}
+              {text.tabs[tab.id]}
             </button>
           );
         })}
@@ -240,19 +257,19 @@ export function App() {
         <section className="panel" aria-labelledby="roster-title">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">Roster</p>
-              <h2 id="roster-title">所有オペレーター管理</h2>
+              <p className="eyebrow">{text.roster.eyebrow}</p>
+              <h2 id="roster-title">{text.roster.title}</h2>
             </div>
             <div className="filters">
               <label className="search-box">
                 <Search size={17} />
-                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="名前で検索" />
+                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={text.roster.searchPlaceholder} />
               </label>
               <select value={professionFilter} onChange={(event) => setProfessionFilter(event.target.value)}>
-                <option value="all">全職業</option>
+                <option value="all">{text.roster.allProfessions}</option>
                 {professions.map((profession) => (
                   <option key={profession} value={profession}>
-                    {profession}
+                    {professionLabels[language][profession]}
                   </option>
                 ))}
               </select>
@@ -274,9 +291,9 @@ export function App() {
                         onClick={() => toggleProfession(professionGroup.profession)}
                       >
                         {professionCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
-                        <span>{professionGroup.profession}</span>
+                        <span>{professionLabels[language][professionGroup.profession]}</span>
                         <span className="collapse-count" aria-hidden="true">
-                          {professionGroup.ownedTotal} / {professionGroup.total}名
+                          {formatCount(professionGroup.ownedTotal, professionGroup.total, language)}
                         </span>
                       </button>
                     </h3>
@@ -303,7 +320,7 @@ export function App() {
                                   {rarityCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
                                   <span>★{rarityGroup.rarity}</span>
                                   <span className="collapse-count" aria-hidden="true">
-                                    {rarityGroup.ownedTotal} / {rarityGroup.operators.length}名
+                                    {formatCount(rarityGroup.ownedTotal, rarityGroup.operators.length, language)}
                                   </span>
                                 </button>
                               </h4>
@@ -315,6 +332,7 @@ export function App() {
                                     key={operator.id}
                                     operator={operator}
                                     entry={state.roster[operator.id]}
+                                    language={language}
                                     onUpdateRoster={updateRoster}
                                   />
                                 ))}
@@ -335,14 +353,16 @@ export function App() {
         <section className="panel" aria-labelledby="plan-title">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">Recommendation</p>
-              <h2 id="plan-title">推奨配置とローテーション</h2>
+              <p className="eyebrow">{text.plan.eyebrow}</p>
+              <h2 id="plan-title">{text.plan.title}</h2>
             </div>
-            <p className="timestamp">生成: {new Date(plan.generatedAt).toLocaleString("ja-JP")}</p>
+            <p className="timestamp">
+              {text.plan.generated}: {new Date(plan.generatedAt).toLocaleString(dateLocale(language))}
+            </p>
           </div>
 
-          <div className="recommendation-controls" aria-label="提案条件">
-            <div className="layout-selector" aria-label="基地構成">
+          <div className="recommendation-controls" aria-label={text.plan.conditions}>
+            <div className="layout-selector" aria-label={text.plan.baseLayout}>
               {(Object.keys(layoutPresets) as BaseLayout[]).map((layout) => (
                 <button
                   key={layout}
@@ -353,14 +373,14 @@ export function App() {
                 >
                   <Home size={18} />
                   <span>
-                    {layoutPresets[layout].label}
-                    <small>{layoutPresets[layout].description}</small>
+                    {layoutLabels[language][layout].label}
+                    <small>{layoutLabels[language][layout].description}</small>
                   </span>
                 </button>
               ))}
             </div>
 
-            <div className="rotation-selector" aria-label="ローテーション回数">
+            <div className="rotation-selector" aria-label={text.plan.rotationCount}>
               <button
                 type="button"
                 className={selectedRotationCount === 2 ? "rotation-option active" : "rotation-option"}
@@ -368,27 +388,27 @@ export function App() {
                 onClick={() => updateRotationCount(2)}
               >
                 <Check size={16} />
-                <span>2回</span>
-                <small>選択中</small>
+                <span>{text.plan.rotationOption(2)}</span>
+                <small>{text.plan.selected}</small>
               </button>
               <button
                 type="button"
                 className={state.rotationCount === 3 ? "rotation-option active" : "rotation-option"}
                 aria-pressed={state.rotationCount === 3}
                 disabled
-                title="今後対応予定"
+                title={text.plan.futureSupport}
               >
-                3回
-                <small>準備中</small>
+                {text.plan.rotationOption(3)}
+                <small>{text.plan.planned}</small>
               </button>
             </div>
 
             <div className="preference-section">
               <div className="preference-heading">
-                <h3>生産物の優先度</h3>
-                <p>選んだ方針に合わせて、対応する基地スキルと施設配置を強く評価します。</p>
+                <h3>{text.plan.productionPriority}</h3>
+                <p>{text.plan.productionPriorityNote}</p>
               </div>
-              <div className="preference-grid" role="radiogroup" aria-label="生産物の優先度">
+              <div className="preference-grid" role="radiogroup" aria-label={text.plan.productionPriority}>
                 {preferencePresets.map((preset) => (
                   <label
                     key={preset.id}
@@ -404,7 +424,7 @@ export function App() {
                       onChange={() => updatePreferencePreset(preset.id)}
                     />
                     <span>
-                      {preset.label}
+                      {preferenceLabels[language][preset.id]}
                     </span>
                   </label>
                 ))}
@@ -415,15 +435,15 @@ export function App() {
 
           {plan.warnings.map((warning) => (
             <p key={warning} className="warning">
-              {warning}
+              {localizeWarning(warning, language)}
             </p>
           ))}
 
-          <div className="rotation-sections" aria-label="ローテーション別提案">
+          <div className="rotation-sections" aria-label={text.plan.rotationSuggestions}>
             {plan.rotation.map((window, rotationIndex) => (
               <section key={window.label} className="rotation-section" aria-labelledby={`rotation-${rotationIndex + 1}`}>
                 <div className="rotation-section-heading">
-                  <h3 id={`rotation-${rotationIndex + 1}`}>{window.label}</h3>
+                  <h3 id={`rotation-${rotationIndex + 1}`}>{text.plan.rotationLabel(rotationIndex, state.rotationCount)}</h3>
                   <span>{window.hours}h</span>
                 </div>
                 <div className="plan-grid">
@@ -432,6 +452,7 @@ export function App() {
                       key={`${window.label}-${facilityPlan.facility.id}`}
                       facilityPlan={facilityPlan}
                       assignments={rotationAssignmentsForFacility(facilityPlan, rotationIndex)}
+                      language={language}
                     />
                   ))}
                 </div>
@@ -457,13 +478,16 @@ function Stat({ icon: Icon, label, value }: { icon: typeof Users; label: string;
 function OperatorCard({
   operator,
   entry,
+  language,
   onUpdateRoster
 }: {
   operator: Operator;
   entry: RosterEntry;
+  language: LanguageCode;
   onUpdateRoster: (operatorId: string, patch: Partial<RosterEntry>) => void;
 }) {
   const unlockedSkills = operator.skills.filter((skill) => skill.unlockPhase <= entry.elite).length;
+  const text = uiText[language];
 
   function toggleOwnedFromCard(event: MouseEvent<HTMLElement>) {
     if (isInteractiveCardTarget(event.target)) {
@@ -486,12 +510,12 @@ function OperatorCard({
             <span>{operator.name}</span>
           </label>
           <p>
-            ★{operator.rarity} / {operator.profession} / 基地スキル {unlockedSkills}/{operator.skills.length}
+            {`★${operator.rarity} / ${professionLabels[language][operator.profession]} / ${text.roster.baseSkill} ${unlockedSkills}/${operator.skills.length}`}
           </p>
         </div>
         <div className="operator-controls">
           <label>
-            昇進
+            {text.roster.elite}
             <select
               value={entry.elite}
               onChange={(event) => onUpdateRoster(operator.id, { elite: Number(event.target.value) as 0 | 1 | 2 })}
@@ -503,19 +527,19 @@ function OperatorCard({
           </label>
         </div>
       </div>
-      <ul className="base-skill-list" aria-label={`${operator.name}の基地スキル`}>
+      <ul className="base-skill-list" aria-label={text.roster.skillListLabel(operator.name)}>
         {operator.skills.map((skill) => {
           const unlocked = skill.unlockPhase <= entry.elite;
           return (
             <li key={skill.id} className={unlocked ? "base-skill unlocked" : "base-skill locked"}>
               <div className="base-skill-heading">
                 <strong>{skill.name}</strong>
-                <span>{unlocked ? "解放済み" : `昇進${skill.unlockPhase}で解放`}</span>
+                <span>{unlocked ? text.roster.unlocked : text.roster.unlockAtElite(skill.unlockPhase)}</span>
               </div>
               {skill.effects.map((effect, index) => (
                 <p key={`${skill.id}-${index}`}>
-                  {facilityLabels[effect.facility]}
-                  {effect.product ? ` / ${productLabels[effect.product]}` : ""}: {effect.description}
+                  {facilityLabels[language][effect.facility]}
+                  {effect.product ? ` / ${productLabels[language][effect.product]}` : ""}: {effect.description}
                 </p>
               ))}
             </li>
@@ -557,6 +581,37 @@ function groupOperatorsByProfessionAndRarity(operatorList: Operator[], roster: R
 
 function countOwnedOperators(operatorList: Operator[], roster: Record<string, RosterEntry>) {
   return operatorList.filter((operator) => roster[operator.id]?.owned).length;
+}
+
+function formatCount(owned: number, total: number, language: LanguageCode) {
+  const suffix = uiText[language].roster.countSuffix;
+  return `${owned} / ${total}${suffix}`;
+}
+
+function formatFacilityName(facility: FacilitySlot, language: LanguageCode) {
+  const baseName = facilityLabels[language][facility.type];
+
+  if (facility.type === "factory" || facility.type === "trading" || facility.type === "power") {
+    const roomNumber = Number(facility.id.split("-").at(-1));
+    const suffix = Number.isFinite(roomNumber) ? String.fromCharCode(64 + roomNumber) : "";
+    return suffix ? `${baseName} ${suffix}` : baseName;
+  }
+
+  return baseName;
+}
+
+function localizeWarning(warning: string, language: LanguageCode) {
+  return warning ? uiText[language].warnings.candidateShortage : warning;
+}
+
+function dateLocale(language: LanguageCode) {
+  if (language === "zh") {
+    return "zh-CN";
+  }
+  if (language === "en") {
+    return "en-US";
+  }
+  return "ja-JP";
 }
 
 function toggleSetValue(current: Set<string>, value: string) {
@@ -609,14 +664,23 @@ function rotationAssignmentsForFacility(facilityPlan: FacilityPlan, rotationInde
   return facilityPlan.alternatives.slice(0, facilityPlan.facility.slotCount);
 }
 
-function FacilityPlanCard({ facilityPlan, assignments }: { facilityPlan: FacilityPlan; assignments: Assignment[] }) {
+function FacilityPlanCard({
+  facilityPlan,
+  assignments,
+  language
+}: {
+  facilityPlan: FacilityPlan;
+  assignments: Assignment[];
+  language: LanguageCode;
+}) {
   const expectedEfficiency = assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
+  const text = uiText[language];
 
   return (
     <article className={`plan-card plan-card-${facilityPlan.facility.type}`}>
       <div className="plan-card-heading">
         <div>
-          <h4>{facilityPlan.facility.name}</h4>
+          <h4>{formatFacilityName(facilityPlan.facility, language)}</h4>
         </div>
         <strong>+{Math.round(expectedEfficiency * 100)}%</strong>
       </div>
@@ -634,7 +698,7 @@ function FacilityPlanCard({ facilityPlan, assignments }: { facilityPlan: Facilit
           ))}
         </ul>
       ) : (
-        <p className="alternatives">候補なし</p>
+        <p className="alternatives">{text.plan.noCandidates}</p>
       )}
     </article>
   );

@@ -6,6 +6,8 @@ export type BaseLayout = "243" | "153";
 
 export type RotationCount = 2 | 3;
 
+export type LanguageCode = "ja" | "zh" | "en";
+
 export type OperatorProfession =
   | "先鋒"
   | "前衛"
@@ -65,6 +67,7 @@ export interface OptimizationPreference {
 }
 
 export interface AppState {
+  language: LanguageCode;
   layout: BaseLayout;
   rotationCount: RotationCount;
   roster: Roster;

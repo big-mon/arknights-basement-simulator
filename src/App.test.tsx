@@ -25,6 +25,23 @@ describe("App", () => {
     expect(within(screen.getByText(amiya.name).closest("article")!).getByRole("checkbox", { name: amiya.name })).toBeChecked();
   });
 
+  it("switches the app language from the top toolbar", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    expect(screen.getByRole("heading", { name: "基地ローテーションシミュレーター" })).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByRole("combobox", { name: /言語/ }), "en");
+
+    expect(screen.getByRole("heading", { name: "Base Rotation Simulator" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Owned/ })).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "zh");
+
+    expect(screen.getByRole("heading", { name: "基建轮班模拟器" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /持有/ })).toBeInTheDocument();
+  });
+
   it("toggles roster ownership from the operator card without hijacking controls", async () => {
     const user = userEvent.setup();
     render(<App />);

@@ -112,6 +112,7 @@ describe("optimizer", () => {
     const state = createDefaultState();
     state.roster.char_002_amiya.owned = true;
     state.roster.char_002_amiya.elite = 2;
+    state.language = "en";
     state.layout = "153";
     state.rotationCount = 2;
     state.facilities = createFacilitiesForLayout("153", state.facilities);
@@ -120,6 +121,7 @@ describe("optimizer", () => {
 
     expect(restored.roster.char_002_amiya.owned).toBe(true);
     expect(restored.roster.char_002_amiya.elite).toBe(2);
+    expect(restored.language).toBe("en");
     expect(restored.layout).toBe("153");
     expect(restored.rotationCount).toBe(2);
     expect(restored.facilities).toHaveLength(state.facilities.length);

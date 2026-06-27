@@ -105,7 +105,34 @@ h4 {
   color: #242628;
 }
 
+.language-selector {
+  min-height: 42px;
+  padding: 0 10px;
+  display: inline-grid;
+  grid-template-columns: 18px auto minmax(92px, auto);
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d5cec1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #242628;
+  font-size: 0.88rem;
+}
+
+.language-selector select {
+  min-width: 96px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.language-selector select:focus-visible {
+  outline: 2px solid #b94c2d;
+  outline-offset: 2px;
+}
+
 .icon-button:hover,
+.language-selector:hover,
 .tab:hover {
   border-color: #b94c2d;
 }

@@ -1,5 +1,6 @@
 import { createDefaultState, createFacilitiesForLayout, isBaseLayout, isRotationCount } from "../data/defaults";
-import type { AppState, BaseLayout, FacilitySlot, RotationCount } from "../types";
+import { defaultLanguage, isLanguageCode } from "../i18n";
+import type { AppState, BaseLayout, FacilitySlot, LanguageCode, RotationCount } from "../types";
 
 const storageKey = "arknights-basement-state-v1";
 
@@ -18,6 +19,7 @@ export function loadState(): AppState {
     const defaults = createDefaultState();
     const layout = normalizeLayout(parsed.layout, parsed.facilities, defaults.layout);
     return {
+      language: normalizeLanguage(parsed.language, defaults.language),
       layout,
       rotationCount: normalizeRotationCount(parsed.rotationCount, defaults.rotationCount),
       roster: { ...defaults.roster, ...parsed.roster },
@@ -55,6 +57,7 @@ export function importState(raw: string): AppState {
 
   const layout = normalizeLayout(maybeState.layout, maybeState.facilities, "243");
   return {
+    language: normalizeLanguage(maybeState.language, defaultLanguage),
     layout,
     rotationCount: normalizeRotationCount(maybeState.rotationCount, 2),
     roster: maybeState.roster,
@@ -83,6 +86,10 @@ function normalizeLayout(layout: unknown, facilities: FacilitySlot[] | undefined
 
 function normalizeRotationCount(rotationCount: unknown, fallback: RotationCount): RotationCount {
   return isRotationCount(rotationCount) ? rotationCount : fallback;
+}
+
+function normalizeLanguage(language: unknown, fallback: LanguageCode): LanguageCode {
+  return isLanguageCode(language) ? language : fallback;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

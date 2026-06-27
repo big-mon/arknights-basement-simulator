@@ -1,5 +1,6 @@
 import type { AppState, BaseLayout, FacilitySlot, OptimizationPreference, Operator, ProductType, Roster, RotationCount } from "../types";
 import operatorsData from "./operators.json";
+import { defaultLanguage } from "../i18n";
 
 export const operators = operatorsData as Operator[];
 
@@ -98,6 +99,7 @@ export function createDefaultRoster(): Roster {
 
 export function createDefaultState(): AppState {
   return {
+    language: defaultLanguage,
     layout: defaultLayout,
     rotationCount: defaultRotationCount,
     roster: createDefaultRoster(),
