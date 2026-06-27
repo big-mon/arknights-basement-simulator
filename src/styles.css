@@ -310,6 +310,12 @@ input[type="checkbox"] {
   margin-bottom: 18px;
 }
 
+.recommendation-controls {
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e5ded4;
+}
+
 .layout-selector {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -374,6 +380,10 @@ input[type="range"] {
 .facility-list {
   display: grid;
   gap: 10px;
+}
+
+.facility-list.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .facility-row {
@@ -538,6 +548,10 @@ input[type="range"] {
   .facility-row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .facility-list.compact {
+    grid-template-columns: 1fr;
   }
 
   .operator-controls {

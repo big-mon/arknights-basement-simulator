@@ -29,21 +29,22 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: /提案/ }));
 
     expect(screen.getByRole("heading", { name: "推奨配置とローテーション" })).toBeInTheDocument();
-    expect(screen.getByText("製造所 A")).toBeInTheDocument();
+    expect(screen.getAllByText("製造所 A").length).toBeGreaterThan(0);
     expect(screen.getByRole("table", { name: "ローテーション" })).toBeInTheDocument();
   });
 
-  it("switches base layout between 243 and 153 presets", async () => {
+  it("switches layout between 243 and 153 presets from the recommendation tab", async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /基地/ }));
-    expect(screen.getByText("貿易所 B")).toBeInTheDocument();
-    expect(screen.getByText("製造所 D")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /基地/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /提案/ }));
+    expect(screen.getAllByText("貿易所 B").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("製造所 D").length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole("button", { name: /153型/ }));
 
     expect(screen.queryByText("貿易所 B")).not.toBeInTheDocument();
-    expect(screen.getByText("製造所 E")).toBeInTheDocument();
+    expect(screen.getAllByText("製造所 E").length).toBeGreaterThan(0);
   });
 });

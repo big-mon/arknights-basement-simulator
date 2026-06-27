@@ -8,7 +8,6 @@ import {
   Home,
   RotateCcw,
   Search,
-  Settings2,
   SlidersHorizontal,
   Upload,
   Users
@@ -18,7 +17,7 @@ import { generateAssignmentPlan } from "./lib/optimizer";
 import { exportState, importState, loadState, saveState } from "./lib/storage";
 import type { AppState, BaseLayout, FacilitySlot, FacilityType, OptimizationPreference, ProductType, RosterEntry } from "./types";
 
-type TabId = "roster" | "base" | "plan";
+type TabId = "roster" | "plan";
 
 const facilityLabels: Record<FacilityType, string> = {
   factory: "製造所",
@@ -38,7 +37,6 @@ const productLabels: Record<ProductType, string> = {
 
 const tabs: Array<{ id: TabId; label: string; icon: typeof Users }> = [
   { id: "roster", label: "所有", icon: Users },
-  { id: "base", label: "基地", icon: Settings2 },
   { id: "plan", label: "提案", icon: Activity }
 ];
 
@@ -238,76 +236,6 @@ export function App() {
         </section>
       ) : null}
 
-      {activeTab === "base" ? (
-        <section className="panel" aria-labelledby="base-title">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Base</p>
-              <h2 id="base-title">基地設定</h2>
-            </div>
-          </div>
-
-          <div className="layout-selector" aria-label="基地構成">
-            {(Object.keys(layoutPresets) as BaseLayout[]).map((layout) => (
-              <button
-                key={layout}
-                type="button"
-                className={state.layout === layout ? "layout-option active" : "layout-option"}
-                onClick={() => updateLayout(layout)}
-              >
-                <Home size={18} />
-                <span>
-                  {layoutPresets[layout].label}
-                  <small>{layoutPresets[layout].description}</small>
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <div className="preference-grid">
-            <PreferenceSlider
-              label="純金"
-              value={state.preference.gold}
-              onChange={(value) => updatePreference("gold", value)}
-            />
-            <PreferenceSlider
-              label="作戦記録"
-              value={state.preference.battleRecord}
-              onChange={(value) => updatePreference("battleRecord", value)}
-            />
-            <PreferenceSlider
-              label="龍門幣"
-              value={state.preference.lmd}
-              onChange={(value) => updatePreference("lmd", value)}
-            />
-          </div>
-
-          <div className="facility-list">
-            {state.facilities.map((facility) => (
-              <article key={facility.id} className="facility-row">
-                <strong>{facility.name}</strong>
-                <span className="pill">{facilityLabels[facility.type]}</span>
-                <span className="room-meta">{facility.slotCount}枠</span>
-                <label>
-                  生産
-                  <select
-                    value={facility.product}
-                    disabled={facility.type !== "factory"}
-                    onChange={(event) => updateFacility(facility.id, { product: event.target.value as ProductType })}
-                  >
-                    <option value="gold">純金</option>
-                    <option value="battleRecord">作戦記録</option>
-                    <option value="lmd">龍門幣</option>
-                    <option value="power">ドローン</option>
-                    <option value="morale">体力回復</option>
-                  </select>
-                </label>
-              </article>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
       {activeTab === "plan" ? (
         <section className="panel" aria-labelledby="plan-title">
           <div className="section-heading">
@@ -316,6 +244,67 @@ export function App() {
               <h2 id="plan-title">推奨配置とローテーション</h2>
             </div>
             <p className="timestamp">生成: {new Date(plan.generatedAt).toLocaleString("ja-JP")}</p>
+          </div>
+
+          <div className="recommendation-controls" aria-label="提案条件">
+            <div className="layout-selector" aria-label="基地構成">
+              {(Object.keys(layoutPresets) as BaseLayout[]).map((layout) => (
+                <button
+                  key={layout}
+                  type="button"
+                  className={state.layout === layout ? "layout-option active" : "layout-option"}
+                  onClick={() => updateLayout(layout)}
+                >
+                  <Home size={18} />
+                  <span>
+                    {layoutPresets[layout].label}
+                    <small>{layoutPresets[layout].description}</small>
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="preference-grid">
+              <PreferenceSlider
+                label="純金"
+                value={state.preference.gold}
+                onChange={(value) => updatePreference("gold", value)}
+              />
+              <PreferenceSlider
+                label="作戦記録"
+                value={state.preference.battleRecord}
+                onChange={(value) => updatePreference("battleRecord", value)}
+              />
+              <PreferenceSlider
+                label="龍門幣"
+                value={state.preference.lmd}
+                onChange={(value) => updatePreference("lmd", value)}
+              />
+            </div>
+
+            <div className="facility-list compact">
+              {state.facilities.map((facility) => (
+                <article key={facility.id} className="facility-row">
+                  <strong>{facility.name}</strong>
+                  <span className="pill">{facilityLabels[facility.type]}</span>
+                  <span className="room-meta">{facility.slotCount}枠</span>
+                  <label>
+                    生産
+                    <select
+                      value={facility.product}
+                      disabled={facility.type !== "factory"}
+                      onChange={(event) => updateFacility(facility.id, { product: event.target.value as ProductType })}
+                    >
+                      <option value="gold">純金</option>
+                      <option value="battleRecord">作戦記録</option>
+                      <option value="lmd">龍門幣</option>
+                      <option value="power">ドローン</option>
+                      <option value="morale">体力回復</option>
+                    </select>
+                  </label>
+                </article>
+              ))}
+            </div>
           </div>
 
           {plan.warnings.map((warning) => (
