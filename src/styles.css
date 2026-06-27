@@ -360,6 +360,7 @@ input[type="number"] {
   align-items: center;
   gap: 8px;
   font-weight: 700;
+  cursor: pointer;
 }
 
 .checkbox-line.compact {
@@ -370,6 +371,11 @@ input[type="checkbox"] {
   width: 18px;
   height: 18px;
   accent-color: #b94c2d;
+  cursor: pointer;
+}
+
+input[type="radio"] {
+  cursor: pointer;
 }
 
 .operator-controls {
@@ -566,6 +572,7 @@ input[type="checkbox"] {
   grid-template-columns: 18px 1fr;
   gap: 10px;
   align-items: center;
+  cursor: pointer;
 }
 
 .preference-option.active {
