@@ -1,7 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { createDefaultState, createFacilitiesForLayout } from "../data/defaults";
+import { createDefaultState, createFacilitiesForLayout, operators } from "../data/defaults";
 import { exportState, importState } from "./storage";
 import { findCandidates, generateAssignmentPlan } from "./optimizer";
+
+const factoryEliteLockedOperator = operators.find((operator) =>
+  operator.skills.some(
+    (skill) =>
+      skill.unlockPhase > 0 &&
+      skill.effects.some((effect) => effect.facility === "factory" && (!effect.product || effect.product === "gold"))
+  )
+)!;
+const factoryEliteLockedSkill = factoryEliteLockedOperator.skills.find(
+  (skill) =>
+    skill.unlockPhase > 0 &&
+    skill.effects.some((effect) => effect.facility === "factory" && (!effect.product || effect.product === "gold"))
+)!;
+const defaultOwnedGoldFactoryOperator = operators.find((operator) =>
+  operator.rarity <= 4 &&
+  operator.skills.some(
+    (skill) =>
+      skill.unlockPhase === 0 &&
+      skill.effects.some((effect) => effect.facility === "factory" && (!effect.product || effect.product === "gold"))
+  )
+)!;
 
 describe("optimizer", () => {
   it("filters candidates by facility type and unlocked elite phase", () => {
@@ -11,15 +32,15 @@ describe("optimizer", () => {
 
     expect(candidates.length).toBeGreaterThan(0);
     expect(candidates.every((candidate) => candidate.facilityId === factory.id)).toBe(true);
-    expect(candidates.some((candidate) => candidate.operatorId === "char_235_jesica")).toBe(false);
+    expect(candidates.some((candidate) => candidate.operatorId === factoryEliteLockedOperator.id)).toBe(false);
 
-    state.roster.char_235_jesica = {
-      ...state.roster.char_235_jesica,
+    state.roster[factoryEliteLockedOperator.id] = {
+      ...state.roster[factoryEliteLockedOperator.id],
       owned: true,
-      elite: 1
+      elite: factoryEliteLockedSkill.unlockPhase
     };
 
-    expect(findCandidates(factory, state).some((candidate) => candidate.operatorId === "char_235_jesica")).toBe(true);
+    expect(findCandidates(factory, state).some((candidate) => candidate.operatorId === factoryEliteLockedOperator.id)).toBe(true);
   });
 
   it("changes score priority when material weights change", () => {
@@ -37,11 +58,16 @@ describe("optimizer", () => {
   it("does not change base scores from potential", () => {
     const state = createDefaultState();
     const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
-    state.roster.char_237_gravel.potential = 1;
-    const baseScore = findCandidates(factory, state).find((candidate) => candidate.operatorId === "char_237_gravel")!.score;
+    state.roster[defaultOwnedGoldFactoryOperator.id].owned = true;
+    state.roster[defaultOwnedGoldFactoryOperator.id].elite = 0;
+    state.roster[defaultOwnedGoldFactoryOperator.id].potential = 1;
+    const baseScore = findCandidates(factory, state).find((candidate) => candidate.operatorId === defaultOwnedGoldFactoryOperator.id)!
+      .score;
 
-    state.roster.char_237_gravel.potential = 6;
-    const maxPotentialScore = findCandidates(factory, state).find((candidate) => candidate.operatorId === "char_237_gravel")!.score;
+    state.roster[defaultOwnedGoldFactoryOperator.id].potential = 6;
+    const maxPotentialScore = findCandidates(factory, state).find(
+      (candidate) => candidate.operatorId === defaultOwnedGoldFactoryOperator.id
+    )!.score;
 
     expect(maxPotentialScore).toBe(baseScore);
   });
@@ -49,13 +75,17 @@ describe("optimizer", () => {
   it("does not change base scores from level or module state", () => {
     const state = createDefaultState();
     const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
-    state.roster.char_237_gravel.level = 1;
-    state.roster.char_237_gravel.moduleEnabled = false;
-    const baseScore = findCandidates(factory, state).find((candidate) => candidate.operatorId === "char_237_gravel")!.score;
+    state.roster[defaultOwnedGoldFactoryOperator.id].owned = true;
+    state.roster[defaultOwnedGoldFactoryOperator.id].elite = 0;
+    state.roster[defaultOwnedGoldFactoryOperator.id].level = 1;
+    state.roster[defaultOwnedGoldFactoryOperator.id].moduleEnabled = false;
+    const baseScore = findCandidates(factory, state).find((candidate) => candidate.operatorId === defaultOwnedGoldFactoryOperator.id)!
+      .score;
 
-    state.roster.char_237_gravel.level = 90;
-    state.roster.char_237_gravel.moduleEnabled = true;
-    const maxedScore = findCandidates(factory, state).find((candidate) => candidate.operatorId === "char_237_gravel")!.score;
+    state.roster[defaultOwnedGoldFactoryOperator.id].level = 90;
+    state.roster[defaultOwnedGoldFactoryOperator.id].moduleEnabled = true;
+    const maxedScore = findCandidates(factory, state).find((candidate) => candidate.operatorId === defaultOwnedGoldFactoryOperator.id)!
+      .score;
 
     expect(maxedScore).toBe(baseScore);
   });

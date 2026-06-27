@@ -2,12 +2,12 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const root = process.cwd();
-const outputPath = path.join(root, "src", "data", "operators.imported.json");
+const outputPath = path.join(root, "src", "data", "operators.json");
 const sources = {
   characters:
-    "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/ja_JP/gamedata/excel/character_table.json",
+    "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/character_table.json",
   building:
-    "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/ja_JP/gamedata/excel/building_data.json"
+    "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/building_data.json"
 };
 
 async function fetchJson(url) {
@@ -40,59 +40,83 @@ function professionToJa(profession) {
   return map[profession] ?? "その他";
 }
 
-function roomTypeToFacility(roomType) {
-  const text = String(roomType).toLowerCase();
-  if (text.includes("manufact") || text.includes("factory")) return "factory";
-  if (text.includes("trading")) return "trading";
-  if (text.includes("power")) return "power";
-  if (text.includes("control")) return "control";
-  if (text.includes("dorm")) return "dormitory";
-  return null;
+function phaseToElite(phase) {
+  const text = String(phase ?? "PHASE_0");
+  const match = text.match(/\d+/);
+  return Math.min(2, Math.max(0, match ? Number(match[0]) : 0));
 }
 
-function inferProduct(description) {
-  if (/純金|gold/i.test(description)) return "gold";
-  if (/作戦記録|battle|record|exp/i.test(description)) return "battleRecord";
-  if (/龍門幣|LMD|受注|注文|order/i.test(description)) return "lmd";
-  if (/ドローン|発電|power/i.test(description)) return "power";
-  if (/体力|回復|宿舎|morale/i.test(description)) return "morale";
+function roomTypeToFacility(roomType) {
+  switch (String(roomType ?? "").toUpperCase()) {
+    case "MANUFACTURE":
+      return "factory";
+    case "TRADING":
+      return "trading";
+    case "POWER":
+      return "power";
+    case "CONTROL":
+      return "control";
+    case "DORMITORY":
+      return "dormitory";
+    default:
+      return null;
+  }
+}
+
+function inferProduct(description, roomType) {
+  const text = String(description);
+  if (/贵金属|赤金|金属|纯金|gold/i.test(text)) return "gold";
+  if (/作战记录|战斗记录|经验|Battle Record|EXP/i.test(text)) return "battleRecord";
+  if (/龙门币|订单|贸易站|LMD|order/i.test(text)) return "lmd";
+  if (/无人机|发电站|drone|power/i.test(text) || roomType === "POWER") return "power";
+  if (/心情|恢复|宿舍|morale|dorm/i.test(text) || roomType === "DORMITORY") return "morale";
   return undefined;
 }
 
 function inferEfficiency(description) {
-  const percentages = [...String(description).matchAll(/([+-]?\d+)%/g)].map((match) => Number(match[1]));
+  const percentages = [...String(description).matchAll(/([+-]?\d+(?:\.\d+)?)%/g)].map((match) => Number(match[1]));
   const positive = percentages.find((value) => value > 0);
   return positive ? positive / 100 : 0.05;
+}
+
+function cleanDescription(description) {
+  return String(description ?? "")
+    .replace(/<@[^>]+>/g, "")
+    .replace(/<\/>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function normalize(characters, building) {
   const buildingChars = building.chars ?? {};
   const buffs = building.buffs ?? {};
 
-  return Object.values(characters)
-    .filter((character) => character?.name && !character.isNotObtainable)
-    .map((character) => {
-      const buildingEntry = buildingChars[character.charId] ?? buildingChars[character.id] ?? {};
-      const rawBuffs = Array.isArray(buildingEntry.buffChar) ? buildingEntry.buffChar.flat(4) : [];
+  return Object.entries(characters)
+    .filter(([, character]) => character?.name && !character.isNotObtainable && !character.isSpChar)
+    .map(([charId, character]) => {
+      const buildingEntry = buildingChars[charId] ?? {};
+      const rawBuffs = Array.isArray(buildingEntry.buffChar)
+        ? buildingEntry.buffChar.flatMap((group) => group.buffData ?? [])
+        : [];
       const skills = rawBuffs
         .map((rawBuff, index) => {
-          const buffId = rawBuff.buffId ?? rawBuff.buffData?.buffId ?? rawBuff.id;
-          const buff = buffs[buffId] ?? rawBuff;
-          const description = buff.description ?? buff.desc ?? buff.buffName ?? "";
-          const facility = roomTypeToFacility(buff.roomType ?? buff.buffRoomType ?? rawBuff.roomType);
+          const buff = buffs[rawBuff.buffId];
+          if (!buff) return null;
+
+          const facility = roomTypeToFacility(buff.roomType);
           if (!facility) return null;
 
-          const unlockPhase = Number(rawBuff.cond?.phase ?? rawBuff.unlockPhase ?? 0);
+          const description = cleanDescription(buff.description);
           return {
-            id: String(buffId ?? `${character.charId}-base-${index}`),
-            name: buff.buffName ?? buff.name ?? "基地スキル",
-            unlockPhase: Math.min(2, Math.max(0, unlockPhase)),
+            id: String(buff.buffId ?? `${charId}-base-${index}`),
+            name: buff.buffName ?? "基地スキル",
+            unlockPhase: phaseToElite(rawBuff.cond?.phase),
             effects: [
               {
                 facility,
-                product: inferProduct(description),
+                product: inferProduct(description, buff.roomType),
                 efficiency: inferEfficiency(description),
-                tags: [facility],
+                tags: [facility, buff.skillIcon, buff.buffIcon].filter(Boolean),
                 description
               }
             ]
@@ -101,19 +125,20 @@ function normalize(characters, building) {
         .filter(Boolean);
 
       return {
-        id: character.charId,
+        id: charId,
         name: character.name,
         rarity: rarityToNumber(character.rarity),
         profession: professionToJa(character.profession),
         skills
       };
     })
-    .filter((operator) => operator.skills.length > 0);
+    .filter((operator) => operator.skills.length > 0)
+    .sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"));
 }
 
 const [characters, building] = await Promise.all([fetchJson(sources.characters), fetchJson(sources.building)]);
 const operators = normalize(characters, building);
 
 await mkdir(path.dirname(outputPath), { recursive: true });
-await writeFile(outputPath, JSON.stringify(operators, null, 2), "utf8");
+await writeFile(outputPath, `${JSON.stringify(operators, null, 2)}\n`, "utf8");
 console.log(`Imported ${operators.length} operators into ${outputPath}`);

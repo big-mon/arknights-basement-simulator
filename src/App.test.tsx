@@ -2,6 +2,9 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "./App";
+import { operators } from "./data/defaults";
+
+const amiya = operators.find((operator) => operator.id === "char_002_amiya")!;
 
 describe("App", () => {
   beforeEach(() => {
@@ -11,25 +14,26 @@ describe("App", () => {
   it("sets roster ownership and keeps it after remount", async () => {
     const user = userEvent.setup();
     const { unmount } = render(<App />);
-    const amiyaCard = screen.getByText("アーミヤ").closest("article")!;
-    const checkbox = within(amiyaCard).getByRole("checkbox", { name: /アーミヤ/ });
+    const amiyaCard = screen.getByText(amiya.name).closest("article")!;
+    const checkbox = within(amiyaCard).getByRole("checkbox", { name: amiya.name });
 
     await user.click(checkbox);
     expect(checkbox).toBeChecked();
 
     unmount();
     render(<App />);
-    expect(within(screen.getByText("アーミヤ").closest("article")!).getByRole("checkbox", { name: /アーミヤ/ })).toBeChecked();
+    expect(within(screen.getByText(amiya.name).closest("article")!).getByRole("checkbox", { name: amiya.name })).toBeChecked();
   });
 
   it("shows base skill names, targets, and unlock state on operator cards", async () => {
     const user = userEvent.setup();
     render(<App />);
-    const amiyaCard = screen.getByText("アーミヤ").closest("article")!;
-    const skillList = within(amiyaCard).getByRole("list", { name: "アーミヤの基地スキル" });
+    const amiyaCard = screen.getByText(amiya.name).closest("article")!;
+    const skillList = within(amiyaCard).getByRole("list", { name: `${amiya.name}の基地スキル` });
+    const [firstSkill, secondSkill] = amiya.skills;
 
-    expect(within(skillList).getByText("共同作業")).toBeInTheDocument();
-    expect(within(skillList).getByText("精神感応")).toBeInTheDocument();
+    expect(within(skillList).getByText(firstSkill.name)).toBeInTheDocument();
+    expect(within(skillList).getByText(secondSkill.name)).toBeInTheDocument();
     expect(within(skillList).getAllByText(/制御中枢/).length).toBeGreaterThan(0);
     expect(within(skillList).getByText("昇進2で解放")).toBeInTheDocument();
 
