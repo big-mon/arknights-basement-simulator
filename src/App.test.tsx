@@ -12,8 +12,8 @@ const lowRarityOperator = operators.find((operator) => operator.rarity <= 2)!;
 const phonor = operators.find((operator) => operator.id === "char_4136_phonor")!;
 const silverashAlter = operators.find((operator) => operator.id === "char_1045_svash2")!;
 const makiri = operators.find((operator) => operator.id === "char_4199_makiri")!;
-const missingJapaneseNameOperator = operators.find((operator) => !operator.name.ja)!;
-const missingJapaneseFallbackName = localizeText(missingJapaneseNameOperator.name, "ja");
+const missingEnglishNameOperator = operators.find((operator) => !operator.name.en)!;
+const missingEnglishFallbackName = localizeText(missingEnglishNameOperator.name, "en");
 
 function operatorNameJa(operator: (typeof operators)[number]) {
   return localizeText(operator.name, "ja");
@@ -51,16 +51,22 @@ describe("App", () => {
     expect(screen.getByText(/表示対象は、現在対応している基地スキルを持つオペレーターです/)).toBeInTheDocument();
   });
 
+  it("supplements missing Japanese operator names", () => {
+    expect(operators.filter((operator) => !operator.name.ja)).toHaveLength(0);
+    expect(makiri.name.ja).toBe("マツキリ");
+  });
+
   it("marks missing selected-language names without excluding operators", async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.type(screen.getByPlaceholderText("名前で検索"), missingJapaneseNameOperator.id);
+    await user.selectOptions(screen.getByRole("combobox", { name: /言語/ }), "en");
+    await user.type(screen.getByPlaceholderText("Search by name"), missingEnglishNameOperator.id);
 
-    const operatorCard = screen.getByText(missingJapaneseFallbackName).closest("article")!;
-    const checkbox = within(operatorCard).getByRole("checkbox", { name: missingJapaneseFallbackName }) as HTMLInputElement;
+    const operatorCard = screen.getByText(missingEnglishFallbackName).closest("article")!;
+    const checkbox = within(operatorCard).getByRole("checkbox", { name: missingEnglishFallbackName }) as HTMLInputElement;
 
-    expect(within(operatorCard).getByLabelText("選択中の言語名未収録")).toBeInTheDocument();
+    expect(within(operatorCard).getByLabelText("Name missing for selected language")).toBeInTheDocument();
 
     await user.click(checkbox);
 
@@ -148,13 +154,14 @@ describe("App", () => {
   it("includes special playable operators from CN game data", () => {
     expect(silverashAlter.rarity).toBe(6);
     expect(silverashAlter.name.zh).toBeTruthy();
-    expect(silverashAlter.name.ja).toBeUndefined();
+    expect(silverashAlter.name.ja).toBe("凛御シルバーアッシュ");
     expect(silverashAlter.skills.length).toBeGreaterThan(0);
   });
 
   it("includes reception-only operators in the roster", async () => {
     const user = userEvent.setup();
     expect(makiri.rarity).toBe(5);
+    expect(makiri.name.ja).toBe("マツキリ");
     expect(makiri.skills.some((skill) => skill.effects.some((effect) => effect.facility === "reception"))).toBe(true);
 
     render(<App />);

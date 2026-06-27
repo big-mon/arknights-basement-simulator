@@ -1062,6 +1062,7 @@
   {
     "id": "char_4186_tmoris",
     "name": {
+      "ja": "八幡海鈴",
       "zh": "八幡海铃"
     },
     "affiliations": [
@@ -1318,6 +1319,7 @@
   {
     "id": "char_4166_varkis",
     "name": {
+      "ja": "渡し守",
       "zh": "摆渡人"
     },
     "affiliations": [
@@ -1606,6 +1608,7 @@
   {
     "id": "char_4037_demetr",
     "name": {
+      "ja": "ベローネ",
       "zh": "贝洛内"
     },
     "affiliations": [
@@ -2598,6 +2601,7 @@
   {
     "id": "char_1050_chen3",
     "name": {
+      "ja": "赤刃明霄チェン",
       "zh": "赤刃明霄陈"
     },
     "affiliations": [
@@ -3298,6 +3302,7 @@
   {
     "id": "char_4195_radian",
     "name": {
+      "ja": "アーク",
       "zh": "电弧"
     },
     "affiliations": [
@@ -3396,6 +3401,7 @@
   {
     "id": "char_4208_wintim",
     "name": {
+      "ja": "冬時",
       "zh": "冬时"
     },
     "affiliations": [
@@ -4202,6 +4208,7 @@
   {
     "id": "char_4182_oblvns",
     "name": {
+      "ja": "豊川祥子",
       "zh": "丰川祥子"
     },
     "affiliations": [
@@ -4389,6 +4396,7 @@
   {
     "id": "char_4222_taraxa",
     "name": {
+      "ja": "風絮",
       "zh": "风絮"
     },
     "affiliations": [
@@ -4560,6 +4568,7 @@
   {
     "id": "char_4031_liesel",
     "name": {
+      "ja": "復奏",
       "zh": "复奏"
     },
     "affiliations": [
@@ -6926,6 +6935,7 @@
   {
     "id": "char_4203_kichi",
     "name": {
+      "ja": "吉星",
       "zh": "吉星"
     },
     "affiliations": [
@@ -7959,6 +7969,7 @@
   {
     "id": "char_4228_closur",
     "name": {
+      "ja": "クロージャ",
       "zh": "可露希尔"
     },
     "affiliations": [
@@ -8781,6 +8792,7 @@
   {
     "id": "char_1049_catap2",
     "name": {
+      "ja": "雷狼竜S空爆",
       "zh": "雷狼龙S空爆"
     },
     "affiliations": [
@@ -9117,6 +9129,7 @@
   {
     "id": "char_4225_tanya",
     "name": {
+      "ja": "裂響",
       "zh": "裂响"
     },
     "affiliations": [
@@ -9461,6 +9474,7 @@
   {
     "id": "char_1045_svash2",
     "name": {
+      "ja": "凛御シルバーアッシュ",
       "zh": "凛御银灰"
     },
     "affiliations": [
@@ -10005,6 +10019,7 @@
   {
     "id": "char_4215_buddy",
     "name": {
+      "ja": "ロドス隠密隊",
       "zh": "罗德岛隐秘队"
     },
     "affiliations": [
@@ -11305,6 +11320,7 @@
   {
     "id": "char_4212_nasti",
     "name": {
+      "ja": "ナスティ",
       "zh": "娜斯提"
     },
     "affiliations": [
@@ -11527,6 +11543,7 @@
   {
     "id": "char_1051_headb2",
     "name": {
+      "ja": "怒潮ズィマー",
       "zh": "怒潮凛冬"
     },
     "affiliations": [
@@ -12446,6 +12463,7 @@
   {
     "id": "char_4183_mortis",
     "name": {
+      "ja": "若葉睦",
       "zh": "若叶睦"
     },
     "affiliations": [
@@ -12571,6 +12589,7 @@
   {
     "id": "char_4184_dolris",
     "name": {
+      "ja": "三角初華",
       "zh": "三角初华"
     },
     "affiliations": [
@@ -14004,6 +14023,7 @@
   {
     "id": "char_1043_leizi2",
     "name": {
+      "ja": "司霆レイズ",
       "zh": "司霆惊蛰"
     },
     "affiliations": [
@@ -14200,6 +14220,7 @@
   {
     "id": "char_4199_makiri",
     "name": {
+      "ja": "マツキリ",
       "zh": "松桐"
     },
     "affiliations": [
@@ -14369,6 +14390,7 @@
   {
     "id": "char_1047_halo2",
     "name": {
+      "ja": "溯光アステジーニ",
       "zh": "溯光星源"
     },
     "affiliations": [
@@ -14685,6 +14707,7 @@
   {
     "id": "char_4213_skybx",
     "name": {
+      "ja": "スカイボックス",
       "zh": "天空盒"
     },
     "affiliations": [
@@ -14855,6 +14878,7 @@
   {
     "id": "char_2027_wang",
     "name": {
+      "ja": "望",
       "zh": "望"
     },
     "affiliations": [
@@ -15216,6 +15240,7 @@
   {
     "id": "char_4226_veen",
     "name": {
+      "ja": "ヴィー",
       "zh": "维伊"
     },
     "affiliations": [
@@ -15894,6 +15919,7 @@
   {
     "id": "char_4214_cairn",
     "name": {
+      "ja": "響石",
       "zh": "响石"
     },
     "affiliations": [
@@ -16107,6 +16133,7 @@
   {
     "id": "char_4051_akkord",
     "name": {
+      "ja": "協律",
       "zh": "协律"
     },
     "affiliations": [
@@ -16186,6 +16213,7 @@
   {
     "id": "char_1022_flwr2",
     "name": {
+      "ja": "擷英パフューマー",
       "zh": "撷英调香师"
     },
     "affiliations": [
@@ -16690,6 +16718,7 @@
   {
     "id": "char_4211_snhunt",
     "name": {
+      "ja": "雪猟",
       "zh": "雪猎"
     },
     "affiliations": [
@@ -17192,6 +17221,7 @@
   {
     "id": "char_1048_orchd2",
     "name": {
+      "ja": "焔狐竜オーキッド",
       "zh": "焰狐龙梓兰"
     },
     "affiliations": [
@@ -17435,6 +17465,7 @@
   {
     "id": "char_4202_haruka",
     "name": {
+      "ja": "遥",
       "zh": "遥"
     },
     "affiliations": [
@@ -18493,6 +18524,7 @@
   {
     "id": "char_4185_amoris",
     "name": {
+      "ja": "祐天寺若麦",
       "zh": "祐天寺若麦"
     },
     "affiliations": [
@@ -18926,6 +18958,7 @@
   {
     "id": "char_1044_hsgma2",
     "name": {
+      "ja": "斬業ホシグマ",
       "zh": "斩业星熊"
     },
     "affiliations": [
@@ -19157,6 +19190,7 @@
   {
     "id": "char_4204_mantra",
     "name": {
+      "ja": "真言",
       "zh": "真言"
     },
     "affiliations": [
@@ -19852,6 +19886,7 @@
   {
     "id": "char_4227_gallus",
     "name": {
+      "ja": "GALLUS²",
       "zh": "GALLUS²"
     },
     "affiliations": [

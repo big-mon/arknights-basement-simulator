@@ -1,8 +1,9 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const root = process.cwd();
 const outputPath = path.join(root, "src", "data", "operators.json");
+const nameOverridesPath = path.join(root, "src", "data", "operator-name-overrides.json");
 const sources = {
   zh: {
     characters:
@@ -124,6 +125,27 @@ function localizedText(languages, getter, fallback) {
 
 function localizedDescription(languages, getter, fallback) {
   return localizedText(languages, (dataset) => cleanDescription(getter(dataset)), fallback);
+}
+
+async function loadNameOverrides() {
+  try {
+    return JSON.parse(await readFile(nameOverridesPath, "utf8"));
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      return {};
+    }
+    throw error;
+  }
+}
+
+function applyNameOverrides(name, overrides) {
+  if (!overrides) {
+    return name;
+  }
+
+  return Object.fromEntries(
+    Object.entries({ ...overrides, ...name }).filter(([, value]) => typeof value === "string" && value.trim())
+  );
 }
 
 function preferredText(text) {
@@ -294,7 +316,7 @@ function dedupeConditions(conditions) {
   });
 }
 
-function normalize(languages) {
+function normalize(languages, nameOverrides) {
   const characters = languages.zh.characters;
   const building = languages.zh.building;
   const buildingChars = building.chars ?? {};
@@ -349,7 +371,10 @@ function normalize(languages) {
 
       return {
         id: charId,
-        name: localizedText(languages, (dataset) => dataset.characters[charId]?.name, character.name),
+        name: applyNameOverrides(
+          localizedText(languages, (dataset) => dataset.characters[charId]?.name, character.name),
+          nameOverrides[charId]
+        ),
         affiliations: characterAffiliations(character),
         rarity: rarityToNumber(character.rarity),
         profession: professionToJa(character.profession),
@@ -371,7 +396,7 @@ const languages = Object.fromEntries(
     ])
   )
 );
-const operators = normalize(languages);
+const operators = normalize(languages, await loadNameOverrides());
 
 await mkdir(path.dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(operators, null, 2)}\n`, "utf8");
