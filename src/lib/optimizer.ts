@@ -14,6 +14,11 @@ import type {
   RosterEntry
 } from "../types";
 
+type AssignmentEvaluationContext = {
+  assignments: Assignment[];
+  facilities: FacilitySlot[];
+};
+
 const fatigueHoursByFacility: Record<FacilitySlot["type"], number> = {
   factory: 12,
   trading: 12,
@@ -25,26 +30,17 @@ const fatigueHoursByFacility: Record<FacilitySlot["type"], number> = {
 const recoveryBaseHours = 8;
 
 export function generateAssignmentPlan(state: AppState): AssignmentPlan {
-  const usedOperatorIds = new Set<string>();
-  const facilityPlans: FacilityPlan[] = [];
   const enabledFacilities = state.facilities.filter((facility) => facility.type !== "dormitory");
   const globalBonus = calculateGlobalBonus(state);
+  let facilityPlans = buildFacilityPlans(state, enabledFacilities, globalBonus, []);
 
-  for (const facility of enabledFacilities) {
-    const candidates = findCandidates(facility, state, globalBonus)
-      .filter((candidate) => !usedOperatorIds.has(candidate.operatorId))
-      .sort((a, b) => b.score - a.score);
-    const assignments = candidates.slice(0, facility.slotCount);
-    assignments.forEach((assignment) => usedOperatorIds.add(assignment.operatorId));
-
-    const expectedEfficiency = assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
-    facilityPlans.push({
-      facility,
-      assignments,
-      expectedEfficiency,
-      score: assignments.reduce((sum, assignment) => sum + assignment.score, 0),
-      alternatives: candidates.slice(facility.slotCount, facility.slotCount + 3)
-    });
+  for (let index = 0; index < 3; index += 1) {
+    const nextFacilityPlans = buildFacilityPlans(state, enabledFacilities, globalBonus, facilityPlans.flatMap((plan) => plan.assignments));
+    if (assignmentSignature(nextFacilityPlans) === assignmentSignature(facilityPlans)) {
+      facilityPlans = nextFacilityPlans;
+      break;
+    }
+    facilityPlans = nextFacilityPlans;
   }
 
   const activeAssignments = facilityPlans.flatMap((plan) => plan.assignments);
@@ -67,6 +63,45 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
     rotation: buildRotationWindows(activeAssignments, restAssignments, state.rotationCount),
     warnings
   };
+}
+
+function buildFacilityPlans(
+  state: AppState,
+  enabledFacilities: FacilitySlot[],
+  globalBonus: number,
+  contextAssignments: Assignment[]
+): FacilityPlan[] {
+  const usedOperatorIds = new Set<string>();
+  const facilityPlans: FacilityPlan[] = [];
+  const context: AssignmentEvaluationContext = {
+    assignments: contextAssignments,
+    facilities: state.facilities
+  };
+
+  for (const facility of enabledFacilities) {
+    const candidates = findCandidates(facility, state, globalBonus, context)
+      .filter((candidate) => !usedOperatorIds.has(candidate.operatorId))
+      .sort((a, b) => b.score - a.score);
+    const assignments = candidates.slice(0, facility.slotCount);
+    assignments.forEach((assignment) => usedOperatorIds.add(assignment.operatorId));
+
+    const expectedEfficiency = assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
+    facilityPlans.push({
+      facility,
+      assignments,
+      expectedEfficiency,
+      score: assignments.reduce((sum, assignment) => sum + assignment.score, 0),
+      alternatives: candidates.slice(facility.slotCount, facility.slotCount + 3)
+    });
+  }
+
+  return facilityPlans;
+}
+
+function assignmentSignature(facilityPlans: FacilityPlan[]) {
+  return facilityPlans
+    .flatMap((plan) => plan.assignments.map((assignment) => `${assignment.facilityId}:${assignment.operatorId}:${assignment.skillId}`))
+    .join("|");
 }
 
 function buildRotationWindows(activeAssignments: Assignment[], restAssignments: Assignment[], rotationCount = 2) {
@@ -109,7 +144,12 @@ function buildRotationWindows(activeAssignments: Assignment[], restAssignments: 
   ];
 }
 
-export function findCandidates(facility: FacilitySlot, state: AppState, globalBonus = 0): Assignment[] {
+export function findCandidates(
+  facility: FacilitySlot,
+  state: AppState,
+  globalBonus = 0,
+  context?: AssignmentEvaluationContext
+): Assignment[] {
   return operators
     .flatMap((operator) => {
       const rosterEntry = state.roster[operator.id];
@@ -117,7 +157,7 @@ export function findCandidates(facility: FacilitySlot, state: AppState, globalBo
         return [];
       }
 
-      return bestSkillForFacility(operator, rosterEntry, facility, state.preference, globalBonus, state.language);
+      return bestSkillForFacility(operator, rosterEntry, facility, state.preference, globalBonus, state.language, context);
     })
     .sort((a, b) => b.score - a.score);
 }
@@ -128,7 +168,8 @@ function bestSkillForFacility(
   facility: FacilitySlot,
   preference: OptimizationPreference,
   globalBonus: number,
-  language: AppState["language"]
+  language: AppState["language"],
+  context?: AssignmentEvaluationContext
 ): Assignment[] {
   const assignments: Assignment[] = [];
 
@@ -138,7 +179,7 @@ function bestSkillForFacility(
     }
 
     for (const effect of skill.effects) {
-      if (!effectMatchesFacility(effect, facility)) {
+      if (!effectMatchesFacility(effect, facility) || !effectConditionsSatisfied(effect, operator, facility, context)) {
         continue;
       }
 
@@ -167,6 +208,62 @@ function effectMatchesFacility(effect: BaseSkillEffect, facility: FacilitySlot):
   }
 
   return !effect.product || effect.product === facility.product || facility.type === "control";
+}
+
+function effectConditionsSatisfied(
+  effect: BaseSkillEffect,
+  operator: Operator,
+  facility: FacilitySlot,
+  context?: AssignmentEvaluationContext
+): boolean {
+  if (!effect.conditions?.length) {
+    return true;
+  }
+  if (!context) {
+    return false;
+  }
+
+  return effect.conditions.every((condition) => {
+    if (condition.type === "sameFacilityOperator") {
+      return context.assignments.some(
+        (assignment) => assignment.facilityId === facility.id && condition.operatorIds.includes(assignment.operatorId)
+      );
+    }
+
+    if (condition.type === "facilityOperator") {
+      return context.assignments.some((assignment) => {
+        const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
+        return assignedFacility?.type === condition.facility && condition.operatorIds.includes(assignment.operatorId);
+      });
+    }
+
+    if (condition.type === "sameFacilityAffiliation") {
+      return (
+        context.assignments.filter(
+          (assignment) =>
+            assignment.facilityId === facility.id &&
+            assignment.operatorId !== operator.id &&
+            operatorHasAnyAffiliation(assignment.operatorId, condition.affiliations)
+        ).length >= (condition.min ?? 1)
+      );
+    }
+
+    return (
+      context.assignments.filter((assignment) => {
+        if (assignment.operatorId === operator.id) {
+          return false;
+        }
+        const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
+        const matchesFacility = condition.facility ? assignedFacility?.type === condition.facility : true;
+        return matchesFacility && operatorHasAnyAffiliation(assignment.operatorId, condition.affiliations);
+      }).length >= (condition.min ?? 1)
+    );
+  });
+}
+
+function operatorHasAnyAffiliation(operatorId: string, affiliations: string[]) {
+  const operator = operators.find((candidate) => candidate.id === operatorId);
+  return Boolean(operator?.affiliations?.some((affiliation) => affiliations.includes(affiliation)));
 }
 
 function calculateGlobalBonus(state: AppState): number {

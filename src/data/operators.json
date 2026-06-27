@@ -6,6 +6,10 @@
       "ja": "ア",
       "en": "Aak"
     },
+    "affiliations": [
+      "lungmen",
+      "lee"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -44,6 +48,9 @@
       "ja": "アランナ",
       "en": "Alanna"
     },
+    "affiliations": [
+      "rim"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -117,6 +124,14 @@
               "bskill_man_spd_double",
               "manufacture"
             ],
+            "conditions": [
+              {
+                "type": "sameFacilityOperator",
+                "operatorIds": [
+                  "char_4081_warmy"
+                ]
+              }
+            ],
             "description": {
               "zh": "进驻制造站时，当与温米在同一个制造站时，贵金属类配方的生产力+15%",
               "ja": "ウォーミーと同じ製造所に配置時、金属製造の製造効率+15%",
@@ -134,6 +149,9 @@
       "ja": "アロマ",
       "en": "Aroma"
     },
+    "affiliations": [
+      "siracusa"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -197,6 +215,9 @@
       "ja": "アーミヤ",
       "en": "Amiya"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -261,6 +282,10 @@
       "ja": "アスカロン",
       "en": "Ascalon"
     },
+    "affiliations": [
+      "rhodes",
+      "sweep"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -324,6 +349,9 @@
       "ja": "ショウ",
       "en": "Shaw"
     },
+    "affiliations": [
+      "lungmen"
+    ],
     "rarity": 5,
     "profession": "特殊",
     "skills": [
@@ -362,6 +390,9 @@
       "ja": "Ela",
       "en": "Ela"
     },
+    "affiliations": [
+      "rainbow"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -400,6 +431,9 @@
       "ja": "エステル",
       "en": "Estelle"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 5,
     "profession": "前衛",
     "skills": [
@@ -438,6 +472,9 @@
       "ja": "エイヤフィヤトラ",
       "en": "Eyjafjalla"
     },
+    "affiliations": [
+      "leithanien"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -475,6 +512,9 @@
       "ja": "アイリス",
       "en": "Iris"
     },
+    "affiliations": [
+      "victoria"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -539,6 +579,9 @@
       "ja": "アンブリエル",
       "en": "Ambriel"
     },
+    "affiliations": [
+      "laterano"
+    ],
     "rarity": 5,
     "profession": "狙撃",
     "skills": [
@@ -603,6 +646,10 @@
       "ja": "アドナキエル",
       "en": "Adnachiel"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve4"
+    ],
     "rarity": 4,
     "profession": "狙撃",
     "skills": [
@@ -641,6 +688,10 @@
       "ja": "アンセル",
       "en": "Ansel"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve4"
+    ],
     "rarity": 4,
     "profession": "医療",
     "skills": [
@@ -679,6 +730,10 @@
       "ja": "アンドレアナ",
       "en": "Andreana"
     },
+    "affiliations": [
+      "egir",
+      "abyssal"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -743,6 +798,9 @@
       "ja": "ロープ",
       "en": "Rope"
     },
+    "affiliations": [
+      "lungmen"
+    ],
     "rarity": 5,
     "profession": "特殊",
     "skills": [
@@ -779,6 +837,9 @@
     "name": {
       "zh": "八幡海铃"
     },
+    "affiliations": [
+      "mujica"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -834,6 +895,10 @@
       "ja": "フィリオプシス",
       "en": "Ptilopsis"
     },
+    "affiliations": [
+      "columbia",
+      "rhine"
+    ],
     "rarity": 6,
     "profession": "医療",
     "skills": [
@@ -896,6 +961,9 @@
       "ja": "シラユキ",
       "en": "Shirayuki"
     },
+    "affiliations": [
+      "higashi"
+    ],
     "rarity": 5,
     "profession": "狙撃",
     "skills": [
@@ -934,6 +1002,9 @@
       "ja": "バイビーク",
       "en": "Bibeak"
     },
+    "affiliations": [
+      "sami"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -996,6 +1067,9 @@
     "name": {
       "zh": "摆渡人"
     },
+    "affiliations": [
+      "minos"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -1052,6 +1126,9 @@
       "ja": "バイソン",
       "en": "Bison"
     },
+    "affiliations": [
+      "lungmen"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -1116,6 +1193,10 @@
       "ja": "スポット",
       "en": "Spot"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve6"
+    ],
     "rarity": 4,
     "profession": "重装",
     "skills": [
@@ -1154,6 +1235,9 @@
       "ja": "ミント",
       "en": "Mint"
     },
+    "affiliations": [
+      "victoria"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -1191,6 +1275,9 @@
       "ja": "サベージ",
       "en": "Savage"
     },
+    "affiliations": [
+      "rim"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -1229,6 +1316,9 @@
       "ja": "ヘビーレイン",
       "en": "Heavyrain"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -1265,6 +1355,9 @@
     "name": {
       "zh": "贝洛内"
     },
+    "affiliations": [
+      "siracusa"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -1343,6 +1436,9 @@
       "ja": "ベナ",
       "en": "Bena"
     },
+    "affiliations": [
+      "victoria"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -1407,6 +1503,9 @@
       "ja": "コールドショット",
       "en": "Coldshot"
     },
+    "affiliations": [
+      "columbia"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -1471,6 +1570,9 @@
       "ja": "ボビング",
       "en": "Bobbing"
     },
+    "affiliations": [
+      "columbia"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -1535,6 +1637,9 @@
       "ja": "ポデンコ",
       "en": "Podenco"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 5,
     "profession": "補助",
     "skills": [
@@ -1625,6 +1730,9 @@
       "ja": "プリン",
       "en": "Pudding"
     },
+    "affiliations": [
+      "columbia"
+    ],
     "rarity": 5,
     "profession": "術師",
     "skills": [
@@ -1689,6 +1797,9 @@
       "ja": "フィグリーノ",
       "en": "Figurino"
     },
+    "affiliations": [
+      "siracusa"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -1752,6 +1863,10 @@
       "ja": "ブライオファイタ",
       "en": "Bryophyta"
     },
+    "affiliations": [
+      "columbia",
+      "siesta"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -1816,6 +1931,9 @@
       "ja": "マトイマル",
       "en": "Matoimaru"
     },
+    "affiliations": [
+      "higashi"
+    ],
     "rarity": 5,
     "profession": "前衛",
     "skills": [
@@ -1854,6 +1972,9 @@
       "ja": "ツェルニー",
       "en": "Czerny"
     },
+    "affiliations": [
+      "leithanien"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -1918,6 +2039,10 @@
       "ja": "チェン",
       "en": "Ch'en"
     },
+    "affiliations": [
+      "lungmen",
+      "lgd"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -1956,6 +2081,9 @@
       "ja": "ゴールデングロー",
       "en": "Goldenglow"
     },
+    "affiliations": [
+      "victoria"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -2020,6 +2148,9 @@
       "ja": "ペナンス",
       "en": "Penance"
     },
+    "affiliations": [
+      "siracusa"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -2058,6 +2189,9 @@
       "ja": "プラマニクス",
       "en": "Pramanix"
     },
+    "affiliations": [
+      "kjerag"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -2096,6 +2230,9 @@
       "ja": "ヴィジェル",
       "en": "Vigil"
     },
+    "affiliations": [
+      "siracusa"
+    ],
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
@@ -2134,6 +2271,9 @@
       "ja": "ヴァンデラ",
       "en": "Vendela"
     },
+    "affiliations": [
+      "victoria"
+    ],
     "rarity": 6,
     "profession": "医療",
     "skills": [
@@ -2198,6 +2338,9 @@
       "ja": "デルフィーン",
       "en": "Delphine"
     },
+    "affiliations": [
+      "victoria"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -2219,6 +2362,16 @@
               "bskill_ctrl_g_limit&spd",
               "control"
             ],
+            "conditions": [
+              {
+                "type": "facilityAffiliation",
+                "facility": "trading",
+                "affiliations": [
+                  "glasgow"
+                ],
+                "min": 1
+              }
+            ],
             "description": {
               "zh": "进驻控制中枢时，同一贸易站中，每有1名格拉斯哥帮干员，订单获取效率+10%",
               "ja": "制御中枢配属時、貿易所に配置されたグラスゴーオペレーター1人につき、受注効率+10%",
@@ -2236,6 +2389,9 @@
       "ja": "プロヴァイゾ",
       "en": "Proviso"
     },
+    "affiliations": [
+      "kazimierz"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -2326,6 +2482,9 @@
       "ja": "Fuze",
       "en": "Fuze"
     },
+    "affiliations": [
+      "rainbow"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -2363,6 +2522,10 @@
       "ja": "テキサス",
       "en": "Texas"
     },
+    "affiliations": [
+      "lungmen",
+      "penguin"
+    ],
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
@@ -2383,6 +2546,14 @@
               "trading",
               "bskill_tra_texas1",
               "trading"
+            ],
+            "conditions": [
+              {
+                "type": "sameFacilityOperator",
+                "operatorIds": [
+                  "char_140_whitew"
+                ]
+              }
             ],
             "description": {
               "zh": "当与拉普兰德在同一个贸易站时，心情每小时消耗+0.3，订单获取效率+65%",
@@ -2410,6 +2581,14 @@
               "bskill_tra_texas2",
               "trading"
             ],
+            "conditions": [
+              {
+                "type": "sameFacilityOperator",
+                "operatorIds": [
+                  "char_103_angel"
+                ]
+              }
+            ],
             "description": {
               "zh": "当与能天使在同一个贸易站时，心情每小时消耗-0.3",
               "ja": "エクシアと同じ貿易所に配置時、1時間ごとの体力消費量-0.3",
@@ -2427,6 +2606,9 @@
       "ja": "アーススピリット",
       "en": "Earthspirit"
     },
+    "affiliations": [
+      "leithanien"
+    ],
     "rarity": 5,
     "profession": "補助",
     "skills": [
@@ -2462,6 +2644,10 @@
     "name": {
       "zh": "电弧"
     },
+    "affiliations": [
+      "rhodes",
+      "elite"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -2518,6 +2704,9 @@
       "ja": "パフューマー",
       "en": "Perfumer"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 5,
     "profession": "医療",
     "skills": [
@@ -2553,6 +2742,9 @@
     "name": {
       "zh": "冬时"
     },
+    "affiliations": [
+      "ursus"
+    ],
     "rarity": 5,
     "profession": "先鋒",
     "skills": [
@@ -2607,6 +2799,9 @@
       "ja": "ビーンストーク",
       "en": "Beanstalk"
     },
+    "affiliations": [
+      "columbia"
+    ],
     "rarity": 5,
     "profession": "先鋒",
     "skills": [
@@ -2670,6 +2865,9 @@
       "ja": "ドーベルマン",
       "en": "Dobermann"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 5,
     "profession": "前衛",
     "skills": [
@@ -2708,6 +2906,10 @@
       "ja": "ドゥリン",
       "en": "Durin"
     },
+    "affiliations": [
+      "rhodes",
+      "action4"
+    ],
     "rarity": 3,
     "profession": "術師",
     "skills": [
@@ -2772,6 +2974,9 @@
       "ja": "ミトム",
       "en": "Mitm"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
@@ -2836,6 +3041,9 @@
       "ja": "コンビクション",
       "en": "Conviction"
     },
+    "affiliations": [
+      "minos"
+    ],
     "rarity": 5,
     "profession": "前衛",
     "skills": [
@@ -2900,6 +3108,10 @@
       "ja": "ドロシー",
       "en": "Dorothy"
     },
+    "affiliations": [
+      "columbia",
+      "rhine"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -2962,6 +3174,9 @@
       "ja": "ウィンドチャイム",
       "en": "Wind Chimes"
     },
+    "affiliations": [
+      "yan"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -3026,6 +3241,9 @@
       "ja": "アレーン",
       "en": "Arene"
     },
+    "affiliations": [
+      "laterano"
+    ],
     "rarity": 5,
     "profession": "前衛",
     "skills": [
@@ -3064,6 +3282,9 @@
       "ja": "フィラエ",
       "en": "Philae"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -3128,6 +3349,9 @@
       "ja": "フィアメッタ",
       "en": "Fiammetta"
     },
+    "affiliations": [
+      "laterano"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -3192,6 +3416,10 @@
       "ja": "フェン",
       "en": "Fang"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve1"
+    ],
     "rarity": 4,
     "profession": "先鋒",
     "skills": [
@@ -3253,6 +3481,9 @@
     "name": {
       "zh": "丰川祥子"
     },
+    "affiliations": [
+      "mujica"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -3331,6 +3562,9 @@
       "ja": "バグパイプ",
       "en": "Bagpipe"
     },
+    "affiliations": [
+      "victoria"
+    ],
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
@@ -3367,6 +3601,9 @@
     "name": {
       "zh": "风絮"
     },
+    "affiliations": [
+      "yan"
+    ],
     "rarity": 6,
     "profession": "医療",
     "skills": [
@@ -3427,6 +3664,10 @@
       "ja": "ハイビスカス",
       "en": "Hibiscus"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve1"
+    ],
     "rarity": 4,
     "profession": "医療",
     "skills": [
@@ -3465,6 +3706,10 @@
       "ja": "グレイディーア",
       "en": "Gladiia"
     },
+    "affiliations": [
+      "egir",
+      "abyssal"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -3512,6 +3757,15 @@
               "bskill_ctrl_aegir",
               "control"
             ],
+            "conditions": [
+              {
+                "type": "facilityAffiliation",
+                "affiliations": [
+                  "abyssal"
+                ],
+                "min": 1
+              }
+            ],
             "description": {
               "zh": "进驻控制中枢时，控制中枢内所有干员的心情每小时恢复+0.05；基建内（不包含副手及活动室使用者）深海猎人干员获得特殊加成（与部分技能有特殊叠加规则）",
               "ja": "制御中枢配置時、制御中枢内全員の体力が1時間ごとに+0.05回復。基地内（補佐と活動室利用者を除く）のアビサルハンター所属オペレーターが特殊効果を得る（一部のスキルに対して特殊加算制限がある）",
@@ -3538,6 +3792,15 @@
               "bskill_ctrl_aegir2",
               "control"
             ],
+            "conditions": [
+              {
+                "type": "facilityAffiliation",
+                "affiliations": [
+                  "abyssal"
+                ],
+                "min": 1
+              }
+            ],
             "description": {
               "zh": "进驻控制中枢时，控制中枢内所有干员的心情每小时恢复+0.05；基建内（不包含副手及活动室使用者）深海猎人干员获得特殊加成（与部分技能有特殊叠加规则）",
               "ja": "制御中枢配置時、制御中枢内全員の体力が1時間ごとに+0.05回復。基地内（補佐と活動室利用者を除く）のアビサルハンター所属オペレーターが特殊効果を得る（一部のスキルに対して特殊加算制限がある）",
@@ -3555,6 +3818,9 @@
       "ja": "グラウコス",
       "en": "Glaucus"
     },
+    "affiliations": [
+      "iberia"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -3619,6 +3885,9 @@
       "ja": "グレイ",
       "en": "Greyy"
     },
+    "affiliations": [
+      "bolivar"
+    ],
     "rarity": 5,
     "profession": "術師",
     "skills": [
@@ -3657,6 +3926,10 @@
       "ja": "グム",
       "en": "Gummy"
     },
+    "affiliations": [
+      "ursus",
+      "student"
+    ],
     "rarity": 5,
     "profession": "重装",
     "skills": [
@@ -3721,6 +3994,9 @@
       "ja": "ローズソルト",
       "en": "Rose Salt"
     },
+    "affiliations": [
+      "iberia"
+    ],
     "rarity": 6,
     "profession": "医療",
     "skills": [
@@ -3785,6 +4061,9 @@
       "ja": "ハイディ",
       "en": "Heidi"
     },
+    "affiliations": [
+      "victoria"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -3874,6 +4153,9 @@
       "ja": "ハイモア",
       "en": "Highmore"
     },
+    "affiliations": [
+      "iberia"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -3936,6 +4218,9 @@
       "ja": "ルシーラ",
       "en": "Lucilla"
     },
+    "affiliations": [
+      "egir"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -4000,6 +4285,9 @@
       "ja": "サンタラ",
       "en": "Santalla"
     },
+    "affiliations": [
+      "sami"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -4038,6 +4326,10 @@
       "ja": "ハーモニー",
       "en": "Harmonie"
     },
+    "affiliations": [
+      "victoria",
+      "tara"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -4076,6 +4368,9 @@
       "ja": "チェストナット",
       "en": "Chestnut"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 5,
     "profession": "医療",
     "skills": [
@@ -4138,6 +4433,9 @@
       "ja": "ヘドリー",
       "en": "Hoederer"
     },
+    "affiliations": [
+      "babel"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -4202,6 +4500,9 @@
       "ja": "ヘラグ",
       "en": "Hellagur"
     },
+    "affiliations": [
+      "ursus"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -4292,6 +4593,10 @@
       "ja": "サイレンス",
       "en": "Silence"
     },
+    "affiliations": [
+      "columbia",
+      "rhine"
+    ],
     "rarity": 6,
     "profession": "医療",
     "skills": [
@@ -4354,6 +4659,10 @@
       "ja": "シュヴァルツ",
       "en": "Schwarz"
     },
+    "affiliations": [
+      "columbia",
+      "siesta"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -4392,6 +4701,9 @@
       "ja": "エーベンホルツ",
       "en": "Ebenholz"
     },
+    "affiliations": [
+      "leithanien"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -4482,6 +4794,10 @@
       "ja": "ノイルホーン",
       "en": "Noir Corne"
     },
+    "affiliations": [
+      "rhodes",
+      "action4"
+    ],
     "rarity": 3,
     "profession": "重装",
     "skills": [
@@ -4545,6 +4861,9 @@
       "ja": "サンドレコナー",
       "en": "Sand Reckoner"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -4609,6 +4928,10 @@
       "ja": "ウン",
       "en": "Hung"
     },
+    "affiliations": [
+      "lungmen",
+      "lee"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -4647,6 +4970,10 @@
       "ja": "レッド",
       "en": "Projekt Red"
     },
+    "affiliations": [
+      "rhodes",
+      "sweep"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -4685,6 +5012,9 @@
       "ja": "ヴィグナ",
       "en": "Vigna"
     },
+    "affiliations": [
+      "columbia"
+    ],
     "rarity": 5,
     "profession": "先鋒",
     "skills": [
@@ -4723,6 +5053,9 @@
       "ja": "ケストレル",
       "en": "Kestrel"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
@@ -4787,6 +5120,9 @@
       "ja": "ヴァーミル",
       "en": "Vermeil"
     },
+    "affiliations": [
+      "siracusa"
+    ],
     "rarity": 5,
     "profession": "狙撃",
     "skills": [
@@ -4850,6 +5186,9 @@
       "ja": "パゼオンカ",
       "en": "Pozëmka"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -4914,6 +5253,10 @@
       "ja": "ワイフー",
       "en": "Waai Fu"
     },
+    "affiliations": [
+      "lungmen",
+      "lee"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -4977,6 +5320,10 @@
       "ja": "ブレイズ",
       "en": "Blaze"
     },
+    "affiliations": [
+      "rhodes",
+      "elite"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -5015,6 +5362,10 @@
       "ja": "アッシュロック",
       "en": "Ashlock"
     },
+    "affiliations": [
+      "kazimierz",
+      "pinus"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -5077,6 +5428,9 @@
       "ja": "グレースロート",
       "en": "GreyThroat"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -5141,6 +5495,9 @@
       "ja": "Ash",
       "en": "Ash"
     },
+    "affiliations": [
+      "rainbow"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -5204,6 +5561,9 @@
       "ja": "ファイヤーホイッスル",
       "en": "Firewhistle"
     },
+    "affiliations": [
+      "rim"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -5268,6 +5628,9 @@
       "ja": "ヴァルカン",
       "en": "Vulcan"
     },
+    "affiliations": [
+      "minos"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -5330,6 +5693,9 @@
     "name": {
       "zh": "吉星"
     },
+    "affiliations": [
+      "higashi"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -5386,6 +5752,9 @@
       "ja": "ジュナー",
       "en": "Dur-nar"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 5,
     "profession": "重装",
     "skills": [
@@ -5424,6 +5793,10 @@
       "ja": "デーゲンブレヒャー",
       "en": "Degenbrecher"
     },
+    "affiliations": [
+      "kjerag",
+      "karlan"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -5514,6 +5887,10 @@
       "ja": "マッターホルン",
       "en": "Matterhorn"
     },
+    "affiliations": [
+      "kjerag",
+      "karlan"
+    ],
     "rarity": 5,
     "profession": "重装",
     "skills": [
@@ -5552,6 +5929,9 @@
       "ja": "ジェイ",
       "en": "Jaye"
     },
+    "affiliations": [
+      "lungmen"
+    ],
     "rarity": 5,
     "profession": "特殊",
     "skills": [
@@ -5616,6 +5996,9 @@
       "ja": "ジャッキー",
       "en": "Jackie"
     },
+    "affiliations": [
+      "columbia"
+    ],
     "rarity": 5,
     "profession": "前衛",
     "skills": [
@@ -5654,6 +6037,10 @@
       "ja": "ジェシカ",
       "en": "Jessica"
     },
+    "affiliations": [
+      "columbia",
+      "blacksteel"
+    ],
     "rarity": 5,
     "profession": "狙撃",
     "skills": [
@@ -5691,6 +6078,9 @@
       "ja": "ジエユン",
       "en": "Jieyun"
     },
+    "affiliations": [
+      "yan"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -5778,6 +6168,9 @@
       "ja": "レイズ",
       "en": "Leizi"
     },
+    "affiliations": [
+      "yan"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -5841,6 +6234,9 @@
       "ja": "カシャ",
       "en": "Click"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 5,
     "profession": "術師",
     "skills": [
@@ -5905,6 +6301,9 @@
       "ja": "カフカ",
       "en": "Kafka"
     },
+    "affiliations": [
+      "columbia"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -5969,6 +6368,10 @@
       "ja": "カーディ",
       "en": "Cardigan"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve4"
+    ],
     "rarity": 4,
     "profession": "重装",
     "skills": [
@@ -6032,6 +6435,9 @@
       "ja": "ケルシー",
       "en": "Kal'tsit"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "医療",
     "skills": [
@@ -6067,6 +6473,9 @@
     "name": {
       "zh": "可露希尔"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
@@ -6123,6 +6532,10 @@
       "ja": "クロワッサン",
       "en": "Croissant"
     },
+    "affiliations": [
+      "lungmen",
+      "penguin"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -6187,6 +6600,10 @@
       "ja": "クルース",
       "en": "Kroos"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve1"
+    ],
     "rarity": 4,
     "profession": "狙撃",
     "skills": [
@@ -6250,6 +6667,9 @@
       "ja": "ケオベ",
       "en": "Ceobe"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -6313,6 +6733,10 @@
       "ja": "ソラ",
       "en": "Sora"
     },
+    "affiliations": [
+      "lungmen",
+      "penguin"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -6377,6 +6801,10 @@
       "ja": "カタパルト",
       "en": "Catapult"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve6"
+    ],
     "rarity": 4,
     "profession": "狙撃",
     "skills": [
@@ -6415,6 +6843,9 @@
       "ja": "スプリア",
       "en": "Spuria"
     },
+    "affiliations": [
+      "laterano"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -6505,6 +6936,9 @@
       "ja": "アルケット",
       "en": "Archetto"
     },
+    "affiliations": [
+      "laterano"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -6569,6 +7003,9 @@
       "ja": "ラップランド",
       "en": "Lappland"
     },
+    "affiliations": [
+      "siracusa"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -6589,6 +7026,14 @@
               "trading",
               "bskill_tra_Lappland1",
               "trading"
+            ],
+            "conditions": [
+              {
+                "type": "sameFacilityOperator",
+                "operatorIds": [
+                  "char_102_texas"
+                ]
+              }
             ],
             "description": {
               "zh": "当与德克萨斯在同一个贸易站时，心情每小时消耗-0.1，订单上限+2",
@@ -6616,6 +7061,14 @@
               "bskill_tra_Lappland2",
               "trading"
             ],
+            "conditions": [
+              {
+                "type": "sameFacilityOperator",
+                "operatorIds": [
+                  "char_102_texas"
+                ]
+              }
+            ],
             "description": {
               "zh": "当与德克萨斯在同一个贸易站时，心情每小时消耗-0.1，订单上限+4",
               "ja": "テキサスと同じ貿易所に配置時、1時間ごとの体力消費量-0.1、注文上限+4",
@@ -6633,6 +7086,10 @@
       "ja": "リー",
       "en": "Lee"
     },
+    "affiliations": [
+      "lungmen",
+      "lee"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -6653,6 +7110,15 @@
               "control",
               "bskill_ctrl_lda",
               "control"
+            ],
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "control",
+                "operatorIds": [
+                  "char_225_haak"
+                ]
+              }
             ],
             "description": {
               "zh": "当与阿进驻控制中枢一起工作时，控制中枢内所有干员心情每小时恢复+0.25",
@@ -6696,6 +7162,10 @@
       "ja": "リスカム",
       "en": "Liskarm"
     },
+    "affiliations": [
+      "columbia",
+      "blacksteel"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -6760,6 +7230,9 @@
       "ja": "レミュアン",
       "en": "Lemuen"
     },
+    "affiliations": [
+      "laterano"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -6807,6 +7280,14 @@
               "bskill_tra_lemuen1",
               "trading"
             ],
+            "conditions": [
+              {
+                "type": "sameFacilityOperator",
+                "operatorIds": [
+                  "char_103_angel"
+                ]
+              }
+            ],
             "description": {
               "zh": "进驻贸易站时，订单获取效率+20%；当与能天使在同一个贸易站时，订单获取效率额外+25%",
               "ja": "貿易所配置時、受注効率+20%。エクシアと同じ貿易所に配置されている場合、追加で受注効率+25%",
@@ -6824,6 +7305,9 @@
       "ja": "グラベル",
       "en": "Gravel"
     },
+    "affiliations": [
+      "kazimierz"
+    ],
     "rarity": 5,
     "profession": "特殊",
     "skills": [
@@ -6862,6 +7346,10 @@
       "ja": "リェータ",
       "en": "Leto"
     },
+    "affiliations": [
+      "ursus",
+      "student"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -6883,6 +7371,15 @@
               "bskill_formula_spd_sunbr",
               "manufacture"
             ],
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "trading",
+                "operatorIds": [
+                  "char_196_sunbr"
+                ]
+              }
+            ],
             "description": {
               "zh": "进驻制造站时，若古米在贸易站，则作战记录类配方的生产力+35%",
               "ja": "製造所配置時、グムが貿易所に配属されている場合、作戦記録製造の製造効率+35%",
@@ -6898,6 +7395,9 @@
     "name": {
       "zh": "裂响"
     },
+    "affiliations": [
+      "ursus"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -6954,6 +7454,9 @@
       "ja": "ニアール",
       "en": "Nearl"
     },
+    "affiliations": [
+      "followers"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -7018,6 +7521,10 @@
       "ja": "ズィマー",
       "en": "Zima"
     },
+    "affiliations": [
+      "ursus",
+      "student"
+    ],
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
@@ -7082,6 +7589,10 @@
       "ja": "ノーシス",
       "en": "Gnosis"
     },
+    "affiliations": [
+      "kjerag",
+      "karlan"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -7129,6 +7640,16 @@
               "bskill_ctrl_t_limit&spd",
               "control"
             ],
+            "conditions": [
+              {
+                "type": "facilityAffiliation",
+                "facility": "trading",
+                "affiliations": [
+                  "karlan"
+                ],
+                "min": 1
+              }
+            ],
             "description": {
               "zh": "进驻控制中枢时，每个进驻在贸易站的谢拉格干员，订单获取效率-15%，订单上限+6",
               "ja": "制御中枢配属時、貿易所に配属したカランド貿易所属オペレーターの受注効率-15%、注文上限+6。",
@@ -7146,6 +7667,9 @@
       "ja": "プリュム",
       "en": "Plume"
     },
+    "affiliations": [
+      "laterano"
+    ],
     "rarity": 4,
     "profession": "先鋒",
     "skills": [
@@ -7184,6 +7708,9 @@
       "ja": "グレースベアラー",
       "en": "Gracebearer"
     },
+    "affiliations": [
+      "bolivar"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -7222,6 +7749,10 @@
       "ja": "リィン",
       "en": "Ling"
     },
+    "affiliations": [
+      "yan",
+      "sui"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -7286,6 +7817,9 @@
       "ja": "ルーメン",
       "en": "Lumen"
     },
+    "affiliations": [
+      "iberia"
+    ],
     "rarity": 6,
     "profession": "医療",
     "skills": [
@@ -7350,6 +7884,9 @@
       "ja": "メテオ",
       "en": "Meteor"
     },
+    "affiliations": [
+      "kazimierz"
+    ],
     "rarity": 5,
     "profession": "狙撃",
     "skills": [
@@ -7413,6 +7950,9 @@
       "ja": "テキーラ",
       "en": "Tequila"
     },
+    "affiliations": [
+      "bolivar"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -7477,6 +8017,9 @@
       "ja": "ウインドフリット",
       "en": "Windflit"
     },
+    "affiliations": [
+      "columbia"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -7515,6 +8058,9 @@
       "ja": "ロベルタ",
       "en": "Roberta"
     },
+    "affiliations": [
+      "columbia"
+    ],
     "rarity": 5,
     "profession": "補助",
     "skills": [
@@ -7550,6 +8096,9 @@
     "name": {
       "zh": "罗德岛隐秘队"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 2,
     "profession": "先鋒",
     "skills": [
@@ -7584,6 +8133,9 @@
       "ja": "ムリナール",
       "en": "Młynar"
     },
+    "affiliations": [
+      "kazimierz"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -7648,6 +8200,9 @@
       "ja": "マルシル",
       "en": "Marcille"
     },
+    "affiliations": [
+      "laios"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -7735,6 +8290,10 @@
       "ja": "メランサ",
       "en": "Melantha"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve4"
+    ],
     "rarity": 4,
     "profession": "前衛",
     "skills": [
@@ -7773,6 +8332,10 @@
       "ja": "メイヤー",
       "en": "Mayer"
     },
+    "affiliations": [
+      "columbia",
+      "rhine"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -7810,6 +8373,10 @@
       "ja": "ロスモンティス",
       "en": "Rosmontis"
     },
+    "affiliations": [
+      "rhodes",
+      "elite"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -7898,6 +8465,10 @@
       "ja": "ビーグル",
       "en": "Beagle"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve1"
+    ],
     "rarity": 4,
     "profession": "重装",
     "skills": [
@@ -7961,6 +8532,9 @@
       "ja": "ハニーベリー",
       "en": "Honeyberry"
     },
+    "affiliations": [
+      "rim"
+    ],
     "rarity": 6,
     "profession": "医療",
     "skills": [
@@ -7999,6 +8573,9 @@
       "ja": "パプリカ",
       "en": "Paprika"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "医療",
     "skills": [
@@ -8089,6 +8666,10 @@
       "ja": "モーガン",
       "en": "Morgan"
     },
+    "affiliations": [
+      "victoria",
+      "glasgow"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -8136,6 +8717,21 @@
               "bskill_tra_par1",
               "trading"
             ],
+            "conditions": [
+              {
+                "type": "sameFacilityOperator",
+                "operatorIds": [
+                  "char_112_siege"
+                ]
+              },
+              {
+                "type": "sameFacilityAffiliation",
+                "affiliations": [
+                  "glasgow"
+                ],
+                "min": 1
+              }
+            ],
             "description": {
               "zh": "进驻贸易站时，同个贸易站中每有1名格拉斯哥帮干员，当前贸易站订单获取效率+20%；当与推进之王在同一个贸易站时，订单获取效率额外+35%",
               "ja": "貿易所配置時、同じ貿易所に配置されているグラスゴーオペレーター1人につき、配置貿易所の受注効率+20%。シージと同じ貿易所に配置されている場合、追加で受注効率+35%",
@@ -8153,6 +8749,9 @@
       "ja": "シヴィライト・エテルナ",
       "en": "Civilight Eterna"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -8242,6 +8841,9 @@
       "ja": "ミルラ",
       "en": "Myrrh"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 5,
     "profession": "医療",
     "skills": [
@@ -8280,6 +8882,10 @@
       "ja": "ミュルジス",
       "en": "Muelsyse"
     },
+    "affiliations": [
+      "columbia",
+      "rhine"
+    ],
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
@@ -8327,6 +8933,15 @@
               "bskill_power_rec_rhine",
               "power"
             ],
+            "conditions": [
+              {
+                "type": "facilityAffiliation",
+                "affiliations": [
+                  "rhine"
+                ],
+                "min": 1
+              }
+            ],
             "description": {
               "zh": "进驻发电站时，无人机充能速度+10%，基建内（不包含副手及活动室使用者）每有1名除自身以外的莱茵生命干员（最多5名），充能速度额外+3%",
               "ja": "発電所配置時、ドローンの回復速度+10%。基地内の自身以外（補佐と活動室利用者を除く）のライン生命オペレーター1人につき（最大5人まで）、追加でドローン回復速度+3%",
@@ -8344,6 +8959,9 @@
       "ja": "ウルフェナイト",
       "en": "Wulfenite"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -8407,6 +9025,9 @@
       "ja": "ムース",
       "en": "Mousse"
     },
+    "affiliations": [
+      "victoria"
+    ],
     "rarity": 5,
     "profession": "前衛",
     "skills": [
@@ -8471,6 +9092,9 @@
       "ja": "ナラントゥヤ",
       "en": "Narantuya"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -8533,6 +9157,10 @@
     "name": {
       "zh": "娜斯提"
     },
+    "affiliations": [
+      "columbia",
+      "rhine"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -8592,6 +9220,10 @@
       "ja": "エクシア",
       "en": "Exusiai"
     },
+    "affiliations": [
+      "lungmen",
+      "penguin"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -8656,6 +9288,9 @@
       "ja": "ニンフ",
       "en": "Nymph"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -8746,6 +9381,9 @@
       "ja": "パラス",
       "en": "Pallas"
     },
+    "affiliations": [
+      "minos"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -8810,6 +9448,9 @@
       "ja": "バブル",
       "en": "Bubble"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 5,
     "profession": "重装",
     "skills": [
@@ -8873,6 +9514,10 @@
       "ja": "ポプカル",
       "en": "Popukar"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve6"
+    ],
     "rarity": 4,
     "profession": "前衛",
     "skills": [
@@ -8937,6 +9582,9 @@
       "ja": "ペペ",
       "en": "Pepe"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -9001,6 +9649,9 @@
       "ja": "チルチャック",
       "en": "Chilchuck"
     },
+    "affiliations": [
+      "laios"
+    ],
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
@@ -9065,6 +9716,9 @@
       "ja": "キララ",
       "en": "Kirara"
     },
+    "affiliations": [
+      "higashi"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -9129,6 +9783,9 @@
       "ja": "トター",
       "en": "Totter"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 5,
     "profession": "狙撃",
     "skills": [
@@ -9193,6 +9850,9 @@
       "ja": "サイラッハ",
       "en": "Saileach"
     },
+    "affiliations": [
+      "victoria"
+    ],
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
@@ -9256,6 +9916,10 @@
       "ja": "スカベンジャー",
       "en": "Scavenger"
     },
+    "affiliations": [
+      "rhodes",
+      "sweep"
+    ],
     "rarity": 5,
     "profession": "先鋒",
     "skills": [
@@ -9320,6 +9984,9 @@
       "ja": "セイリュウ",
       "en": "Purestream"
     },
+    "affiliations": [
+      "yan"
+    ],
     "rarity": 5,
     "profession": "医療",
     "skills": [
@@ -9382,6 +10049,9 @@
     "name": {
       "zh": "若叶睦"
     },
+    "affiliations": [
+      "mujica"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -9436,6 +10106,9 @@
     "name": {
       "zh": "三角初华"
     },
+    "affiliations": [
+      "mujica"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -9492,6 +10165,9 @@
       "ja": "ユーネクテス",
       "en": "Eunectes"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -9565,6 +10241,15 @@
               "bskill_ctrl_p_bot",
               "control"
             ],
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "power",
+                "operatorIds": [
+                  "char_285_medic2"
+                ]
+              }
+            ],
             "description": {
               "zh": "进驻控制中枢时，如果Lancet-2进驻在发电站，发电站额外+2（仅影响设施数量）",
               "ja": "制御中枢配置時、Lancet-2が発電所に配置されている場合、追加で発電所の施設数+2（施設の数以外に影響なし）",
@@ -9582,6 +10267,9 @@
       "ja": "センシ",
       "en": "Senshi"
     },
+    "affiliations": [
+      "laios"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -9646,6 +10334,9 @@
       "ja": "Blitz",
       "en": "Blitz"
     },
+    "affiliations": [
+      "rainbow"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -9684,6 +10375,9 @@
       "ja": "シャイニング",
       "en": "Shining"
     },
+    "affiliations": [
+      "followers"
+    ],
     "rarity": 6,
     "profession": "医療",
     "skills": [
@@ -9748,6 +10442,9 @@
       "ja": "クオーラ",
       "en": "Cuora"
     },
+    "affiliations": [
+      "columbia"
+    ],
     "rarity": 5,
     "profession": "重装",
     "skills": [
@@ -9811,6 +10508,9 @@
       "ja": "インディゴ",
       "en": "Indigo"
     },
+    "affiliations": [
+      "iberia"
+    ],
     "rarity": 5,
     "profession": "術師",
     "skills": [
@@ -9901,6 +10601,9 @@
       "ja": "ディピカ",
       "en": "Deepcolor"
     },
+    "affiliations": [
+      "egir"
+    ],
     "rarity": 5,
     "profession": "補助",
     "skills": [
@@ -9939,6 +10642,9 @@
       "ja": "アンダーフロー",
       "en": "Underflow"
     },
+    "affiliations": [
+      "egir"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -10003,6 +10709,10 @@
       "ja": "スワイヤー",
       "en": "Swire"
     },
+    "affiliations": [
+      "lungmen",
+      "lgd"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -10041,6 +10751,9 @@
       "ja": "アスベストス",
       "en": "Asbestos"
     },
+    "affiliations": [
+      "rim"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -10105,6 +10818,9 @@
       "ja": "クォーツ",
       "en": "Quartz"
     },
+    "affiliations": [
+      "columbia"
+    ],
     "rarity": 5,
     "profession": "前衛",
     "skills": [
@@ -10168,6 +10884,9 @@
       "ja": "エフイーター",
       "en": "FEater"
     },
+    "affiliations": [
+      "lungmen"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -10232,6 +10951,10 @@
       "ja": "スチュワード",
       "en": "Steward"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve4"
+    ],
     "rarity": 4,
     "profession": "術師",
     "skills": [
@@ -10295,6 +11018,9 @@
       "ja": "クラウンスレイヤー",
       "en": "Crownslayer"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -10333,6 +11059,10 @@
       "ja": "シュウ",
       "en": "Shu"
     },
+    "affiliations": [
+      "yan",
+      "sui"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -10396,6 +11126,9 @@
       "ja": "Frost",
       "en": "Frost"
     },
+    "affiliations": [
+      "rainbow"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -10434,6 +11167,9 @@
       "ja": "フロストリーフ",
       "en": "Frostleaf"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 5,
     "profession": "前衛",
     "skills": [
@@ -10498,6 +11234,9 @@
       "ja": "ミヅキ",
       "en": "Mizuki"
     },
+    "affiliations": [
+      "higashi"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -10560,6 +11299,10 @@
       "ja": "スカジ",
       "en": "Skadi"
     },
+    "affiliations": [
+      "egir",
+      "abyssal"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -10624,6 +11367,9 @@
       "ja": "エイプリル",
       "en": "April"
     },
+    "affiliations": [
+      "rim"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -10714,6 +11460,9 @@
       "ja": "イグゼキュター",
       "en": "Executor"
     },
+    "affiliations": [
+      "laterano"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -10752,6 +11501,9 @@
       "ja": "ヴィルトゥオーサ",
       "en": "Virtuosa"
     },
+    "affiliations": [
+      "laterano"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -10816,6 +11568,9 @@
       "ja": "アシッドドロップ",
       "en": "Aciddrop"
     },
+    "affiliations": [
+      "columbia"
+    ],
     "rarity": 5,
     "profession": "狙撃",
     "skills": [
@@ -10854,6 +11609,9 @@
       "ja": "テラ大陸調査団",
       "en": "Terra Research Commission"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 2,
     "profession": "狙撃",
     "skills": [
@@ -10917,6 +11675,9 @@
       "ja": "テンニンカ",
       "en": "Myrtle"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 5,
     "profession": "先鋒",
     "skills": [
@@ -10981,6 +11742,9 @@
       "ja": "トミミ",
       "en": "Tomimi"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -11017,6 +11781,9 @@
     "name": {
       "zh": "天空盒"
     },
+    "affiliations": [
+      "columbia"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -11051,6 +11818,9 @@
       "ja": "トゥイエ",
       "en": "Tuye"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 6,
     "profession": "医療",
     "skills": [
@@ -11115,6 +11885,10 @@
       "ja": "シージ",
       "en": "Siege"
     },
+    "affiliations": [
+      "victoria",
+      "glasgow"
+    ],
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
@@ -11177,6 +11951,10 @@
     "name": {
       "zh": "望"
     },
+    "affiliations": [
+      "yan",
+      "sui"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -11211,6 +11989,9 @@
       "ja": "ヴィヴィアナ",
       "en": "Viviana"
     },
+    "affiliations": [
+      "leithanien"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -11272,6 +12053,9 @@
     "name": {
       "zh": "维伊"
     },
+    "affiliations": [
+      "ursus"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -11305,6 +12089,9 @@
       "ja": "リード",
       "en": "Reed"
     },
+    "affiliations": [
+      "victoria"
+    ],
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
@@ -11369,6 +12156,9 @@
       "ja": "ウィーディ",
       "en": "Weedy"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -11433,6 +12223,9 @@
       "ja": "ウォーミー",
       "en": "Warmy"
     },
+    "affiliations": [
+      "rim"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -11523,6 +12316,9 @@
       "ja": "ウユウ",
       "en": "Mr. Nothing"
     },
+    "affiliations": [
+      "yan"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -11561,6 +12357,9 @@
       "ja": "シャマレ",
       "en": "Shamare"
     },
+    "affiliations": [
+      "siracusa"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -11625,6 +12424,10 @@
       "ja": "シー",
       "en": "Dusk"
     },
+    "affiliations": [
+      "yan",
+      "sui"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -11689,6 +12492,9 @@
       "ja": "シーン",
       "en": "Scene"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -11752,6 +12558,10 @@
       "ja": "セイロン",
       "en": "Ceylon"
     },
+    "affiliations": [
+      "columbia",
+      "siesta"
+    ],
     "rarity": 6,
     "profession": "医療",
     "skills": [
@@ -11789,6 +12599,10 @@
       "ja": "バニラ",
       "en": "Vanilla"
     },
+    "affiliations": [
+      "columbia",
+      "blacksteel"
+    ],
     "rarity": 4,
     "profession": "先鋒",
     "skills": [
@@ -11850,6 +12664,9 @@
     "name": {
       "zh": "响石"
     },
+    "affiliations": [
+      "columbia"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -11906,6 +12723,9 @@
       "ja": "グレインバッズ",
       "en": "Grain Buds"
     },
+    "affiliations": [
+      "yan"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -11968,6 +12788,9 @@
     "name": {
       "zh": "协律"
     },
+    "affiliations": [
+      "leithanien"
+    ],
     "rarity": 5,
     "profession": "術師",
     "skills": [
@@ -12046,6 +12869,10 @@
       "ja": "アステジーニ",
       "en": "Astgenne"
     },
+    "affiliations": [
+      "columbia",
+      "rhine"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -12108,6 +12935,10 @@
       "ja": "アーモンド",
       "en": "Almond"
     },
+    "affiliations": [
+      "columbia",
+      "blacksteel"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -12170,6 +13001,9 @@
     "name": {
       "zh": "雪猎"
     },
+    "affiliations": [
+      "kjerag"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -12226,6 +13060,9 @@
       "ja": "スノーズント",
       "en": "Snowsant"
     },
+    "affiliations": [
+      "lungmen"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -12290,6 +13127,10 @@
       "ja": "クーリエ",
       "en": "Courier"
     },
+    "affiliations": [
+      "kjerag",
+      "karlan"
+    ],
     "rarity": 5,
     "profession": "先鋒",
     "skills": [
@@ -12328,6 +13169,9 @@
       "ja": "クリフハート",
       "en": "Cliffheart"
     },
+    "affiliations": [
+      "kjerag"
+    ],
     "rarity": 6,
     "profession": "特殊",
     "skills": [
@@ -12392,6 +13236,10 @@
       "ja": "ラヴァ",
       "en": "Lava"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve1"
+    ],
     "rarity": 4,
     "profession": "術師",
     "skills": [
@@ -12455,6 +13303,10 @@
       "ja": "フレイムテイル",
       "en": "Flametail"
     },
+    "affiliations": [
+      "kazimierz",
+      "pinus"
+    ],
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
@@ -12502,6 +13354,16 @@
               "bskill_ctrl_psk",
               "control"
             ],
+            "conditions": [
+              {
+                "type": "facilityAffiliation",
+                "facility": "factory",
+                "affiliations": [
+                  "pinus"
+                ],
+                "min": 1
+              }
+            ],
             "description": {
               "zh": "进驻控制中枢时，每个进驻在制造站的红松骑士团干员，作战记录类配方的生产力+10%，贵金属类配方的生产力-10%",
               "ja": "制御中枢配置時、製造所に配置されたレッドパイン騎士団オペレーター1人につき、作戦記録製造の製造効率+10%、金属製造の製造効率-10%",
@@ -12519,6 +13381,9 @@
       "ja": "セメント",
       "en": "Cement"
     },
+    "affiliations": [
+      "rim"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -12580,6 +13445,9 @@
     "name": {
       "zh": "遥"
     },
+    "affiliations": [
+      "higashi"
+    ],
     "rarity": 6,
     "profession": "補助",
     "skills": [
@@ -12614,6 +13482,10 @@
       "ja": "ワイルドメイン",
       "en": "Wild Mane"
     },
+    "affiliations": [
+      "kazimierz",
+      "pinus"
+    ],
     "rarity": 6,
     "profession": "先鋒",
     "skills": [
@@ -12676,6 +13548,10 @@
       "ja": "ヤトウ",
       "en": "Yato"
     },
+    "affiliations": [
+      "rhodes",
+      "action4"
+    ],
     "rarity": 3,
     "profession": "先鋒",
     "skills": [
@@ -12739,6 +13615,9 @@
       "ja": "ヘイズ",
       "en": "Haze"
     },
+    "affiliations": [
+      "victoria"
+    ],
     "rarity": 5,
     "profession": "術師",
     "skills": [
@@ -12803,6 +13682,9 @@
       "ja": "ナイチンゲール",
       "en": "Nightingale"
     },
+    "affiliations": [
+      "followers"
+    ],
     "rarity": 6,
     "profession": "医療",
     "skills": [
@@ -12867,6 +13749,10 @@
       "ja": "イフリータ",
       "en": "Ifrit"
     },
+    "affiliations": [
+      "columbia",
+      "rhine"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -12931,6 +13817,9 @@
       "ja": "イーサン",
       "en": "Ethan"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 5,
     "profession": "特殊",
     "skills": [
@@ -12969,6 +13858,9 @@
       "ja": "Doc",
       "en": "Doc"
     },
+    "affiliations": [
+      "rainbow"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -13007,6 +13899,9 @@
       "ja": "パッセンジャー",
       "en": "Passenger"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -13097,6 +13992,10 @@
       "ja": "シルバーアッシュ",
       "en": "SilverAsh"
     },
+    "affiliations": [
+      "kjerag",
+      "karlan"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -13161,6 +14060,9 @@
       "ja": "エンテレケイア",
       "en": "Entelechia"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -13225,6 +14127,9 @@
       "ja": "インサイダー",
       "en": "Insider"
     },
+    "affiliations": [
+      "laterano"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -13263,6 +14168,10 @@
       "ja": "スペクター",
       "en": "Specter"
     },
+    "affiliations": [
+      "egir",
+      "abyssal"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -13325,6 +14234,9 @@
     "name": {
       "zh": "祐天寺若麦"
     },
+    "affiliations": [
+      "mujica"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -13380,6 +14292,10 @@
       "ja": "ユー",
       "en": "Yu"
     },
+    "affiliations": [
+      "yan",
+      "sui"
+    ],
     "rarity": 6,
     "profession": "重装",
     "skills": [
@@ -13418,6 +14334,9 @@
       "ja": "ギターノ",
       "en": "Gitano"
     },
+    "affiliations": [
+      "sami"
+    ],
     "rarity": 5,
     "profession": "術師",
     "skills": [
@@ -13456,6 +14375,10 @@
       "ja": "ファートゥース",
       "en": "Fartooth"
     },
+    "affiliations": [
+      "kazimierz",
+      "pinus"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -13544,6 +14467,10 @@
       "ja": "ミッドナイト",
       "en": "Midnight"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve6"
+    ],
     "rarity": 4,
     "profession": "前衛",
     "skills": [
@@ -13607,6 +14534,10 @@
       "ja": "ロサ",
       "en": "Rosa"
     },
+    "affiliations": [
+      "ursus",
+      "student"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -13645,6 +14576,9 @@
       "ja": "Tachanka",
       "en": "Tachanka"
     },
+    "affiliations": [
+      "rainbow"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -13708,6 +14642,9 @@
       "ja": "ディアマンテ",
       "en": "Diamante"
     },
+    "affiliations": [
+      "leithanien"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -13770,6 +14707,10 @@
     "name": {
       "zh": "真言"
     },
+    "affiliations": [
+      "rhodes",
+      "elite"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -13826,6 +14767,10 @@
       "ja": "ジャスティスナイト",
       "en": "'Justice Knight'"
     },
+    "affiliations": [
+      "kazimierz",
+      "pinus"
+    ],
     "rarity": 2,
     "profession": "狙撃",
     "skills": [
@@ -13890,6 +14835,9 @@
       "ja": "ミニマリスト",
       "en": "Minimalist"
     },
+    "affiliations": [
+      "sargon"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -13977,6 +14925,10 @@
       "ja": "チョンユエ",
       "en": "Chongyue"
     },
+    "affiliations": [
+      "yan",
+      "sui"
+    ],
     "rarity": 6,
     "profession": "前衛",
     "skills": [
@@ -14041,6 +14993,9 @@
       "ja": "ルナカブ",
       "en": "Lunacub"
     },
+    "affiliations": [
+      "siracusa"
+    ],
     "rarity": 6,
     "profession": "狙撃",
     "skills": [
@@ -14079,6 +15034,10 @@
       "ja": "オーキッド",
       "en": "Orchid"
     },
+    "affiliations": [
+      "rhodes",
+      "reserve6"
+    ],
     "rarity": 4,
     "profession": "補助",
     "skills": [
@@ -14117,6 +15076,9 @@
       "ja": "Castle-3",
       "en": "Castle-3"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 2,
     "profession": "前衛",
     "skills": [
@@ -14181,6 +15143,9 @@
       "ja": "CONFESS-47",
       "en": "CONFESS-47"
     },
+    "affiliations": [
+      "laterano"
+    ],
     "rarity": 2,
     "profession": "先鋒",
     "skills": [
@@ -14228,6 +15193,16 @@
               "bskill_power_rec_spd_ext&faction",
               "power"
             ],
+            "conditions": [
+              {
+                "type": "facilityAffiliation",
+                "facility": "power",
+                "affiliations": [
+                  "laterano"
+                ],
+                "min": 1
+              }
+            ],
             "description": {
               "zh": "进驻发电站时，如果其他拉特兰干员进驻在发电站，则无人机充能速度+5%",
               "ja": "発電所配置時、他のラテラーノオペレーターが発電所に配置されている場合、ドローンの回復速度+5%",
@@ -14245,6 +15220,9 @@
       "ja": "Friston-3",
       "en": "Friston-3"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 2,
     "profession": "重装",
     "skills": [
@@ -14292,6 +15270,15 @@
               "bskill_pow_spd_P",
               "power"
             ],
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "control",
+                "operatorIds": [
+                  "char_003_kalts"
+                ]
+              }
+            ],
             "description": {
               "zh": "进驻发电站时，如果凯尔希进驻在控制中枢，则无人机充能速度+5%",
               "ja": "発電所配置時、ケルシーが制御中枢に配置されている場合、ドローンの回復速度+5%",
@@ -14307,6 +15294,9 @@
     "name": {
       "zh": "GALLUS²"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 2,
     "profession": "術師",
     "skills": [
@@ -14363,6 +15353,9 @@
       "ja": "Lancet-2",
       "en": "Lancet-2"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 2,
     "profession": "医療",
     "skills": [
@@ -14427,6 +15420,9 @@
       "ja": "ミス・クリスティーン",
       "en": "Miss.Christine"
     },
+    "affiliations": [
+      "victoria"
+    ],
     "rarity": 6,
     "profession": "術師",
     "skills": [
@@ -14474,6 +15470,14 @@
               "bskill_man_spd_double2",
               "manufacture"
             ],
+            "conditions": [
+              {
+                "type": "sameFacilityOperator",
+                "operatorIds": [
+                  "char_1042_phatm2"
+                ]
+              }
+            ],
             "description": {
               "zh": "进驻制造站时，当与酒神在同一个制造站时，作战记录类配方的生产力+30%",
               "ja": "トラゴーディアと同じ製造所に配置時、作戦記録製造の製造効率+30%",
@@ -14491,6 +15495,9 @@
       "ja": "Mon3tr",
       "en": "Mon3tr"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 6,
     "profession": "医療",
     "skills": [
@@ -14554,6 +15561,9 @@
       "ja": "PhonoR-0",
       "en": "PhonoR-0"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 2,
     "profession": "補助",
     "skills": [
@@ -14618,6 +15628,9 @@
       "ja": "THRM-EX",
       "en": "THRM-EX"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 2,
     "profession": "特殊",
     "skills": [
@@ -14682,6 +15695,9 @@
       "ja": "U-Official",
       "en": "U-Official"
     },
+    "affiliations": [
+      "rhodes"
+    ],
     "rarity": 2,
     "profession": "補助",
     "skills": [

@@ -26,8 +26,31 @@ export interface BaseSkillEffect {
   product?: ProductType;
   efficiency: number;
   tags?: string[];
+  conditions?: BaseSkillCondition[];
   description: LocalizedText;
 }
+
+export type BaseSkillCondition =
+  | {
+      type: "sameFacilityOperator";
+      operatorIds: string[];
+    }
+  | {
+      type: "facilityOperator";
+      facility: FacilityType;
+      operatorIds: string[];
+    }
+  | {
+      type: "sameFacilityAffiliation";
+      affiliations: string[];
+      min?: number;
+    }
+  | {
+      type: "facilityAffiliation";
+      facility?: FacilityType;
+      affiliations: string[];
+      min?: number;
+    };
 
 export interface BaseSkill {
   id: string;
@@ -39,6 +62,7 @@ export interface BaseSkill {
 export interface Operator {
   id: string;
   name: LocalizedText;
+  affiliations?: string[];
   rarity: 1 | 2 | 3 | 4 | 5 | 6;
   profession: OperatorProfession;
   skills: BaseSkill[];

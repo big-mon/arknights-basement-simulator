@@ -127,11 +127,175 @@ function preferredText(text) {
   return text.zh ?? text.ja ?? text.en ?? "";
 }
 
+function characterAffiliations(character) {
+  return [character.nationId, character.groupId, character.teamId].filter(Boolean);
+}
+
+function buildNameIndex(languages) {
+  const index = new Map();
+
+  for (const [charId, character] of Object.entries(languages.zh.characters)) {
+    for (const language of Object.keys(languages)) {
+      const name = languages[language].characters[charId]?.name;
+      if (typeof name === "string" && name.trim()) {
+        index.set(name.trim(), charId);
+      }
+    }
+    if (character?.name) {
+      index.set(String(character.name).trim(), charId);
+    }
+  }
+
+  return [...index.entries()].sort((a, b) => b[0].length - a[0].length);
+}
+
+const facilityPhraseMap = [
+  { facility: "factory", phrases: ["製造所", "Factory", "制造站"] },
+  { facility: "trading", phrases: ["貿易所", "Trading Post", "贸易站"] },
+  { facility: "power", phrases: ["発電所", "Power Plant", "发电站"] },
+  { facility: "control", phrases: ["制御中枢", "Control Center", "控制中枢"] },
+  { facility: "dormitory", phrases: ["宿舎", "Dormitory", "宿舍"] }
+];
+
+const affiliationPhraseMap = [
+  { affiliations: ["rainbow"], phrases: ["レインボー小隊", "Rainbow", "彩虹小队"] },
+  { affiliations: ["student"], phrases: ["ウルサス学生自治団", "Ursus Student Self-Governing Group", "乌萨斯学生自治团"] },
+  { affiliations: ["lgd"], phrases: ["龍門近衛局", "L.G.D.", "龙门近卫局"] },
+  { affiliations: ["lee"], phrases: ["リー探偵事務所", "Lee's Detective Agency", "鲤氏侦探事务所"] },
+  { affiliations: ["karlan"], phrases: ["カランド貿易", "Karlan Trade", "喀兰贸易"] },
+  { affiliations: ["glasgow"], phrases: ["グラスゴー", "Glasgow", "格拉斯哥"] },
+  { affiliations: ["rhine"], phrases: ["ライン生命", "Rhine Lab", "莱茵生命"] },
+  { affiliations: ["laterano"], phrases: ["ラテラーノ", "Laterano", "拉特兰"] },
+  { affiliations: ["pinus"], phrases: ["レッドパイン騎士団", "Pinus Sylvestris", "红松骑士团"] },
+  { affiliations: ["sui"], phrases: ["歳", "Sui", "岁"] },
+  { affiliations: ["abyssal"], phrases: ["アビサルハンター", "Abyssal Hunter", "深海猎人"] },
+  { affiliations: ["blacksteel"], phrases: ["BSW", "Blacksteel", "黑钢"] }
+];
+
+function inferConditions(localizedDescription, nameIndex, currentCharId) {
+  const texts = Object.values(localizedDescription).filter(Boolean);
+  const conditions = [];
+
+  for (const [name, charId] of nameIndex) {
+    if (charId === currentCharId) {
+      continue;
+    }
+
+    for (const { facility, phrases } of facilityPhraseMap) {
+      if (
+        texts.some((text) =>
+          phrases.some(
+            (phrase) =>
+              hasNamePhrase(text, name, `と同じ${phrase}`) ||
+              hasNamePhrase(text, name, `と同じ${phrase}に配置`) ||
+              hasNamePhrase(text, name, ` is assigned to the same ${phrase}`) ||
+              hasNamePhrase(text, name, ` assigned to the same ${phrase}`) ||
+              text.includes(`与${name}同时进驻同个${phrase}`)
+          )
+        )
+      ) {
+        conditions.push({ type: "sameFacilityOperator", operatorIds: [charId] });
+      } else if (
+        texts.some((text) =>
+          phrases.some(
+            (phrase) =>
+              hasNamePhrase(text, name, `が${phrase}に配置されている場合`) ||
+              hasNamePhrase(text, name, `が${phrase}に配属されている場合`) ||
+              hasNamePhrase(text, name, ` is assigned to a ${phrase}`) ||
+              hasNamePhrase(text, name, ` is assigned to the ${phrase}`) ||
+              text.includes(`${name}进驻${phrase}`)
+          )
+        )
+      ) {
+        conditions.push({ type: "facilityOperator", facility, operatorIds: [charId] });
+      }
+    }
+  }
+
+  for (const { affiliations, phrases } of affiliationPhraseMap) {
+    for (const { facility, phrases: facilityPhrases } of facilityPhraseMap) {
+      if (
+        texts.some((text) =>
+          phrases.some((affiliationPhrase) =>
+            facilityPhrases.some(
+              (facilityPhrase) =>
+                text.includes(`同じ${facilityPhrase}に配置されている${affiliationPhrase}`) ||
+                text.includes(`${affiliationPhrase} assigned to the same ${facilityPhrase}`)
+            )
+          )
+        )
+      ) {
+        conditions.push({ type: "sameFacilityAffiliation", affiliations, min: 1 });
+      } else if (
+        texts.some((text) =>
+          phrases.some((affiliationPhrase) =>
+            facilityPhrases.some(
+              (facilityPhrase) =>
+                text.includes(`${facilityPhrase}に配置されている${affiliationPhrase}`) ||
+                text.includes(`${facilityPhrase}に配置された${affiliationPhrase}`) ||
+                text.includes(`${affiliationPhrase} Operator is assigned to a ${facilityPhrase}`) ||
+                text.includes(`${affiliationPhrase} Operators assigned to ${facilityPhrase}`)
+            )
+          )
+        )
+      ) {
+        conditions.push({ type: "facilityAffiliation", facility, affiliations, min: 1 });
+      }
+    }
+
+    if (
+      texts.some((text) =>
+        phrases.some(
+          (affiliationPhrase) =>
+            text.includes(`基地内`) && text.includes(affiliationPhrase) ||
+            text.includes(`base`) && text.includes(affiliationPhrase)
+        )
+      )
+    ) {
+      conditions.push({ type: "facilityAffiliation", affiliations, min: 1 });
+    }
+  }
+
+  return dedupeConditions(conditions);
+}
+
+function hasNamePhrase(text, name, suffix) {
+  let start = 0;
+  const needle = `${name}${suffix}`;
+
+  while (start < text.length) {
+    const index = text.indexOf(needle, start);
+    if (index === -1) {
+      return false;
+    }
+    const previous = index > 0 ? text[index - 1] : "";
+    if (!previous || !/[\p{Script=Katakana}\p{Script=Hiragana}\p{Script=Han}A-Za-z0-9]/u.test(previous)) {
+      return true;
+    }
+    start = index + 1;
+  }
+
+  return false;
+}
+
+function dedupeConditions(conditions) {
+  const seen = new Set();
+  return conditions.filter((condition) => {
+    const key = JSON.stringify(condition);
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
 function normalize(languages) {
   const characters = languages.zh.characters;
   const building = languages.zh.building;
   const buildingChars = building.chars ?? {};
   const buffs = building.buffs ?? {};
+  const nameIndex = buildNameIndex(languages);
 
   return Object.entries(characters)
     .filter(([, character]) => character?.name && !character.isNotObtainable && !character.isSpChar)
@@ -159,6 +323,7 @@ function normalize(languages) {
             (dataset) => dataset.building.buffs?.[rawBuff.buffId]?.description,
             description
           );
+          const conditions = inferConditions(localizedBuffDescription, nameIndex, charId);
 
           return {
             id: String(buff.buffId ?? `${charId}-base-${index}`),
@@ -170,6 +335,7 @@ function normalize(languages) {
                 product: inferProduct(description, buff.roomType),
                 efficiency: inferEfficiency(description),
                 tags: [facility, buff.skillIcon, buff.buffIcon].filter(Boolean),
+                ...(conditions.length ? { conditions } : {}),
                 description: localizedBuffDescription
               }
             ]
@@ -180,6 +346,7 @@ function normalize(languages) {
       return {
         id: charId,
         name: localizedText(languages, (dataset) => dataset.characters[charId]?.name, character.name),
+        affiliations: characterAffiliations(character),
         rarity: rarityToNumber(character.rarity),
         profession: professionToJa(character.profession),
         skills
