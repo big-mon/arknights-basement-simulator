@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   Archive,
@@ -465,8 +465,16 @@ function OperatorCard({
 }) {
   const unlockedSkills = operator.skills.filter((skill) => skill.unlockPhase <= entry.elite).length;
 
+  function toggleOwnedFromCard(event: MouseEvent<HTMLElement>) {
+    if (isInteractiveCardTarget(event.target)) {
+      return;
+    }
+
+    onUpdateRoster(operator.id, { owned: !entry.owned });
+  }
+
   return (
-    <article className={entry.owned ? "operator-card owned" : "operator-card"}>
+    <article className={entry.owned ? "operator-card owned" : "operator-card"} onClick={toggleOwnedFromCard}>
       <div className="operator-card-top">
         <div className="operator-card-main">
           <label className="checkbox-line">
@@ -554,6 +562,10 @@ function toggleSetValue(current: Set<string>, value: string) {
 
 function rarityGroupKey(profession: string, rarity: number) {
   return `${profession}-${rarity}`;
+}
+
+function isInteractiveCardTarget(target: EventTarget) {
+  return target instanceof Element && Boolean(target.closest("button, input, label, select, textarea, a"));
 }
 
 function professionSortIndex(profession: OperatorProfession) {

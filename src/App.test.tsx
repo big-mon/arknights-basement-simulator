@@ -25,6 +25,22 @@ describe("App", () => {
     expect(within(screen.getByText(amiya.name).closest("article")!).getByRole("checkbox", { name: amiya.name })).toBeChecked();
   });
 
+  it("toggles roster ownership from the operator card without hijacking controls", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const amiyaCard = screen.getByText(amiya.name).closest("article")!;
+    const checkbox = within(amiyaCard).getByRole("checkbox", { name: amiya.name });
+
+    await user.click(amiyaCard);
+    expect(checkbox).toBeChecked();
+
+    await user.selectOptions(within(amiyaCard).getByRole("combobox"), "2");
+    expect(checkbox).toBeChecked();
+
+    await user.click(amiyaCard);
+    expect(checkbox).not.toBeChecked();
+  });
+
   it("groups owned roster by profession and rarity", () => {
     render(<App />);
 

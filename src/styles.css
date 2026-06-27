@@ -329,6 +329,7 @@ input[type="number"] {
   border: 1px solid #e1d9cd;
   border-radius: 8px;
   background: #ffffff;
+  cursor: pointer;
 }
 
 .operator-card.owned {
