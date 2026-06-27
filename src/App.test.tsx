@@ -45,6 +45,12 @@ describe("App", () => {
     expect(screen.getAllByRole("checkbox").every((checkbox) => !(checkbox as HTMLInputElement).checked)).toBe(true);
   });
 
+  it("explains the roster data scope", () => {
+    render(<App />);
+
+    expect(screen.getByText(/表示対象は、現在対応している基地スキルを持つオペレーターです/)).toBeInTheDocument();
+  });
+
   it("marks missing selected-language names without excluding operators", async () => {
     const user = userEvent.setup();
     render(<App />);

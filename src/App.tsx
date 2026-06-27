@@ -305,6 +305,7 @@ export function App() {
             <div>
               <p className="eyebrow">{text.roster.eyebrow}</p>
               <h2 id="roster-title">{text.roster.title}</h2>
+              <p className="scope-note">{text.roster.scopeNote}</p>
             </div>
             <div className="filters">
               <label className="search-box">

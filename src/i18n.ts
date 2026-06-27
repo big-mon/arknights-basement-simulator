@@ -35,6 +35,8 @@ export const uiText = {
     roster: {
       eyebrow: "Roster",
       title: "所有オペレーター管理",
+      scopeNote:
+        "表示対象は、現在対応している基地スキルを持つオペレーターです。未対応施設のみの基地スキル、または基地スキル未取得のデータは一覧に表示されない場合があります。",
       searchPlaceholder: "名前で検索",
       professionFilter: "職業",
       rarityFilter: "☆数",
@@ -98,6 +100,7 @@ export const uiText = {
     roster: {
       eyebrow: "Roster",
       title: "持有干员管理",
+      scopeNote: "列表仅显示当前已支持基建技能的干员。仅拥有未支持设施技能、或尚未取得基建技能数据的干员可能不会显示。",
       searchPlaceholder: "按名称搜索",
       professionFilter: "职业",
       rarityFilter: "星级",
@@ -160,6 +163,8 @@ export const uiText = {
     roster: {
       eyebrow: "Roster",
       title: "Owned Operator Management",
+      scopeNote:
+        "This list shows operators with currently supported base skills. Operators with only unsupported facility skills, or without imported base skill data, may be hidden.",
       searchPlaceholder: "Search by name",
       professionFilter: "Class",
       rarityFilter: "Rarity",
