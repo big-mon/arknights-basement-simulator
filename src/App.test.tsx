@@ -91,6 +91,26 @@ describe("App", () => {
     expect(within(vanguardSection).getByRole("heading", { name: "★5" })).toBeInTheDocument();
   });
 
+  it("filters the owned roster with profession and rarity radio options", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    expect(screen.queryByRole("combobox", { name: /全職業/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "全職業" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "全☆" })).toBeChecked();
+
+    await user.click(screen.getByRole("radio", { name: "術師" }));
+
+    expect(screen.getByRole("heading", { name: "術師" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "先鋒" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: "★6" }));
+
+    const casterSection = screen.getByRole("heading", { name: "術師" }).closest("section")!;
+    expect(within(casterSection).getByRole("heading", { name: "★6" })).toBeInTheDocument();
+    expect(within(casterSection).queryByRole("heading", { name: "★5" })).not.toBeInTheDocument();
+  });
+
   it("collapses profession and rarity groups in the owned roster", async () => {
     const user = userEvent.setup();
     const profession = "先鋒";

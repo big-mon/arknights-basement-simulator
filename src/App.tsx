@@ -48,6 +48,7 @@ import type {
 } from "./types";
 
 type TabId = "roster" | "plan";
+type RarityFilter = "all" | `${Operator["rarity"]}`;
 
 const tabs: Array<{ id: TabId; icon: typeof Users }> = [
   { id: "roster", icon: Users },
@@ -82,6 +83,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<TabId>("roster");
   const [query, setQuery] = useState("");
   const [professionFilter, setProfessionFilter] = useState("all");
+  const [rarityFilter, setRarityFilter] = useState<RarityFilter>("all");
   const [collapsedProfessions, setCollapsedProfessions] = useState<Set<string>>(() => new Set());
   const [collapsedRarityGroups, setCollapsedRarityGroups] = useState<Set<string>>(() => new Set());
   const [notice, setNotice] = useState("");
@@ -100,11 +102,13 @@ export function App() {
   const professions = Array.from(new Set(operators.map((operator) => operator.profession))).sort(
     (a, b) => professionSortIndex(a) - professionSortIndex(b)
   );
+  const rarities = Array.from(new Set(operators.map((operator) => operator.rarity))).sort((a, b) => b - a);
 
   const filteredOperators = operators.filter((operator) => {
     const matchesQuery = `${operator.name} ${operator.id}`.toLowerCase().includes(query.toLowerCase());
     const matchesProfession = professionFilter === "all" || operator.profession === professionFilter;
-    return matchesQuery && matchesProfession;
+    const matchesRarity = rarityFilter === "all" || operator.rarity === Number(rarityFilter);
+    return matchesQuery && matchesProfession && matchesRarity;
   });
   const groupedOperators = groupOperatorsByProfessionAndRarity(filteredOperators, state.roster);
 
@@ -265,15 +269,65 @@ export function App() {
                 <Search size={17} />
                 <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={text.roster.searchPlaceholder} />
               </label>
-              <select value={professionFilter} onChange={(event) => setProfessionFilter(event.target.value)}>
-                <option value="all">{text.roster.allProfessions}</option>
-                {professions.map((profession) => (
-                  <option key={profession} value={profession}>
-                    {professionLabels[language][profession]}
-                  </option>
-                ))}
-              </select>
             </div>
+          </div>
+
+          <div className="roster-filter-panel" aria-label={`${text.roster.professionFilter} / ${text.roster.rarityFilter}`}>
+            <fieldset className="filter-group">
+              <legend>{text.roster.professionFilter}</legend>
+              <div className="filter-options" role="radiogroup" aria-label={text.roster.professionFilter}>
+                <label className={professionFilter === "all" ? "filter-chip active" : "filter-chip"}>
+                  <input
+                    type="radio"
+                    name="profession-filter"
+                    value="all"
+                    checked={professionFilter === "all"}
+                    onChange={() => setProfessionFilter("all")}
+                  />
+                  <span>{text.roster.allProfessions}</span>
+                </label>
+                {professions.map((profession) => (
+                  <label key={profession} className={professionFilter === profession ? "filter-chip active" : "filter-chip"}>
+                    <input
+                      type="radio"
+                      name="profession-filter"
+                      value={profession}
+                      checked={professionFilter === profession}
+                      onChange={() => setProfessionFilter(profession)}
+                    />
+                    <span>{professionLabels[language][profession]}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="filter-group">
+              <legend>{text.roster.rarityFilter}</legend>
+              <div className="filter-options" role="radiogroup" aria-label={text.roster.rarityFilter}>
+                <label className={rarityFilter === "all" ? "filter-chip active" : "filter-chip"}>
+                  <input
+                    type="radio"
+                    name="rarity-filter"
+                    value="all"
+                    checked={rarityFilter === "all"}
+                    onChange={() => setRarityFilter("all")}
+                  />
+                  <span>{text.roster.allRarities}</span>
+                </label>
+                {rarities.map((rarity) => (
+                  <label key={rarity} className={rarityFilter === String(rarity) ? "filter-chip active" : "filter-chip"}>
+                    <input
+                      type="radio"
+                      name="rarity-filter"
+                      value={rarity}
+                      checked={rarityFilter === String(rarity)}
+                      onChange={() => setRarityFilter(String(rarity) as RarityFilter)}
+                    />
+                    <span>★{rarity}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
           </div>
 
           <div className="operator-sections">

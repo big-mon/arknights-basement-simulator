@@ -250,6 +250,56 @@ h4 {
   outline: 0;
 }
 
+.roster-filter-panel {
+  margin: 16px 0 22px;
+  display: grid;
+  gap: 12px;
+}
+
+.filter-group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.filter-group legend {
+  padding: 0;
+  color: #65605b;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-chip {
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 1px solid #d8d0c3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #232527;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.filter-chip.active {
+  border-color: #b94c2d;
+  background: #fff6ef;
+  box-shadow: inset 0 0 0 2px #b94c2d;
+  color: #8e351d;
+}
+
 select,
 input[type="number"] {
   height: 38px;
