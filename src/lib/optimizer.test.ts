@@ -44,6 +44,9 @@ const letoGummySkill = leto.skills.find((skill) => skill.id === "manu_formula_sp
 const delphine = operators.find((operator) => operator.id === "char_4110_delphn")!;
 const glasgowOperator = operators.find((operator) => operator.id === "char_154_morgan")!;
 const delphineGlasgowSkill = delphine.skills.find((skill) => skill.id === "control_tra_limit&spd[010]")!;
+const lemuen = operators.find((operator) => operator.id === "char_4193_lemuen")!;
+const exusiai = operators.find((operator) => operator.id === "char_103_angel")!;
+const lemuenExusiaiSkill = lemuen.skills.find((skill) => skill.id === "trade_ord_spd&multiPar[100]")!;
 
 function ownBaselineRoster(state: ReturnType<typeof createDefaultState>) {
   for (const operator of operators) {
@@ -179,6 +182,37 @@ describe("optimizer", () => {
         assignments: [contextAssignment(trading, glasgowOperator.id)]
       }).some((candidate) => candidate.skillId === delphineGlasgowSkill.id)
     ).toBe(true);
+  });
+
+  it("adds Lemuen's Exusiai same-trading-post bonus when evaluating candidates", () => {
+    const state = createDefaultState();
+    ownOperators(state, [lemuen.id, exusiai.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const withoutExusiaiContext = findCandidates(trading, state).find((candidate) => candidate.operatorId === lemuen.id)!;
+    const withExusiaiContext = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(trading, exusiai.id)]
+    }).find((candidate) => candidate.operatorId === lemuen.id)!;
+
+    expect(withoutExusiaiContext.efficiency).toBeCloseTo(0.23);
+    expect(withExusiaiContext.skillId).toBe(lemuenExusiaiSkill.id);
+    expect(withExusiaiContext.efficiency).toBeCloseTo(0.48);
+  });
+
+  it("discovers the Lemuen and Exusiai trading post pairing in assignment plans", () => {
+    const state = createDefaultState();
+    ownOperators(state, [lemuen.id, exusiai.id]);
+    const plan = generateAssignmentPlan(state);
+    const lemuenAssignment = plan.facilityPlans
+      .flatMap((facilityPlan) => facilityPlan.assignments)
+      .find((assignment) => assignment.operatorId === lemuen.id)!;
+    const exusiaiAssignment = plan.facilityPlans
+      .flatMap((facilityPlan) => facilityPlan.assignments)
+      .find((assignment) => assignment.operatorId === exusiai.id)!;
+
+    expect(lemuenAssignment.facilityId).toBe(exusiaiAssignment.facilityId);
+    expect(lemuenAssignment.skillId).toBe(lemuenExusiaiSkill.id);
+    expect(lemuenAssignment.efficiency).toBeCloseTo(0.48);
   });
 
   it("matches originium factory skills only to originium products", () => {

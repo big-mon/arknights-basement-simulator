@@ -8949,7 +8949,7 @@
           {
             "facility": "trading",
             "product": "lmd",
-            "efficiency": 0.2,
+            "efficiency": 0.45,
             "tags": [
               "trading",
               "bskill_tra_lemuen1",

@@ -94,7 +94,11 @@ function inferProduct(description, roomType) {
 
 function inferEfficiency(description) {
   const percentages = [...String(description).matchAll(/([+-]?\d+(?:\.\d+)?)%/g)].map((match) => Number(match[1]));
-  const positive = percentages.find((value) => value > 0);
+  const positivePercentages = percentages.filter((value) => value > 0);
+  if (positivePercentages.length > 1 && /额外|追加|additional|additionally|extra/i.test(String(description))) {
+    return positivePercentages.reduce((sum, value) => sum + value, 0) / 100;
+  }
+  const positive = positivePercentages[0];
   return positive ? positive / 100 : 0.05;
 }
 
