@@ -96,6 +96,8 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /3回/ })).toBeDisabled();
     expect(screen.getByText("生産物の優先度")).toBeInTheDocument();
     expect(screen.getByText("選んだ方針に合わせて、対応する基地スキルと施設配置を強く評価します。")).toBeInTheDocument();
+    expect(screen.queryByText("純金・作戦記録・龍門幣を近い重みで評価")).not.toBeInTheDocument();
+    expect(screen.queryByText("純金向けの製造所スキルを高く評価")).not.toBeInTheDocument();
     expect(screen.getByRole("radio", { name: /バランス/ })).toBeChecked();
     await user.click(screen.getByRole("radio", { name: /純金優先/ }));
     expect(screen.getByRole("radio", { name: /純金優先/ })).toBeChecked();

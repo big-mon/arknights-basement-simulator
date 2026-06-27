@@ -66,25 +66,21 @@ const preferencePresets = [
   {
     id: "balanced",
     label: "バランス",
-    description: "純金・作戦記録・龍門幣を近い重みで評価",
     preference: { gold: 0.35, battleRecord: 0.35, lmd: 0.3 }
   },
   {
     id: "gold",
     label: "純金優先",
-    description: "純金向けの製造所スキルを高く評価",
     preference: { gold: 0.7, battleRecord: 0.15, lmd: 0.15 }
   },
   {
     id: "battleRecord",
     label: "作戦記録優先",
-    description: "作戦記録向けの製造所スキルを高く評価",
     preference: { gold: 0.15, battleRecord: 0.7, lmd: 0.15 }
   },
   {
     id: "lmd",
     label: "龍門幣優先",
-    description: "貿易所の龍門幣効率を高く評価",
     preference: { gold: 0.15, battleRecord: 0.15, lmd: 0.7 }
   }
 ] as const;
@@ -409,7 +405,6 @@ export function App() {
                     />
                     <span>
                       {preset.label}
-                      <small>{preset.description}</small>
                     </span>
                   </label>
                 ))}

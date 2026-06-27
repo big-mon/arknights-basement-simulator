@@ -439,7 +439,7 @@ input[type="checkbox"] {
 
 .preference-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -557,14 +557,15 @@ input[type="checkbox"] {
 }
 
 .preference-option {
-  padding: 16px;
+  min-height: 48px;
+  padding: 12px 14px;
   border: 1px solid #e0d8cd;
   border-radius: 8px;
   background: #ffffff;
   display: grid;
   grid-template-columns: 18px 1fr;
   gap: 10px;
-  align-items: start;
+  align-items: center;
 }
 
 .preference-option.active {
@@ -574,15 +575,7 @@ input[type="checkbox"] {
 }
 
 .preference-option span {
-  display: grid;
-  gap: 4px;
   font-weight: 700;
-}
-
-.preference-option small {
-  color: #65605b;
-  font-weight: 500;
-  line-height: 1.4;
 }
 
 .plan-grid {
