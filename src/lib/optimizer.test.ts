@@ -82,6 +82,27 @@ function contextAssignment(facility: FacilitySlot, operatorId: string): Assignme
 }
 
 describe("optimizer", () => {
+  it("uses two gold and two battle record factories for balanced 243 layout", () => {
+    const state = createDefaultState();
+    const factoryProducts = state.facilities.filter((facility) => facility.type === "factory").map((facility) => facility.product);
+
+    expect(factoryProducts).toEqual(["gold", "gold", "battleRecord", "battleRecord"]);
+  });
+
+  it("migrates the legacy balanced factory split to two gold factories", () => {
+    const legacyFacilities: FacilitySlot[] = [
+      { id: "factory-1", type: "factory", name: "Factory A", slotCount: 3, product: "gold" },
+      { id: "factory-2", type: "factory", name: "Factory B", slotCount: 3, product: "battleRecord" },
+      { id: "factory-3", type: "factory", name: "Factory C", slotCount: 3, product: "battleRecord" },
+      { id: "factory-4", type: "factory", name: "Factory D", slotCount: 3, product: "battleRecord" }
+    ];
+    const factoryProducts = createFacilitiesForLayout("243", legacyFacilities)
+      .filter((facility) => facility.type === "factory")
+      .map((facility) => facility.product);
+
+    expect(factoryProducts).toEqual(["gold", "gold", "battleRecord", "battleRecord"]);
+  });
+
   it("filters candidates by facility type and unlocked elite phase", () => {
     const state = createDefaultState();
     ownBaselineRoster(state);
@@ -131,7 +152,7 @@ describe("optimizer", () => {
   it("requires named operators in referenced facilities for cross-facility conditional skills", () => {
     const state = createDefaultState();
     ownOperators(state, [leto.id, gummy.id]);
-    const factory = state.facilities.find((facility) => facility.id === "factory-2")!;
+    const factory = state.facilities.find((facility) => facility.type === "factory" && facility.product === "battleRecord")!;
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
 
     expect(factory.product).toBe("battleRecord");

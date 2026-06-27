@@ -43,7 +43,8 @@ export function createFacilitiesForLayout(layout: BaseLayout, existingFacilities
   const existingFactoryProducts = existingFacilities
     .filter((facility) => facility.type === "factory")
     .map((facility) => facility.product);
-  const defaultFactoryProducts: ProductType[] = ["gold", "battleRecord", "battleRecord", "battleRecord", "battleRecord"];
+  const defaultFactoryProducts: ProductType[] = ["gold", "gold", "battleRecord", "battleRecord", "battleRecord"];
+  const preferredFactoryProducts = normalizeFactoryProducts(existingFactoryProducts, defaultFactoryProducts);
 
   return [
     ...createRoomSeries("trading", preset.trading, "貿易所", "lmd"),
@@ -52,12 +53,22 @@ export function createFacilitiesForLayout(layout: BaseLayout, existingFacilities
       preset.factory,
       "製造所",
       "battleRecord",
-      existingFactoryProducts.length ? existingFactoryProducts : defaultFactoryProducts
+      preferredFactoryProducts
     ),
     ...createRoomSeries("power", preset.power, "発電所", "power"),
     { id: "control-1", type: "control", name: "制御中枢", slotCount: 5, product: "lmd" },
     { id: "dormitory-1", type: "dormitory", name: "宿舎", slotCount: 5, product: "morale" }
   ];
+}
+
+function normalizeFactoryProducts(existingFactoryProducts: ProductType[], defaultFactoryProducts: ProductType[]) {
+  if (!existingFactoryProducts.length) {
+    return defaultFactoryProducts;
+  }
+
+  const legacyBalancedProducts: ProductType[] = ["gold", "battleRecord", "battleRecord", "battleRecord", "battleRecord"];
+  const isLegacyBalanced = existingFactoryProducts.every((product, index) => product === legacyBalancedProducts[index]);
+  return isLegacyBalanced ? defaultFactoryProducts : existingFactoryProducts;
 }
 
 function createRoomSeries(
