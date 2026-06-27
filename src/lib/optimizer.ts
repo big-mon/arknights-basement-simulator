@@ -1,4 +1,5 @@
 import { operators } from "../data/defaults";
+import { localizeText } from "./localization";
 import type {
   AppState,
   Assignment,
@@ -116,7 +117,7 @@ export function findCandidates(facility: FacilitySlot, state: AppState, globalBo
         return [];
       }
 
-      return bestSkillForFacility(operator, rosterEntry, facility, state.preference, globalBonus);
+      return bestSkillForFacility(operator, rosterEntry, facility, state.preference, globalBonus, state.language);
     })
     .sort((a, b) => b.score - a.score);
 }
@@ -126,7 +127,8 @@ function bestSkillForFacility(
   rosterEntry: RosterEntry,
   facility: FacilitySlot,
   preference: OptimizationPreference,
-  globalBonus: number
+  globalBonus: number,
+  language: AppState["language"]
 ): Assignment[] {
   const assignments: Assignment[] = [];
 
@@ -151,7 +153,7 @@ function bestSkillForFacility(
         efficiency: effectiveEfficiency,
         fatigueHours: fatigueHoursByFacility[facility.type],
         recoveryHours: facility.type === "dormitory" ? 0 : Math.max(4, recoveryBaseHours - globalBonus * 8),
-        reason: `${skill.name}: ${effect.description}`
+        reason: `${localizeText(skill.name, language)}: ${localizeText(effect.description, language)}`
       });
     }
   }

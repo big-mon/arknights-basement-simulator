@@ -4,10 +4,24 @@ import path from "node:path";
 const root = process.cwd();
 const outputPath = path.join(root, "src", "data", "operators.json");
 const sources = {
-  characters:
-    "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/character_table.json",
-  building:
-    "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/building_data.json"
+  zh: {
+    characters:
+      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/character_table.json",
+    building:
+      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/building_data.json"
+  },
+  ja: {
+    characters:
+      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/ja_JP/gamedata/excel/character_table.json",
+    building:
+      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/ja_JP/gamedata/excel/building_data.json"
+  },
+  en: {
+    characters:
+      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/en_US/gamedata/excel/character_table.json",
+    building:
+      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/en_US/gamedata/excel/building_data.json"
+  }
 };
 
 async function fetchJson(url) {
@@ -82,12 +96,40 @@ function inferEfficiency(description) {
 function cleanDescription(description) {
   return String(description ?? "")
     .replace(/<@[^>]+>/g, "")
+    .replace(/<\$[^>]+>/g, "")
     .replace(/<\/>/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function normalize(characters, building) {
+function localizedText(languages, getter, fallback) {
+  const localized = {};
+
+  for (const [language, dataset] of Object.entries(languages)) {
+    const value = getter(dataset);
+    if (typeof value === "string" && value.trim()) {
+      localized[language] = value.trim();
+    }
+  }
+
+  if (!localized.zh && fallback) {
+    localized.zh = fallback;
+  }
+
+  return localized;
+}
+
+function localizedDescription(languages, getter, fallback) {
+  return localizedText(languages, (dataset) => cleanDescription(getter(dataset)), fallback);
+}
+
+function preferredText(text) {
+  return text.zh ?? text.ja ?? text.en ?? "";
+}
+
+function normalize(languages) {
+  const characters = languages.zh.characters;
+  const building = languages.zh.building;
   const buildingChars = building.chars ?? {};
   const buffs = building.buffs ?? {};
 
@@ -107,9 +149,20 @@ function normalize(characters, building) {
           if (!facility) return null;
 
           const description = cleanDescription(buff.description);
+          const localizedBuffName = localizedText(
+            languages,
+            (dataset) => dataset.building.buffs?.[rawBuff.buffId]?.buffName,
+            buff.buffName ?? "基地スキル"
+          );
+          const localizedBuffDescription = localizedDescription(
+            languages,
+            (dataset) => dataset.building.buffs?.[rawBuff.buffId]?.description,
+            description
+          );
+
           return {
             id: String(buff.buffId ?? `${charId}-base-${index}`),
-            name: buff.buffName ?? "基地スキル",
+            name: localizedBuffName,
             unlockPhase: phaseToElite(rawBuff.cond?.phase),
             effects: [
               {
@@ -117,7 +170,7 @@ function normalize(characters, building) {
                 product: inferProduct(description, buff.roomType),
                 efficiency: inferEfficiency(description),
                 tags: [facility, buff.skillIcon, buff.buffIcon].filter(Boolean),
-                description
+                description: localizedBuffDescription
               }
             ]
           };
@@ -126,18 +179,28 @@ function normalize(characters, building) {
 
       return {
         id: charId,
-        name: character.name,
+        name: localizedText(languages, (dataset) => dataset.characters[charId]?.name, character.name),
         rarity: rarityToNumber(character.rarity),
         profession: professionToJa(character.profession),
         skills
       };
     })
     .filter((operator) => operator.skills.length > 0)
-    .sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"));
+    .sort((a, b) => preferredText(a.name).localeCompare(preferredText(b.name), "zh-Hans-CN"));
 }
 
-const [characters, building] = await Promise.all([fetchJson(sources.characters), fetchJson(sources.building)]);
-const operators = normalize(characters, building);
+const languages = Object.fromEntries(
+  await Promise.all(
+    Object.entries(sources).map(async ([language, languageSources]) => [
+      language,
+      {
+        characters: await fetchJson(languageSources.characters),
+        building: await fetchJson(languageSources.building)
+      }
+    ])
+  )
+);
+const operators = normalize(languages);
 
 await mkdir(path.dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(operators, null, 2)}\n`, "utf8");

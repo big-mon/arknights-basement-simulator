@@ -31,6 +31,7 @@ import {
   uiText
 } from "./i18n";
 import { generateAssignmentPlan } from "./lib/optimizer";
+import { localizedTextValues, localizeText } from "./lib/localization";
 import { exportState, importState, loadState, saveState } from "./lib/storage";
 import type {
   AppState,
@@ -103,12 +104,13 @@ export function App() {
   const rarities = Array.from(new Set(operators.map((operator) => operator.rarity))).sort((a, b) => b - a);
 
   const filteredOperators = operators.filter((operator) => {
-    const matchesQuery = `${operator.name} ${operator.id}`.toLowerCase().includes(query.toLowerCase());
+    const operatorSearchText = [operator.id, ...localizedTextValues(operator.name)].join(" ").toLowerCase();
+    const matchesQuery = operatorSearchText.includes(query.toLowerCase());
     const matchesProfession = professionFilter === "all" || operator.profession === professionFilter;
     const matchesRarity = rarityFilter === "all" || operator.rarity === Number(rarityFilter);
     return matchesQuery && matchesProfession && matchesRarity;
   });
-  const groupedOperators = groupOperatorsByProfessionAndRarity(filteredOperators, state.roster);
+  const groupedOperators = groupOperatorsByProfessionAndRarity(filteredOperators, state.roster, language);
 
   function updateRoster(operatorId: string, patch: Partial<RosterEntry>) {
     setState((current) => ({
@@ -544,6 +546,7 @@ function OperatorCard({
 }) {
   const unlockedSkills = operator.skills.filter((skill) => skill.unlockPhase <= entry.elite).length;
   const text = uiText[language];
+  const operatorName = localizeText(operator.name, language);
 
   function toggleOwnedFromCard(event: MouseEvent<HTMLElement>) {
     if (isInteractiveCardTarget(event.target)) {
@@ -563,7 +566,7 @@ function OperatorCard({
               checked={entry.owned}
               onChange={(event) => onUpdateRoster(operator.id, { owned: event.target.checked })}
             />
-            <span>{operator.name}</span>
+            <span>{operatorName}</span>
           </label>
           <p>
             {`★${operator.rarity} / ${professionLabels[language][operator.profession]} / ${text.roster.baseSkill} ${unlockedSkills}/${operator.skills.length}`}
@@ -583,19 +586,21 @@ function OperatorCard({
           </label>
         </div>
       </div>
-      <ul className="base-skill-list" aria-label={text.roster.skillListLabel(operator.name)}>
+      <ul className="base-skill-list" aria-label={text.roster.skillListLabel(operatorName)}>
         {operator.skills.map((skill) => {
           const unlocked = skill.unlockPhase <= entry.elite;
+          const skillName = localizeText(skill.name, language);
           return (
             <li key={skill.id} className={unlocked ? "base-skill unlocked" : "base-skill locked"}>
               <div className="base-skill-heading">
-                <strong>{skill.name}</strong>
+                <strong>{skillName}</strong>
                 <span>{unlocked ? text.roster.unlocked : text.roster.unlockAtElite(skill.unlockPhase)}</span>
               </div>
               {skill.effects.map((effect, index) => (
                 <p key={`${skill.id}-${index}`}>
                   {facilityLabels[language][effect.facility]}
-                  {effect.product ? ` / ${productLabels[language][effect.product]}` : ""}: {effect.description}
+                  {effect.product ? ` / ${productLabels[language][effect.product]}` : ""}:{" "}
+                  {localizeText(effect.description, language)}
                 </p>
               ))}
             </li>
@@ -606,7 +611,11 @@ function OperatorCard({
   );
 }
 
-function groupOperatorsByProfessionAndRarity(operatorList: Operator[], roster: Record<string, RosterEntry>) {
+function groupOperatorsByProfessionAndRarity(
+  operatorList: Operator[],
+  roster: Record<string, RosterEntry>,
+  language: LanguageCode
+) {
   const professions = Array.from(new Set(operatorList.map((operator) => operator.profession))).sort(
     (a, b) => professionSortIndex(a) - professionSortIndex(b)
   );
@@ -623,7 +632,7 @@ function groupOperatorsByProfessionAndRarity(operatorList: Operator[], roster: R
       rarityGroups: rarities.map((rarity) => {
         const rarityOperators = professionOperators
           .filter((operator) => operator.rarity === rarity)
-          .sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"));
+          .sort((a, b) => localizeText(a.name, language).localeCompare(localizeText(b.name, language), dateLocale(language)));
 
         return {
           rarity,
@@ -695,8 +704,9 @@ function professionSortIndex(profession: OperatorProfession) {
   return index === -1 ? professionOrder.length : index;
 }
 
-function operatorName(operatorId: string): string {
-  return operators.find((operator) => operator.id === operatorId)?.name ?? operatorId;
+function operatorName(operatorId: string, language: LanguageCode): string {
+  const operator = operators.find((candidate) => candidate.id === operatorId);
+  return operator ? localizeText(operator.name, language) : operatorId;
 }
 
 function selectedPreferencePreset(preference: { gold: number; battleRecord: number; lmd: number }): PreferencePresetId {
@@ -746,7 +756,7 @@ function FacilityPlanCard({
             <li key={`${assignment.facilityId}-${assignment.operatorId}`}>
               <Check size={16} />
               <span>
-                {operatorName(assignment.operatorId)}
+                {operatorName(assignment.operatorId, language)}
                 <small>{assignment.reason}</small>
               </span>
               <b>{assignment.score.toFixed(1)}</b>

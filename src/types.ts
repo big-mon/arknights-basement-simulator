@@ -8,6 +8,8 @@ export type RotationCount = 2 | 3;
 
 export type LanguageCode = "ja" | "zh" | "en";
 
+export type LocalizedText = Partial<Record<LanguageCode, string>>;
+
 export type OperatorProfession =
   | "先鋒"
   | "前衛"
@@ -24,19 +26,19 @@ export interface BaseSkillEffect {
   product?: ProductType;
   efficiency: number;
   tags?: string[];
-  description: string;
+  description: LocalizedText;
 }
 
 export interface BaseSkill {
   id: string;
-  name: string;
+  name: LocalizedText;
   unlockPhase: 0 | 1 | 2;
   effects: BaseSkillEffect[];
 }
 
 export interface Operator {
   id: string;
-  name: string;
+  name: LocalizedText;
   rarity: 1 | 2 | 3 | 4 | 5 | 6;
   profession: OperatorProfession;
   skills: BaseSkill[];

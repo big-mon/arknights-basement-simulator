@@ -3,8 +3,14 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "./App";
 import { createDefaultState, operators } from "./data/defaults";
+import { localizeText } from "./lib/localization";
 
 const amiya = operators.find((operator) => operator.id === "char_002_amiya")!;
+const amiyaName = localizeText(amiya.name, "ja");
+
+function operatorNameJa(operator: (typeof operators)[number]) {
+  return localizeText(operator.name, "ja");
+}
 
 describe("App", () => {
   beforeEach(() => {
@@ -14,15 +20,15 @@ describe("App", () => {
   it("sets roster ownership and keeps it after remount", async () => {
     const user = userEvent.setup();
     const { unmount } = render(<App />);
-    const amiyaCard = screen.getByText(amiya.name).closest("article")!;
-    const checkbox = within(amiyaCard).getByRole("checkbox", { name: amiya.name }) as HTMLInputElement;
+    const amiyaCard = screen.getByText(amiyaName).closest("article")!;
+    const checkbox = within(amiyaCard).getByRole("checkbox", { name: amiyaName }) as HTMLInputElement;
 
     await user.click(checkbox);
     expect(checkbox).toBeChecked();
 
     unmount();
     render(<App />);
-    expect(within(screen.getByText(amiya.name).closest("article")!).getByRole("checkbox", { name: amiya.name })).toBeChecked();
+    expect(within(screen.getByText(amiyaName).closest("article")!).getByRole("checkbox", { name: amiyaName })).toBeChecked();
   });
 
   it("starts with no owned operators selected", () => {
@@ -42,18 +48,24 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: "Base Rotation Simulator" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Owned/ })).toBeInTheDocument();
+    expect(screen.getByText(localizeText(amiya.name, "en"))).toBeInTheDocument();
+    expect(screen.getByText(localizeText(amiya.skills[0].name, "en"))).toBeInTheDocument();
+    expect(screen.getAllByText(localizeText(amiya.skills[0].effects[0].description, "en"), { exact: false }).length).toBeGreaterThan(0);
 
     await user.selectOptions(screen.getByRole("combobox", { name: /Language/ }), "zh");
 
     expect(screen.getByRole("heading", { name: "基建轮班模拟器" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /持有/ })).toBeInTheDocument();
+    expect(screen.getByText(localizeText(amiya.name, "zh"))).toBeInTheDocument();
+    expect(screen.getByText(localizeText(amiya.skills[0].name, "zh"))).toBeInTheDocument();
+    expect(screen.getAllByText(localizeText(amiya.skills[0].effects[0].description, "zh"), { exact: false }).length).toBeGreaterThan(0);
   });
 
   it("toggles roster ownership from the operator card without hijacking controls", async () => {
     const user = userEvent.setup();
     render(<App />);
-    const amiyaCard = screen.getByText(amiya.name).closest("article")!;
-    const checkbox = within(amiyaCard).getByRole("checkbox", { name: amiya.name }) as HTMLInputElement;
+    const amiyaCard = screen.getByText(amiyaName).closest("article")!;
+    const checkbox = within(amiyaCard).getByRole("checkbox", { name: amiyaName }) as HTMLInputElement;
     const defaultState = createDefaultState();
     const professionTotal = operators.filter((operator) => operator.profession === amiya.profession).length;
     const rarityTotal = operators.filter((operator) => operator.profession === amiya.profession && operator.rarity === amiya.rarity).length;
@@ -122,13 +134,13 @@ describe("App", () => {
     const professionSection = screen.getByRole("heading", { name: profession }).closest("section")!;
     const professionToggle = within(professionSection).getByRole("button", { name: profession });
 
-    expect(within(professionSection).getByText(firstOperator.name)).toBeInTheDocument();
+    expect(within(professionSection).getByText(operatorNameJa(firstOperator))).toBeInTheDocument();
     expect(professionToggle).toHaveAttribute("aria-expanded", "true");
 
     await user.click(professionToggle);
 
     expect(professionToggle).toHaveAttribute("aria-expanded", "false");
-    expect(within(professionSection).queryByText(firstOperator.name)).not.toBeInTheDocument();
+    expect(within(professionSection).queryByText(operatorNameJa(firstOperator))).not.toBeInTheDocument();
 
     await user.click(professionToggle);
 
@@ -138,18 +150,18 @@ describe("App", () => {
     await user.click(rarityToggle);
 
     expect(rarityToggle).toHaveAttribute("aria-expanded", "false");
-    expect(within(professionSection).queryByText(firstOperator.name)).not.toBeInTheDocument();
+    expect(within(professionSection).queryByText(operatorNameJa(firstOperator))).not.toBeInTheDocument();
   });
 
   it("shows base skill names, targets, and unlock state on operator cards", async () => {
     const user = userEvent.setup();
     render(<App />);
-    const amiyaCard = screen.getByText(amiya.name).closest("article")!;
-    const skillList = within(amiyaCard).getByRole("list", { name: `${amiya.name}の基地スキル` });
+    const amiyaCard = screen.getByText(amiyaName).closest("article")!;
+    const skillList = within(amiyaCard).getByRole("list", { name: `${amiyaName}の基地スキル` });
     const [firstSkill, secondSkill] = amiya.skills;
 
-    expect(within(skillList).getByText(firstSkill.name)).toBeInTheDocument();
-    expect(within(skillList).getByText(secondSkill.name)).toBeInTheDocument();
+    expect(within(skillList).getByText(localizeText(firstSkill.name, "ja"))).toBeInTheDocument();
+    expect(within(skillList).getByText(localizeText(secondSkill.name, "ja"))).toBeInTheDocument();
     expect(within(skillList).getAllByText(/制御中枢/).length).toBeGreaterThan(0);
     expect(within(skillList).getByText("昇進2で解放")).toBeInTheDocument();
 
