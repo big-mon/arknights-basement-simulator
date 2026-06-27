@@ -54,6 +54,11 @@ describe("App", () => {
     expect(rotationSuggestions).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^2回$/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: /3回/ })).toBeDisabled();
+    expect(screen.getByText("生産物の優先度")).toBeInTheDocument();
+    expect(screen.getByText("選んだ方針に合わせて、対応する基地スキルと施設配置を強く評価します。")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /バランス/ })).toBeChecked();
+    await user.click(screen.getByRole("radio", { name: /純金優先/ }));
+    expect(screen.getByRole("radio", { name: /純金優先/ })).toBeChecked();
     expect(screen.getByText("1回目ローテーション")).toBeInTheDocument();
     expect(screen.getByText("2回目ローテーション")).toBeInTheDocument();
     expect(screen.queryByText("第3ローテーション")).not.toBeInTheDocument();

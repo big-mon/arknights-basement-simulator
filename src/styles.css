@@ -374,6 +374,21 @@ input[type="checkbox"] {
   margin-bottom: 18px;
 }
 
+.preference-section {
+  display: grid;
+  gap: 10px;
+}
+
+.preference-heading h3 {
+  margin: 0 0 4px;
+}
+
+.preference-heading p {
+  margin: 0;
+  color: #65605b;
+  font-size: 0.88rem;
+}
+
 .recommendation-controls {
   margin-bottom: 20px;
   padding-bottom: 18px;
@@ -457,28 +472,33 @@ input[type="checkbox"] {
   font-size: 0.68rem;
 }
 
-.preference {
+.preference-option {
   padding: 16px;
   border: 1px solid #e0d8cd;
   border-radius: 8px;
   background: #ffffff;
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 10px;
+  align-items: start;
 }
 
-.preference span {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+.preference-option.active {
+  border-color: #b94c2d;
+  background: #fff6ef;
+  box-shadow: inset 0 0 0 2px #b94c2d;
+}
+
+.preference-option span {
+  display: grid;
+  gap: 4px;
   font-weight: 700;
 }
 
-.preference b {
-  color: #a64028;
-}
-
-input[type="range"] {
-  width: 100%;
-  accent-color: #b94c2d;
+.preference-option small {
+  color: #65605b;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .facility-list {

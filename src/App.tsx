@@ -29,7 +29,6 @@ import type {
   FacilityType,
   FacilityPlan,
   Assignment,
-  OptimizationPreference,
   ProductType,
   RosterEntry,
   RotationCount
@@ -57,6 +56,35 @@ const tabs: Array<{ id: TabId; label: string; icon: typeof Users }> = [
   { id: "roster", label: "所有", icon: Users },
   { id: "plan", label: "提案", icon: Activity }
 ];
+
+const preferencePresets = [
+  {
+    id: "balanced",
+    label: "バランス",
+    description: "純金・作戦記録・龍門幣を近い重みで評価",
+    preference: { gold: 0.35, battleRecord: 0.35, lmd: 0.3 }
+  },
+  {
+    id: "gold",
+    label: "純金優先",
+    description: "純金向けの製造所スキルを高く評価",
+    preference: { gold: 0.7, battleRecord: 0.15, lmd: 0.15 }
+  },
+  {
+    id: "battleRecord",
+    label: "作戦記録優先",
+    description: "作戦記録向けの製造所スキルを高く評価",
+    preference: { gold: 0.15, battleRecord: 0.7, lmd: 0.15 }
+  },
+  {
+    id: "lmd",
+    label: "龍門幣優先",
+    description: "貿易所の龍門幣効率を高く評価",
+    preference: { gold: 0.15, battleRecord: 0.15, lmd: 0.7 }
+  }
+] as const;
+
+type PreferencePresetId = (typeof preferencePresets)[number]["id"];
 
 export function App() {
   const [state, setState] = useState<AppState>(() => loadState());
@@ -109,13 +137,15 @@ export function App() {
     }));
   }
 
-  function updatePreference(key: keyof OptimizationPreference, value: number) {
+  function updatePreferencePreset(presetId: PreferencePresetId) {
+    const preset = preferencePresets.find((preferencePreset) => preferencePreset.id === presetId);
+    if (!preset) {
+      return;
+    }
+
     setState((current) => ({
       ...current,
-      preference: {
-        ...current.preference,
-        [key]: value
-      }
+      preference: preset.preference
     }));
   }
 
@@ -333,22 +363,33 @@ export function App() {
               </button>
             </div>
 
-            <div className="preference-grid">
-              <PreferenceSlider
-                label="純金"
-                value={state.preference.gold}
-                onChange={(value) => updatePreference("gold", value)}
-              />
-              <PreferenceSlider
-                label="作戦記録"
-                value={state.preference.battleRecord}
-                onChange={(value) => updatePreference("battleRecord", value)}
-              />
-              <PreferenceSlider
-                label="龍門幣"
-                value={state.preference.lmd}
-                onChange={(value) => updatePreference("lmd", value)}
-              />
+            <div className="preference-section">
+              <div className="preference-heading">
+                <h3>生産物の優先度</h3>
+                <p>選んだ方針に合わせて、対応する基地スキルと施設配置を強く評価します。</p>
+              </div>
+              <div className="preference-grid" role="radiogroup" aria-label="生産物の優先度">
+                {preferencePresets.map((preset) => (
+                  <label
+                    key={preset.id}
+                    className={
+                      selectedPreferencePreset(state.preference) === preset.id ? "preference-option active" : "preference-option"
+                    }
+                  >
+                    <input
+                      type="radio"
+                      name="production-priority"
+                      value={preset.id}
+                      checked={selectedPreferencePreset(state.preference) === preset.id}
+                      onChange={() => updatePreferencePreset(preset.id)}
+                    />
+                    <span>
+                      {preset.label}
+                      <small>{preset.description}</small>
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <div className="facility-list compact">
@@ -417,27 +458,21 @@ function Stat({ icon: Icon, label, value }: { icon: typeof Users; label: string;
   );
 }
 
-function PreferenceSlider({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
-  return (
-    <label className="preference">
-      <span>
-        {label}
-        <b>{Math.round(value * 100)}</b>
-      </span>
-      <input
-        type="range"
-        min={0}
-        max={1}
-        step={0.05}
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-      />
-    </label>
-  );
-}
-
 function operatorName(operatorId: string): string {
   return operators.find((operator) => operator.id === operatorId)?.name ?? operatorId;
+}
+
+function selectedPreferencePreset(preference: { gold: number; battleRecord: number; lmd: number }): PreferencePresetId {
+  if (preference.gold > preference.battleRecord && preference.gold > preference.lmd) {
+    return "gold";
+  }
+  if (preference.battleRecord > preference.gold && preference.battleRecord > preference.lmd) {
+    return "battleRecord";
+  }
+  if (preference.lmd > preference.gold && preference.lmd > preference.battleRecord) {
+    return "lmd";
+  }
+  return "balanced";
 }
 
 function rotationAssignmentsForFacility(facilityPlan: FacilityPlan, rotationIndex: number): Assignment[] {
