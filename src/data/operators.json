@@ -51,7 +51,7 @@
     "affiliations": [
       "rim"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -152,7 +152,7 @@
     "affiliations": [
       "siracusa"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "術師",
     "skills": [
       {
@@ -218,7 +218,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "術師",
     "skills": [
       {
@@ -352,7 +352,7 @@
     "affiliations": [
       "lungmen"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "特殊",
     "skills": [
       {
@@ -434,7 +434,7 @@
     "affiliations": [
       "sargon"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "前衛",
     "skills": [
       {
@@ -515,7 +515,7 @@
     "affiliations": [
       "victoria"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "術師",
     "skills": [
       {
@@ -582,7 +582,7 @@
     "affiliations": [
       "laterano"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "狙撃",
     "skills": [
       {
@@ -650,7 +650,7 @@
       "rhodes",
       "reserve4"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "狙撃",
     "skills": [
       {
@@ -692,7 +692,7 @@
       "rhodes",
       "reserve4"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "医療",
     "skills": [
       {
@@ -734,7 +734,7 @@
       "egir",
       "abyssal"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "狙撃",
     "skills": [
       {
@@ -801,7 +801,7 @@
     "affiliations": [
       "lungmen"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "特殊",
     "skills": [
       {
@@ -840,7 +840,7 @@
     "affiliations": [
       "mujica"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -899,7 +899,7 @@
       "columbia",
       "rhine"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "医療",
     "skills": [
       {
@@ -964,7 +964,7 @@
     "affiliations": [
       "higashi"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "狙撃",
     "skills": [
       {
@@ -1005,7 +1005,7 @@
     "affiliations": [
       "sami"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -1070,7 +1070,7 @@
     "affiliations": [
       "minos"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -1129,7 +1129,7 @@
     "affiliations": [
       "lungmen"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -1197,7 +1197,7 @@
       "rhodes",
       "reserve6"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "重装",
     "skills": [
       {
@@ -1238,7 +1238,7 @@
     "affiliations": [
       "victoria"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "術師",
     "skills": [
       {
@@ -1278,7 +1278,7 @@
     "affiliations": [
       "rim"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -1319,7 +1319,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -1439,7 +1439,7 @@
     "affiliations": [
       "victoria"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -1506,7 +1506,7 @@
     "affiliations": [
       "columbia"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "狙撃",
     "skills": [
       {
@@ -1573,7 +1573,7 @@
     "affiliations": [
       "columbia"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -1640,7 +1640,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "補助",
     "skills": [
       {
@@ -1733,7 +1733,7 @@
     "affiliations": [
       "columbia"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "術師",
     "skills": [
       {
@@ -1800,7 +1800,7 @@
     "affiliations": [
       "siracusa"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -1867,7 +1867,7 @@
       "columbia",
       "siesta"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -1934,7 +1934,7 @@
     "affiliations": [
       "higashi"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "前衛",
     "skills": [
       {
@@ -1975,7 +1975,7 @@
     "affiliations": [
       "leithanien"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -2192,7 +2192,7 @@
     "affiliations": [
       "kjerag"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -2274,7 +2274,7 @@
     "affiliations": [
       "victoria"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "医療",
     "skills": [
       {
@@ -2341,7 +2341,7 @@
     "affiliations": [
       "victoria"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "術師",
     "skills": [
       {
@@ -2392,7 +2392,7 @@
     "affiliations": [
       "kazimierz"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -2485,7 +2485,7 @@
     "affiliations": [
       "rainbow"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -2526,7 +2526,7 @@
       "lungmen",
       "penguin"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "先鋒",
     "skills": [
       {
@@ -2609,7 +2609,7 @@
     "affiliations": [
       "leithanien"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "補助",
     "skills": [
       {
@@ -2707,7 +2707,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "医療",
     "skills": [
       {
@@ -2745,7 +2745,7 @@
     "affiliations": [
       "ursus"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "先鋒",
     "skills": [
       {
@@ -2802,7 +2802,7 @@
     "affiliations": [
       "columbia"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "先鋒",
     "skills": [
       {
@@ -2868,7 +2868,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "前衛",
     "skills": [
       {
@@ -2910,7 +2910,7 @@
       "rhodes",
       "action4"
     ],
-    "rarity": 3,
+    "rarity": 2,
     "profession": "術師",
     "skills": [
       {
@@ -2977,7 +2977,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "先鋒",
     "skills": [
       {
@@ -3044,7 +3044,7 @@
     "affiliations": [
       "minos"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "前衛",
     "skills": [
       {
@@ -3177,7 +3177,7 @@
     "affiliations": [
       "yan"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -3244,7 +3244,7 @@
     "affiliations": [
       "laterano"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "前衛",
     "skills": [
       {
@@ -3285,7 +3285,7 @@
     "affiliations": [
       "sargon"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -3420,7 +3420,7 @@
       "rhodes",
       "reserve1"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "先鋒",
     "skills": [
       {
@@ -3604,7 +3604,7 @@
     "affiliations": [
       "yan"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "医療",
     "skills": [
       {
@@ -3668,7 +3668,7 @@
       "rhodes",
       "reserve1"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "医療",
     "skills": [
       {
@@ -3821,7 +3821,7 @@
     "affiliations": [
       "iberia"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -3888,7 +3888,7 @@
     "affiliations": [
       "bolivar"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "術師",
     "skills": [
       {
@@ -3930,7 +3930,7 @@
       "ursus",
       "student"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "重装",
     "skills": [
       {
@@ -3997,7 +3997,7 @@
     "affiliations": [
       "iberia"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "医療",
     "skills": [
       {
@@ -4064,7 +4064,7 @@
     "affiliations": [
       "victoria"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -4156,7 +4156,7 @@
     "affiliations": [
       "iberia"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -4221,7 +4221,7 @@
     "affiliations": [
       "egir"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -4288,7 +4288,7 @@
     "affiliations": [
       "sami"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "術師",
     "skills": [
       {
@@ -4330,7 +4330,7 @@
       "victoria",
       "tara"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "術師",
     "skills": [
       {
@@ -4371,7 +4371,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "医療",
     "skills": [
       {
@@ -4597,7 +4597,7 @@
       "columbia",
       "rhine"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "医療",
     "skills": [
       {
@@ -4798,7 +4798,7 @@
       "rhodes",
       "action4"
     ],
-    "rarity": 3,
+    "rarity": 2,
     "profession": "重装",
     "skills": [
       {
@@ -4864,7 +4864,7 @@
     "affiliations": [
       "sargon"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -4932,7 +4932,7 @@
       "lungmen",
       "lee"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -4974,7 +4974,7 @@
       "rhodes",
       "sweep"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -5015,7 +5015,7 @@
     "affiliations": [
       "columbia"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "先鋒",
     "skills": [
       {
@@ -5056,7 +5056,7 @@
     "affiliations": [
       "sargon"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "先鋒",
     "skills": [
       {
@@ -5123,7 +5123,7 @@
     "affiliations": [
       "siracusa"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "狙撃",
     "skills": [
       {
@@ -5257,7 +5257,7 @@
       "lungmen",
       "lee"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -5366,7 +5366,7 @@
       "kazimierz",
       "pinus"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -5431,7 +5431,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "狙撃",
     "skills": [
       {
@@ -5564,7 +5564,7 @@
     "affiliations": [
       "rim"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -5631,7 +5631,7 @@
     "affiliations": [
       "minos"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -5696,7 +5696,7 @@
     "affiliations": [
       "higashi"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "狙撃",
     "skills": [
       {
@@ -5755,7 +5755,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "重装",
     "skills": [
       {
@@ -5891,7 +5891,7 @@
       "kjerag",
       "karlan"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "重装",
     "skills": [
       {
@@ -5932,7 +5932,7 @@
     "affiliations": [
       "lungmen"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "特殊",
     "skills": [
       {
@@ -5999,7 +5999,7 @@
     "affiliations": [
       "columbia"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "前衛",
     "skills": [
       {
@@ -6041,7 +6041,7 @@
       "columbia",
       "blacksteel"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "狙撃",
     "skills": [
       {
@@ -6081,7 +6081,7 @@
     "affiliations": [
       "yan"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "狙撃",
     "skills": [
       {
@@ -6171,7 +6171,7 @@
     "affiliations": [
       "yan"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "術師",
     "skills": [
       {
@@ -6237,7 +6237,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "術師",
     "skills": [
       {
@@ -6304,7 +6304,7 @@
     "affiliations": [
       "columbia"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -6372,7 +6372,7 @@
       "rhodes",
       "reserve4"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "重装",
     "skills": [
       {
@@ -6536,7 +6536,7 @@
       "lungmen",
       "penguin"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -6604,7 +6604,7 @@
       "rhodes",
       "reserve1"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "狙撃",
     "skills": [
       {
@@ -6737,7 +6737,7 @@
       "lungmen",
       "penguin"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -6805,7 +6805,7 @@
       "rhodes",
       "reserve6"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "狙撃",
     "skills": [
       {
@@ -6846,7 +6846,7 @@
     "affiliations": [
       "laterano"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -7006,7 +7006,7 @@
     "affiliations": [
       "siracusa"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -7166,7 +7166,7 @@
       "columbia",
       "blacksteel"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -7308,7 +7308,7 @@
     "affiliations": [
       "kazimierz"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "特殊",
     "skills": [
       {
@@ -7350,7 +7350,7 @@
       "ursus",
       "student"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -7398,7 +7398,7 @@
     "affiliations": [
       "ursus"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -7457,7 +7457,7 @@
     "affiliations": [
       "followers"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -7525,7 +7525,7 @@
       "ursus",
       "student"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "先鋒",
     "skills": [
       {
@@ -7670,7 +7670,7 @@
     "affiliations": [
       "laterano"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "先鋒",
     "skills": [
       {
@@ -7711,7 +7711,7 @@
     "affiliations": [
       "bolivar"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -7887,7 +7887,7 @@
     "affiliations": [
       "kazimierz"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "狙撃",
     "skills": [
       {
@@ -7953,7 +7953,7 @@
     "affiliations": [
       "bolivar"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -8020,7 +8020,7 @@
     "affiliations": [
       "columbia"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -8061,7 +8061,7 @@
     "affiliations": [
       "columbia"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "補助",
     "skills": [
       {
@@ -8099,7 +8099,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 2,
+    "rarity": 1,
     "profession": "先鋒",
     "skills": [
       {
@@ -8294,7 +8294,7 @@
       "rhodes",
       "reserve4"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "前衛",
     "skills": [
       {
@@ -8336,7 +8336,7 @@
       "columbia",
       "rhine"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -8469,7 +8469,7 @@
       "rhodes",
       "reserve1"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "重装",
     "skills": [
       {
@@ -8535,7 +8535,7 @@
     "affiliations": [
       "rim"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "医療",
     "skills": [
       {
@@ -8576,7 +8576,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "医療",
     "skills": [
       {
@@ -8670,7 +8670,7 @@
       "victoria",
       "glasgow"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -8844,7 +8844,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "医療",
     "skills": [
       {
@@ -8962,7 +8962,7 @@
     "affiliations": [
       "sargon"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -9028,7 +9028,7 @@
     "affiliations": [
       "victoria"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "前衛",
     "skills": [
       {
@@ -9451,7 +9451,7 @@
     "affiliations": [
       "sargon"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "重装",
     "skills": [
       {
@@ -9518,7 +9518,7 @@
       "rhodes",
       "reserve6"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "前衛",
     "skills": [
       {
@@ -9652,7 +9652,7 @@
     "affiliations": [
       "laios"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "先鋒",
     "skills": [
       {
@@ -9719,7 +9719,7 @@
     "affiliations": [
       "higashi"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -9786,7 +9786,7 @@
     "affiliations": [
       "sargon"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "狙撃",
     "skills": [
       {
@@ -9920,7 +9920,7 @@
       "rhodes",
       "sweep"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "先鋒",
     "skills": [
       {
@@ -9987,7 +9987,7 @@
     "affiliations": [
       "yan"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "医療",
     "skills": [
       {
@@ -10052,7 +10052,7 @@
     "affiliations": [
       "mujica"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -10109,7 +10109,7 @@
     "affiliations": [
       "mujica"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -10270,7 +10270,7 @@
     "affiliations": [
       "laios"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -10337,7 +10337,7 @@
     "affiliations": [
       "rainbow"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -10445,7 +10445,7 @@
     "affiliations": [
       "columbia"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "重装",
     "skills": [
       {
@@ -10511,7 +10511,7 @@
     "affiliations": [
       "iberia"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "術師",
     "skills": [
       {
@@ -10604,7 +10604,7 @@
     "affiliations": [
       "egir"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "補助",
     "skills": [
       {
@@ -10645,7 +10645,7 @@
     "affiliations": [
       "egir"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -10713,7 +10713,7 @@
       "lungmen",
       "lgd"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -10754,7 +10754,7 @@
     "affiliations": [
       "rim"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -10821,7 +10821,7 @@
     "affiliations": [
       "columbia"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "前衛",
     "skills": [
       {
@@ -10887,7 +10887,7 @@
     "affiliations": [
       "lungmen"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -10955,7 +10955,7 @@
       "rhodes",
       "reserve4"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "術師",
     "skills": [
       {
@@ -11129,7 +11129,7 @@
     "affiliations": [
       "rainbow"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -11170,7 +11170,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "前衛",
     "skills": [
       {
@@ -11370,7 +11370,7 @@
     "affiliations": [
       "rim"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "狙撃",
     "skills": [
       {
@@ -11463,7 +11463,7 @@
     "affiliations": [
       "laterano"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "狙撃",
     "skills": [
       {
@@ -11571,7 +11571,7 @@
     "affiliations": [
       "columbia"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "狙撃",
     "skills": [
       {
@@ -11612,7 +11612,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 2,
+    "rarity": 1,
     "profession": "狙撃",
     "skills": [
       {
@@ -11678,7 +11678,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "先鋒",
     "skills": [
       {
@@ -11745,7 +11745,7 @@
     "affiliations": [
       "sargon"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "術師",
     "skills": [
       {
@@ -11784,7 +11784,7 @@
     "affiliations": [
       "columbia"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "狙撃",
     "skills": [
       {
@@ -11821,7 +11821,7 @@
     "affiliations": [
       "sargon"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "医療",
     "skills": [
       {
@@ -12092,7 +12092,7 @@
     "affiliations": [
       "victoria"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "先鋒",
     "skills": [
       {
@@ -12226,7 +12226,7 @@
     "affiliations": [
       "rim"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "術師",
     "skills": [
       {
@@ -12319,7 +12319,7 @@
     "affiliations": [
       "yan"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -12360,7 +12360,7 @@
     "affiliations": [
       "siracusa"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -12495,7 +12495,7 @@
     "affiliations": [
       "sargon"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -12562,7 +12562,7 @@
       "columbia",
       "siesta"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "医療",
     "skills": [
       {
@@ -12603,7 +12603,7 @@
       "columbia",
       "blacksteel"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "先鋒",
     "skills": [
       {
@@ -12667,7 +12667,7 @@
     "affiliations": [
       "columbia"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -12726,7 +12726,7 @@
     "affiliations": [
       "yan"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "補助",
     "skills": [
       {
@@ -12791,7 +12791,7 @@
     "affiliations": [
       "leithanien"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "術師",
     "skills": [
       {
@@ -12873,7 +12873,7 @@
       "columbia",
       "rhine"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "術師",
     "skills": [
       {
@@ -12939,7 +12939,7 @@
       "columbia",
       "blacksteel"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -13004,7 +13004,7 @@
     "affiliations": [
       "kjerag"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "狙撃",
     "skills": [
       {
@@ -13063,7 +13063,7 @@
     "affiliations": [
       "lungmen"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -13131,7 +13131,7 @@
       "kjerag",
       "karlan"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "先鋒",
     "skills": [
       {
@@ -13172,7 +13172,7 @@
     "affiliations": [
       "kjerag"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "特殊",
     "skills": [
       {
@@ -13240,7 +13240,7 @@
       "rhodes",
       "reserve1"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "術師",
     "skills": [
       {
@@ -13384,7 +13384,7 @@
     "affiliations": [
       "rim"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "重装",
     "skills": [
       {
@@ -13486,7 +13486,7 @@
       "kazimierz",
       "pinus"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "先鋒",
     "skills": [
       {
@@ -13552,7 +13552,7 @@
       "rhodes",
       "action4"
     ],
-    "rarity": 3,
+    "rarity": 2,
     "profession": "先鋒",
     "skills": [
       {
@@ -13618,7 +13618,7 @@
     "affiliations": [
       "victoria"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "術師",
     "skills": [
       {
@@ -13820,7 +13820,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "特殊",
     "skills": [
       {
@@ -13861,7 +13861,7 @@
     "affiliations": [
       "rainbow"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -14130,7 +14130,7 @@
     "affiliations": [
       "laterano"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "狙撃",
     "skills": [
       {
@@ -14172,7 +14172,7 @@
       "egir",
       "abyssal"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -14237,7 +14237,7 @@
     "affiliations": [
       "mujica"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -14337,7 +14337,7 @@
     "affiliations": [
       "sami"
     ],
-    "rarity": 5,
+    "rarity": 4,
     "profession": "術師",
     "skills": [
       {
@@ -14471,7 +14471,7 @@
       "rhodes",
       "reserve6"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "前衛",
     "skills": [
       {
@@ -14579,7 +14579,7 @@
     "affiliations": [
       "rainbow"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "前衛",
     "skills": [
       {
@@ -14645,7 +14645,7 @@
     "affiliations": [
       "leithanien"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "術師",
     "skills": [
       {
@@ -14771,7 +14771,7 @@
       "kazimierz",
       "pinus"
     ],
-    "rarity": 2,
+    "rarity": 1,
     "profession": "狙撃",
     "skills": [
       {
@@ -14838,7 +14838,7 @@
     "affiliations": [
       "sargon"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "術師",
     "skills": [
       {
@@ -14996,7 +14996,7 @@
     "affiliations": [
       "siracusa"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "狙撃",
     "skills": [
       {
@@ -15038,7 +15038,7 @@
       "rhodes",
       "reserve6"
     ],
-    "rarity": 4,
+    "rarity": 3,
     "profession": "補助",
     "skills": [
       {
@@ -15079,7 +15079,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 2,
+    "rarity": 1,
     "profession": "前衛",
     "skills": [
       {
@@ -15146,7 +15146,7 @@
     "affiliations": [
       "laterano"
     ],
-    "rarity": 2,
+    "rarity": 1,
     "profession": "先鋒",
     "skills": [
       {
@@ -15223,7 +15223,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 2,
+    "rarity": 1,
     "profession": "重装",
     "skills": [
       {
@@ -15297,7 +15297,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 2,
+    "rarity": 1,
     "profession": "術師",
     "skills": [
       {
@@ -15356,7 +15356,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 2,
+    "rarity": 1,
     "profession": "医療",
     "skills": [
       {
@@ -15423,7 +15423,7 @@
     "affiliations": [
       "victoria"
     ],
-    "rarity": 6,
+    "rarity": 5,
     "profession": "術師",
     "skills": [
       {
@@ -15564,7 +15564,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 2,
+    "rarity": 1,
     "profession": "補助",
     "skills": [
       {
@@ -15631,7 +15631,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 2,
+    "rarity": 1,
     "profession": "特殊",
     "skills": [
       {
@@ -15698,7 +15698,7 @@
     "affiliations": [
       "rhodes"
     ],
-    "rarity": 2,
+    "rarity": 1,
     "profession": "補助",
     "skills": [
       {

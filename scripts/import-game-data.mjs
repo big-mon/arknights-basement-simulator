@@ -37,7 +37,7 @@ function rarityToNumber(rawRarity) {
     return Math.min(6, Math.max(1, rawRarity + 1));
   }
   const match = String(rawRarity).match(/\d+/);
-  return match ? Math.min(6, Math.max(1, Number(match[0]) + 1)) : 1;
+  return match ? Math.min(6, Math.max(1, Number(match[0]))) : 1;
 }
 
 function professionToJa(profession) {

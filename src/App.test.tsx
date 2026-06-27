@@ -9,6 +9,7 @@ const amiya = operators.find((operator) => operator.id === "char_002_amiya")!;
 const amiyaName = localizeText(amiya.name, "ja");
 const threeStarOperator = operators.find((operator) => operator.rarity === 3)!;
 const lowRarityOperator = operators.find((operator) => operator.rarity <= 2)!;
+const phonor = operators.find((operator) => operator.id === "char_4136_phonor")!;
 const missingJapaneseNameOperator = operators.find((operator) => !operator.name.ja)!;
 const missingJapaneseFallbackName = localizeText(missingJapaneseNameOperator.name, "ja");
 
@@ -121,6 +122,19 @@ describe("App", () => {
     expect(vanguardSection).toBeInTheDocument();
     expect(within(vanguardSection).getByRole("heading", { name: "★6" })).toBeInTheDocument();
     expect(within(vanguardSection).getByRole("heading", { name: "★5" })).toBeInTheDocument();
+  });
+
+  it("uses game-facing rarity labels from imported data", () => {
+    expect(phonor.rarity).toBe(1);
+    expect(amiya.rarity).toBe(5);
+
+    render(<App />);
+
+    const phonorCard = screen.getByText("PhonoR-0").closest("article")!;
+    const amiyaCard = screen.getByText(amiyaName).closest("article")!;
+
+    expect(within(phonorCard).getByText(/★1/)).toBeInTheDocument();
+    expect(within(amiyaCard).getByText(/★5/)).toBeInTheDocument();
   });
 
   it("filters the owned roster with profession and rarity radio options", async () => {
