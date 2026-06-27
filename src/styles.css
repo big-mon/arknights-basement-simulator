@@ -249,6 +249,51 @@ input[type="number"] {
   gap: 12px;
 }
 
+.operator-sections {
+  display: grid;
+  gap: 24px;
+}
+
+.operator-profession-section {
+  display: grid;
+  gap: 14px;
+}
+
+.operator-section-heading,
+.operator-rarity-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.operator-section-heading {
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e4dbce;
+}
+
+.operator-section-heading h3,
+.operator-rarity-heading h4 {
+  margin: 0;
+}
+
+.operator-section-heading span,
+.operator-rarity-heading span {
+  color: #65605b;
+  font-size: 0.84rem;
+}
+
+.operator-rarity-section {
+  display: grid;
+  gap: 10px;
+}
+
+.operator-rarity-heading {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f0e9df;
+}
+
 .operator-card {
   min-height: 132px;
   align-items: stretch;

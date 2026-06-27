@@ -25,6 +25,16 @@ describe("App", () => {
     expect(within(screen.getByText(amiya.name).closest("article")!).getByRole("checkbox", { name: amiya.name })).toBeChecked();
   });
 
+  it("groups owned roster by profession and rarity", () => {
+    render(<App />);
+
+    const vanguardSection = screen.getByRole("heading", { name: "先鋒" }).closest("section")!;
+
+    expect(vanguardSection).toBeInTheDocument();
+    expect(within(vanguardSection).getByRole("heading", { name: "★6" })).toBeInTheDocument();
+    expect(within(vanguardSection).getByRole("heading", { name: "★5" })).toBeInTheDocument();
+  });
+
   it("shows base skill names, targets, and unlock state on operator cards", async () => {
     const user = userEvent.setup();
     render(<App />);

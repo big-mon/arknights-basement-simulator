@@ -29,6 +29,8 @@ import type {
   FacilityType,
   FacilityPlan,
   Assignment,
+  Operator,
+  OperatorProfession,
   ProductType,
   RosterEntry,
   RotationCount
@@ -56,6 +58,8 @@ const tabs: Array<{ id: TabId; label: string; icon: typeof Users }> = [
   { id: "roster", label: "所有", icon: Users },
   { id: "plan", label: "提案", icon: Activity }
 ];
+
+const professionOrder: OperatorProfession[] = ["先鋒", "前衛", "重装", "狙撃", "術師", "医療", "補助", "特殊", "その他"];
 
 const preferencePresets = [
   {
@@ -109,6 +113,7 @@ export function App() {
     const matchesProfession = professionFilter === "all" || operator.profession === professionFilter;
     return matchesQuery && matchesProfession;
   });
+  const groupedOperators = groupOperatorsByProfessionAndRarity(filteredOperators);
 
   function updateRoster(operatorId: string, patch: Partial<RosterEntry>) {
     setState((current) => ({
@@ -254,62 +259,33 @@ export function App() {
             </div>
           </div>
 
-          <div className="operator-grid">
-            {filteredOperators.map((operator) => {
-              const entry = state.roster[operator.id];
-              const unlockedSkills = operator.skills.filter((skill) => skill.unlockPhase <= entry.elite).length;
-              return (
-                <article key={operator.id} className={entry.owned ? "operator-card owned" : "operator-card"}>
-                  <div className="operator-card-top">
-                    <div className="operator-card-main">
-                      <label className="checkbox-line">
-                        <input
-                          type="checkbox"
-                          checked={entry.owned}
-                          onChange={(event) => updateRoster(operator.id, { owned: event.target.checked })}
+          <div className="operator-sections">
+            {groupedOperators.map((professionGroup) => (
+              <section key={professionGroup.profession} className="operator-profession-section">
+                <div className="operator-section-heading">
+                  <h3>{professionGroup.profession}</h3>
+                  <span>{professionGroup.total}名</span>
+                </div>
+                {professionGroup.rarityGroups.map((rarityGroup) => (
+                  <section key={`${professionGroup.profession}-${rarityGroup.rarity}`} className="operator-rarity-section">
+                    <div className="operator-rarity-heading">
+                      <h4>★{rarityGroup.rarity}</h4>
+                      <span>{rarityGroup.operators.length}名</span>
+                    </div>
+                    <div className="operator-grid">
+                      {rarityGroup.operators.map((operator) => (
+                        <OperatorCard
+                          key={operator.id}
+                          operator={operator}
+                          entry={state.roster[operator.id]}
+                          onUpdateRoster={updateRoster}
                         />
-                        <span>{operator.name}</span>
-                      </label>
-                      <p>
-                        ★{operator.rarity} / {operator.profession} / 基地スキル {unlockedSkills}/{operator.skills.length}
-                      </p>
+                      ))}
                     </div>
-                    <div className="operator-controls">
-                      <label>
-                        昇進
-                        <select
-                          value={entry.elite}
-                          onChange={(event) => updateRoster(operator.id, { elite: Number(event.target.value) as 0 | 1 | 2 })}
-                        >
-                          <option value={0}>0</option>
-                          <option value={1}>1</option>
-                          <option value={2}>2</option>
-                        </select>
-                      </label>
-                    </div>
-                  </div>
-                  <ul className="base-skill-list" aria-label={`${operator.name}の基地スキル`}>
-                    {operator.skills.map((skill) => {
-                      const unlocked = skill.unlockPhase <= entry.elite;
-                      return (
-                        <li key={skill.id} className={unlocked ? "base-skill unlocked" : "base-skill locked"}>
-                          <div className="base-skill-heading">
-                            <strong>{skill.name}</strong>
-                            <span>{unlocked ? "解放済み" : `昇進${skill.unlockPhase}で解放`}</span>
-                          </div>
-                          {skill.effects.map((effect, index) => (
-                            <p key={`${skill.id}-${index}`}>
-                              {facilityLabels[effect.facility]}
-                              {effect.product ? ` / ${productLabels[effect.product]}` : ""}: {effect.description}
-                            </p>
-                          ))}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </article>
-              );
-            })}
+                  </section>
+                ))}
+              </section>
+            ))}
           </div>
         </section>
       ) : null}
@@ -459,6 +435,97 @@ function Stat({ icon: Icon, label, value }: { icon: typeof Users; label: string;
       <strong>{value}</strong>
     </div>
   );
+}
+
+function OperatorCard({
+  operator,
+  entry,
+  onUpdateRoster
+}: {
+  operator: Operator;
+  entry: RosterEntry;
+  onUpdateRoster: (operatorId: string, patch: Partial<RosterEntry>) => void;
+}) {
+  const unlockedSkills = operator.skills.filter((skill) => skill.unlockPhase <= entry.elite).length;
+
+  return (
+    <article className={entry.owned ? "operator-card owned" : "operator-card"}>
+      <div className="operator-card-top">
+        <div className="operator-card-main">
+          <label className="checkbox-line">
+            <input
+              type="checkbox"
+              checked={entry.owned}
+              onChange={(event) => onUpdateRoster(operator.id, { owned: event.target.checked })}
+            />
+            <span>{operator.name}</span>
+          </label>
+          <p>
+            ★{operator.rarity} / {operator.profession} / 基地スキル {unlockedSkills}/{operator.skills.length}
+          </p>
+        </div>
+        <div className="operator-controls">
+          <label>
+            昇進
+            <select
+              value={entry.elite}
+              onChange={(event) => onUpdateRoster(operator.id, { elite: Number(event.target.value) as 0 | 1 | 2 })}
+            >
+              <option value={0}>0</option>
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <ul className="base-skill-list" aria-label={`${operator.name}の基地スキル`}>
+        {operator.skills.map((skill) => {
+          const unlocked = skill.unlockPhase <= entry.elite;
+          return (
+            <li key={skill.id} className={unlocked ? "base-skill unlocked" : "base-skill locked"}>
+              <div className="base-skill-heading">
+                <strong>{skill.name}</strong>
+                <span>{unlocked ? "解放済み" : `昇進${skill.unlockPhase}で解放`}</span>
+              </div>
+              {skill.effects.map((effect, index) => (
+                <p key={`${skill.id}-${index}`}>
+                  {facilityLabels[effect.facility]}
+                  {effect.product ? ` / ${productLabels[effect.product]}` : ""}: {effect.description}
+                </p>
+              ))}
+            </li>
+          );
+        })}
+      </ul>
+    </article>
+  );
+}
+
+function groupOperatorsByProfessionAndRarity(operatorList: Operator[]) {
+  const professions = Array.from(new Set(operatorList.map((operator) => operator.profession))).sort(
+    (a, b) => professionSortIndex(a) - professionSortIndex(b)
+  );
+
+  return professions.map((profession) => {
+    const professionOperators = operatorList.filter((operator) => operator.profession === profession);
+    const rarities = Array.from(new Set(professionOperators.map((operator) => operator.rarity))).sort((a, b) => b - a);
+
+    return {
+      profession,
+      total: professionOperators.length,
+      rarityGroups: rarities.map((rarity) => ({
+        rarity,
+        operators: professionOperators
+          .filter((operator) => operator.rarity === rarity)
+          .sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"))
+      }))
+    };
+  });
+}
+
+function professionSortIndex(profession: OperatorProfession) {
+  const index = professionOrder.indexOf(profession);
+  return index === -1 ? professionOrder.length : index;
 }
 
 function operatorName(operatorId: string): string {
