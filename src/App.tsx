@@ -213,7 +213,7 @@ export function App() {
                       <span>{operator.name}</span>
                     </label>
                     <p>
-                      ★{operator.rarity} / {operator.profession} / 解放スキル {unlockedSkills}/{operator.skills.length}
+                      ★{operator.rarity} / {operator.profession} / 基地スキル {unlockedSkills}/{operator.skills.length}
                     </p>
                   </div>
                   <div className="operator-controls">
