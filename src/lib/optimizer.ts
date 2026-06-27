@@ -318,6 +318,9 @@ function productWeight(product: ProductType, preference: OptimizationPreference)
   if (product === "battleRecord") {
     return preference.battleRecord;
   }
+  if (product === "originium") {
+    return 0.05;
+  }
   if (product === "lmd") {
     return preference.lmd;
   }

@@ -540,7 +540,8 @@
               "zh": "进驻制造站时，源石类配方的生产力+35%",
               "ja": "製造所配置時、源石製造の製造効率+35%",
               "en": "When this Operator is assigned to a Factory, Originium formula related productivity +35%"
-            }
+            },
+            "product": "originium"
           }
         ]
       }
@@ -1517,7 +1518,8 @@
               "zh": "进驻制造站时，源石类配方的生产力+30%",
               "ja": "製造所配置時、源石製造の製造効率+30%",
               "en": "When this Operator is assigned to a Factory, Originium formula related productivity +30%"
-            }
+            },
+            "product": "originium"
           }
         ]
       }
@@ -3215,7 +3217,8 @@
               "zh": "进驻制造站时，源石类配方的生产力+35%",
               "ja": "製造所配置時、源石製造の製造効率+35%",
               "en": "When this Operator is assigned to a Factory, Originium formula related productivity +35%"
-            }
+            },
+            "product": "originium"
           }
         ]
       }
@@ -5478,7 +5481,8 @@
               "zh": "进驻制造站时，源石类配方的生产力+30%",
               "ja": "製造所配置時、源石製造の製造効率+30%",
               "en": "When this Operator is assigned to a Factory, Originium formula related productivity +30%"
-            }
+            },
+            "product": "originium"
           }
         ]
       }
@@ -15776,7 +15780,8 @@
               "zh": "进驻制造站时，源石类配方的生产力+35%",
               "ja": "製造所配置時、源石製造の製造効率+35%",
               "en": "When this Operator is assigned to a Factory, Originium formula related productivity +35%"
-            }
+            },
+            "product": "originium"
           }
         ]
       }
@@ -17104,7 +17109,8 @@
               "zh": "进驻制造站时，源石类配方的生产力+35%",
               "ja": "製造所配置時、源石製造の製造効率+35%",
               "en": "When this Operator is assigned to a Factory, Originium formula related productivity +35%"
-            }
+            },
+            "product": "originium"
           }
         ]
       }
@@ -18840,7 +18846,8 @@
               "zh": "进驻制造站时，源石类配方的生产力+30%",
               "ja": "製造所配置時、源石製造の製造効率+30%",
               "en": "When this Operator is assigned to a Factory, Originium formula related productivity +30%"
-            }
+            },
+            "product": "originium"
           }
         ]
       }

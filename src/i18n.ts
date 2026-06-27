@@ -238,6 +238,7 @@ export const productLabels: Record<LanguageCode, Record<ProductType, string>> = 
   ja: {
     gold: "純金",
     battleRecord: "作戦記録",
+    originium: "源石",
     lmd: "龍門幣",
     power: "ドローン",
     morale: "体力回復",
@@ -246,6 +247,7 @@ export const productLabels: Record<LanguageCode, Record<ProductType, string>> = 
   zh: {
     gold: "赤金",
     battleRecord: "作战记录",
+    originium: "源石",
     lmd: "龙门币",
     power: "无人机",
     morale: "心情恢复",
@@ -254,6 +256,7 @@ export const productLabels: Record<LanguageCode, Record<ProductType, string>> = 
   en: {
     gold: "Gold",
     battleRecord: "Battle Records",
+    originium: "Originium",
     lmd: "LMD",
     power: "Drones",
     morale: "Morale recovery",

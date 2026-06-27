@@ -36,6 +36,8 @@ const lowRarityPowerOperator = operators.find(
       skill.effects.some((effect) => effect.facility === "power" && (!effect.product || effect.product === "power"))
     )
 )!;
+const eyjafjalla = operators.find((operator) => operator.id === "char_180_amgoat")!;
+const lava = operators.find((operator) => operator.id === "char_121_lava")!;
 const leto = operators.find((operator) => operator.id === "char_194_leto")!;
 const gummy = operators.find((operator) => operator.id === "char_196_sunbr")!;
 const letoGummySkill = leto.skills.find((skill) => skill.id === "manu_formula_spd_P[000]")!;
@@ -156,6 +158,25 @@ describe("optimizer", () => {
         assignments: [contextAssignment(trading, glasgowOperator.id)]
       }).some((candidate) => candidate.skillId === delphineGlasgowSkill.id)
     ).toBe(true);
+  });
+
+  it("matches originium factory skills only to originium products", () => {
+    const state = createDefaultState();
+    ownOperators(state, [eyjafjalla.id, lava.id]);
+    state.roster[lava.id].elite = 1;
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const goldFactory: FacilitySlot = { ...factory, product: "gold" };
+    const battleRecordFactory: FacilitySlot = { ...factory, product: "battleRecord" };
+    const originiumFactory: FacilitySlot = { ...factory, product: "originium" };
+    const goldCandidateIds = findCandidates(goldFactory, state).map((candidate) => candidate.operatorId);
+    const battleRecordCandidateIds = findCandidates(battleRecordFactory, state).map((candidate) => candidate.operatorId);
+    const originiumCandidateIds = findCandidates(originiumFactory, state).map((candidate) => candidate.operatorId);
+
+    expect(goldCandidateIds).not.toContain(eyjafjalla.id);
+    expect(goldCandidateIds).not.toContain(lava.id);
+    expect(battleRecordCandidateIds).not.toContain(eyjafjalla.id);
+    expect(battleRecordCandidateIds).not.toContain(lava.id);
+    expect(originiumCandidateIds).toEqual(expect.arrayContaining([eyjafjalla.id, lava.id]));
   });
 
   it("does not change base scores from potential", () => {

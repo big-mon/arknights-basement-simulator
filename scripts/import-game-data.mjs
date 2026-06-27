@@ -83,6 +83,7 @@ function roomTypeToFacility(roomType) {
 function inferProduct(description, roomType) {
   const text = String(description);
   if (roomType === "MEETING") return "clue";
+  if (/源石|Originium/i.test(text)) return "originium";
   if (/贵金属|赤金|金属|纯金|gold/i.test(text)) return "gold";
   if (/作战记录|战斗记录|经验|Battle Record|EXP/i.test(text)) return "battleRecord";
   if (/龙门币|订单|贸易站|LMD|order/i.test(text)) return "lmd";
