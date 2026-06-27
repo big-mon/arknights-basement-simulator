@@ -194,6 +194,23 @@ h4 {
   font-weight: 800;
 }
 
+.layout-summary-control {
+  cursor: pointer;
+}
+
+.layout-select {
+  width: 100%;
+  height: 42px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.layout-description {
+  color: #65605b;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
 .notice,
 .warning {
   padding: 12px 14px;
@@ -572,53 +589,6 @@ input[type="radio"] {
   border-bottom: 1px solid #e5ded4;
 }
 
-.layout-selector {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.layout-selector.compact {
-  margin-bottom: 0;
-}
-
-.layout-option {
-  min-height: 76px;
-  padding: 14px 16px;
-  border: 1px solid #d8d0c3;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #232527;
-  display: grid;
-  grid-template-columns: 22px 1fr;
-  gap: 10px;
-  align-items: center;
-  text-align: left;
-  cursor: pointer;
-}
-
-.layout-option.active {
-  border-color: #b94c2d;
-  background: #fff6ef;
-  box-shadow: inset 0 0 0 2px #b94c2d;
-}
-
-.layout-option.active svg {
-  color: #b94c2d;
-}
-
-.layout-option span {
-  display: grid;
-  gap: 4px;
-  font-weight: 800;
-}
-
-.layout-option small {
-  color: #65605b;
-  font-weight: 500;
-}
-
 .rotation-selector {
   display: inline-flex;
   gap: 8px;
@@ -847,7 +817,6 @@ input[type="radio"] {
 @media (max-width: 900px) {
   .summary-strip,
   .operator-grid,
-  .layout-selector,
   .plan-metrics,
   .preference-grid,
   .plan-grid {
@@ -873,7 +842,6 @@ input[type="radio"] {
 
   .summary-strip,
   .operator-grid,
-  .layout-selector,
   .plan-metrics,
   .preference-grid,
   .plan-grid {

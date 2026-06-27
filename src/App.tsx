@@ -6,7 +6,6 @@ import {
   ChevronDown,
   ChevronRight,
   Download,
-  Home,
   Languages,
   RotateCcw,
   Search,
@@ -232,26 +231,25 @@ export function App() {
 
       <section className="summary-strip" aria-label={text.summaryLabel}>
         <Stat icon={Users} label={text.stats.owned} value={`${ownedCount}/${operators.length}`} />
-        <div className="summary-control">
+        <label className="summary-control layout-summary-control">
           <span className="summary-control-label">{text.plan.baseLayout}</span>
-          <div className="layout-selector compact" aria-label={text.plan.baseLayout}>
+          <select
+            className="layout-select"
+            value={selectedLayout}
+            onChange={(event) => {
+              if (isBaseLayout(event.target.value)) {
+                updateLayout(event.target.value);
+              }
+            }}
+          >
             {(Object.keys(layoutPresets) as BaseLayout[]).map((layout) => (
-              <button
-                key={layout}
-                type="button"
-                aria-pressed={selectedLayout === layout}
-                className={selectedLayout === layout ? "layout-option active" : "layout-option"}
-                onClick={() => updateLayout(layout)}
-              >
-                <Home size={18} />
-                <span>
-                  {layoutLabels[language][layout].label}
-                  <small>{layoutLabels[language][layout].description}</small>
-                </span>
-              </button>
+              <option key={layout} value={layout}>
+                {layoutLabels[language][layout].label}
+              </option>
             ))}
-          </div>
-        </div>
+          </select>
+          <small className="layout-description">{layoutLabels[language][selectedLayout].description}</small>
+        </label>
         <div className="summary-control">
           <span className="summary-control-label">{text.plan.rotationCount}</span>
           <div className="rotation-selector compact" aria-label={text.plan.rotationCount}>

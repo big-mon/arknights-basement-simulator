@@ -198,15 +198,16 @@ describe("App", () => {
     const summary = screen.getByLabelText("現在の概要");
     expect(within(summary).queryByText("日次価値")).not.toBeInTheDocument();
     expect(within(summary).queryByText("総合スコア")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /243型/ })).toHaveAttribute("aria-pressed", "true");
+    const layoutSelect = screen.getByRole("combobox", { name: /基地構成/ }) as HTMLSelectElement;
+    expect(layoutSelect).toHaveValue("243");
 
     await user.click(screen.getByRole("button", { name: /提案/ }));
     expect(screen.getAllByText("貿易所 B").length).toBeGreaterThan(0);
     expect(screen.getAllByText("製造所 D").length).toBeGreaterThan(0);
 
-    await user.click(screen.getByRole("button", { name: /153型/ }));
+    await user.selectOptions(layoutSelect, "153");
 
-    expect(screen.getByRole("button", { name: /153型/ })).toHaveAttribute("aria-pressed", "true");
+    expect(layoutSelect).toHaveValue("153");
     expect(screen.queryByText("貿易所 B")).not.toBeInTheDocument();
     expect(screen.getAllByText("製造所 E").length).toBeGreaterThan(0);
   });
@@ -227,7 +228,7 @@ describe("App", () => {
     render(<App />);
     await user.click(screen.getByRole("button", { name: /提案/ }));
 
-    expect(screen.getByRole("button", { name: /243型/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("combobox", { name: /基地構成/ })).toHaveValue("243");
     expect(screen.getByRole("button", { name: /2回.*選択中/ })).toHaveAttribute("aria-pressed", "true");
   });
 });
