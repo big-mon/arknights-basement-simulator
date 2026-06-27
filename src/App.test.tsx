@@ -10,6 +10,7 @@ const amiyaName = localizeText(amiya.name, "ja");
 const threeStarOperator = operators.find((operator) => operator.rarity === 3)!;
 const lowRarityOperator = operators.find((operator) => operator.rarity <= 2)!;
 const phonor = operators.find((operator) => operator.id === "char_4136_phonor")!;
+const silverashAlter = operators.find((operator) => operator.id === "char_1045_svash2")!;
 const missingJapaneseNameOperator = operators.find((operator) => !operator.name.ja)!;
 const missingJapaneseFallbackName = localizeText(missingJapaneseNameOperator.name, "ja");
 
@@ -135,6 +136,13 @@ describe("App", () => {
 
     expect(within(phonorCard).getByText(/★1/)).toBeInTheDocument();
     expect(within(amiyaCard).getByText(/★5/)).toBeInTheDocument();
+  });
+
+  it("includes special playable operators from CN game data", () => {
+    expect(silverashAlter.rarity).toBe(6);
+    expect(silverashAlter.name.zh).toBeTruthy();
+    expect(silverashAlter.name.ja).toBeUndefined();
+    expect(silverashAlter.skills.length).toBeGreaterThan(0);
   });
 
   it("filters the owned roster with profession and rarity radio options", async () => {

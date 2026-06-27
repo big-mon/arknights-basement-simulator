@@ -2075,6 +2075,73 @@
     ]
   },
   {
+    "id": "char_1027_greyy2",
+    "name": {
+      "zh": "承曦格雷伊",
+      "ja": "承曦グレイ",
+      "en": "Greyy the Lightningbearer"
+    },
+    "affiliations": [
+      "rhodes"
+    ],
+    "rarity": 5,
+    "profession": "狙撃",
+    "skills": [
+      {
+        "id": "power_rec_drone[000]",
+        "name": {
+          "zh": "巡线框架",
+          "ja": "配電工事",
+          "en": "Line Patrol Frame"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "power",
+            "product": "power",
+            "efficiency": 0.01,
+            "tags": [
+              "power",
+              "bskill_pow_drone",
+              "power"
+            ],
+            "description": {
+              "zh": "进驻发电站时，每10架无人机上限+1%无人机充能速度（最多+25%）",
+              "ja": "発電所配置時、ドローンの上限数10につき、ドローンの回復速度+1%（最大+25%まで）",
+              "en": "When this Operator is assigned to a Power Plant, +1% Drone recovery rate for every 10 max Drone capacity (Max +25%)"
+            }
+          }
+        ]
+      },
+      {
+        "id": "power_count[000]",
+        "name": {
+          "zh": "晨曦",
+          "ja": "曙光",
+          "en": "Dawnlight"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "power",
+            "product": "power",
+            "efficiency": 0.05,
+            "tags": [
+              "power",
+              "bskill_pow_count",
+              "power"
+            ],
+            "description": {
+              "zh": "进驻发电站时，如果其他发电站内没有进驻作业平台，则发电站额外+1(仅影响设施数量)",
+              "ja": "発電所配置時、他の発電所に作業用プラットフォーム が配置されていない場合、発電所の施設数+1（施設の数以外に影響なし）",
+              "en": "When this Operator is assigned to a Power Plant, if there are no Operation Platforms in other Power Plants, Power Plant +1(only affects facility quantity)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_377_gdglow",
     "name": {
       "zh": "澄闪",
@@ -2224,6 +2291,47 @@
     ]
   },
   {
+    "id": "char_1016_agoat2",
+    "name": {
+      "zh": "纯烬艾雅法拉",
+      "ja": "純燼エイヤフィヤトラ",
+      "en": "Eyjafjalla the Hvít Aska"
+    },
+    "affiliations": [
+      "leithanien"
+    ],
+    "rarity": 6,
+    "profession": "医療",
+    "skills": [
+      {
+        "id": "dorm_rec_all&profession[000]",
+        "name": {
+          "zh": "火山温泉浴",
+          "ja": "火山温泉浴",
+          "en": "Volcanic Hot Springs Bath"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "dormitory",
+            "product": "morale",
+            "efficiency": 0.05,
+            "tags": [
+              "dormitory",
+              "bskill_dorm_rec_all&profession",
+              "dormitory"
+            ],
+            "description": {
+              "zh": "进驻宿舍时，基建内（不包含副手及活动室使用者）每名行医干员为该宿舍内所有干员心情每小时恢复速度+0.06（最多生效4名，且同种效果取最高）",
+              "ja": "配置宿舎内、基地に配置された（補佐と活動室利用者を除く）放浪医オペレーター1人につき、全員の1時間ごとの体力回復量+0.06（最大4人まで、同種の効果は高いほうのみ適用）",
+              "en": "When this Operator is assigned to a Dormitory, Morale recovery per hour of all Operators in that Dormitory +0.06 for each Wandering Medic Operator in the Base (excluding Assistants and Activity Room users, caps at 4 Operators, strongest effect of the same type applies)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_427_vigil",
     "name": {
       "zh": "伺夜",
@@ -2325,6 +2433,47 @@
               "zh": "进驻宿舍时，该宿舍内所有干员心情每小时恢复+0.15，同时该宿舍内心情18以下的干员恢复效果额外+0.1（同种效果取最高）",
               "ja": "配置宿舎内、全員の1時間ごとの体力回復量+0.15。同時に体力18以下のオペレーターの1時間ごとの体力回復量が追加で+0.1（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory and restores an additional +0.1 to Operators whose Morale is below 18 (Only the strongest effect of this type applies)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1031_slent2",
+    "name": {
+      "zh": "淬羽赫默",
+      "ja": "淬羽サイレンス",
+      "en": "Silence the Paradigmatic"
+    },
+    "affiliations": [
+      "columbia",
+      "rhine"
+    ],
+    "rarity": 6,
+    "profession": "補助",
+    "skills": [
+      {
+        "id": "manu_prod_spd[021]",
+        "name": {
+          "zh": "莱茵科技·γ",
+          "ja": "ラインテクγ",
+          "en": "Rhine Tech γ"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "factory",
+            "efficiency": 0.3,
+            "tags": [
+              "factory",
+              "bskill_man_spd3",
+              "manufacture"
+            ],
+            "description": {
+              "zh": "进驻制造站时，生产力+30%",
+              "ja": "製造所配置時、製造効率+30%",
+              "en": "When this Operator is assigned to a Factory, productivity +30%"
             }
           }
         ]
@@ -2633,6 +2782,84 @@
               "zh": "进驻制造站时，源石类配方的生产力+35%",
               "ja": "製造所配置時、源石製造の製造効率+35%",
               "en": "When this Operator is assigned to a Factory, Originium formula related productivity +35%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1034_jesca2",
+    "name": {
+      "zh": "涤火杰西卡",
+      "ja": "滌火ジェシカ",
+      "en": "Jessica the Liberated"
+    },
+    "affiliations": [
+      "columbia",
+      "blacksteel"
+    ],
+    "rarity": 6,
+    "profession": "重装",
+    "skills": [
+      {
+        "id": "trade_ord_spd&limit[001]",
+        "name": {
+          "zh": "订单管理·β",
+          "ja": "注文管理β",
+          "en": "Order Management β"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "trading",
+            "product": "lmd",
+            "efficiency": 0.1,
+            "tags": [
+              "trading",
+              "bskill_tra_spd&limit2",
+              "trading"
+            ],
+            "description": {
+              "zh": "进驻贸易站时，订单获取效率+10%，且订单上限+4",
+              "ja": "貿易所配置時、受注効率+10%、注文上限+4",
+              "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +10% and the order limit +4"
+            }
+          }
+        ]
+      },
+      {
+        "id": "control_bd_spd[000]",
+        "name": {
+          "zh": "老友相聚",
+          "ja": "旧友との再会",
+          "en": "Reunion of Old Friends"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "control",
+            "product": "morale",
+            "efficiency": 0.05,
+            "tags": [
+              "control",
+              "bskill_ctrl_bd_spd",
+              "control"
+            ],
+            "conditions": [
+              {
+                "type": "facilityAffiliation",
+                "facility": "factory",
+                "affiliations": [
+                  "blacksteel"
+                ],
+                "min": 1
+              }
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，自身心情每小时消耗+0.5；每个进驻在制造站的黑钢国际干员，生产力+5%",
+              "ja": "制御中枢配置時、自身の1時間ごとの体力消費量+0.5、製造所に配置されたBSWオペレーター1人につき、製造効率+5%",
+              "en": "When this Operator is assigned to the Control Center, self Morale loss per hour +0.5; for each Blacksteel Worldwide Operator assigned to Factories, productivity +5%"
             }
           }
         ]
@@ -4279,6 +4506,47 @@
     ]
   },
   {
+    "id": "char_1021_kroos2",
+    "name": {
+      "zh": "寒芒克洛丝",
+      "ja": "寒芒クルース",
+      "en": "Kroos the Keen Glint"
+    },
+    "affiliations": [
+      "rhodes"
+    ],
+    "rarity": 5,
+    "profession": "狙撃",
+    "skills": [
+      {
+        "id": "control_mp_cost&faction[900]",
+        "name": {
+          "zh": "异格者",
+          "ja": "異格者",
+          "en": "Alternate Operator"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "control",
+            "product": "morale",
+            "efficiency": 0.05,
+            "tags": [
+              "control",
+              "bskill_ctrl_sp",
+              "control"
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，控制中枢内每个异格干员可使控制中枢内所有干员的心情每小时恢复+0.05",
+              "ja": "制御中枢配置時、制御中枢内の異格オペレーター1人につき、中枢内全員の体力が1時間ごとに+0.05回復",
+              "en": "When this Operator is assigned to the Control Center, each Alternate Operator increases the Morale of all Operators in the Control Center by +0.05 per hour"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_341_sntlla",
     "name": {
       "zh": "寒檀",
@@ -5555,6 +5823,73 @@
     ]
   },
   {
+    "id": "char_1030_noirc2",
+    "name": {
+      "zh": "火龙S黑角",
+      "ja": "レウスSノイルホーン",
+      "en": "Rathalos S Noir Corne"
+    },
+    "affiliations": [
+      "rhodes",
+      "action4"
+    ],
+    "rarity": 5,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "control_mp_bd2[000]",
+        "name": {
+          "zh": "团队合作",
+          "ja": "チームワーク",
+          "en": "Teamwork"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "control",
+            "efficiency": 0.05,
+            "tags": [
+              "control",
+              "bskill_ctrl_felyne",
+              "control"
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，控制中枢内每有1名怪物猎人小队干员，则木天蓼+2",
+              "ja": "制御中枢配置時、制御中枢内のアイルーと愉快な仲間たち所属オペレーター1人につき、マタタビ+2",
+              "en": "When this Operator is assigned to the Control Center, for each Soubo Adventurers Operator, Felvine +2"
+            }
+          }
+        ]
+      },
+      {
+        "id": "control_token_tra_spd[000]",
+        "name": {
+          "zh": "秘传交涉术",
+          "ja": "秘伝交渉術",
+          "en": "Esoteric Negotiations"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "control",
+            "product": "lmd",
+            "efficiency": 0.07,
+            "tags": [
+              "control",
+              "bskill_ctrl_token_t_spd",
+              "control"
+            ],
+            "description": {
+              "zh": "当与怪物猎人小队干员进驻控制中枢一起工作时，所有贸易站订单效率+7%（同种效果取最高）",
+              "ja": "アイルーと愉快な仲間たち所属オペレーターと共に制御中枢に配置時、全貿易所の受注効率+7%（同種の効果は高いほうのみ適用）",
+              "en": "When this Operator is assigned together with other Soubo Adventurers Operators to the Control Center, all Trading Posts' order efficiency +7% (Only the strongest effect of this type takes place)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_493_firwhl",
     "name": {
       "zh": "火哨",
@@ -6221,6 +6556,73 @@
               "zh": "进驻控制中枢时，小幅提升会客室内干员所属派系的线索倾向效果",
               "ja": "制御中枢配置時、応接室配属オペレーターの手がかり捜索の傾向をわずかに強める。",
               "en": "When this Operator is assigned to the Control Center, slightly increases the likelihood of obtaining Clues corresponding to the factions of Operators assigned to the Reception Room"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1042_phatm2",
+    "name": {
+      "zh": "酒神",
+      "ja": "トラゴーディア",
+      "en": "Tragodia"
+    },
+    "affiliations": [
+      "victoria"
+    ],
+    "rarity": 6,
+    "profession": "補助",
+    "skills": [
+      {
+        "id": "manu_formula_spd&limit&cost[000]",
+        "name": {
+          "zh": "镜中影",
+          "ja": "鏡に映る像",
+          "en": "Man in the Mirror"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "battleRecord",
+            "efficiency": 0.2,
+            "tags": [
+              "factory",
+              "bskill_man_exp&spd&limit&cost1",
+              "manufacture"
+            ],
+            "description": {
+              "zh": "进驻制造站时，作战记录类配方的生产力+20%，心情每小时消耗-0.25",
+              "ja": "製造所配置時、作戦記録製造の製造効率+20%、1時間ごとの体力消費量-0.25",
+              "en": "When this Operator is assigned to a Factory, Battle Record productivity +20%, and Morale consumed per hour -0.25"
+            }
+          }
+        ]
+      },
+      {
+        "id": "manu_formula_spd&limit&cost[010]",
+        "name": {
+          "zh": "戏中人",
+          "ja": "劇中の人物",
+          "en": "Playing the Part"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "battleRecord",
+            "efficiency": 0.35,
+            "tags": [
+              "factory",
+              "bskill_man_exp&spd&limit&cost2",
+              "manufacture"
+            ],
+            "description": {
+              "zh": "进驻制造站时，作战记录类配方的生产力+35%，心情每小时消耗-0.25",
+              "ja": "製造所配置時、作戦記録製造の製造効率+35%、1時間ごとの体力消費量-0.25",
+              "en": "When this Operator is assigned to a Factory, Battle Record productivity +35%, and Morale consumed per hour -0.25"
             }
           }
         ]
@@ -7156,6 +7558,42 @@
     ]
   },
   {
+    "id": "char_1049_catap2",
+    "name": {
+      "zh": "雷狼龙S空爆"
+    },
+    "affiliations": [
+      "rhodes",
+      "reserve6"
+    ],
+    "rarity": 5,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "trade_ord_spd[022]",
+        "name": {
+          "zh": "气氛组"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "trading",
+            "product": "lmd",
+            "efficiency": 0.35,
+            "tags": [
+              "trading",
+              "bskill_tra_spd3&catap2",
+              "trading"
+            ],
+            "description": {
+              "zh": "进驻贸易站时，订单获取效率+35%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_107_liskam",
     "name": {
       "zh": "雷蛇",
@@ -7292,6 +7730,71 @@
               "zh": "进驻贸易站时，订单获取效率+20%；当与能天使在同一个贸易站时，订单获取效率额外+25%",
               "ja": "貿易所配置時、受注効率+20%。エクシアと同じ貿易所に配置されている場合、追加で受注効率+25%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +20%; if Exusiai is assigned to the same Trading Post, additionally order acquisition efficiency +25%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1036_fang2",
+    "name": {
+      "zh": "历阵锐枪芬",
+      "ja": "歴陣鋭槍フェン",
+      "en": "Fang the Fire-Sharpened"
+    },
+    "affiliations": [
+      "rhodes"
+    ],
+    "rarity": 5,
+    "profession": "先鋒",
+    "skills": [
+      {
+        "id": "manu_prod_spd[1000]",
+        "name": {
+          "zh": "标准化·α",
+          "ja": "標準化α",
+          "en": "Standardization α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "factory",
+            "efficiency": 0.15,
+            "tags": [
+              "factory",
+              "bskill_man_spd1",
+              "manufacture"
+            ],
+            "description": {
+              "zh": "进驻制造站时，生产力+15%",
+              "ja": "製造所配置時、製造効率+15%",
+              "en": "When this Operator is assigned to a Factory, productivity +15%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "manu_prod_spd&fraction[000]",
+        "name": {
+          "zh": "重聚时光",
+          "ja": "再会のひととき",
+          "en": "Time of Reunion"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "factory",
+            "efficiency": 0.1,
+            "tags": [
+              "factory",
+              "bskill_man_A1",
+              "manufacture"
+            ],
+            "description": {
+              "zh": "进驻制造站时，当前制造站内每个A1小队干员为自身+10%的生产力",
+              "ja": "製造所配置時、配置製造所のA1小隊のオペレーター数1につき、製造効率+10%",
+              "en": "When this Operator is assigned to a Factory, gain +10% productivity for each A1 Detachment Operator in the same Factory."
             }
           }
         ]
@@ -7515,6 +8018,73 @@
     ]
   },
   {
+    "id": "char_1033_swire2",
+    "name": {
+      "zh": "琳琅诗怀雅",
+      "ja": "琳琅スワイヤー",
+      "en": "Swire the Elegant Wit"
+    },
+    "affiliations": [
+      "lungmen"
+    ],
+    "rarity": 6,
+    "profession": "特殊",
+    "skills": [
+      {
+        "id": "trade_ord_spd[000]",
+        "name": {
+          "zh": "订单分发·α",
+          "ja": "注文分配α",
+          "en": "Order Distribution α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "trading",
+            "product": "lmd",
+            "efficiency": 0.2,
+            "tags": [
+              "trading",
+              "bskill_tra_spd1",
+              "trading"
+            ],
+            "description": {
+              "zh": "进驻贸易站时，订单获取效率+20%",
+              "ja": "貿易所配置時、受注効率+20%",
+              "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +20%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "trade_ord_spd_variable[000]",
+        "name": {
+          "zh": "招商引资",
+          "ja": "投資誘致",
+          "en": "Investment Solicitations"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "trading",
+            "product": "lmd",
+            "efficiency": 0.04,
+            "tags": [
+              "trading",
+              "bskill_trade_ord_spd_variable",
+              "trading"
+            ],
+            "description": {
+              "zh": "进驻贸易站时，当前贸易站内干员提升的每个订单上限，提供4%订单获取效率",
+              "ja": "貿易所配置時、配置貿易所の注文上限増加量1につき、受注効率+4%",
+              "en": "When this Operator is assigned to a Trading Post, provides an additional 4% order acquisition efficiency for every order limit increase provided by all other Operators assigned to that Trading Post"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_115_headbr",
     "name": {
       "zh": "凛冬",
@@ -7576,6 +8146,41 @@
               "zh": "进驻宿舍时，该宿舍内所有干员的心情每小时恢复+0.2（同种效果取最高）",
               "ja": "配置宿舎内、全員の1時間ごとの体力回復量+0.2（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to a Dormitory, restores +0.2 Morale per hour to all Operators assigned to that Dormitory (Only the strongest effect of this type takes place)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1045_svash2",
+    "name": {
+      "zh": "凛御银灰"
+    },
+    "affiliations": [
+      "kjerag"
+    ],
+    "rarity": 6,
+    "profession": "先鋒",
+    "skills": [
+      {
+        "id": "control_tra_limit&spd3[000]",
+        "name": {
+          "zh": "商业版图"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "control",
+            "product": "lmd",
+            "efficiency": 0.1,
+            "tags": [
+              "control",
+              "bskill_ctrl_t_limit&spd3",
+              "control"
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，每个存在3名谢拉格干员的贸易站，订单获取效率+10%"
             }
           }
         ]
@@ -9375,6 +9980,86 @@
     ]
   },
   {
+    "id": "char_1051_headb2",
+    "name": {
+      "zh": "怒潮凛冬"
+    },
+    "affiliations": [
+      "ursus",
+      "student"
+    ],
+    "rarity": 6,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "manu_formula_spd&bd[000]",
+        "name": {
+          "zh": "战阵领袖"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "battleRecord",
+            "efficiency": 0.3,
+            "tags": [
+              "factory",
+              "bskill_formula_spd_headb1",
+              "manufacture"
+            ],
+            "description": {
+              "zh": "进驻制造站时，作战记录类配方的生产力+30%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "manu_formula_spd&bd[001]",
+        "name": {
+          "zh": "情同手足"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "battleRecord",
+            "efficiency": 0.3,
+            "tags": [
+              "factory",
+              "bskill_formula_spd_headb2",
+              "manufacture"
+            ],
+            "description": {
+              "zh": "进驻制造站时，作战记录类配方的生产力+30%，当与乌萨斯学生自治团干员在同一个制造站时，作战记录类配方的生产力额外+10%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "control_meeting_bd[000]",
+        "name": {
+          "zh": "“是，团长！”"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "control",
+            "product": "morale",
+            "efficiency": 0.1,
+            "tags": [
+              "control",
+              "bskill_ctrl_c_ussg",
+              "control"
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，自身心情每小时消耗+0.5，每个进驻在会客室的乌萨斯学生自治团干员，线索搜集速度+10%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_485_pallas",
     "name": {
       "zh": "帕拉斯",
@@ -9703,6 +10388,73 @@
               "zh": "进驻贸易站时，每1点魔物料理+1%订单效率",
               "ja": "貿易所配置時、魔物料理1つにつき受注効率+1%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +1% for every 1 Monster Meal"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1029_yato2",
+    "name": {
+      "zh": "麒麟R夜刀",
+      "ja": "キリンRヤトウ",
+      "en": "Kirin R Yato"
+    },
+    "affiliations": [
+      "rhodes",
+      "action4"
+    ],
+    "rarity": 6,
+    "profession": "特殊",
+    "skills": [
+      {
+        "id": "control_mp_cost&bd2[010]",
+        "name": {
+          "zh": "耐力回复",
+          "ja": "スタミナ回復",
+          "en": "Endurance Recovery"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "control",
+            "product": "morale",
+            "efficiency": 0.05,
+            "tags": [
+              "control",
+              "bskill_ctrl_cost_felyne",
+              "control"
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，自身心情每小时消耗+0.5，木天蓼+8",
+              "ja": "制御中枢配置時、自身の1時間ごとの体力消費量+0.5、マタタビ+8",
+              "en": "When this Operator is assigned to the Control Center, self Morale loss per hour +0.5, Felvine +8"
+            }
+          }
+        ]
+      },
+      {
+        "id": "control_token_prod_spd2[000]",
+        "name": {
+          "zh": "以身作则",
+          "ja": "率先垂範",
+          "en": "Leading By Example"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "control",
+            "efficiency": 0.02,
+            "tags": [
+              "control",
+              "bskill_ctrl_token_p_spd2",
+              "control"
+            ],
+            "description": {
+              "zh": "当与怪物猎人小队干员进驻控制中枢一起工作时，所有制造站生产力+2%（同种效果取最高）",
+              "ja": "アイルーと愉快な仲間たち所属オペレーターと共に制御中枢に配置時、全製造所の製造効率+2%（同種の効果は高いほうのみ適用）",
+              "en": "When this Operator is assigned together with other Soubo Adventurers Operators to the Control Center, all Factories' productivity +2% (Only the strongest effect of this type takes place)"
             }
           }
         ]
@@ -10703,6 +11455,99 @@
     ]
   },
   {
+    "id": "char_1032_excu2",
+    "name": {
+      "zh": "圣约送葬人",
+      "ja": "聖約イグゼキュター",
+      "en": "Executor the Ex Foedere"
+    },
+    "affiliations": [
+      "laterano"
+    ],
+    "rarity": 6,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "manu_formula_spd[030]",
+        "name": {
+          "zh": "公证所教习·α",
+          "ja": "公証人役場教習α",
+          "en": "Notarial Hall Instructor α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "battleRecord",
+            "efficiency": 0.2,
+            "tags": [
+              "factory",
+              "bskill_man_exp4",
+              "manufacture"
+            ],
+            "description": {
+              "zh": "进驻制造站时，作战记录类配方的生产力+20%",
+              "ja": "製造所配置時、作戦記録製造の製造効率+20%",
+              "en": "When this Operator is assigned to a Factory, Battle Record formula related productivity +20%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "manu_formula_spd[031]",
+        "name": {
+          "zh": "公证所教习·β",
+          "ja": "公証人役場教習β",
+          "en": "Notarial Hall Instructor β"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "battleRecord",
+            "efficiency": 0.3,
+            "tags": [
+              "factory",
+              "bskill_man_exp2",
+              "manufacture"
+            ],
+            "description": {
+              "zh": "进驻制造站时，作战记录类配方的生产力+30%",
+              "ja": "製造所配置時、作戦記録製造の製造効率+30%",
+              "en": "When this Operator is assigned to a Factory, Battle Record formula related productivity +30%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "manu_formula_limit[020]",
+        "name": {
+          "zh": "合理利用",
+          "ja": "合理的運用",
+          "en": "Reasonable Utilization"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "battleRecord",
+            "efficiency": 0.05,
+            "tags": [
+              "factory",
+              "bskill_man_exp&limit3",
+              "manufacture"
+            ],
+            "description": {
+              "zh": "进驻制造站时，生产作战记录类配方时，仓库容量上限+4",
+              "ja": "製造所で作戦記録を製造時、保管上限+4",
+              "en": "When this Operator is assigned to a Factory, capacity limit is increased by +4 when producing Battle Records"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_308_swire",
     "name": {
       "zh": "诗怀雅",
@@ -11293,6 +12138,41 @@
     ]
   },
   {
+    "id": "char_1043_leizi2",
+    "name": {
+      "zh": "司霆惊蛰"
+    },
+    "affiliations": [
+      "yan"
+    ],
+    "rarity": 6,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "power_rec_spd[007]",
+        "name": {
+          "zh": "雷法专精"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "power",
+            "product": "power",
+            "efficiency": 0.1,
+            "tags": [
+              "power",
+              "bskill_pow_spd1",
+              "power"
+            ],
+            "description": {
+              "zh": "进驻发电站时，无人机充能速度+10%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_263_skadi",
     "name": {
       "zh": "斯卡蒂",
@@ -11555,6 +12435,66 @@
               "zh": "进驻宿舍时，该宿舍内所有干员的心情每小时恢复+0.2，每有5点无声共鸣，该宿舍内所有干员的心情每小时恢复额外+0.01（同种效果取最高）",
               "ja": "配置宿舎内、全員の1時間ごとの体力回復量+0.2。静かなる共鳴5ごとに、配置宿舎内の全員の1時間ごとの体力回復量が追加で+0.01（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to a Dormitory, restores +0.2 Morale per hour to all Operators assigned to that Dormitory, and for every 5 Soundless Resonance, restores an additional +0.01 to all Operators (Only the strongest effect of this type applies)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1047_halo2",
+    "name": {
+      "zh": "溯光星源"
+    },
+    "affiliations": [
+      "columbia",
+      "rhine"
+    ],
+    "rarity": 6,
+    "profession": "補助",
+    "skills": [
+      {
+        "id": "manu_skill_limit[000]",
+        "name": {
+          "zh": "勘探背包"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "factory",
+            "efficiency": 0.05,
+            "tags": [
+              "factory",
+              "bskill_man_limit1",
+              "manufacture"
+            ],
+            "description": {
+              "zh": "进驻制造站时，当前制造站内每个莱茵科技类技能为自身+5的仓库上限容量"
+            }
+          }
+        ]
+      },
+      {
+        "id": "manu_prod_spd[011]",
+        "name": {
+          "zh": "莱茵科技·β",
+          "ja": "ラインテクβ",
+          "en": "Rhine Tech β"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "factory",
+            "efficiency": 0.25,
+            "tags": [
+              "factory",
+              "bskill_man_spd2",
+              "manufacture"
+            ],
+            "description": {
+              "zh": "进驻制造站时，生产力+25%",
+              "ja": "製造所配置時、製造効率+25%",
+              "en": "When this Operator is assigned to a Factory, productivity +25%"
             }
           }
         ]
@@ -12042,6 +12982,184 @@
               "zh": "进驻控制中枢时，每个进驻在制造站的骑士干员生产力+7%",
               "ja": "制御中枢配置時、製造所に配置されている騎士オペレーター1人につき、製造効率+7%",
               "en": "When this Operator is assigned to the Control Center, all Knight Operators assigned to Factories gain productivity +7%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1019_siege2",
+    "name": {
+      "zh": "维娜·维多利亚",
+      "ja": "ヴィーナ・ヴィクトリア",
+      "en": "Vina Victoria"
+    },
+    "affiliations": [
+      "victoria"
+    ],
+    "rarity": 6,
+    "profession": "前衛",
+    "skills": [
+      {
+        "id": "trade_ord_spd&par[000]",
+        "name": {
+          "zh": "外贸决议·α",
+          "ja": "外貿決議α",
+          "en": "Resolution on Foreign Trade α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "trading",
+            "product": "lmd",
+            "efficiency": 0.3,
+            "tags": [
+              "trading",
+              "trade_ord_spd&par1",
+              "trading"
+            ],
+            "description": {
+              "zh": "进驻贸易站时，订单获取效率+30%",
+              "ja": "貿易所配置時、受注効率+30%",
+              "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +30%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "trade_ord_spd&par[001]",
+        "name": {
+          "zh": "外贸决议·β",
+          "ja": "外貿決議β",
+          "en": "Resolution on Foreign Trade β"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "trading",
+            "product": "lmd",
+            "efficiency": 0.3,
+            "tags": [
+              "trading",
+              "trade_ord_spd&par2",
+              "trading"
+            ],
+            "description": {
+              "zh": "进驻贸易站时，订单获取效率+30%；当前贸易站内存在格拉斯哥帮干员时，订单获取效率额外+10%",
+              "ja": "貿易所配置時、受注効率+30%、配置貿易所にグラスゴー所属オペレーターがいる場合、追加で受注効率+10%",
+              "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +30%; if a Glasgow Gang Operator is assigned to the same Trading Post, increase order acquisition efficiency by an additional +10%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1035_wisdel",
+    "name": {
+      "zh": "维什戴尔",
+      "ja": "ウィシャデル",
+      "en": "Wiš'adel"
+    },
+    "affiliations": [
+      "babel"
+    ],
+    "rarity": 6,
+    "profession": "狙撃",
+    "skills": [
+      {
+        "id": "control_meeting&ord[000]",
+        "name": {
+          "zh": "同谋·α",
+          "ja": "共犯者α",
+          "en": "Conspirator α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "control",
+            "product": "lmd",
+            "efficiency": 0.05,
+            "tags": [
+              "control",
+              "bskill_ctrl_c_babel",
+              "control"
+            ],
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "trading",
+                "operatorIds": [
+                  "char_4088_hodrer"
+                ]
+              }
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，当伊内丝入驻会客室时，会客室线索搜集速度+5%；当赫德雷入驻贸易站时，赫德雷所在贸易站订单上限+1",
+              "ja": "制御中枢配置時、イネスが応接室に配置されているとき、応接室の手がかり捜索速度+5%。ヘドリーが貿易所に配置されているとき、ヘドリーのいる貿易所の注文上限+1",
+              "en": "When this Operator is assigned to the Control Center: if Ines is assigned to the Reception Room, clue collection speed +5%; if Hoederer is assigned to a Trading Post, that Trading Post's order limit +1."
+            }
+          }
+        ]
+      },
+      {
+        "id": "control_meeting&ord[001]",
+        "name": {
+          "zh": "同谋·β",
+          "ja": "共犯者β",
+          "en": "Conspirator β"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "control",
+            "product": "lmd",
+            "efficiency": 0.05,
+            "tags": [
+              "control",
+              "bskill_ctrl_c_babel2",
+              "control"
+            ],
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "trading",
+                "operatorIds": [
+                  "char_4088_hodrer"
+                ]
+              }
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，当伊内丝入驻会客室时，会客室线索搜集速度+5%；当赫德雷入驻贸易站时，赫德雷所在贸易站订单上限+2",
+              "ja": "制御中枢配置時、イネスが応接室に配置されているとき、応接室の手がかり捜索速度+5%。ヘドリーが貿易所に配置されているとき、ヘドリーのいる貿易所の注文上限+2",
+              "en": "When this Operator is assigned to the Control Center: if Ines is assigned to the Reception Room, clue collection speed +5%; if Hoederer is assigned to a Trading Post, that Trading Post's order limit +2."
+            }
+          }
+        ]
+      },
+      {
+        "id": "control_mp_expand_double[000]",
+        "name": {
+          "zh": "巴别塔之帜",
+          "ja": "バベルの旗印",
+          "en": "Banner of Babel"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "control",
+            "product": "morale",
+            "efficiency": 0.05,
+            "tags": [
+              "control",
+              "bskill_ctrl_cost_expand",
+              "control"
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，其他设施内处于工作状态的干员心情每小时恢复+0.1，当魔王进驻中枢时额外+0.1（与控制中枢加成有特殊比较规则）",
+              "ja": "制御中枢配置時、他の施設内で仕事中のオペレーターの体力が1時間ごとに+0.1回復し、シヴィライト・エテルナを配置した場合は追加で+0.1回復（制御中枢内の他のスキル間とは特殊比較方式が適用される）",
+              "en": "When this Operator is assigned to the Control Center, Operators working in other buildings recover +0.1 Morale per hour, with an additional +0.1 when Civilight Eterna is also assigned to the Control Center (Special Comparison Rules apply with Control Center bonus)."
             }
           }
         ]
@@ -12863,6 +13981,166 @@
     ]
   },
   {
+    "id": "char_1022_flwr2",
+    "name": {
+      "zh": "撷英调香师"
+    },
+    "affiliations": [
+      "rhodes"
+    ],
+    "rarity": 5,
+    "profession": "補助",
+    "skills": [
+      {
+        "id": "dorm_rec_all[029]",
+        "name": {
+          "zh": "沉静心灵"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "dormitory",
+            "product": "morale",
+            "efficiency": 0.05,
+            "tags": [
+              "dormitory",
+              "bskill_dorm_all2",
+              "dormitory"
+            ],
+            "description": {
+              "zh": "进驻宿舍时，该宿舍内所有干员的心情每小时恢复+0.15（同种效果取最高）"
+            }
+          }
+        ]
+      },
+      {
+        "id": "dorm_rec_all&tired[100]",
+        "name": {
+          "zh": "净化呼吸"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "dormitory",
+            "product": "morale",
+            "efficiency": 0.05,
+            "tags": [
+              "dormitory",
+              "bskill_dorm_all_tired2",
+              "dormitory"
+            ],
+            "description": {
+              "zh": "进驻宿舍时，该宿舍内心情20以下的干员恢复效果额外+0.1（同种效果取最高）"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1041_angel2",
+    "name": {
+      "zh": "新约能天使",
+      "ja": "新約エクシア",
+      "en": "Exusiai the New Covenant"
+    },
+    "affiliations": [
+      "lungmen",
+      "penguin"
+    ],
+    "rarity": 6,
+    "profession": "特殊",
+    "skills": [
+      {
+        "id": "dorm_rec_single_power[100]",
+        "name": {
+          "zh": "天生乐天派",
+          "ja": "天性の楽天家",
+          "en": "Natural Optimist"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "dormitory",
+            "product": "morale",
+            "efficiency": 0.05,
+            "tags": [
+              "dormitory",
+              "bskill_dorm_single1",
+              "dormitory"
+            ],
+            "description": {
+              "zh": "进驻宿舍时，使该宿舍内除自身以外心情未满的某个干员每小时恢复+0.55（同种效果取最高）",
+              "ja": "配置宿舎内、自身以外のオペレーター1人の1時間ごとの体力回復量+0.55（同種の効果は高いほうのみ適用）",
+              "en": "When this Operator is assigned to a Dormitory, restores +0.55 Morale per hour to another Operator assigned to that Dormitory whose Morale is not full (Only the strongest effect of this type takes place)"
+            }
+          }
+        ]
+      },
+      {
+        "id": "dorm_rec_single_power[001]",
+        "name": {
+          "zh": "圣城趣事通",
+          "ja": "聖都事情通",
+          "en": "Funny Holy City Stories"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "dormitory",
+            "product": "morale",
+            "efficiency": 0.05,
+            "tags": [
+              "dormitory",
+              "bskill_dorm_single_laterano",
+              "dormitory"
+            ],
+            "description": {
+              "zh": "进驻宿舍时，使该宿舍内除自身以外心情未满的某个干员每小时恢复+0.55（同种效果取最高），如果目标是拉特兰干员，则恢复效果额外+0.45",
+              "ja": "宿舎配置時、自身以外のオペレーター1人の1時間ごとの体力回復量+0.55（同種の効果は高いほうのみ適用）。対象がラテラーノオペレーターの場合、更に+0.45",
+              "en": "When this Operator is assigned to a Dormitory, restores +0.55 Morale per hour to all other Operators assigned to that Dormitory whose Morale is not full (Only the strongest effect of this type takes place); if the target is a Laterano Operator, further increases Morale restored by +0.45"
+            }
+          }
+        ]
+      },
+      {
+        "id": "trade_ord_spd_par[001]",
+        "name": {
+          "zh": "同城加急单",
+          "ja": "市内お急ぎ注文",
+          "en": "Same-City Express Order"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "trading",
+            "product": "lmd",
+            "efficiency": 0.15,
+            "tags": [
+              "trading",
+              "bskill_tra_laterano1",
+              "trading"
+            ],
+            "conditions": [
+              {
+                "type": "sameFacilityAffiliation",
+                "affiliations": [
+                  "laterano"
+                ],
+                "min": 1
+              }
+            ],
+            "description": {
+              "zh": "进驻贸易站时，同个贸易站中每有1名拉特兰干员，当前贸易站订单获取效率+15%",
+              "ja": "貿易所配置時、同じ貿易所に配置されているラテラーノオペレーター1人につき、配置貿易所の受注効率+15%",
+              "en": "When this Operator is assigned to a Trading Post, for every Laterano Operator in the same Trading Post, order acquisition efficiency +15%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_135_halo",
     "name": {
       "zh": "星源",
@@ -13297,6 +14575,130 @@
     ]
   },
   {
+    "id": "char_1011_lava2",
+    "name": {
+      "zh": "炎狱炎熔",
+      "ja": "炎獄ラヴァ",
+      "en": "Lava the Purgatory"
+    },
+    "affiliations": [
+      "rhodes"
+    ],
+    "rarity": 5,
+    "profession": "術師",
+    "skills": [
+      {
+        "id": "control_mp_cost&faction[900]",
+        "name": {
+          "zh": "异格者",
+          "ja": "異格者",
+          "en": "Alternate Operator"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "control",
+            "product": "morale",
+            "efficiency": 0.05,
+            "tags": [
+              "control",
+              "bskill_ctrl_sp",
+              "control"
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，控制中枢内每个异格干员可使控制中枢内所有干员的心情每小时恢复+0.05",
+              "ja": "制御中枢配置時、制御中枢内の異格オペレーター1人につき、中枢内全員の体力が1時間ごとに+0.05回復",
+              "en": "When this Operator is assigned to the Control Center, each Alternate Operator increases the Morale of all Operators in the Control Center by +0.05 per hour"
+            }
+          }
+        ]
+      },
+      {
+        "id": "power_rec_spd[022]",
+        "name": {
+          "zh": "热能充能·γ",
+          "ja": "火力発電γ",
+          "en": "Heat Charge γ"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "power",
+            "product": "power",
+            "efficiency": 0.2,
+            "tags": [
+              "power",
+              "bskill_pow_spd3",
+              "power"
+            ],
+            "description": {
+              "zh": "进驻发电站时，无人机充能速度+20%",
+              "ja": "発電所配置時、ドローンの回復速度+20%",
+              "en": "When this Operator is assigned to a Power Plant, increases the drone recovery rate by +20%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1048_orchd2",
+    "name": {
+      "zh": "焰狐龙梓兰"
+    },
+    "affiliations": [
+      "rhodes",
+      "reserve6"
+    ],
+    "rarity": 6,
+    "profession": "狙撃",
+    "skills": [
+      {
+        "id": "control_hire_spd_all[000]",
+        "name": {
+          "zh": "办公室年度人物"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "control",
+            "efficiency": 0.1,
+            "tags": [
+              "control",
+              "bskill_ctrl_orchd2",
+              "control"
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，人力办公室联络速度+10%（同种效果取最高）"
+            }
+          }
+        ]
+      },
+      {
+        "id": "trade_ord_spd&limit_tag[000]",
+        "name": {
+          "zh": "队长的自觉"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "trading",
+            "product": "lmd",
+            "efficiency": 0.2,
+            "tags": [
+              "trading",
+              "bskill_tra_orchd2",
+              "trading"
+            ],
+            "description": {
+              "zh": "进驻贸易站时，订单上限+3，且每有一个泡影国狩猎小队干员进驻贸易站，订单获取效率+20%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_420_flamtl",
     "name": {
       "zh": "焰尾",
@@ -13368,6 +14770,48 @@
               "zh": "进驻控制中枢时，每个进驻在制造站的红松骑士团干员，作战记录类配方的生产力+10%，贵金属类配方的生产力-10%",
               "ja": "制御中枢配置時、製造所に配置されたレッドパイン騎士団オペレーター1人につき、作戦記録製造の製造効率+10%、金属製造の製造効率-10%",
               "en": "When this Operator is assigned to the Control Center, each Pinus Sylvestris Operator assigned to Factories have +10% productivity towards Battle Records and -10% productivity towards Precious Metals"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1020_reed2",
+    "name": {
+      "zh": "焰影苇草",
+      "ja": "焔影リード",
+      "en": "Reed the Flame Shadow"
+    },
+    "affiliations": [
+      "victoria",
+      "tara"
+    ],
+    "rarity": 6,
+    "profession": "医療",
+    "skills": [
+      {
+        "id": "control_dorm_rec[000]",
+        "name": {
+          "zh": "领袖",
+          "ja": "カリスマ",
+          "en": "Leader"
+        },
+        "unlockPhase": 1,
+        "effects": [
+          {
+            "facility": "control",
+            "product": "morale",
+            "efficiency": 0.05,
+            "tags": [
+              "control",
+              "bskill_ctrl_leader",
+              "control"
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，所有宿舍内所有干员的心情每小时恢复+0.05（同种效果取最高）",
+              "ja": "制御中枢配置時、全ての宿舎内のオペレーターの1時間ごとの体力回復量+0.05（同種の効果は高いほうのみ適用）",
+              "en": "When this Operator is assigned to the Control Center, all Operators in Dormitories recover +0.05 Morale per hour (strongest effect of the same type applies)"
             }
           }
         ]
@@ -14054,6 +15498,73 @@
     ]
   },
   {
+    "id": "char_1039_thorn2",
+    "name": {
+      "zh": "引星棘刺",
+      "ja": "引星ソーンズ",
+      "en": "Thorns the Lodestar"
+    },
+    "affiliations": [
+      "iberia"
+    ],
+    "rarity": 6,
+    "profession": "特殊",
+    "skills": [
+      {
+        "id": "manu_formula_spd[102]",
+        "name": {
+          "zh": "金属工艺·α",
+          "ja": "金属工芸α",
+          "en": "Metalwork α"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "gold",
+            "efficiency": 0.3,
+            "tags": [
+              "factory",
+              "bskill_man_gold1",
+              "manufacture"
+            ],
+            "description": {
+              "zh": "进驻制造站时，贵金属类配方的生产力+30%",
+              "ja": "製造所配置時、金属製造の製造効率+30%",
+              "en": "When this Operator is assigned to a Factory, Precious Metal formula related productivity +30%"
+            }
+          }
+        ]
+      },
+      {
+        "id": "manu_prod_spd&trade[1000]",
+        "name": {
+          "zh": "原质塑金副产物",
+          "ja": "原質錬金副産物",
+          "en": "Essence Transmutation Byproduct"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "factory",
+            "product": "gold",
+            "efficiency": 0.03,
+            "tags": [
+              "factory",
+              "bskill_man_spd&trade1",
+              "manufacture"
+            ],
+            "description": {
+              "zh": "进驻制造站时，每个贸易站为当前制造站贵金属类配方的生产力+3%",
+              "ja": "製造所配置時、貿易所1か所につき、配置中の製造所のみ金属製造の製造効率+3%",
+              "en": "When this Operator is assigned to a Factory, every Trading Post makes the Factory's Precious Metal formula related productivity +3%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_4010_etlchi",
     "name": {
       "zh": "隐德来希",
@@ -14570,6 +16081,62 @@
     ]
   },
   {
+    "id": "char_1044_hsgma2",
+    "name": {
+      "zh": "斩业星熊"
+    },
+    "affiliations": [
+      "lungmen",
+      "lgd"
+    ],
+    "rarity": 6,
+    "profession": "重装",
+    "skills": [
+      {
+        "id": "control_train_spd[012]",
+        "name": {
+          "zh": "下城人脉"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "control",
+            "efficiency": 0.05,
+            "tags": [
+              "control",
+              "bskill_ctrl_train_spd3",
+              "control"
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，如训练室有干员在进行技能专精，则该干员的专精技能训练速度+5%（同种效果取最高）"
+            }
+          }
+        ]
+      },
+      {
+        "id": "control_token_prod_spd3[000]",
+        "name": {
+          "zh": "共事情谊"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "control",
+            "efficiency": 0.03,
+            "tags": [
+              "control",
+              "bskill_token_prod_spd3_lungmenguard",
+              "control"
+            ],
+            "description": {
+              "zh": "当与龙门近卫局干员进驻控制中枢一起工作时，所有制造站生产力+3%（同种效果取最高）"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "char_459_tachak",
     "name": {
       "zh": "战车",
@@ -14980,6 +16547,114 @@
               "zh": "进驻控制中枢时，其他设施内处于工作状态的干员心情每小时恢复+0.05；同时每有20点人间烟火，则额外+0.05，（与控制中枢加成有特殊比较规则）",
               "ja": "制御中枢配置時、他の施設内で仕事中のオペレーターの体力が1時間ごとに+0.05回復し、俗世之憂20につき、体力が追加で+0.05回復（制御中枢内の他のスキル間とは特殊比較方式が適用される）",
               "en": "When this Operator is assigned to the Control Center, Operators working in other buildings recover +0.05 Morale per hour, with an additional +0.05 for every 20 Worldly Plight (Special Comparison Rules apply with Control Center bonus)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1040_blaze2",
+    "name": {
+      "zh": "烛煌",
+      "ja": "熾炎ブレイズ",
+      "en": "Blaze the Igniting Spark"
+    },
+    "affiliations": [
+      "rhodes",
+      "elite"
+    ],
+    "rarity": 6,
+    "profession": "術師",
+    "skills": [
+      {
+        "id": "control_train_spd[011]",
+        "name": {
+          "zh": "断金之交",
+          "ja": "断金の交わり",
+          "en": "Best of Buds"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "control",
+            "efficiency": 0.05,
+            "tags": [
+              "control",
+              "bskill_ctrl_train_spd2",
+              "control"
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，如训练室有干员在进行技能专精，则该干员的专精技能训练速度+5%（同种效果取最高）",
+              "ja": "制御中枢配置時、訓練室で訓練を行っているオペレーターがいる場合、当該オペレーターの訓練速度+5%（同種の効果は高いほうのみ適用）",
+              "en": "When this Operator is assigned to the Control Center, if an Operator is conducting Skill Specialization in the Training Room, that Operator's Specialization training speed +5% (Only the strongest effect of this type takes place)."
+            }
+          }
+        ]
+      },
+      {
+        "id": "power_rec_spd[1022]",
+        "name": {
+          "zh": "热能充能·γ",
+          "ja": "火力発電γ",
+          "en": "Heat Charge γ"
+        },
+        "unlockPhase": 2,
+        "effects": [
+          {
+            "facility": "power",
+            "product": "power",
+            "efficiency": 0.2,
+            "tags": [
+              "power",
+              "bskill_pow_spd3",
+              "power"
+            ],
+            "description": {
+              "zh": "进驻发电站时，无人机充能速度+20%",
+              "ja": "発電所配置時、ドローンの回復速度+20%",
+              "en": "When this Operator is assigned to a Power Plant, increases the drone recovery rate by +20%"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_1024_hbisc2",
+    "name": {
+      "zh": "濯尘芙蓉",
+      "ja": "濯塵ハイビスカス",
+      "en": "Hibiscus the Purifier"
+    },
+    "affiliations": [
+      "rhodes"
+    ],
+    "rarity": 5,
+    "profession": "医療",
+    "skills": [
+      {
+        "id": "control_mp_cost&faction[900]",
+        "name": {
+          "zh": "异格者",
+          "ja": "異格者",
+          "en": "Alternate Operator"
+        },
+        "unlockPhase": 0,
+        "effects": [
+          {
+            "facility": "control",
+            "product": "morale",
+            "efficiency": 0.05,
+            "tags": [
+              "control",
+              "bskill_ctrl_sp",
+              "control"
+            ],
+            "description": {
+              "zh": "进驻控制中枢时，控制中枢内每个异格干员可使控制中枢内所有干员的心情每小时恢复+0.05",
+              "ja": "制御中枢配置時、制御中枢内の異格オペレーター1人につき、中枢内全員の体力が1時間ごとに+0.05回復",
+              "en": "When this Operator is assigned to the Control Center, each Alternate Operator increases the Morale of all Operators in the Control Center by +0.05 per hour"
             }
           }
         ]

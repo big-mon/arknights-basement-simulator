@@ -298,7 +298,7 @@ function normalize(languages) {
   const nameIndex = buildNameIndex(languages);
 
   return Object.entries(characters)
-    .filter(([, character]) => character?.name && !character.isNotObtainable && !character.isSpChar)
+    .filter(([, character]) => character?.name && !character.isNotObtainable)
     .map(([charId, character]) => {
       const buildingEntry = buildingChars[charId] ?? {};
       const rawBuffs = Array.isArray(buildingEntry.buffChar)
