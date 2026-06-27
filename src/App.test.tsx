@@ -50,12 +50,16 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: "推奨配置とローテーション" })).toBeInTheDocument();
     expect(screen.getAllByText("製造所 A").length).toBeGreaterThan(0);
-    expect(screen.getByRole("table", { name: "ローテーション" })).toBeInTheDocument();
+    const rotationSuggestions = screen.getByLabelText("ローテーション別提案");
+    expect(rotationSuggestions).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^2回$/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: /3回/ })).toBeDisabled();
-    expect(screen.getByText("第1ローテーション")).toBeInTheDocument();
-    expect(screen.getByText("第2ローテーション")).toBeInTheDocument();
+    expect(screen.getByText("1回目ローテーション")).toBeInTheDocument();
+    expect(screen.getByText("2回目ローテーション")).toBeInTheDocument();
     expect(screen.queryByText("第3ローテーション")).not.toBeInTheDocument();
+    expect(within(rotationSuggestions).getAllByText("貿易所 A")[0].closest("article")).toHaveClass("plan-card-trading");
+    expect(within(rotationSuggestions).getAllByText("製造所 A")[0].closest("article")).toHaveClass("plan-card-factory");
+    expect(within(rotationSuggestions).getAllByText("発電所 A")[0].closest("article")).toHaveClass("plan-card-power");
   });
 
   it("switches layout between 243 and 153 presets from the recommendation tab", async () => {

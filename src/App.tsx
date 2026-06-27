@@ -27,6 +27,8 @@ import type {
   BaseLayout,
   FacilitySlot,
   FacilityType,
+  FacilityPlan,
+  Assignment,
   OptimizationPreference,
   ProductType,
   RosterEntry,
@@ -380,54 +382,23 @@ export function App() {
             </p>
           ))}
 
-          <div className="plan-grid">
-            {plan.facilityPlans.map((facilityPlan) => (
-              <article key={facilityPlan.facility.id} className="plan-card">
-                <div className="plan-card-heading">
-                  <div>
-                    <h3>{facilityPlan.facility.name}</h3>
-                    <p>
-                      {facilityLabels[facilityPlan.facility.type]} / {productLabels[facilityPlan.facility.product]}
-                    </p>
-                  </div>
-                  <strong>+{Math.round(facilityPlan.expectedEfficiency * 100)}%</strong>
+          <div className="rotation-sections" aria-label="ローテーション別提案">
+            {plan.rotation.map((window, rotationIndex) => (
+              <section key={window.label} className="rotation-section" aria-labelledby={`rotation-${rotationIndex + 1}`}>
+                <div className="rotation-section-heading">
+                  <h3 id={`rotation-${rotationIndex + 1}`}>{window.label}</h3>
+                  <span>{window.hours}h</span>
                 </div>
-                <ul className="assignment-list">
-                  {facilityPlan.assignments.map((assignment) => (
-                    <li key={`${assignment.facilityId}-${assignment.operatorId}`}>
-                      <Check size={16} />
-                      <span>
-                        {operatorName(assignment.operatorId)}
-                        <small>{assignment.reason}</small>
-                      </span>
-                      <b>{assignment.score.toFixed(1)}</b>
-                    </li>
+                <div className="plan-grid">
+                  {plan.facilityPlans.map((facilityPlan) => (
+                    <FacilityPlanCard
+                      key={`${window.label}-${facilityPlan.facility.id}`}
+                      facilityPlan={facilityPlan}
+                      assignments={rotationAssignmentsForFacility(facilityPlan, rotationIndex)}
+                    />
                   ))}
-                </ul>
-                {facilityPlan.alternatives.length ? (
-                  <p className="alternatives">
-                    代替: {facilityPlan.alternatives.map((assignment) => operatorName(assignment.operatorId)).join(" / ")}
-                  </p>
-                ) : null}
-              </article>
-            ))}
-          </div>
-
-          <div className="rotation-table" role="table" aria-label="ローテーション">
-            <div role="row" className="rotation-header">
-              <span>時間帯</span>
-              <span>稼働</span>
-              <span>回復</span>
-            </div>
-            {plan.rotation.map((window) => (
-              <div role="row" key={window.label} className="rotation-row">
-                <span>
-                  {window.label}
-                  <small>{window.hours}h</small>
-                </span>
-                <span>{window.assignments.map((assignment) => operatorName(assignment.operatorId)).join(" / ") || "-"}</span>
-                <span>{window.recovery.map((assignment) => operatorName(assignment.operatorId)).join(" / ") || "-"}</span>
-              </div>
+                </div>
+              </section>
             ))}
           </div>
         </section>
@@ -467,4 +438,46 @@ function PreferenceSlider({ label, value, onChange }: { label: string; value: nu
 
 function operatorName(operatorId: string): string {
   return operators.find((operator) => operator.id === operatorId)?.name ?? operatorId;
+}
+
+function rotationAssignmentsForFacility(facilityPlan: FacilityPlan, rotationIndex: number): Assignment[] {
+  if (rotationIndex === 0) {
+    return facilityPlan.assignments;
+  }
+
+  return facilityPlan.alternatives.slice(0, facilityPlan.facility.slotCount);
+}
+
+function FacilityPlanCard({ facilityPlan, assignments }: { facilityPlan: FacilityPlan; assignments: Assignment[] }) {
+  const expectedEfficiency = assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
+
+  return (
+    <article className={`plan-card plan-card-${facilityPlan.facility.type}`}>
+      <div className="plan-card-heading">
+        <div>
+          <h4>{facilityPlan.facility.name}</h4>
+          <p>
+            {facilityLabels[facilityPlan.facility.type]} / {productLabels[facilityPlan.facility.product]}
+          </p>
+        </div>
+        <strong>+{Math.round(expectedEfficiency * 100)}%</strong>
+      </div>
+      {assignments.length ? (
+        <ul className="assignment-list">
+          {assignments.map((assignment) => (
+            <li key={`${assignment.facilityId}-${assignment.operatorId}`}>
+              <Check size={16} />
+              <span>
+                {operatorName(assignment.operatorId)}
+                <small>{assignment.reason}</small>
+              </span>
+              <b>{assignment.score.toFixed(1)}</b>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="alternatives">候補なし</p>
+      )}
+    </article>
+  );
 }

@@ -94,13 +94,13 @@ function buildRotationWindows(activeAssignments: Assignment[], restAssignments: 
 
   return [
     {
-      label: "第1ローテーション",
+      label: "1回目ローテーション",
       hours: 12,
       assignments: activeAssignments.filter((assignment) => assignment.fatigueHours > 0),
       recovery: []
     },
     {
-      label: "第2ローテーション",
+      label: "2回目ローテーション",
       hours: 12,
       assignments: restAssignments.filter((assignment) => assignment.fatigueHours >= 18),
       recovery: restAssignments.filter((assignment) => assignment.fatigueHours <= 12)

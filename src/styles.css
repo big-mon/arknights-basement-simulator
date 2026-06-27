@@ -81,6 +81,11 @@ h3 {
   font-size: 1rem;
 }
 
+h4 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
 .toolbar,
 .tabs,
 .filters,
@@ -515,11 +520,65 @@ input[type="range"] {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.rotation-sections {
+  display: grid;
+  gap: 22px;
+}
+
+.rotation-section {
+  display: grid;
+  gap: 12px;
+}
+
+.rotation-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5ded4;
+}
+
+.rotation-section-heading h3 {
+  margin: 0;
+  font-size: 1.12rem;
+}
+
+.rotation-section-heading span {
+  color: #65605b;
+  font-size: 0.86rem;
+}
+
 .plan-card {
   padding: 16px;
   border: 1px solid #e0d8cd;
   border-radius: 8px;
   background: #ffffff;
+}
+
+.plan-card-trading {
+  border-color: #bdd2e8;
+  background: #f2f8ff;
+}
+
+.plan-card-factory {
+  border-color: #ead79d;
+  background: #fff9e8;
+}
+
+.plan-card-power {
+  border-color: #bdddc8;
+  background: #f2fbf4;
+}
+
+.plan-card-control {
+  border-color: #d6c9df;
+  background: #faf6fc;
+}
+
+.plan-card-dormitory {
+  border-color: #d8d0c3;
+  background: #fbfaf7;
 }
 
 .plan-card-heading {
