@@ -211,32 +211,53 @@ export function App() {
               const unlockedSkills = operator.skills.filter((skill) => skill.unlockPhase <= entry.elite).length;
               return (
                 <article key={operator.id} className={entry.owned ? "operator-card owned" : "operator-card"}>
-                  <div className="operator-card-main">
-                    <label className="checkbox-line">
-                      <input
-                        type="checkbox"
-                        checked={entry.owned}
-                        onChange={(event) => updateRoster(operator.id, { owned: event.target.checked })}
-                      />
-                      <span>{operator.name}</span>
-                    </label>
-                    <p>
-                      ★{operator.rarity} / {operator.profession} / 基地スキル {unlockedSkills}/{operator.skills.length}
-                    </p>
+                  <div className="operator-card-top">
+                    <div className="operator-card-main">
+                      <label className="checkbox-line">
+                        <input
+                          type="checkbox"
+                          checked={entry.owned}
+                          onChange={(event) => updateRoster(operator.id, { owned: event.target.checked })}
+                        />
+                        <span>{operator.name}</span>
+                      </label>
+                      <p>
+                        ★{operator.rarity} / {operator.profession} / 基地スキル {unlockedSkills}/{operator.skills.length}
+                      </p>
+                    </div>
+                    <div className="operator-controls">
+                      <label>
+                        昇進
+                        <select
+                          value={entry.elite}
+                          onChange={(event) => updateRoster(operator.id, { elite: Number(event.target.value) as 0 | 1 | 2 })}
+                        >
+                          <option value={0}>0</option>
+                          <option value={1}>1</option>
+                          <option value={2}>2</option>
+                        </select>
+                      </label>
+                    </div>
                   </div>
-                  <div className="operator-controls">
-                    <label>
-                      昇進
-                      <select
-                        value={entry.elite}
-                        onChange={(event) => updateRoster(operator.id, { elite: Number(event.target.value) as 0 | 1 | 2 })}
-                      >
-                        <option value={0}>0</option>
-                        <option value={1}>1</option>
-                        <option value={2}>2</option>
-                      </select>
-                    </label>
-                  </div>
+                  <ul className="base-skill-list" aria-label={`${operator.name}の基地スキル`}>
+                    {operator.skills.map((skill) => {
+                      const unlocked = skill.unlockPhase <= entry.elite;
+                      return (
+                        <li key={skill.id} className={unlocked ? "base-skill unlocked" : "base-skill locked"}>
+                          <div className="base-skill-heading">
+                            <strong>{skill.name}</strong>
+                            <span>{unlocked ? "解放済み" : `昇進${skill.unlockPhase}で解放`}</span>
+                          </div>
+                          {skill.effects.map((effect, index) => (
+                            <p key={`${skill.id}-${index}`}>
+                              {facilityLabels[effect.facility]}
+                              {effect.product ? ` / ${productLabels[effect.product]}` : ""}: {effect.description}
+                            </p>
+                          ))}
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </article>
               );
             })}

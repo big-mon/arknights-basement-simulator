@@ -22,6 +22,22 @@ describe("App", () => {
     expect(within(screen.getByText("アーミヤ").closest("article")!).getByRole("checkbox", { name: /アーミヤ/ })).toBeChecked();
   });
 
+  it("shows base skill names, targets, and unlock state on operator cards", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const amiyaCard = screen.getByText("アーミヤ").closest("article")!;
+    const skillList = within(amiyaCard).getByRole("list", { name: "アーミヤの基地スキル" });
+
+    expect(within(skillList).getByText("共同作業")).toBeInTheDocument();
+    expect(within(skillList).getByText("精神感応")).toBeInTheDocument();
+    expect(within(skillList).getAllByText(/制御中枢/).length).toBeGreaterThan(0);
+    expect(within(skillList).getByText("昇進2で解放")).toBeInTheDocument();
+
+    await user.selectOptions(within(amiyaCard).getByRole("combobox"), "2");
+
+    expect(within(skillList).getAllByText("解放済み")).toHaveLength(2);
+  });
+
   it("shows assignment suggestions after switching to recommendation tab", async () => {
     const user = userEvent.setup();
     render(<App />);

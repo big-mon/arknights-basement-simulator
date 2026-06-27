@@ -247,7 +247,7 @@ input[type="number"] {
 .operator-card {
   min-height: 132px;
   align-items: stretch;
-  justify-content: space-between;
+  display: grid;
   gap: 14px;
   padding: 14px;
   border: 1px solid #e1d9cd;
@@ -262,6 +262,13 @@ input[type="number"] {
 
 .operator-card-main {
   min-width: 0;
+}
+
+.operator-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
 }
 
 .operator-card-main p,
@@ -301,6 +308,58 @@ input[type="checkbox"] {
   font-size: 0.78rem;
   display: grid;
   gap: 5px;
+}
+
+.base-skill-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.base-skill {
+  padding: 10px;
+  border: 1px solid #e6ded3;
+  border-radius: 8px;
+  background: #fbfaf7;
+}
+
+.base-skill.locked {
+  opacity: 0.72;
+}
+
+.base-skill-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.base-skill-heading strong {
+  font-size: 0.9rem;
+}
+
+.base-skill-heading span {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #eef2ee;
+  color: #325546;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.base-skill.locked .base-skill-heading span {
+  background: #f1ece5;
+  color: #75695d;
+}
+
+.base-skill p {
+  margin: 0;
+  color: #65605b;
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
 .preference-grid {
@@ -549,7 +608,7 @@ input[type="range"] {
     padding: 16px;
   }
 
-  .operator-card,
+  .operator-card-top,
   .facility-row {
     align-items: flex-start;
     flex-direction: column;
