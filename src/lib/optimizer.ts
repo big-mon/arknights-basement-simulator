@@ -616,11 +616,16 @@ export function conditionsSatisfied(
     }
 
     if (condition.type === "facilityOperator" || condition.type === "assignedOperator") {
-      return context.assignments.some((assignment) => {
+      const assigned = context.assignments.some((assignment) => {
         const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
         const matchesFacility = condition.type === "assignedOperator" && !condition.facility ? true : assignedFacility?.type === condition.facility;
         return matchesFacility && condition.operatorIds.includes(assignment.operatorId);
       });
+      const ownedPrerequisite =
+        condition.type === "assignedOperator" &&
+        !condition.facility &&
+        condition.operatorIds.some((operatorId) => context.roster?.[operatorId]?.owned && operatorIsSkillless(operatorId));
+      return assigned || ownedPrerequisite;
     }
 
     if (condition.type === "facilityCount") {
@@ -655,6 +660,10 @@ export function conditionsSatisfied(
 function operatorHasAnyAffiliation(operatorId: string, affiliations: string[]) {
   const operator = operators.find((candidate) => candidate.id === operatorId);
   return Boolean(operator?.affiliations?.some((affiliation) => affiliations.includes(affiliation)));
+}
+
+function operatorIsSkillless(operatorId: string) {
+  return operators.find((candidate) => candidate.id === operatorId)?.skills.length === 0;
 }
 
 function calculateGlobalBonus(state: AppState, facility: FacilitySlot, context: AssignmentEvaluationContext): number {

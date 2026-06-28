@@ -68,6 +68,9 @@ const pramanix = operators.find((operator) => operator.id === "char_174_slbell")
 const courier = operators.find((operator) => operator.id === "char_198_blackd")!;
 const hedley = operators.find((operator) => operator.id === "char_4088_hodrer")!;
 const ines = operators.find((operator) => operator.id === "char_4087_ines")!;
+const w = operators.find((operator) => operator.id === "char_113_cqbw")!;
+const underflow = operators.find((operator) => operator.id === "char_4137_udflow")!;
+const ulpianus = operators.find((operator) => operator.id === "char_4145_ulpia")!;
 const snegurochka = operators.find((operator) => operator.id === "char_4208_wintim")!;
 const vulpisfoglia = operators.find((operator) => operator.id === "char_4026_vulpis")!;
 const suzuran = operators.find((operator) => operator.id === "char_358_lisa")!;
@@ -744,9 +747,24 @@ describe("optimizer", () => {
       facilities: state.facilities,
       assignments: [contextAssignment(control, ines.id)]
     }).find((candidate) => candidate.operatorId === hedley.id)!;
+    state.roster[w.id].owned = true;
+    state.roster[w.id].elite = 2;
+    const withOwnedW = findCandidates(trading, state).find((candidate) => candidate.operatorId === hedley.id)!;
 
+    expect(w.skills).toHaveLength(0);
     expect(base.efficiency).toBeCloseTo(0.33);
     expect(withInes.efficiency).toBeCloseTo(0.38);
+    expect(withOwnedW.efficiency).toBeCloseTo(0.38);
+  });
+
+  it("adds Underflow's Ulpianus bonus from owned skillless prerequisites", () => {
+    const state = createDefaultState();
+    ownOperators(state, [underflow.id, ulpianus.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const candidate = findCandidates(trading, state).find((assignment) => assignment.operatorId === underflow.id)!;
+
+    expect(ulpianus.skills).toHaveLength(0);
+    expect(candidate.efficiency).toBeCloseTo(0.43);
   });
 
   it("discovers the Lemuen and Exusiai trading post pairing in assignment plans", () => {

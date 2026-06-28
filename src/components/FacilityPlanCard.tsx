@@ -13,7 +13,8 @@ export function FacilityPlanCard({
   language: LanguageCode;
   operatorNameById: (operatorId: string) => string;
 }) {
-  const expectedEfficiency = assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
+  const expectedEfficiency =
+    assignments === facilityPlan.assignments ? facilityPlan.expectedEfficiency : assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
   const text = uiText[language];
 
   return (

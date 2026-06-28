@@ -2,9 +2,11 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "./App";
+import { FacilityPlanCard } from "./components/FacilityPlanCard";
 import { createDefaultState, operators } from "./data/defaults";
 import { productLabels } from "./i18n";
 import { localizeText } from "./lib/localization";
+import type { Assignment, FacilityPlan } from "./types";
 
 const amiya = operators.find((operator) => operator.id === "char_002_amiya")!;
 const amiyaName = localizeText(amiya.name, "ja");
@@ -371,6 +373,37 @@ describe("App", () => {
     expect(within(tradingCard).getByText(productLabels.ja.lmd)).toBeInTheDocument();
     expect(within(factoryCard).getByText(productLabels.ja.gold)).toBeInTheDocument();
     expect(within(powerCard).queryByText(productLabels.ja.power)).not.toBeInTheDocument();
+  });
+
+  it("shows facility-level expected efficiency in active recommendation cards", () => {
+    const assignment: Assignment = {
+      facilityId: "reception-1",
+      operatorId: amiya.id,
+      skillId: "candidate",
+      score: 0.23,
+      efficiency: 0.23,
+      fatigueHours: 24,
+      recoveryHours: 8,
+      reason: "candidate"
+    };
+    const facilityPlan: FacilityPlan = {
+      facility: { id: "reception-1", type: "reception", name: "Reception", slotCount: 2, product: "clue" },
+      assignments: [assignment],
+      expectedEfficiency: 0.48,
+      score: 0.48,
+      alternatives: []
+    };
+
+    render(
+      <FacilityPlanCard
+        facilityPlan={facilityPlan}
+        assignments={facilityPlan.assignments}
+        language="ja"
+        operatorNameById={() => amiyaName}
+      />
+    );
+
+    expect(screen.getByText("+48%")).toBeInTheDocument();
   });
 
   it("switches layout between 243 and 153 presets from the top controls", async () => {
