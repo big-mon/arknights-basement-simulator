@@ -17,6 +17,8 @@ const haruka = operators.find((operator) => operator.id === "char_4202_haruka")!
 const mantra = operators.find((operator) => operator.id === "char_4204_mantra")!;
 const bellone = operators.find((operator) => operator.id === "char_4037_demetr")!;
 const snegurochka = operators.find((operator) => operator.id === "char_4208_wintim")!;
+const suzuran = operators.find((operator) => operator.id === "char_358_lisa")!;
+const bibeak = operators.find((operator) => operator.id === "char_252_bibeak")!;
 const rhodesCovert = operators.find((operator) => operator.id === "char_4215_buddy")!;
 const varkalis = operators.find((operator) => operator.id === "char_4166_varkis")!;
 const nyamu = operators.find((operator) => operator.id === "char_4185_amoris")!;
@@ -69,6 +71,16 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByText(/表示対象は、現在対応している基地スキルを持つオペレーターです/)).toBeInTheDocument();
+  });
+
+  it("shows calculation assumptions and excluded effect notes at the page bottom", () => {
+    render(<App />);
+
+    const notesSection = screen.getByRole("heading", { name: "計算前提と未換算効果" }).closest("section")!;
+    expect(notesSection).toBeInTheDocument();
+    expect(within(notesSection).getByText(/施設レベルは上限として扱います/)).toBeInTheDocument();
+    expect(within(notesSection).getByText(/高価値オーダー確率/)).toBeInTheDocument();
+    expect(within(notesSection).getByText(/グレイディーア/)).toBeInTheDocument();
   });
 
   it("supplements missing Japanese operator names", () => {
@@ -210,6 +222,27 @@ describe("App", () => {
     const makiriCard = screen.getByText(localizeText(makiri.name, "ja")).closest("article")!;
     expect(within(makiriCard).getByText(/★5/)).toBeInTheDocument();
     expect(within(makiriCard).getAllByText(/応接室/).length).toBeGreaterThan(0);
+  });
+
+  it("includes skillless operators referenced by another operator's base skill", async () => {
+    const user = userEvent.setup();
+    expect(suzuran.name.ja).toBe("スズラン");
+    expect(suzuran.skills).toHaveLength(0);
+
+    render(<App />);
+    await user.type(screen.getByPlaceholderText("名前で検索"), suzuran.id);
+
+    const suzuranCard = screen.getByText("スズラン").closest("article")!;
+    expect(within(suzuranCard).getByText(/基地スキル 0\/0/)).toBeInTheDocument();
+  });
+
+  it("marks unsupported optimization-only effects on operator cards", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.type(screen.getByPlaceholderText(/名前で検索/), bibeak.id);
+
+    const bibeakCard = screen.getByText(localizeText(bibeak.name, "ja")).closest("article")!;
+    expect(within(bibeakCard).getAllByText("最適化計算対象外").length).toBeGreaterThan(0);
   });
 
   it("filters the owned roster with profession and rarity radio options", async () => {

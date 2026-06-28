@@ -4,6 +4,7 @@ import path from "node:path";
 const root = process.cwd();
 const outputPath = path.join(root, "src", "data", "operators.json");
 const nameOverridesPath = path.join(root, "src", "data", "operator-name-overrides.json");
+const baseSkillOverridesPath = path.join(root, "src", "data", "base-skill-overrides.json");
 const sources = {
   zh: {
     characters:
@@ -144,6 +145,17 @@ function localizedDescription(languages, getter, fallback) {
 async function loadNameOverrides() {
   try {
     return JSON.parse(await readFile(nameOverridesPath, "utf8"));
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      return {};
+    }
+    throw error;
+  }
+}
+
+async function loadBaseSkillOverrides() {
+  try {
+    return JSON.parse(await readFile(baseSkillOverridesPath, "utf8"));
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
       return {};
@@ -358,14 +370,14 @@ function dedupeConditions(conditions) {
   });
 }
 
-function normalize(languages, nameOverrides) {
+function normalize(languages, nameOverrides, baseSkillOverrides) {
   const characters = languages.zh.characters;
   const building = languages.zh.building;
   const buildingChars = building.chars ?? {};
   const buffs = building.buffs ?? {};
   const nameIndex = buildNameIndex(languages);
 
-  return Object.entries(characters)
+  const normalizedOperators = Object.entries(characters)
     .filter(([, character]) => character?.name && !character.isNotObtainable)
     .map(([charId, character]) => {
       const buildingEntry = buildingChars[charId] ?? {};
@@ -445,9 +457,56 @@ function normalize(languages, nameOverrides) {
         profession: professionToJa(character.profession),
         skills
       };
-    })
-    .filter((operator) => operator.skills.length > 0)
+    });
+  const overriddenOperators = applyBaseSkillOverrides(normalizedOperators, baseSkillOverrides);
+  const referencedOperatorIds = new Set(
+    overriddenOperators.flatMap((operator) =>
+      operator.skills.flatMap((skill) =>
+        skill.effects.flatMap((effect) =>
+          (effect.conditions ?? []).flatMap((condition) => ("operatorIds" in condition ? condition.operatorIds : []))
+        )
+      )
+    )
+  );
+
+  return overriddenOperators
+    .filter((operator) => operator.skills.length > 0 || referencedOperatorIds.has(operator.id))
     .sort((a, b) => preferredText(a.name).localeCompare(preferredText(b.name), "zh-Hans-CN"));
+}
+
+function applyBaseSkillOverrides(operators, overrides) {
+  if (!overrides || !Object.keys(overrides).length) {
+    return operators;
+  }
+
+  return operators.map((operator) => {
+    const operatorOverride = overrides[operator.id];
+    if (!operatorOverride) {
+      return operator;
+    }
+
+    const skills = operator.skills.map((skill) => {
+      const skillOverride = operatorOverride.skills?.[skill.id];
+      if (!skillOverride) {
+        return skill;
+      }
+
+      const effects = skill.effects.map((effect, index) => {
+        const effectOverride = skillOverride.effects?.find((candidate) => candidate.index === index);
+        return effectOverride ? { ...effect, ...structuredClone(effectOverride.patch) } : effect;
+      });
+
+      return { ...skill, effects };
+    });
+    const addAffiliations = operatorOverride.addAffiliations ?? [];
+    const affiliations = addAffiliations.length ? [...new Set([...(operator.affiliations ?? []), ...addAffiliations])] : operator.affiliations;
+
+    return {
+      ...operator,
+      affiliations,
+      skills
+    };
+  });
 }
 
 const languages = Object.fromEntries(
@@ -461,7 +520,7 @@ const languages = Object.fromEntries(
     ])
   )
 );
-const operators = normalize(languages, await loadNameOverrides());
+const operators = normalize(languages, await loadNameOverrides(), await loadBaseSkillOverrides());
 
 await mkdir(path.dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(operators, null, 2)}\n`, "utf8");

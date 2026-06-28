@@ -25,13 +25,48 @@ export interface BaseSkillEffect {
   facility: FacilityType;
   product?: ProductType;
   efficiency: number;
+  baseEfficiency?: number;
   scaling?: {
-    type: "affiliation";
-    affiliations: string[];
+    type:
+      | "affiliation"
+      | "facilityGroupAffiliation"
+      | "facilityCount"
+      | "facilityProductCount"
+      | "facilityLevel"
+      | "fixed"
+      | "resource"
+      | "facilityStorageLimit"
+      | "facilityOrderLimit";
+    affiliations?: string[];
     facility?: FacilityType;
+    product?: ProductType;
+    resource?: string;
+    count?: number;
+    per?: number;
     includeSelf?: boolean;
     max?: number;
+    min?: number;
+    scope?: "base" | "facility" | "sameFacility";
   };
+  globalEffect?: {
+    facility: FacilityType;
+    product?: ProductType;
+    stackKey?: string;
+  };
+  resourceEffects?: Array<{
+    resource: string;
+    amount: number;
+    scaling?: NonNullable<BaseSkillEffect["scaling"]>;
+  }>;
+  storageLimit?: number;
+  orderLimit?: number;
+  ignoredForOptimization?: boolean;
+  unsupportedReason?: string;
+  conditionalBonuses?: Array<{
+    efficiency: number;
+    conditions: BaseSkillCondition[];
+  }>;
+  suppressesOtherFactoryEfficiency?: boolean;
   tags?: string[];
   conditions?: BaseSkillCondition[];
   description: LocalizedText;
@@ -48,6 +83,11 @@ export type BaseSkillCondition =
       operatorIds: string[];
     }
   | {
+      type: "assignedOperator";
+      facility?: FacilityType;
+      operatorIds: string[];
+    }
+  | {
       type: "sameFacilityAffiliation";
       affiliations: string[];
       min?: number;
@@ -57,6 +97,13 @@ export type BaseSkillCondition =
       facility?: FacilityType;
       affiliations: string[];
       min?: number;
+      max?: number;
+    }
+  | {
+      type: "facilityCount";
+      facility: FacilityType;
+      min?: number;
+      max?: number;
     };
 
 export interface BaseSkill {
@@ -114,6 +161,9 @@ export interface Assignment {
   skillId: string;
   score: number;
   efficiency: number;
+  storageLimit?: number;
+  orderLimit?: number;
+  suppressesOtherFactoryEfficiency?: boolean;
   fatigueHours: number;
   recoveryHours: number;
   reason: string;

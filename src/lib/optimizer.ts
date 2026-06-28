@@ -18,6 +18,12 @@ import type {
 type AssignmentEvaluationContext = {
   assignments: Assignment[];
   facilities: FacilitySlot[];
+  roster?: AppState["roster"];
+};
+
+type GlobalBonusBucket = {
+  stackKey?: string;
+  value: number;
 };
 
 const fatigueHoursByFacility: Record<FacilitySlot["type"], number> = {
@@ -31,13 +37,21 @@ const fatigueHoursByFacility: Record<FacilitySlot["type"], number> = {
 
 const recoveryBaseHours = 8;
 
+const maxFacilityLevelByType: Record<FacilitySlot["type"], number> = {
+  factory: 3,
+  trading: 3,
+  power: 3,
+  control: 5,
+  dormitory: 5,
+  reception: 3
+};
+
 export function generateAssignmentPlan(state: AppState): AssignmentPlan {
   const enabledFacilities = state.facilities.filter((facility) => facility.type !== "dormitory");
-  const globalBonus = calculateGlobalBonus(state);
-  let facilityPlans = buildFacilityPlans(state, enabledFacilities, globalBonus, []);
+  let facilityPlans = buildFacilityPlans(state, enabledFacilities, []);
 
   for (let index = 0; index < 3; index += 1) {
-    const nextFacilityPlans = buildFacilityPlans(state, enabledFacilities, globalBonus, facilityPlans.flatMap((plan) => plan.assignments));
+    const nextFacilityPlans = buildFacilityPlans(state, enabledFacilities, facilityPlans.flatMap((plan) => plan.assignments));
     if (assignmentSignature(nextFacilityPlans) === assignmentSignature(facilityPlans)) {
       facilityPlans = nextFacilityPlans;
       break;
@@ -45,7 +59,7 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
     facilityPlans = nextFacilityPlans;
   }
 
-  facilityPlans = attachRotationAlternatives(state, facilityPlans, globalBonus);
+  facilityPlans = attachRotationAlternatives(state, facilityPlans);
 
   const activeAssignments = facilityPlans.flatMap((plan) => plan.assignments);
   const restAssignments = activeAssignments
@@ -72,29 +86,30 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
 function buildFacilityPlans(
   state: AppState,
   enabledFacilities: FacilitySlot[],
-  globalBonus: number,
   contextAssignments: Assignment[]
 ): FacilityPlan[] {
   const usedOperatorIds = new Set<string>();
   const facilityPlans: FacilityPlan[] = [];
   const context: AssignmentEvaluationContext = {
     assignments: contextAssignments,
-    facilities: state.facilities
+    facilities: state.facilities,
+    roster: state.roster
   };
 
   for (const facility of enabledFacilities) {
+    const globalBonus = calculateGlobalBonus(state, facility, context);
     const candidates = findCandidates(facility, state, globalBonus, context)
       .filter((candidate) => !usedOperatorIds.has(candidate.operatorId))
       .sort((a, b) => b.score - a.score);
     const assignments = candidates.slice(0, facility.slotCount);
     assignments.forEach((assignment) => usedOperatorIds.add(assignment.operatorId));
 
-    const expectedEfficiency = assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
+    const expectedEfficiency = effectiveFacilityEfficiency(assignments);
     facilityPlans.push({
       facility,
       assignments,
       expectedEfficiency,
-      score: assignments.reduce((sum, assignment) => sum + assignment.score, 0),
+      score: effectiveFacilityScore(assignments, facility, state.preference),
       alternatives: []
     });
   }
@@ -102,15 +117,17 @@ function buildFacilityPlans(
   return facilityPlans;
 }
 
-function attachRotationAlternatives(state: AppState, facilityPlans: FacilityPlan[], globalBonus: number): FacilityPlan[] {
+function attachRotationAlternatives(state: AppState, facilityPlans: FacilityPlan[]): FacilityPlan[] {
   const firstRotationOperatorIds = new Set(facilityPlans.flatMap((plan) => plan.assignments.map((assignment) => assignment.operatorId)));
   const secondRotationOperatorIds = new Set<string>();
   const context: AssignmentEvaluationContext = {
     assignments: facilityPlans.flatMap((plan) => plan.assignments),
-    facilities: state.facilities
+    facilities: state.facilities,
+    roster: state.roster
   };
 
   return facilityPlans.map((plan) => {
+    const globalBonus = calculateGlobalBonus(state, plan.facility, context);
     const alternatives = findCandidates(plan.facility, state, globalBonus, context)
       .filter((candidate) => !firstRotationOperatorIds.has(candidate.operatorId))
       .filter((candidate) => !secondRotationOperatorIds.has(candidate.operatorId))
@@ -177,6 +194,12 @@ export function findCandidates(
   globalBonus = 0,
   context?: AssignmentEvaluationContext
 ): Assignment[] {
+  const evaluationContext = {
+    assignments: context?.assignments ?? [],
+    facilities: context?.facilities ?? state.facilities,
+    roster: context?.roster ?? state.roster
+  };
+
   return operators
     .flatMap((operator) => {
       const rosterEntry = state.roster[operator.id];
@@ -184,7 +207,7 @@ export function findCandidates(
         return [];
       }
 
-      return bestSkillForFacility(operator, rosterEntry, facility, state.preference, globalBonus, state.language, context);
+      return bestSkillForFacility(operator, rosterEntry, facility, state.preference, globalBonus, state.language, evaluationContext);
     })
     .sort((a, b) => b.score - a.score);
 }
@@ -207,6 +230,10 @@ function bestSkillForFacility(
     }
 
     for (const effect of skill.effects) {
+      if (effect.ignoredForOptimization) {
+        continue;
+      }
+
       if (!effectMatchesFacility(effect, facility) || !effectConditionsSatisfied(effect, operator, facility, context)) {
         continue;
       }
@@ -214,13 +241,18 @@ function bestSkillForFacility(
       const productMultiplier = productWeight(facility.product, preference);
       const eliteBonus = elite * 0.015;
       const scalingMultiplier = effectScalingMultiplier(effect, operator, facility, context);
-      const effectiveEfficiency = effect.efficiency * scalingMultiplier + eliteBonus + globalBonus;
+      const conditionalBonus = effectConditionalBonus(effect, operator, facility, context);
+      const effectiveEfficiency =
+        (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier + conditionalBonus + eliteBonus + globalBonus;
       assignments.push({
         facilityId: facility.id,
         operatorId: operator.id,
         skillId: skill.id,
         score: effectiveEfficiency * productMultiplier * facilityWeight(facility),
         efficiency: effectiveEfficiency,
+        storageLimit: effect.storageLimit,
+        orderLimit: effect.orderLimit,
+        ...(effect.suppressesOtherFactoryEfficiency ? { suppressesOtherFactoryEfficiency: true } : {}),
         fatigueHours: fatigueHoursByFacility[facility.type],
         recoveryHours: facility.type === "dormitory" ? 0 : Math.max(4, recoveryBaseHours - globalBonus * 8),
         reason: `${localizeText(skill.name, language)}: ${localizeText(effect.description, language)}`
@@ -229,6 +261,16 @@ function bestSkillForFacility(
   }
 
   return assignments.sort((a, b) => b.score - a.score).slice(0, 1);
+}
+
+function effectiveFacilityEfficiency(assignments: Assignment[]) {
+  const suppressingAssignments = assignments.filter((assignment) => assignment.suppressesOtherFactoryEfficiency);
+  const countedAssignments = suppressingAssignments.length ? suppressingAssignments : assignments;
+  return countedAssignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
+}
+
+function effectiveFacilityScore(assignments: Assignment[], facility: FacilitySlot, preference: OptimizationPreference) {
+  return effectiveFacilityEfficiency(assignments) * productWeight(facility.product, preference) * facilityWeight(facility);
 }
 
 function effectScalingMultiplier(
@@ -241,24 +283,266 @@ function effectScalingMultiplier(
     return 1;
   }
 
+  if (effect.scaling.type === "fixed") {
+    return effect.scaling.count ?? 0;
+  }
+
+  if (effect.scaling.type === "facilityLevel") {
+    const level = maxFacilityLevelByType[effect.scaling.facility ?? facility.type];
+    return effect.scaling.max ? Math.min(level, effect.scaling.max) : level;
+  }
+
+  if (effect.scaling.type === "facilityCount") {
+    return facilityCount(effect, context);
+  }
+
+  if (effect.scaling.type === "facilityProductCount") {
+    return facilityProductCount(effect, context);
+  }
+
+  if (effect.scaling.type === "facilityGroupAffiliation") {
+    return facilityGroupAffiliationCount(effect, operator, facility, context);
+  }
+
+  if (effect.scaling.type === "resource") {
+    const resource = effect.scaling.resource ? resourceAmount(effect.scaling.resource, context) : 0;
+    const count = effect.scaling.per ? Math.floor(resource / effect.scaling.per) : resource;
+    return effect.scaling.max ? Math.min(count, effect.scaling.max) : count;
+  }
+
+  if (effect.scaling.type === "facilityStorageLimit") {
+    const count = facilityAssignmentStat(effect, operator, facility, context, "storageLimit");
+    return effect.scaling.max ? Math.min(count, effect.scaling.max) : count;
+  }
+
+  if (effect.scaling.type === "facilityOrderLimit") {
+    const count = facilityAssignmentStat(effect, operator, facility, context, "orderLimit");
+    const scaled = effect.scaling.per ? Math.floor(count / effect.scaling.per) : count;
+    return effect.scaling.max ? Math.min(scaled, effect.scaling.max) : scaled;
+  }
+
   const assignedMatches =
     context?.assignments.filter((assignment) => {
-      if (assignment.operatorId === operator.id) {
+      if (assignment.operatorId === operator.id || !effect.scaling) {
         return false;
       }
       const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
-      const matchesFacility = effect.scaling?.facility ? assignedFacility?.type === effect.scaling.facility : true;
-      return matchesFacility && operatorHasAnyAffiliation(assignment.operatorId, effect.scaling?.affiliations ?? []);
+      const matchesFacility = scalingMatchesFacility(effect.scaling, facility, assignment, assignedFacility);
+      return matchesFacility && operatorMatchesScalingAffiliation(assignment.operatorId, effect.scaling);
     }).length ?? 0;
   const selfMatches =
     effect.scaling.includeSelf &&
-    (!effect.scaling.facility || effect.scaling.facility === facility.type) &&
-    operator.affiliations?.some((affiliation) => effect.scaling?.affiliations.includes(affiliation))
+    scalingCanIncludeSelf(effect.scaling, facility) &&
+    operatorMatchesSelfScalingAffiliation(operator, effect.scaling)
       ? 1
       : 0;
   const count = assignedMatches + selfMatches;
 
   return effect.scaling.max ? Math.min(count, effect.scaling.max) : count;
+}
+
+function facilityAssignmentStat(
+  effect: BaseSkillEffect,
+  operator: Operator,
+  facility: FacilitySlot,
+  context: AssignmentEvaluationContext | undefined,
+  key: "storageLimit" | "orderLimit"
+) {
+  const assignedTotal =
+    context?.assignments
+      .filter((assignment) => {
+        if (!effect.scaling || assignment.operatorId === operator.id) {
+          return false;
+        }
+        const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
+        return scalingMatchesFacility(effect.scaling, facility, assignment, assignedFacility);
+      })
+      .reduce((sum, assignment) => sum + (assignment[key] ?? 0), 0) ?? 0;
+  const selfTotal = effect.scaling?.includeSelf ? effect[key] ?? 0 : 0;
+  return assignedTotal + selfTotal;
+}
+
+function facilityCount(effect: BaseSkillEffect, context?: AssignmentEvaluationContext) {
+  if (!effect.scaling || !context) {
+    return 0;
+  }
+
+  const count = context.facilities.filter((facility) => !effect.scaling?.facility || facility.type === effect.scaling.facility).length;
+  return effect.scaling.max ? Math.min(count, effect.scaling.max) : count;
+}
+
+function facilityProductCount(effect: BaseSkillEffect, context?: AssignmentEvaluationContext) {
+  if (!effect.scaling || !context) {
+    return 0;
+  }
+
+  const count = context.facilities.filter(
+    (facility) =>
+      (!effect.scaling?.facility || facility.type === effect.scaling.facility) &&
+      (!effect.scaling?.product || facility.product === effect.scaling.product)
+  ).length;
+  return effect.scaling.max ? Math.min(count, effect.scaling.max) : count;
+}
+
+function facilityGroupAffiliationCount(
+  effect: BaseSkillEffect,
+  operator: Operator,
+  facility: FacilitySlot,
+  context?: AssignmentEvaluationContext
+) {
+  if (!effect.scaling || !context) {
+    return 0;
+  }
+
+  const facilityCounts = new Map<string, number>();
+  for (const assignment of context.assignments) {
+    const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
+    if (!assignedFacility || (effect.scaling.facility && assignedFacility.type !== effect.scaling.facility)) {
+      continue;
+    }
+    if (operatorMatchesScalingAffiliation(assignment.operatorId, effect.scaling)) {
+      facilityCounts.set(assignment.facilityId, (facilityCounts.get(assignment.facilityId) ?? 0) + 1);
+    }
+  }
+
+  if (
+    effect.scaling.includeSelf &&
+    scalingCanIncludeSelf(effect.scaling, facility) &&
+    operatorMatchesSelfScalingAffiliation(operator, effect.scaling)
+  ) {
+    facilityCounts.set(facility.id, (facilityCounts.get(facility.id) ?? 0) + 1);
+  }
+
+  const min = effect.scaling.min ?? 1;
+  const count = [...facilityCounts.values()].filter((affiliationCount) => affiliationCount >= min).length;
+  return effect.scaling.max ? Math.min(count, effect.scaling.max) : count;
+}
+
+function operatorMatchesScalingAffiliation(operatorId: string, scaling: NonNullable<BaseSkillEffect["scaling"]>) {
+  if (!scaling.affiliations?.length) {
+    return true;
+  }
+  return operatorHasAnyAffiliation(operatorId, scaling.affiliations);
+}
+
+function operatorMatchesSelfScalingAffiliation(operator: Operator, scaling: NonNullable<BaseSkillEffect["scaling"]>) {
+  if (!scaling.affiliations?.length) {
+    return true;
+  }
+  return Boolean(operator.affiliations?.some((affiliation) => scaling.affiliations?.includes(affiliation)));
+}
+
+function scalingMatchesFacility(
+  scaling: NonNullable<BaseSkillEffect["scaling"]>,
+  candidateFacility: FacilitySlot,
+  assignment: Assignment,
+  assignedFacility?: FacilitySlot
+) {
+  if (scaling.scope === "sameFacility") {
+    return assignment.facilityId === candidateFacility.id;
+  }
+  if (scaling.facility) {
+    return assignedFacility?.type === scaling.facility;
+  }
+  return true;
+}
+
+function scalingCanIncludeSelf(scaling: NonNullable<BaseSkillEffect["scaling"]>, facility: FacilitySlot) {
+  if (scaling.scope === "sameFacility") {
+    return true;
+  }
+  return !scaling.facility || scaling.facility === facility.type;
+}
+
+function effectConditionalBonus(
+  effect: BaseSkillEffect,
+  operator: Operator,
+  facility: FacilitySlot,
+  context?: AssignmentEvaluationContext
+) {
+  return (
+    effect.conditionalBonuses?.reduce((sum, bonus) => {
+      if (conditionsSatisfied(bonus.conditions, operator, facility, context)) {
+        return sum + bonus.efficiency;
+      }
+      return sum;
+    }, 0) ?? 0
+  );
+}
+
+function resourceAmount(resource: string, context?: AssignmentEvaluationContext) {
+  if (!context) {
+    return 0;
+  }
+
+  return context.assignments.reduce((sum, assignment) => {
+    const operator = operators.find((candidate) => candidate.id === assignment.operatorId);
+    const facility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
+    if (!operator || !facility) {
+      return sum;
+    }
+
+    const effects = operator.skills
+      .filter((skill: BaseSkill) => skill.unlockPhase <= clampEliteForOperator(operator, context.roster?.[operator.id]?.elite ?? 0))
+      .flatMap((skill) => skill.effects)
+      .filter((effect) => effect.facility === facility.type && effect.resourceEffects?.some((resourceEffect) => resourceEffect.resource === resource))
+      .filter((effect) => effectConditionsSatisfied(effect, operator, facility, context));
+
+    return (
+      sum +
+      effects.reduce(
+        (effectSum, effect) =>
+          effectSum +
+          (effect.resourceEffects ?? [])
+            .filter((resourceEffect) => resourceEffect.resource === resource)
+            .reduce(
+              (resourceSum, resourceEffect) =>
+                resourceSum + resourceEffect.amount * resourceEffectMultiplier(resourceEffect, operator, facility, context),
+              0
+            ),
+        0
+      )
+    );
+  }, 0);
+}
+
+function resourceEffectMultiplier(
+  resourceEffect: NonNullable<BaseSkillEffect["resourceEffects"]>[number],
+  operator: Operator,
+  facility: FacilitySlot,
+  context: AssignmentEvaluationContext
+) {
+  if (!resourceEffect.scaling) {
+    return 1;
+  }
+  if (resourceEffect.scaling.type === "fixed") {
+    return resourceEffect.scaling.count ?? 0;
+  }
+  if (resourceEffect.scaling.type === "facilityCount") {
+    const count = context.facilities.filter(
+      (facility) => !resourceEffect.scaling?.facility || facility.type === resourceEffect.scaling.facility
+    ).length;
+    return resourceEffect.scaling.max ? Math.min(count, resourceEffect.scaling.max) : count;
+  }
+  if (resourceEffect.scaling.type === "affiliation") {
+    const assignedMatches = context.assignments.filter((assignment) => {
+      if (assignment.operatorId === operator.id) {
+        return false;
+      }
+      const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
+      return scalingMatchesFacility(resourceEffect.scaling!, facility, assignment, assignedFacility) &&
+        operatorMatchesScalingAffiliation(assignment.operatorId, resourceEffect.scaling!);
+    }).length;
+    const selfMatches =
+      resourceEffect.scaling.includeSelf &&
+      scalingCanIncludeSelf(resourceEffect.scaling, facility) &&
+      operatorMatchesSelfScalingAffiliation(operator, resourceEffect.scaling)
+        ? 1
+        : 0;
+    const count = assignedMatches + selfMatches;
+    return resourceEffect.scaling.max ? Math.min(count, resourceEffect.scaling.max) : count;
+  }
+  return 1;
 }
 
 function effectMatchesFacility(effect: BaseSkillEffect, facility: FacilitySlot): boolean {
@@ -275,25 +559,40 @@ function effectConditionsSatisfied(
   facility: FacilitySlot,
   context?: AssignmentEvaluationContext
 ): boolean {
-  if (!effect.conditions?.length) {
+  return conditionsSatisfied(effect.conditions ?? [], operator, facility, context);
+}
+
+function conditionsSatisfied(
+  conditions: BaseSkillEffect["conditions"],
+  operator: Operator,
+  facility: FacilitySlot,
+  context?: AssignmentEvaluationContext
+): boolean {
+  if (!conditions?.length) {
     return true;
   }
   if (!context) {
     return false;
   }
 
-  return effect.conditions.every((condition) => {
+  return conditions.every((condition) => {
     if (condition.type === "sameFacilityOperator") {
       return context.assignments.some(
         (assignment) => assignment.facilityId === facility.id && condition.operatorIds.includes(assignment.operatorId)
       );
     }
 
-    if (condition.type === "facilityOperator") {
+    if (condition.type === "facilityOperator" || condition.type === "assignedOperator") {
       return context.assignments.some((assignment) => {
         const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
-        return assignedFacility?.type === condition.facility && condition.operatorIds.includes(assignment.operatorId);
+        const matchesFacility = condition.type === "assignedOperator" && !condition.facility ? true : assignedFacility?.type === condition.facility;
+        return matchesFacility && condition.operatorIds.includes(assignment.operatorId);
       });
+    }
+
+    if (condition.type === "facilityCount") {
+      const count = context.facilities.filter((candidate) => candidate.type === condition.facility).length;
+      return count >= (condition.min ?? 0) && (condition.max === undefined || count <= condition.max);
     }
 
     if (condition.type === "sameFacilityAffiliation") {
@@ -307,16 +606,15 @@ function effectConditionsSatisfied(
       );
     }
 
-    return (
-      context.assignments.filter((assignment) => {
+    const count = context.assignments.filter((assignment) => {
         if (assignment.operatorId === operator.id) {
           return false;
         }
         const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
         const matchesFacility = condition.facility ? assignedFacility?.type === condition.facility : true;
         return matchesFacility && operatorHasAnyAffiliation(assignment.operatorId, condition.affiliations);
-      }).length >= (condition.min ?? 1)
-    );
+      }).length;
+    return count >= (condition.min ?? 1) && (condition.max === undefined || count <= condition.max);
   });
 }
 
@@ -325,21 +623,47 @@ function operatorHasAnyAffiliation(operatorId: string, affiliations: string[]) {
   return Boolean(operator?.affiliations?.some((affiliation) => affiliations.includes(affiliation)));
 }
 
-function calculateGlobalBonus(state: AppState): number {
-  return operators.reduce((sum, operator) => {
-    const rosterEntry = state.roster[operator.id];
-    if (!rosterEntry?.owned) {
-      return sum;
+function calculateGlobalBonus(state: AppState, facility: FacilitySlot, context: AssignmentEvaluationContext): number {
+  const buckets: GlobalBonusBucket[] = [];
+
+  for (const assignment of context.assignments) {
+    const operator = operators.find((candidate) => candidate.id === assignment.operatorId);
+    const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
+    const rosterEntry = operator ? state.roster[operator.id] : undefined;
+    if (!operator || !assignedFacility || assignedFacility.type !== "control" || !rosterEntry?.owned) {
+      continue;
     }
 
     const elite = clampEliteForOperator(operator, rosterEntry.elite);
-    const activeControlEffects = operator.skills
+    const activeEffects = operator.skills
       .filter((skill: BaseSkill) => skill.unlockPhase <= elite)
       .flatMap((skill) => skill.effects)
-      .filter((effect) => effect.facility === "control" && effect.tags?.some((tag) => tag.startsWith("global-")));
+      .filter((effect) => effect.globalEffect && globalEffectMatchesFacility(effect, facility))
+      .filter((effect) => effectConditionsSatisfied(effect, operator, assignedFacility, context));
 
-    return sum + activeControlEffects.reduce((effectSum, effect) => effectSum + effect.efficiency * 0.25, 0);
-  }, 0);
+    for (const effect of activeEffects) {
+      const scalingMultiplier = effectScalingMultiplier(effect, operator, assignedFacility, context);
+      buckets.push({ stackKey: effect.globalEffect?.stackKey, value: (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier });
+    }
+  }
+
+  const stackBuckets = new Map<string, number>();
+  let unstacked = 0;
+  for (const bucket of buckets) {
+    if (bucket.stackKey) {
+      stackBuckets.set(bucket.stackKey, Math.max(stackBuckets.get(bucket.stackKey) ?? 0, bucket.value));
+    } else {
+      unstacked += bucket.value;
+    }
+  }
+  return unstacked + [...stackBuckets.values()].reduce((sum, value) => sum + value, 0);
+}
+
+function globalEffectMatchesFacility(effect: BaseSkillEffect, facility: FacilitySlot) {
+  return (
+    effect.globalEffect?.facility === facility.type &&
+    (!effect.globalEffect.product || effect.globalEffect.product === facility.product)
+  );
 }
 
 function productWeight(product: ProductType, preference: OptimizationPreference): number {

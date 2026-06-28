@@ -46,6 +46,8 @@ const glasgowOperator = operators.find((operator) => operator.id === "char_154_m
 const delphineGlasgowSkill = delphine.skills.find((skill) => skill.id === "control_tra_limit&spd[010]")!;
 const gladiia = operators.find((operator) => operator.id === "char_474_glady")!;
 const andreana = operators.find((operator) => operator.id === "char_218_cuttle")!;
+const chen = operators.find((operator) => operator.id === "char_010_chen")!;
+const swire = operators.find((operator) => operator.id === "char_308_swire")!;
 const morgan = operators.find((operator) => operator.id === "char_154_morgan")!;
 const siege = operators.find((operator) => operator.id === "char_112_siege")!;
 const morganGlasgowSkill = morgan.skills.find((skill) => skill.id === "trade_ord_spd_par[000]")!;
@@ -56,6 +58,44 @@ const zima = operators.find((operator) => operator.id === "char_115_headbr")!;
 const lemuen = operators.find((operator) => operator.id === "char_4193_lemuen")!;
 const exusiai = operators.find((operator) => operator.id === "char_103_angel")!;
 const lemuenExusiaiSkill = lemuen.skills.find((skill) => skill.id === "trade_ord_spd&multiPar[100]")!;
+const muelsyse = operators.find((operator) => operator.id === "char_249_mlyss")!;
+const saria = operators.find((operator) => operator.id === "char_202_demkni")!;
+const eunectes = operators.find((operator) => operator.id === "char_416_zumama")!;
+const silverashAlter = operators.find((operator) => operator.id === "char_1045_svash2")!;
+const pramanix = operators.find((operator) => operator.id === "char_174_slbell")!;
+const courier = operators.find((operator) => operator.id === "char_198_blackd")!;
+const hedley = operators.find((operator) => operator.id === "char_4088_hodrer")!;
+const ines = operators.find((operator) => operator.id === "char_4087_ines")!;
+const snegurochka = operators.find((operator) => operator.id === "char_4208_wintim")!;
+const vulpisfoglia = operators.find((operator) => operator.id === "char_4026_vulpis")!;
+const suzuran = operators.find((operator) => operator.id === "char_358_lisa")!;
+const vulpisfogliaSuzuranSkill = vulpisfoglia.skills.find((skill) => skill.id === "meet_spd&bd[100]")!;
+const ash = operators.find((operator) => operator.id === "char_456_ash")!;
+const blitz = operators.find((operator) => operator.id === "char_457_blitz")!;
+const tachanka = operators.find((operator) => operator.id === "char_459_tachak")!;
+const wisadel = operators.find((operator) => operator.id === "char_1035_wisdel")!;
+const wisadelHedleySkill = wisadel.skills.find((skill) => skill.id === "control_meeting&ord[000]")!;
+const fang = operators.find((operator) => operator.id === "char_123_fang")!;
+const lee = operators.find((operator) => operator.id === "char_322_lmlee")!;
+const may = operators.find((operator) => operator.id === "char_133_mm")!;
+const yatoAlter = operators.find((operator) => operator.id === "char_1029_yato2")!;
+const terraResearchCommission = operators.find((operator) => operator.id === "char_4077_palico")!;
+const iana = operators.find((operator) => operator.id === "char_4124_iana")!;
+const bibeak = operators.find((operator) => operator.id === "char_252_bibeak")!;
+const ascalon = operators.find((operator) => operator.id === "char_4132_ascln")!;
+const saileach = operators.find((operator) => operator.id === "char_479_sleach")!;
+const archetto = operators.find((operator) => operator.id === "char_332_archet")!;
+const minimalist = operators.find((operator) => operator.id === "char_4054_malist")!;
+const greyyAlter = operators.find((operator) => operator.id === "char_1027_greyy2")!;
+const alanna = operators.find((operator) => operator.id === "char_4178_alanna")!;
+const lancet = operators.find((operator) => operator.id === "char_285_medic2")!;
+const justiceKnight = operators.find((operator) => operator.id === "char_4000_jnight")!;
+const vigil = operators.find((operator) => operator.id === "char_427_vigil")!;
+const vermeil = operators.find((operator) => operator.id === "char_190_clour")!;
+const bubble = operators.find((operator) => operator.id === "char_381_bubble")!;
+const degenbrecher = operators.find((operator) => operator.id === "char_4116_blkkgt")!;
+const obliviator = operators.find((operator) => operator.id === "char_4182_oblvns")!;
+const mortis = operators.find((operator) => operator.id === "char_4183_mortis")!;
 
 function ownBaselineRoster(state: ReturnType<typeof createDefaultState>) {
   for (const operator of operators) {
@@ -80,7 +120,7 @@ function ownOperators(state: ReturnType<typeof createDefaultState>, operatorIds:
   }
 }
 
-function contextAssignment(facility: FacilitySlot, operatorId: string): Assignment {
+function contextAssignment(facility: FacilitySlot, operatorId: string, patch: Partial<Assignment> = {}): Assignment {
   return {
     facilityId: facility.id,
     operatorId,
@@ -89,7 +129,8 @@ function contextAssignment(facility: FacilitySlot, operatorId: string): Assignme
     efficiency: 0,
     fatigueHours: 0,
     recoveryHours: 0,
-    reason: "context"
+    reason: "context",
+    ...patch
   };
 }
 
@@ -212,20 +253,81 @@ describe("optimizer", () => {
     ).toBe(true);
   });
 
+  it("keeps Gladiia eligible as a control center recovery candidate", () => {
+    const state = createDefaultState();
+    ownOperators(state, [gladiia.id, andreana.id]);
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const gladiiaCandidate = findCandidates(control, state).find((candidate) => candidate.operatorId === gladiia.id)!;
+
+    expect(gladiiaCandidate.facilityId).toBe(control.id);
+    expect(gladiiaCandidate.efficiency).toBeCloseTo(0.08);
+  });
+
+  it("scales Chen's control recovery by LGD operators in the control center", () => {
+    const state = createDefaultState();
+    ownOperators(state, [chen.id, swire.id]);
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const chenBase = findCandidates(control, state).find((candidate) => candidate.operatorId === chen.id)!;
+    const chenWithLgd = findCandidates(control, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(control, swire.id)]
+    }).find((candidate) => candidate.operatorId === chen.id)!;
+
+    expect(chen.affiliations).toContain("lgd");
+    expect(swire.affiliations).toContain("lgd");
+    expect(chenBase.efficiency).toBeCloseTo(0.08);
+    expect(chenWithLgd.efficiency).toBeCloseTo(0.13);
+  });
+
+  it("scales Rainbow control recovery by Rainbow operators in the control center", () => {
+    const state = createDefaultState();
+    ownOperators(state, [ash.id, blitz.id, tachanka.id]);
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const ashBase = findCandidates(control, state).find((candidate) => candidate.operatorId === ash.id)!;
+    const ashWithRainbowSquad = findCandidates(control, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(control, blitz.id), contextAssignment(control, tachanka.id)]
+    }).find((candidate) => candidate.operatorId === ash.id)!;
+
+    expect(ash.affiliations).toContain("rainbow");
+    expect(blitz.affiliations).toContain("rainbow");
+    expect(tachanka.affiliations).toContain("rainbow");
+    expect(ashBase.efficiency).toBeCloseTo(0.08);
+    expect(ashWithRainbowSquad.efficiency).toBeCloseTo(0.18);
+  });
+
+  it("requires Hedley in a trading post for Wis'adel's control center order bonus", () => {
+    const state = createDefaultState();
+    ownOperators(state, [wisadel.id, hedley.id]);
+    state.roster[wisadel.id].elite = 0;
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+
+    expect(findCandidates(control, state).some((candidate) => candidate.skillId === wisadelHedleySkill.id)).toBe(false);
+    expect(
+      findCandidates(control, state, 0, {
+        facilities: state.facilities,
+        assignments: [contextAssignment(trading, hedley.id)]
+      }).some((candidate) => candidate.skillId === wisadelHedleySkill.id)
+    ).toBe(true);
+  });
+
   it("requires same-facility affiliation matches for same-room faction skills", () => {
     const state = createDefaultState();
     ownOperators(state, [morgan.id, siege.id]);
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const morganBase = findCandidates(trading, state).find((candidate) => candidate.operatorId === morgan.id)!;
+    const morganWithSiege = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(trading, siege.id)]
+    }).find((candidate) => candidate.operatorId === morgan.id)!;
 
     expect(morgan.affiliations).toContain("glasgow");
     expect(siege.affiliations).toContain("glasgow");
-    expect(findCandidates(trading, state).some((candidate) => candidate.skillId === morganGlasgowSkill.id)).toBe(false);
-    expect(
-      findCandidates(trading, state, 0, {
-        facilities: state.facilities,
-        assignments: [contextAssignment(trading, siege.id)]
-      }).some((candidate) => candidate.skillId === morganGlasgowSkill.id)
-    ).toBe(true);
+    expect(morganBase.skillId).toBe(morganGlasgowSkill.id);
+    expect(morganBase.efficiency).toBeCloseTo(0.23);
+    expect(morganWithSiege.skillId).toBe(morganGlasgowSkill.id);
+    expect(morganWithSiege.efficiency).toBeCloseTo(0.78);
   });
 
   it("applies Sami reception bonuses only when another Sami operator is assigned together", () => {
@@ -281,6 +383,305 @@ describe("optimizer", () => {
     expect(withoutExusiaiContext.efficiency).toBeCloseTo(0.23);
     expect(withExusiaiContext.skillId).toBe(lemuenExusiaiSkill.id);
     expect(withExusiaiContext.efficiency).toBeCloseTo(0.48);
+  });
+
+  it("uses skillless referenced operators to satisfy named operator conditions", () => {
+    const state = createDefaultState();
+    ownOperators(state, [vulpisfoglia.id, suzuran.id]);
+    const reception: FacilitySlot = { id: "reception-1", type: "reception", name: "Reception", slotCount: 2, product: "clue" };
+    const withoutSuzuran = findCandidates(reception, state).find((candidate) => candidate.operatorId === vulpisfoglia.id)!;
+    const withSuzuran = findCandidates(reception, state, 0, {
+      facilities: [...state.facilities, reception],
+      assignments: [contextAssignment(reception, suzuran.id)]
+    }).find((candidate) => candidate.operatorId === vulpisfoglia.id)!;
+
+    expect(suzuran.skills).toHaveLength(0);
+    expect(withoutSuzuran.skillId).not.toBe(vulpisfogliaSuzuranSkill.id);
+    expect(withSuzuran.skillId).toBe(vulpisfogliaSuzuranSkill.id);
+    expect(withSuzuran.efficiency).toBeGreaterThan(withoutSuzuran.efficiency);
+  });
+
+  it("scales Muelsyse's power bonus by other Rhine operators assigned in the base", () => {
+    const state = createDefaultState();
+    ownOperators(state, [muelsyse.id, saria.id]);
+    const power = state.facilities.find((facility) => facility.id === "power-1")!;
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const base = findCandidates(power, state).find((candidate) => candidate.operatorId === muelsyse.id)!;
+    const withRhine = findCandidates(power, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(factory, saria.id)]
+    }).find((candidate) => candidate.operatorId === muelsyse.id)!;
+
+    expect(muelsyse.affiliations).toContain("rhine");
+    expect(saria.affiliations).toContain("rhine");
+    expect(base.efficiency).toBeCloseTo(0.13);
+    expect(withRhine.efficiency).toBeCloseTo(0.16);
+  });
+
+  it("scales Eunectes factory productivity by power plant count", () => {
+    const state = createDefaultState();
+    ownOperators(state, [eunectes.id]);
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const candidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === eunectes.id)!;
+
+    expect(candidate.efficiency).toBeCloseTo(0.33);
+  });
+
+  it("scales Snegurochka by every operator assigned to the same factory", () => {
+    const state = createDefaultState();
+    ownOperators(state, [snegurochka.id, texas.id, lappland.id]);
+    state.roster[snegurochka.id].elite = 1;
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const candidate = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(factory, texas.id), contextAssignment(factory, lappland.id)]
+    }).find((assignment) => assignment.operatorId === snegurochka.id)!;
+
+    expect(candidate.suppressesOtherFactoryEfficiency).toBe(true);
+    expect(candidate.efficiency).toBeCloseTo(0.315);
+  });
+
+  it("uses max facility level for reception-level scaling skills", () => {
+    const state = createDefaultState();
+    ownOperators(state, [vigil.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const candidate = findCandidates(trading, state).find((assignment) => assignment.operatorId === vigil.id)!;
+
+    expect(candidate.efficiency).toBeCloseTo(0.43);
+  });
+
+  it("counts assigned operation platforms for factory and control conditions", () => {
+    const state = createDefaultState();
+    ownOperators(state, [alanna.id, lancet.id, justiceKnight.id]);
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const power1 = state.facilities.find((facility) => facility.id === "power-1")!;
+    const power2 = state.facilities.find((facility) => facility.id === "power-2")!;
+    const alannaBase = findCandidates(factory, state).find((assignment) => assignment.operatorId === alanna.id)!;
+    const alannaWithPlatforms = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(power1, lancet.id), contextAssignment(power2, justiceKnight.id)]
+    }).find((assignment) => assignment.operatorId === alanna.id)!;
+
+    expect(lancet.affiliations).toContain("platform");
+    expect(justiceKnight.affiliations).toContain("platform");
+    expect(alannaBase.efficiency).toBeCloseTo(0.03);
+    expect(alannaWithPlatforms.efficiency).toBeCloseTo(0.23);
+  });
+
+  it("uses modeled drone cap assumptions for Greyy the Lightningbearer's power skill", () => {
+    const state = createDefaultState();
+    ownOperators(state, [greyyAlter.id]);
+    const power = state.facilities.find((facility) => facility.id === "power-1")!;
+    const candidate = findCandidates(power, state).find((assignment) => assignment.operatorId === greyyAlter.id)!;
+
+    expect(candidate.efficiency).toBeCloseTo(0.23);
+  });
+
+  it("uses max steady-state values for time-ramping factory skills", () => {
+    const state = createDefaultState();
+    ownOperators(state, [fang.id]);
+    state.roster[fang.id].elite = 0;
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const candidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === fang.id)!;
+
+    expect(candidate.efficiency).toBeCloseTo(0.25);
+  });
+
+  it("uses max total dormitory level for dorm-level scaling skills", () => {
+    const state = createDefaultState();
+    ownOperators(state, [archetto.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const candidate = findCandidates(trading, state).find((assignment) => assignment.operatorId === archetto.id)!;
+
+    expect(candidate.efficiency).toBeCloseTo(0.43);
+  });
+
+  it("folds max construction robot count into Minimalist's production skill", () => {
+    const state = createDefaultState();
+    ownOperators(state, [minimalist.id]);
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const candidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === minimalist.id)!;
+
+    expect(candidate.efficiency).toBeCloseTo(0.43);
+  });
+
+  it("applies Lee's control-center clue speed bonus to reception assignments", () => {
+    const state = createDefaultState();
+    ownOperators(state, [lee.id, may.id]);
+    state.facilities = [
+      ...state.facilities,
+      { id: "reception-1", type: "reception", name: "Reception", slotCount: 2, product: "clue" }
+    ];
+    const plan = generateAssignmentPlan(state);
+    const receptionAssignment = plan.facilityPlans
+      .find((facilityPlan) => facilityPlan.facility.type === "reception")!
+      .assignments.find((assignment) => assignment.operatorId === may.id)!;
+
+    expect(plan.facilityPlans.some((facilityPlan) => facilityPlan.assignments.some((assignment) => assignment.operatorId === lee.id))).toBe(true);
+    expect(receptionAssignment.efficiency).toBeCloseTo(0.48);
+  });
+
+  it("scales Terra Research Commission from catnip generated in the control center", () => {
+    const state = createDefaultState();
+    ownOperators(state, [terraResearchCommission.id, yatoAlter.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const base = findCandidates(trading, state).find((assignment) => assignment.operatorId === terraResearchCommission.id)!;
+    const withCatnip = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(control, yatoAlter.id)]
+    }).find((assignment) => assignment.operatorId === terraResearchCommission.id)!;
+
+    expect(withCatnip.efficiency - base.efficiency).toBeCloseTo(0.24);
+  });
+
+  it("scales Iana's reception speed from Rainbow intel reserve", () => {
+    const state = createDefaultState();
+    ownOperators(state, [iana.id, ash.id, blitz.id]);
+    const reception: FacilitySlot = { id: "reception-1", type: "reception", name: "Reception", slotCount: 2, product: "clue" };
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const facilities = [...state.facilities, reception];
+    const base = findCandidates(reception, state).find((assignment) => assignment.operatorId === iana.id)!;
+    const withIntelReserve = findCandidates(reception, state, 0, {
+      facilities,
+      assignments: [contextAssignment(control, ash.id), contextAssignment(control, blitz.id)]
+    }).find((assignment) => assignment.operatorId === iana.id)!;
+
+    expect(withIntelReserve.efficiency - base.efficiency).toBeCloseTo(0.1);
+  });
+
+  it("does not score high-value order probability as generic trading efficiency", () => {
+    const state = createDefaultState();
+    ownOperators(state, [bibeak.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+
+    expect(findCandidates(trading, state).some((assignment) => assignment.operatorId === bibeak.id)).toBe(false);
+  });
+
+  it("does not score training-room or office-only control effects as control productivity", () => {
+    const state = createDefaultState();
+    ownOperators(state, [ascalon.id, saileach.id]);
+    state.roster[ascalon.id].elite = 0;
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const candidates = findCandidates(control, state);
+
+    expect(candidates.some((assignment) => assignment.operatorId === ascalon.id && assignment.skillId === "control_train_spd[010]")).toBe(false);
+    expect(candidates.some((assignment) => assignment.operatorId === saileach.id && assignment.skillId === "control_hire_spd[000]")).toBe(false);
+  });
+
+  it("scales Vermeil from same-factory storage limit increases", () => {
+    const state = createDefaultState();
+    ownOperators(state, [vermeil.id, bubble.id]);
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const base = findCandidates(factory, state).find((assignment) => assignment.operatorId === vermeil.id)!;
+    const withStoragePartner = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(factory, bubble.id, { storageLimit: 10 })]
+    }).find((assignment) => assignment.operatorId === vermeil.id)!;
+
+    expect(base.storageLimit).toBe(8);
+    expect(base.efficiency).toBeCloseTo(0.19);
+    expect(withStoragePartner.efficiency).toBeCloseTo(0.39);
+  });
+
+  it("scales Degenbrecher from same-trading-post order limit increases", () => {
+    const state = createDefaultState();
+    ownOperators(state, [degenbrecher.id, silverashAlter.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const base = findCandidates(trading, state).find((assignment) => assignment.operatorId === degenbrecher.id)!;
+    const withOrderLimit = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(trading, silverashAlter.id, { orderLimit: 10 })]
+    }).find((assignment) => assignment.operatorId === degenbrecher.id)!;
+
+    expect(base.efficiency).toBeCloseTo(0.28);
+    expect(withOrderLimit.efficiency).toBeCloseTo(0.53);
+  });
+
+  it("scales Sakiko Togawa's gold factory control effect from passion", () => {
+    const baseState = createDefaultState();
+    ownOperators(baseState, [obliviator.id, defaultOwnedGoldFactoryOperator.id]);
+    baseState.roster[defaultOwnedGoldFactoryOperator.id].elite = 0;
+    const basePlan = generateAssignmentPlan(baseState);
+    const baseGoldAssignment = basePlan.facilityPlans
+      .find((facilityPlan) => facilityPlan.facility.product === "gold")!
+      .assignments.find((assignment) => assignment.operatorId === defaultOwnedGoldFactoryOperator.id)!;
+
+    const passionState = createDefaultState();
+    ownOperators(passionState, [obliviator.id, mortis.id, defaultOwnedGoldFactoryOperator.id]);
+    passionState.roster[defaultOwnedGoldFactoryOperator.id].elite = 0;
+    const passionPlan = generateAssignmentPlan(passionState);
+    const passionGoldAssignment = passionPlan.facilityPlans
+      .find((facilityPlan) => facilityPlan.facility.product === "gold")!
+      .assignments.find((assignment) => assignment.operatorId === defaultOwnedGoldFactoryOperator.id)!;
+
+    expect(passionGoldAssignment.efficiency - baseGoldAssignment.efficiency).toBeCloseTo(0.01);
+  });
+
+  it("does not count Snegurochka's storage-only first skill as production", () => {
+    const state = createDefaultState();
+    ownOperators(state, [snegurochka.id]);
+    state.roster[snegurochka.id].elite = 0;
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const candidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === snegurochka.id)!;
+
+    expect(candidate.suppressesOtherFactoryEfficiency).toBe(true);
+    expect(candidate.efficiency).toBe(0);
+  });
+
+  it("does not add other factory productivity when Snegurochka suppresses same-factory effects", () => {
+    const state = createDefaultState();
+    ownOperators(state, [snegurochka.id, defaultOwnedGoldFactoryOperator.id]);
+    state.roster[snegurochka.id].elite = 1;
+    state.roster[defaultOwnedGoldFactoryOperator.id].elite = 0;
+    const plan = generateAssignmentPlan(state);
+    const factoryPlan = plan.facilityPlans.find((facilityPlan) =>
+      facilityPlan.assignments.some((assignment) => assignment.operatorId === snegurochka.id)
+    )!;
+    const snegurochkaAssignment = factoryPlan.assignments.find((assignment) => assignment.operatorId === snegurochka.id)!;
+
+    expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === defaultOwnedGoldFactoryOperator.id)).toBe(true);
+    expect(snegurochkaAssignment.suppressesOtherFactoryEfficiency).toBe(true);
+    expect(factoryPlan.expectedEfficiency).toBeCloseTo(snegurochkaAssignment.efficiency);
+  });
+
+  it("counts trading posts with three Kjerag operators for SilverAsh the Dignified Lord", () => {
+    const state = createDefaultState();
+    ownOperators(state, [silverashAlter.id, pramanix.id, courier.id]);
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const base = findCandidates(control, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(trading, pramanix.id), contextAssignment(trading, courier.id)]
+    }).find((candidate) => candidate.operatorId === silverashAlter.id)!;
+    const withThreeKjerag = findCandidates(control, state, 0, {
+      facilities: state.facilities,
+      assignments: [
+        contextAssignment(trading, pramanix.id),
+        contextAssignment(trading, courier.id),
+        contextAssignment(trading, silverashAlter.id)
+      ]
+    }).find((candidate) => candidate.operatorId === silverashAlter.id)!;
+
+    expect(pramanix.affiliations).toContain("kjerag");
+    expect(courier.affiliations).toContain("kjerag");
+    expect(base.efficiency).toBeCloseTo(0.03);
+    expect(withThreeKjerag.efficiency).toBeCloseTo(0.13);
+  });
+
+  it("adds Hedley's Ines bonus when Ines is assigned anywhere in the base", () => {
+    const state = createDefaultState();
+    ownOperators(state, [hedley.id, ines.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const base = findCandidates(trading, state).find((candidate) => candidate.operatorId === hedley.id)!;
+    const withInes = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(control, ines.id)]
+    }).find((candidate) => candidate.operatorId === hedley.id)!;
+
+    expect(base.efficiency).toBeCloseTo(0.33);
+    expect(withInes.efficiency).toBeCloseTo(0.38);
   });
 
   it("discovers the Lemuen and Exusiai trading post pairing in assignment plans", () => {

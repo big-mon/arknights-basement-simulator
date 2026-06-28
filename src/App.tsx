@@ -83,6 +83,39 @@ const preferencePresets = [
 
 type PreferencePresetId = (typeof preferencePresets)[number]["id"];
 
+const calculationNotes: Record<LanguageCode, { title: string; items: string[] }> = {
+  ja: {
+    title: "計算前提と未換算効果",
+    items: [
+      "施設レベルは上限として扱います。貿易所・製造所・発電所・応接室・訓練室はLv3、制御中枢と宿舎はLv5、宿舎合計レベルは20です。",
+      "時間経過で上昇する基地スキルは、最大値に到達した定常状態として計算します。",
+      "ドローン上限、建設ロボット、注文上限、保管上限などの基地状態由来の値は、現行モデルで扱える上限相当の値に固定しています。",
+      "高価値オーダー確率、違約オーダー、事務連絡、訓練室効果、手がかり傾向など期待値換算していない効果は、最適化計算対象外として表示します。",
+      "グレイディーアなどの特殊加算制限や体力状態による分岐は、基本効果と明示できる資源効果のみを扱い、専用比較ルールが必要な部分は完全再現していません。"
+    ]
+  },
+  zh: {
+    title: "计算前提与未换算效果",
+    items: [
+      "设施等级按上限处理：贸易站、制造站、发电站、会客室、训练室为3级，控制中枢和宿舍为5级，宿舍总等级为20。",
+      "随工作时间递增的基建技能按达到最大值后的稳定状态计算。",
+      "无人机上限、建造机器人、订单上限、仓库上限等基地状态值固定为当前模型可处理的上限值。",
+      "高价值订单概率、违约订单、办公室联络、训练室效果、线索倾向等尚未换算为期望收益的效果，会显示为不参与优化计算。",
+      "歌蕾蒂娅等特殊加成限制和心情状态分支，只处理基础效果与可明确建模的资源效果；需要专用比较规则的部分尚未完全复现。"
+    ]
+  },
+  en: {
+    title: "Calculation Assumptions",
+    items: [
+      "Facility levels are treated as capped: Trading Posts, Factories, Power Plants, Reception Room, and Training Room are level 3; Control Center and Dormitories are level 5; total Dormitory level is 20.",
+      "Time-ramping base skills are evaluated at their max steady-state value.",
+      "Base-state values such as drone cap, construction robots, order limit, and storage limit use the capped values currently supported by the model.",
+      "Effects not converted to expected value, such as high-value order chance, defaulted orders, HR office contact speed, training effects, and clue bias, are shown as excluded from optimization.",
+      "Special stacking limits and morale-state branches, such as Gladiia's Abyssal Hunter interactions, only apply their base effects and explicitly modeled resource effects for now."
+    ]
+  }
+};
+
 export function App() {
   const [state, setState] = useState<AppState>(() => loadState());
   const [activeTab, setActiveTab] = useState<TabId>("roster");
@@ -104,6 +137,7 @@ export function App() {
   const ownedCount = Object.values(state.roster).filter((entry) => entry.owned).length;
   const language = state.language;
   const text = uiText[language];
+  const notes = calculationNotes[language];
   const professions = getProfessions(operators);
   const rarities = getRarities(operators);
   const filteredOperators = filterOperators(operators, query, professionFilter, rarityFilter);
@@ -523,6 +557,15 @@ export function App() {
           </div>
         </section>
       ) : null}
+
+      <section className="calculation-notes" aria-labelledby="calculation-notes-title">
+        <h2 id="calculation-notes-title">{notes.title}</h2>
+        <ul>
+          {notes.items.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </section>
     </main>
   );
 }

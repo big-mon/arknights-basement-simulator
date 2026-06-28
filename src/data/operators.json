@@ -76,7 +76,9 @@
               "zh": "进驻控制中枢时，提升会客室内干员所属派系的线索倾向效果，但控制中枢内所有干员的心情每小时消耗+1.5",
               "ja": "制御中枢配置時、応接室配属オペレーターの手がかり捜索の傾向を強める。制御中枢内全員の1時間ごとの体力消費量+1.5",
               "en": "When this Operator is assigned to the Control Center, increases the likelihood of obtaining Clues corresponding to the factions of Operators assigned to the Reception Room, but also increases the Morale consumption of Operators assigned to the Control Center by +1.5"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "clueBiasNotModeled"
           }
         ]
       }
@@ -117,6 +119,13 @@
               "zh": "进驻制造站时，每有1台作业平台进驻发电站，贵金属类配方的生产力+5%",
               "ja": "製造所配置時、発電所配属中の作業用プラットフォーム1体につき、金属製造の製造効率+5%",
               "en": "When this Operator is assigned to a Factory, Precious Metal productivity +5% for every Operation Platform assigned to a Power Plant"
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "platform"
+              ],
+              "facility": "power"
             }
           }
         ]
@@ -143,6 +152,13 @@
               "zh": "进驻制造站时，每有1台作业平台进驻发电站，贵金属类配方的生产力+10%",
               "ja": "製造所配置時、発電所配属中の作業用プラットフォーム1体につき、金属製造の製造効率+10%",
               "en": "When this Operator is assigned to a Factory, Precious Metal productivity +10% for every Operation Platform assigned to a Power Plant"
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "platform"
+              ],
+              "facility": "power"
             }
           }
         ]
@@ -233,7 +249,7 @@
         "effects": [
           {
             "facility": "factory",
-            "efficiency": 0.02,
+            "efficiency": 0.2,
             "tags": [
               "factory",
               "bskill_man_spd_add3",
@@ -243,6 +259,10 @@
               "zh": "进驻制造站后，生产力每小时+2%，最终达到+20%",
               "ja": "製造所配置時、製造効率は1時間ごとに+2%、最大+20%まで",
               "en": "When this Operator is assigned to a Factory, productivity per hour +2%, up to +20%."
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 1
             }
           }
         ]
@@ -284,6 +304,11 @@
               "zh": "进驻控制中枢时，所有贸易站订单效率+7%（同种效果取最高）",
               "ja": "制御中枢配置時、全貿易所の受注効率+7%（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to the Control Center, all Trading Posts' order efficiency +7% (only the most effective one will take effect when assigned Operators have the same skill effect)"
+            },
+            "globalEffect": {
+              "facility": "trading",
+              "product": "lmd",
+              "stackKey": "all-trading-speed"
             }
           }
         ]
@@ -351,7 +376,9 @@
               "zh": "进驻控制中枢时，如训练室有干员在进行技能专精，则该干员的专精技能训练速度+5%（同种效果取最高）",
               "ja": "制御中枢配置時、訓練室で訓練を行っているオペレーターがいる場合、当該オペレーターの訓練速度+5%（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to the Control Center, if an Operator is conducting Skill Specialization in the Training Room, that Operator's Specialization training speed +5% (Only the strongest effect of this type takes place)."
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "trainingRoomNotModeled"
           }
         ]
       },
@@ -377,6 +404,11 @@
               "zh": "进驻控制中枢时，所有贸易站订单效率+7%（同种效果取最高）",
               "ja": "制御中枢配置時、全貿易所の受注効率+7%（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to the Control Center, all Trading Posts' order efficiency +7% (only the most effective one will take effect when assigned Operators have the same skill effect)"
+            },
+            "globalEffect": {
+              "facility": "trading",
+              "product": "lmd",
+              "stackKey": "all-trading-speed"
             }
           }
         ]
@@ -459,7 +491,9 @@
               "zh": "进驻控制中枢时，更容易获得线索板上尚未拥有的线索，但控制中枢内除自身以外的其余干员心情每小时消耗+0.25",
               "ja": "制御中枢配置時、ボード上未入手の手がかりを入手しやすいが、自身を除く制御中枢内全員の1時間ごとの体力消費量+0.25",
               "en": "When this Operator is assigned to the Control Center, increases the likelihood of obtaining clues that are not on the Clue Board, but increases the Morale consumed per hour of all Operators (excluding self) in the Control Center by +0.25"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "clueBiasNotModeled"
           }
         ]
       }
@@ -961,7 +995,8 @@
               "zh": "进驻贸易站时，订单上限+5，心情每小时消耗-0.25",
               "ja": "貿易所配置時、注文上限+5、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, order limit +5 and Morale consumed per hour -0.25"
-            }
+            },
+            "orderLimit": 5
           }
         ]
       }
@@ -1089,7 +1124,13 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，热情值+10；人脉资源的联络速度+10%（同种效果取最高）"
-            }
+            },
+            "resourceEffects": [
+              {
+                "resource": "passion",
+                "amount": 10
+              }
+            ]
           }
         ]
       },
@@ -1285,7 +1326,9 @@
               "zh": "进驻贸易站时，小幅提升当前贸易站高品质贵金属订单的出现概率（工作时长影响概率），心情每小时消耗-0.25",
               "ja": "貿易所配置時、配置貿易所の高価値な金属オーダーの獲得率がわずかに上昇（勤務時間が確率に影響する）、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased slightly (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "highValueOrderProbability"
           }
         ]
       },
@@ -1311,7 +1354,9 @@
               "zh": "进驻贸易站时，提升当前贸易站高品质贵金属订单的出现概率（工作时长影响概率），心情每小时消耗-0.25",
               "ja": "貿易所配置時、配置貿易所の高価値な金属オーダーの獲得率が上昇（勤務時間が確率に影響する）、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "highValueOrderProbability"
           }
         ]
       }
@@ -1436,7 +1481,8 @@
               "zh": "进驻贸易站时，订单获取效率+30%，且订单上限+1",
               "ja": "貿易所配置時、受注効率+30%、注文上限+1",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +30% and the order limit +1"
-            }
+            },
+            "orderLimit": 1
           }
         ]
       }
@@ -1681,7 +1727,8 @@
             ],
             "description": {
               "zh": "当与伺夜在同一个贸易站时，心情每小时消耗-0.1，订单上限+2"
-            }
+            },
+            "orderLimit": 2
           }
         ]
       }
@@ -1722,7 +1769,8 @@
               "zh": "进驻制造站时，生产力-20%，仓库容量上限+17，心情每小时消耗-0.25",
               "ja": "製造所配置時、製造効率-20%、保管上限+17、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, productivity -20%, capacity limit +17, and Morale consumed per hour -0.25"
-            }
+            },
+            "storageLimit": 17
           }
         ]
       },
@@ -1748,7 +1796,9 @@
               "zh": "进驻贸易站时，小幅提升当前贸易站高品质贵金属订单的出现概率（工作时长影响概率），心情每小时消耗-0.25",
               "ja": "貿易所配置時、配置貿易所の高価値な金属オーダーの獲得率がわずかに上昇（勤務時間が確率に影響する）、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased slightly (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "highValueOrderProbability"
           }
         ]
       }
@@ -2042,7 +2092,21 @@
               "zh": "进驻控制中枢时，如果有2台以上作业平台进驻在发电站，则所有制造站生产力+2%（同种效果取最高）",
               "ja": "制御中枢配置時、2台以上の作業用プラットフォームが発電所に配置されている時、全製造所の製造効率+2%（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to the Control Center, if there are 2 or more Operation Platforms assigned to Power Plants, all Factories' productivity +2% (only the most effective one will take effect when assigned Operators have the same skill effect)"
-            }
+            },
+            "globalEffect": {
+              "facility": "factory",
+              "stackKey": "all-factory-speed"
+            },
+            "conditions": [
+              {
+                "type": "facilityAffiliation",
+                "facility": "power",
+                "affiliations": [
+                  "platform"
+                ],
+                "min": 2
+              }
+            ]
           }
         ]
       }
@@ -2108,7 +2172,8 @@
               "zh": "进驻制造站时，生产力+25%，仓库容量上限+6",
               "ja": "製造所配置時、製造効率+25%、保管上限+6",
               "en": "When this Operator is assigned to a Factory, Productivity +25% and capacity limit +6"
-            }
+            },
+            "storageLimit": 6
           }
         ]
       }
@@ -2326,6 +2391,14 @@
               "zh": "进驻控制中枢时，控制中枢内每个龙门近卫局干员可使控制中枢内所有干员的心情每小时恢复+0.05",
               "ja": "制御中枢配置時、制御中枢内の龍門近衛局所属オペレーター1人につき、中枢内全員の体力が1時間ごとに+0.05回復",
               "en": "When this Operator is assigned to the Control Center, each Operator from Lungmen Guard Department increases the Morale of all Operators in the Control Center by +0.05 per hour"
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "lgd"
+              ],
+              "facility": "control",
+              "includeSelf": true
             }
           }
         ]
@@ -2393,6 +2466,11 @@
               "zh": "进驻发电站时，每10架无人机上限+1%无人机充能速度（最多+25%）",
               "ja": "発電所配置時、ドローンの上限数10につき、ドローンの回復速度+1%（最大+25%まで）",
               "en": "When this Operator is assigned to a Power Plant, +1% Drone recovery rate for every 10 max Drone capacity (Max +25%)"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 20,
+              "max": 25
             }
           }
         ]
@@ -2419,7 +2497,17 @@
               "zh": "进驻发电站时，如果其他发电站内没有进驻作业平台，则发电站额外+1(仅影响设施数量)",
               "ja": "発電所配置時、他の発電所に作業用プラットフォーム が配置されていない場合、発電所の施設数+1（施設の数以外に影響なし）",
               "en": "When this Operator is assigned to a Power Plant, if there are no Operation Platforms in other Power Plants, Power Plant +1(only affects facility quantity)"
-            }
+            },
+            "conditions": [
+              {
+                "type": "facilityAffiliation",
+                "facility": "power",
+                "affiliations": [
+                  "platform"
+                ],
+                "max": 0
+              }
+            ]
           }
         ]
       }
@@ -2791,7 +2879,7 @@
           {
             "facility": "trading",
             "product": "lmd",
-            "efficiency": 0.25,
+            "efficiency": 0.05,
             "tags": [
               "trading",
               "bskill_tra_spd&meet1",
@@ -2801,6 +2889,12 @@
               "zh": "进驻贸易站时，订单获取效率+25%，会客室每级额外提供5%获取效率，最多提供40%效率",
               "ja": "貿易所配置時、受注効率+25%、応接室のレベル1につき、追加で受注効率+5%、最大+40%まで",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +25%, +5% per Reception Room level, up to a maximum of 40%"
+            },
+            "baseEfficiency": 0.25,
+            "scaling": {
+              "type": "facilityLevel",
+              "facility": "reception",
+              "max": 3
             }
           }
         ]
@@ -3001,7 +3095,9 @@
               "zh": "进驻贸易站时，如果下笔赤金订单交付数小于4，则视为违约订单",
               "ja": "貿易所配置時、次に受注する金属オーダーの納品数が4を下回るならば、違約オーダーと見なす",
               "en": "When this Operator is assigned to a Trading Post, if the amount of Pure Gold traded is less than 4, it will be considered a Defaulted trade"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "goldOrderValueExpectation"
           }
         ]
       },
@@ -3027,7 +3123,9 @@
               "zh": "进驻贸易站时，如果下笔赤金订单是违约订单，则赤金交付数额外+1",
               "ja": "貿易所配置時、次に受注する金属オーダーが違約オーダーならば、純金の納品数が+1追加される",
               "en": "When this Operator is assigned to a Trading Post, if a Pure Gold trade is a Defaulted trade, Pure Gold traded +1"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "goldOrderValueExpectation"
           }
         ]
       },
@@ -3053,7 +3151,9 @@
               "zh": "进驻贸易站时，如果下笔赤金订单是违约订单，则赤金交付数额外+2",
               "ja": "貿易所配置時、次に受注する金属オーダーが違約オーダーならば、純金の納品数が+2追加される",
               "en": "When this Operator is assigned to a Trading Post, if a Pure Gold trade is a Defaulted trade, Pure Gold traded +2"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "goldOrderValueExpectation"
           }
         ]
       }
@@ -3093,7 +3193,8 @@
               "zh": "进驻制造站时，生产力+20%，每有1瓶乌萨斯特饮，则仓库容量上限+2",
               "ja": "製造所配置時、製造効率+20%。ウルサスドリンク1本につき、保管上限+2",
               "en": "When this Operator is assigned to a Factory, Productivity +20%; for every 1 Ursus Specialty Beverage, capacity limit +2"
-            }
+            },
+            "storageLimit": 2
           }
         ]
       }
@@ -3260,7 +3361,8 @@
               "zh": "进驻贸易站时，订单获取效率+10%，且订单上限+4",
               "ja": "貿易所配置時、受注効率+10%、注文上限+4",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +10% and the order limit +4"
-            }
+            },
+            "orderLimit": 4
           }
         ]
       },
@@ -3282,20 +3384,17 @@
               "bskill_ctrl_bd_spd",
               "control"
             ],
-            "conditions": [
-              {
-                "type": "facilityAffiliation",
-                "facility": "factory",
-                "affiliations": [
-                  "blacksteel"
-                ],
-                "min": 1
-              }
-            ],
             "description": {
               "zh": "进驻控制中枢时，自身心情每小时消耗+0.5；每个进驻在制造站的黑钢国际干员，生产力+5%",
               "ja": "制御中枢配置時、自身の1時間ごとの体力消費量+0.5、製造所に配置されたBSWオペレーター1人につき、製造効率+5%",
               "en": "When this Operator is assigned to the Control Center, self Morale loss per hour +0.5; for each Blacksteel Worldwide Operator assigned to Factories, productivity +5%"
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "blacksteel"
+              ],
+              "facility": "factory"
             }
           }
         ]
@@ -3355,6 +3454,11 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，所有宿舍内精英干员的心情每小时恢复+0.1（同种效果取最高）"
+            },
+            "globalEffect": {
+              "facility": "dormitory",
+              "product": "morale",
+              "stackKey": "elite-dorm-recovery"
             }
           }
         ]
@@ -3422,7 +3526,7 @@
         "effects": [
           {
             "facility": "factory",
-            "efficiency": 0.05,
+            "efficiency": 0,
             "tags": [
               "factory",
               "bskill_man_spd_manu1",
@@ -3430,7 +3534,9 @@
             ],
             "description": {
               "zh": "进驻制造站时，当前制造站内其他干员提供的生产力全部归零（不包含根据设施数量提供加成的生产力），每个当前制造站内干员为当前制造站仓库容量上限+5"
-            }
+            },
+            "suppressesOtherFactoryEfficiency": true,
+            "storageLimit": 5
           }
         ]
       },
@@ -3451,7 +3557,14 @@
             ],
             "description": {
               "zh": "进驻制造站时，当前制造站内其他干员提供的生产力全部归零（不包含根据设施数量提供加成的生产力），每个当前制造站内干员为当前制造站+10%生产力，仓库容量上限+5"
-            }
+            },
+            "scaling": {
+              "type": "affiliation",
+              "scope": "sameFacility",
+              "includeSelf": true
+            },
+            "suppressesOtherFactoryEfficiency": true,
+            "storageLimit": 5
           }
         ]
       }
@@ -3517,7 +3630,8 @@
               "zh": "进驻制造站时，仓库容量上限+8，心情每小时消耗-0.25",
               "ja": "製造所配置時、保管上限+8、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, capacity limit +8 and Morale consumed per hour -0.25"
-            }
+            },
+            "storageLimit": 8
           }
         ]
       }
@@ -3667,7 +3781,9 @@
               "zh": "进驻贸易站时，小幅提升当前贸易站高品质贵金属订单的出现概率（工作时长影响概率），心情每小时消耗-0.25",
               "ja": "貿易所配置時、配置貿易所の高価値な金属オーダーの獲得率がわずかに上昇（勤務時間が確率に影響する）、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased slightly (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "highValueOrderProbability"
           }
         ]
       },
@@ -3683,7 +3799,7 @@
           {
             "facility": "trading",
             "product": "lmd",
-            "efficiency": 0.15,
+            "efficiency": 0.05,
             "tags": [
               "trading",
               "bskill_tra_spd&meet",
@@ -3693,6 +3809,12 @@
               "zh": "进驻贸易站时，订单获取效率+15%，会客室每级额外提供5%获取效率，最多提供30%效率",
               "ja": "貿易所配置時、受注効率+15%、応接室のレベル1につき、追加で受注効率+5%、最大+30%まで",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +15%, +5% per Reception Room level, up to a maximum of 30%"
+            },
+            "baseEfficiency": 0.15,
+            "scaling": {
+              "type": "facilityLevel",
+              "facility": "reception",
+              "max": 3
             }
           }
         ]
@@ -3934,7 +4056,9 @@
               "zh": "进驻贸易站时，贸易站内全体干员每小时心情消耗-0.1，每有10点人间烟火，则额外-0.01",
               "ja": "貿易所配置時、配属オペレーターの1時間ごとの体力消費量-0.1、俗世の憂10につき、体力消費量が追加で-0.01",
               "en": "When this Operator is assigned to a Trading Post, Morale loss of Operators in the Trading Post -0.1 per hour, with an additional -0.01 for every 10 Worldly Plight"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "moraleCostOnlyNotScored"
           }
         ]
       },
@@ -3960,7 +4084,9 @@
               "zh": "进驻贸易站时，贸易站内全体干员每小时心情消耗-0.1，每有10点人间烟火，则额外-0.02",
               "ja": "貿易所配置時、配属オペレーターの1時間ごとの体力消費量-0.1、俗世の憂10につき、体力消費量が追加で-0.02",
               "en": "When this Operator is assigned to a Trading Post, Morale loss of Operators in the Trading Post -0.1 per hour, with an additional -0.02 for every 10 Worldly Plight"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "moraleCostOnlyNotScored"
           }
         ]
       }
@@ -4068,6 +4194,10 @@
               "zh": "进驻发电站时，每间宿舍每级为充能速度额外+0.5%",
               "ja": "発電所配置時、宿舎の合計レベルが1につき、追加でドローンの回復速度+0.5%",
               "en": "When this Operator is assigned to a Power Plant, drone recovery rate +0.5% for every level of each Dormitory"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 20
             }
           }
         ]
@@ -4166,7 +4296,7 @@
         "effects": [
           {
             "facility": "factory",
-            "efficiency": 0.2,
+            "efficiency": 0.25,
             "tags": [
               "factory",
               "bskill_man_spd_add1",
@@ -4176,6 +4306,10 @@
               "zh": "进驻制造站后，生产力首小时+20%，此后每小时+1%，最终达到+25%",
               "ja": "製造所配置時、最初の1時間製造効率+20%、その後まで1時間ごと更に+1%、最終的に+25%になる",
               "en": "When this Operator is assigned to a Factory, productivity +20% in the first hour and thereafter +1% per hour, up to +25%"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 1
             }
           }
         ]
@@ -4238,6 +4372,17 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，所有生产贵金属类配方的制造站生产力+0.5%，每有20点热情值，所有生产贵金属类配方的制造站生产力+0.5%"
+            },
+            "baseEfficiency": 0.005,
+            "scaling": {
+              "type": "resource",
+              "resource": "passion",
+              "per": 20
+            },
+            "globalEffect": {
+              "facility": "factory",
+              "product": "gold",
+              "stackKey": "oblivionis-gold-speed"
             }
           }
         ]
@@ -4260,6 +4405,17 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，所有生产贵金属类配方的制造站生产力+1%，每有20点热情值，所有生产贵金属类配方的制造站生产力+1%"
+            },
+            "baseEfficiency": 0.01,
+            "scaling": {
+              "type": "resource",
+              "resource": "passion",
+              "per": 20
+            },
+            "globalEffect": {
+              "facility": "factory",
+              "product": "gold",
+              "stackKey": "oblivionis-gold-speed"
             }
           }
         ]
@@ -4282,7 +4438,9 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，热情值处于40点及以上时，自身心情每小时消耗+0.05"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "moraleCostOnlyNotScored"
           }
         ]
       }
@@ -4662,7 +4820,9 @@
               "zh": "进驻控制中枢时，每有1个深海猎人干员进驻在宿舍以外的设施，则自身心情每小时消耗+0.5；反之则自身心情每小时恢复+0.5，如果进驻在宿舍内的深海猎人干员为满心情，则额外+0.5",
               "ja": "制御中枢配置時、宿舎以外の施設内のアビサルハンター所属オペレーター1人につき、自身の1時間ごとの体力消費量が+0.5。宿舎内のアビサルハンター所属オペレーター1人につき、自身の体力が1時間ごとに+0.5回復、宿舎内のアビサルハンター所属オペレーターの体力が最大値であれば、体力回復量が追加で+0.5",
               "en": "When this Operator is assigned to the Control Center, for each Abyssal Hunter Operator currently assigned to a non-Dormitory facility, self Morale consumed per hour +0.5; Otherwise, self Morale restored per hour +0.5, with an additional +0.5 if the Abyssal Hunter Operator assigned to the Dormitory has full Morale"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "abyssalDormMoraleStateNotModeled"
           }
         ]
       },
@@ -4678,7 +4838,7 @@
           {
             "facility": "control",
             "product": "morale",
-            "efficiency": 0.05,
+            "efficiency": 0,
             "tags": [
               "control",
               "bskill_ctrl_aegir",
@@ -4688,7 +4848,9 @@
               "zh": "进驻控制中枢时，控制中枢内所有干员的心情每小时恢复+0.05；基建内（不包含副手及活动室使用者）深海猎人干员获得特殊加成（与部分技能有特殊叠加规则）",
               "ja": "制御中枢配置時、制御中枢内全員の体力が1時間ごとに+0.05回復。基地内（補佐と活動室利用者を除く）のアビサルハンター所属オペレーターが特殊効果を得る（一部のスキルに対して特殊加算制限がある）",
               "en": "When this Operator is assigned to the Control Center, increases Morale recovery per hour of all Operators in the Control Center by +0.05; Abyssal Hunters in the Base (excluding Assistants and Activity Room users) gain Special Bonuses (Has Special Interaction Rules with certain skills)"
-            }
+            },
+            "baseEfficiency": 0.05,
+            "unsupportedReason": "abyssalHunterSpecialBonusNotModeled"
           }
         ]
       },
@@ -4704,7 +4866,7 @@
           {
             "facility": "control",
             "product": "morale",
-            "efficiency": 0.05,
+            "efficiency": 0,
             "tags": [
               "control",
               "bskill_ctrl_aegir2",
@@ -4714,7 +4876,9 @@
               "zh": "进驻控制中枢时，控制中枢内所有干员的心情每小时恢复+0.05；基建内（不包含副手及活动室使用者）深海猎人干员获得特殊加成（与部分技能有特殊叠加规则）",
               "ja": "制御中枢配置時、制御中枢内全員の体力が1時間ごとに+0.05回復。基地内（補佐と活動室利用者を除く）のアビサルハンター所属オペレーターが特殊効果を得る（一部のスキルに対して特殊加算制限がある）",
               "en": "When this Operator is assigned to the Control Center, increases Morale recovery per hour of all Operators in the Control Center by +0.05; Abyssal Hunters in the Base (excluding Assistants and Activity Room users) gain Special Bonuses (Has Special Interaction Rules with certain skills)"
-            }
+            },
+            "baseEfficiency": 0.05,
+            "unsupportedReason": "abyssalHunterSpecialBonusNotModeled"
           }
         ]
       }
@@ -4931,7 +5095,8 @@
               "zh": "进驻贸易站时，当前贸易站每级+1个订单上限",
               "ja": "貿易所配置時、配置貿易所のレベル1ごとに注文上限+1",
               "en": "When this Operator is assigned to a Trading Post, +1 order limit for every level of that Trading Post"
-            }
+            },
+            "orderLimit": 3
           }
         ]
       },
@@ -5505,7 +5670,20 @@
               "zh": "进驻贸易站时，订单获取效率+25%；当伊内丝入驻工作场所时（不包含副手），订单获取效率额外+5%",
               "ja": "貿易所配置時、受注効率+25%。イネスが作業施設に配置されているとき（補佐を除く）、追加で受注効率+5%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +25%; when Ines is assigned to any Work Area (excluding Assistant), order acquisition efficiency additionally +5%"
-            }
+            },
+            "conditionalBonuses": [
+              {
+                "efficiency": 0.05,
+                "conditions": [
+                  {
+                    "type": "assignedOperator",
+                    "operatorIds": [
+                      "char_4087_ines"
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -5531,7 +5709,31 @@
               "zh": "进驻贸易站时，订单获取效率+30%；当伊内丝、W入驻工作场所时（不包含副手），订单获取效率分别额外+5%",
               "ja": "貿易所配置時、受注効率+30%。イネス、Wが作業施設に配置されているとき（補佐を除く）、追加でそれぞれ受注効率+5%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +30%; when Ines or W are assigned to any Work Area (excluding Assistants), order acquisition efficiency additionally +5%"
-            }
+            },
+            "conditionalBonuses": [
+              {
+                "efficiency": 0.05,
+                "conditions": [
+                  {
+                    "type": "assignedOperator",
+                    "operatorIds": [
+                      "char_4087_ines"
+                    ]
+                  }
+                ]
+              },
+              {
+                "efficiency": 0.05,
+                "conditions": [
+                  {
+                    "type": "assignedOperator",
+                    "operatorIds": [
+                      "char_113_cqbw"
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       }
@@ -5763,7 +5965,7 @@
           {
             "facility": "trading",
             "product": "lmd",
-            "efficiency": 0.05,
+            "efficiency": 0,
             "tags": [
               "trading",
               "bskill_tra_bd_n1",
@@ -5773,7 +5975,15 @@
               "zh": "进驻贸易站时，宿舍内每有1名干员则感知信息+1，同时每1点感知信息转化为1点无声共鸣",
               "ja": "製造所配置時、宿舎中のオペレーター1人につき、知覚情報+1。1の知覚情報が1の静かなる共鳴に転化される",
               "en": "When this Operator is assigned to a Trading Post, for every 1 Operator in the Dormitories, Perception Information +1, and every 1 Perception Information is converted to 1 Soundless Resonance"
-            }
+            },
+            "resourceEffects": [
+              {
+                "resource": "perceptionInfo",
+                "amount": 20
+              }
+            ],
+            "ignoredForOptimization": true,
+            "unsupportedReason": "dormOccupancyResourceGeneratorFoldedIntoConsumer"
           }
         ]
       },
@@ -5799,6 +6009,12 @@
               "zh": "进驻贸易站时，每4点无声共鸣+1%订单效率",
               "ja": "貿易所配置時、静かなる共鳴4につき、受注効率+1%",
               "en": "When this Operator is assigned to a Trading Post, for every 4 Soundless Resonance, +1% order efficiency"
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "resource",
+              "resource": "perceptionInfo",
+              "per": 4
             }
           }
         ]
@@ -5825,6 +6041,12 @@
               "zh": "进驻贸易站时，每2点无声共鸣+1%订单效率",
               "ja": "貿易所配置時、静かなる共鳴2につき、受注効率+1%",
               "en": "When this Operator is assigned to a Trading Post, for every 2 Soundless Resonance, +1% order efficiency"
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "resource",
+              "resource": "perceptionInfo",
+              "per": 2
             }
           }
         ]
@@ -5866,7 +6088,8 @@
               "zh": "进驻制造站时，仓库容量上限+10，生产力+10%",
               "ja": "製造所配置時、保管上限+10、製造効率+10%",
               "en": "When this Operator is assigned to a Factory, capacity limit +10 and productivity +10%"
-            }
+            },
+            "storageLimit": 10
           }
         ]
       },
@@ -5892,7 +6115,8 @@
               "zh": "进驻贸易站时，订单获取效率+10%，且订单上限+2",
               "ja": "貿易所配置時、受注効率+10%、注文上限+2",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +10% and the order limit +2"
-            }
+            },
+            "orderLimit": 2
           }
         ]
       }
@@ -5959,7 +6183,8 @@
               "zh": "进驻贸易站时，订单获取效率+30%，且订单上限+1",
               "ja": "貿易所配置時、受注効率+30%、注文上限+1",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +30% and the order limit +1"
-            }
+            },
+            "orderLimit": 1
           }
         ]
       }
@@ -6001,6 +6226,14 @@
               "zh": "进驻控制中枢时，控制中枢内每个鲤氏侦探事务所干员可使该派系干员额外恢复心情，同时每人可使控制中枢内所有干员的心情每小时恢复+0.2",
               "ja": "制御中枢配置時、制御中枢内のリー探偵事務所所属オペレーター1人につき、中枢内全員の体力が1時間ごとに+0.2回復。所属オペレーターは体力回復量が更に増加",
               "en": "When this Operator is assigned to the Control Center, each Operator from Lee's Detective Agency restores extra Morale and increases the Morale of all Operators in the Control Center by +0.2 per hour."
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "lee"
+              ],
+              "facility": "control",
+              "includeSelf": true
             }
           }
         ]
@@ -6151,6 +6384,11 @@
               "zh": "进驻控制中枢时，所有宿舍内所有干员的心情每小时恢复+0.05（同种效果取最高）",
               "ja": "制御中枢配置時、全ての宿舎内のオペレーターの1時間ごとの体力回復量+0.05（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to the Control Center, all Operators in Dormitories recover +0.05 Morale per hour (strongest effect of the same type applies)"
+            },
+            "globalEffect": {
+              "facility": "dormitory",
+              "product": "morale",
+              "stackKey": "all-dorm-recovery"
             }
           }
         ]
@@ -6218,7 +6456,8 @@
               "zh": "进驻制造站时，仓库容量上限+8，心情每小时消耗-0.25",
               "ja": "製造所配置時、保管上限+8、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, capacity limit +8 and Morale consumed per hour -0.25"
-            }
+            },
+            "storageLimit": 8
           }
         ]
       },
@@ -6243,6 +6482,13 @@
               "zh": "进驻制造站时，当前制造站内干员提升的每格仓库容量，提供2%生产力",
               "ja": "製造所配置時、保管上限1上昇につき、製造効率+2%",
               "en": "When this Operator is assigned to a Factory, Operators assigned to the Factory increase all capacity limits, add 2% productivity."
+            },
+            "baseEfficiency": 0,
+            "storageLimit": 8,
+            "scaling": {
+              "type": "facilityStorageLimit",
+              "scope": "sameFacility",
+              "includeSelf": true
             }
           }
         ]
@@ -6273,7 +6519,7 @@
         "effects": [
           {
             "facility": "trading",
-            "product": "gold",
+            "product": "lmd",
             "efficiency": 0.05,
             "tags": [
               "trading",
@@ -6284,6 +6530,11 @@
               "zh": "进驻贸易站时，每有1条赤金生产线，则当前贸易站订单获取效率+5%",
               "ja": "貿易所配置時、純金生産ラインの数1につき、受注効率+5%",
               "en": "When this operator is assigned to a Trading Post, for every 1 Pure Gold Production Line, , Trading Post order acquisition efficiency +5%"
+            },
+            "scaling": {
+              "type": "facilityProductCount",
+              "facility": "factory",
+              "product": "gold"
             }
           }
         ]
@@ -6299,7 +6550,7 @@
         "effects": [
           {
             "facility": "trading",
-            "product": "gold",
+            "product": "lmd",
             "efficiency": 0.05,
             "tags": [
               "trading",
@@ -6310,6 +6561,14 @@
               "zh": "进驻贸易站时，基建内（不包含副手及活动室使用者）每1名杜林族干员（最多4名）为当前贸易站提供1条赤金生产线",
               "ja": "貿易所配置時、基地内（補佐と活動室利用者を除く）に配置中のドゥリン族オペレーター1人につき（最大4人）、配置貿易所の純金生産ラインの数1+",
               "en": "When this Operator is assigned to a Trading post, for every 1 Durin Operator in the base (excluding Assistants and Activity Room users, caps at 4), Trading Post gains another 1 Pure Gold Production Line"
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "durin"
+              ],
+              "scope": "base",
+              "max": 4
             }
           }
         ]
@@ -6593,6 +6852,14 @@
               "zh": "进驻控制中枢时，控制中枢内每个彩虹小队干员可使控制中枢内所有干员的心情每小时恢复+0.05",
               "ja": "制御中枢配置時、制御中枢内のレインボー小隊所属オペレーター1人につき、中枢内全員の体力が1時間ごとに+0.05回復",
               "en": "When this Operator is assigned to the Control Center, each Operator from Team Rainbow increases the Morale of all Operators in the Control Center by +0.05 per hour"
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "rainbow"
+              ],
+              "facility": "control",
+              "includeSelf": true
             }
           }
         ]
@@ -6608,7 +6875,7 @@
         "effects": [
           {
             "facility": "control",
-            "efficiency": 0.05,
+            "efficiency": 0,
             "tags": [
               "control",
               "bskill_ctrl_ash",
@@ -6618,7 +6885,29 @@
               "zh": "进驻控制中枢时，控制中枢内每有1名彩虹小队干员，则情报储备+1",
               "ja": "制御中枢配置時、制御中枢内のレインボー小隊所属オペレーター1人につき、情報備蓄+1",
               "en": "When this Operator is assigned to the Control Center, for each Team Rainbow Operator, Intelligence Reserve+1"
-            }
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "rainbow"
+              ],
+              "facility": "control",
+              "includeSelf": true
+            },
+            "resourceEffects": [
+              {
+                "resource": "intelReserve",
+                "amount": 1,
+                "scaling": {
+                  "type": "affiliation",
+                  "affiliations": [
+                    "rainbow"
+                  ],
+                  "facility": "control",
+                  "includeSelf": true
+                }
+              }
+            ]
           }
         ]
       }
@@ -6649,7 +6938,7 @@
         "effects": [
           {
             "facility": "control",
-            "efficiency": 0.05,
+            "efficiency": 0,
             "tags": [
               "control",
               "bskill_ctrl_felyne",
@@ -6659,7 +6948,29 @@
               "zh": "进驻控制中枢时，控制中枢内每有1名怪物猎人小队干员，则木天蓼+2",
               "ja": "制御中枢配置時、制御中枢内のアイルーと愉快な仲間たち所属オペレーター1人につき、マタタビ+2",
               "en": "When this Operator is assigned to the Control Center, for each Soubo Adventurers Operator, Felvine +2"
-            }
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "action4"
+              ],
+              "facility": "control",
+              "includeSelf": true
+            },
+            "resourceEffects": [
+              {
+                "resource": "catnip",
+                "amount": 2,
+                "scaling": {
+                  "type": "affiliation",
+                  "affiliations": [
+                    "action4"
+                  ],
+                  "facility": "control",
+                  "includeSelf": true
+                }
+              }
+            ]
           }
         ]
       },
@@ -6685,6 +6996,21 @@
               "zh": "当与怪物猎人小队干员进驻控制中枢一起工作时，所有贸易站订单效率+7%（同种效果取最高）",
               "ja": "アイルーと愉快な仲間たち所属オペレーターと共に制御中枢に配置時、全貿易所の受注効率+7%（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned together with other Soubo Adventurers Operators to the Control Center, all Trading Posts' order efficiency +7% (Only the strongest effect of this type takes place)"
+            },
+            "conditions": [
+              {
+                "type": "facilityAffiliation",
+                "facility": "control",
+                "affiliations": [
+                  "action4"
+                ],
+                "min": 1
+              }
+            ],
+            "globalEffect": {
+              "facility": "trading",
+              "product": "lmd",
+              "stackKey": "all-trading-speed"
             }
           }
         ]
@@ -6793,7 +7119,8 @@
               "zh": "进驻制造站时，生产力-5%，仓库容量上限+16，心情每小时消耗-0.15",
               "ja": "製造所配置時、製造効率-5%、保管上限+16、1時間ごとの体力消費量-0.15",
               "en": "When this Operator is assigned to a Factory, productivity -5%, capacity limit +16, and Morale consumed per hour -0.15"
-            }
+            },
+            "storageLimit": 16
           }
         ]
       },
@@ -6819,7 +7146,8 @@
               "zh": "进驻制造站时，生产力-5%，仓库容量上限+19，心情每小时消耗-0.25",
               "ja": "製造所配置時、製造効率-5%、保管上限+19、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, productivity -5%, capacity limit +19, and Morale consumed per hour -0.25"
-            }
+            },
+            "storageLimit": 19
           }
         ]
       }
@@ -7120,7 +7448,8 @@
               "zh": "进驻贸易站时，订单获取效率+20%，且订单上限-2（订单最少为1）",
               "ja": "貿易所配置時、受注効率+20%、注文上限-2（上限数最低1）",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +20% and order limit -2 (minimum 1)"
-            }
+            },
+            "orderLimit": -2
           }
         ]
       },
@@ -7146,7 +7475,8 @@
               "zh": "进驻贸易站时，订单获取效率+25%，且订单上限-6（订单最少为1）",
               "ja": "貿易所配置時、受注効率+25%、注文上限-6（上限数最低1）",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +25% and order limit -6 (minimum 1)"
-            }
+            },
+            "orderLimit": -6
           }
         ]
       },
@@ -7172,6 +7502,13 @@
               "zh": "进驻贸易站时，当前贸易站内干员提升的每5个订单上限，提供25%订单获取效率，最多提供100%效率",
               "ja": "貿易所配置時、配置貿易所の注文上限増加量5につき、受注効率+25%、最大+100%まで",
               "en": "When this Operator is assigned to a Trading Post, for every 5 order limit increase provided by Operators in the Trading Post, provides 25% order acquisition efficiency, up to a maximum of 100%"
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "facilityOrderLimit",
+              "scope": "sameFacility",
+              "per": 5,
+              "max": 4
             }
           }
         ]
@@ -7281,7 +7618,8 @@
               "zh": "进驻贸易站时，订单获取效率+15%，且订单上限+2",
               "ja": "貿易所配置時、受注効率+15%、注文上限+2",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +15% and the order limit +2"
-            }
+            },
+            "orderLimit": 2
           }
         ]
       }
@@ -7322,7 +7660,9 @@
               "zh": "进驻贸易站时，当前订单数与订单上限每差1笔订单，则订单获取效率+4%",
               "ja": "貿易所配置時、オーダー数と注文上限数の差が1につき、受注効率+4%",
               "en": "When this Operator is assigned to a Trading Post, increases order acquisition efficiency by +4% for every difference of 1 order(s) between the current number of orders and the maximum number of orders"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "currentOrderStateNotModeled"
           }
         ]
       },
@@ -7348,7 +7688,10 @@
               "zh": "进驻贸易站时，当前贸易站内其他干员提供的每10%订单获取效率使订单上限-1（订单最少为1），同时每有1笔订单就+4%订单获取效率（与部分技能有特殊叠加规则）",
               "ja": "貿易所配置時、自身以外の配属オペレーターの受注効率が10%につき、注文上限-1（上限数最低1）。オーダー数が1につき、受注効率+4%（一部のスキルに対して特殊加算制限がある）",
               "en": "When this Operator is assigned to a Trading Post, reduces the order limit by -1 for every 10% order acquisition efficiency provided by all other Operators stationed at that Trading Post (to a minimum of 1); Furthermore, increases order acquisition efficiency by +4% for every 1 order(s) (Special Interaction Rules apply with certain skills)"
-            }
+            },
+            "orderLimit": -1,
+            "ignoredForOptimization": true,
+            "unsupportedReason": "currentOrderAndSpecialStackNotModeled"
           }
         ]
       }
@@ -7522,7 +7865,9 @@
               "zh": "进驻制造站时，每5点人间烟火转化为1点巫术结晶",
               "ja": "製造所配置時、5の俗世之憂が1の巫術の結晶に転化される",
               "en": "When this Operator is assigned to a Factory, every 5 Worldly Plight is converted to 1 Witchcraft Crystal"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "resourceConversionFoldedIntoConsumer"
           }
         ]
       },
@@ -7547,6 +7892,12 @@
               "zh": "进驻制造站时，每1点巫术结晶+1%生产力",
               "ja": "製造所配置時、巫術の結晶1につき、製造効率+1%",
               "en": "When this Operator is assigned to a Factory, for every 1 Witchcraft Crystal, productivity +1%"
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "resource",
+              "resource": "worldlyPlight",
+              "per": 5
             }
           }
         ]
@@ -7572,6 +7923,12 @@
               "zh": "进驻制造站时，每1点巫术结晶+2%生产力",
               "ja": "製造所配置時、巫術の結晶1につき、製造効率+2%",
               "en": "When this Operator is assigned to a Factory, for every 1 Witchcraft Crystal, productivity +2%"
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "resource",
+              "resource": "worldlyPlight",
+              "per": 5
             }
           }
         ]
@@ -7613,7 +7970,9 @@
               "zh": "进驻控制中枢时，小幅提升会客室内干员所属派系的线索倾向效果，但控制中枢内所有干员的心情每小时消耗+0.5",
               "ja": "制御中枢配置時、応接室配属オペレーターの手がかり捜索の傾向をわずかに強める。制御中枢内全員の1時間ごとの体力消費量+0.5",
               "en": "When this Operator is assigned to the Control Center, slightly increases the likelihood of obtaining Clues corresponding to the factions of Operators assigned to the Reception Room, but also increases the Morale consumption of Operators assigned to the Control Center by +0.5"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "clueBiasNotModeled"
           }
         ]
       },
@@ -7638,7 +7997,9 @@
               "zh": "进驻控制中枢时，小幅提升会客室内干员所属派系的线索倾向效果",
               "ja": "制御中枢配置時、応接室配属オペレーターの手がかり捜索の傾向をわずかに強める。",
               "en": "When this Operator is assigned to the Control Center, slightly increases the likelihood of obtaining Clues corresponding to the factions of Operators assigned to the Reception Room"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "clueBiasNotModeled"
           }
         ]
       }
@@ -7772,7 +8133,8 @@
               "zh": "进驻制造站时，生产作战记录类配方时，仓库容量上限+15",
               "ja": "製造所で作戦記録を製造時、保管上限+15",
               "en": "When this Operator is assigned to a Factory, capacity limit is increased by +15 when producing Battle Records"
-            }
+            },
+            "storageLimit": 15
           }
         ]
       }
@@ -7813,7 +8175,9 @@
               "zh": "进驻贸易站时，小幅提升当前贸易站高品质贵金属订单的出现概率（工作时长影响概率），心情每小时消耗-0.25",
               "ja": "貿易所配置時、配置貿易所の高価値な金属オーダーの獲得率がわずかに上昇（勤務時間が確率に影響する）、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased slightly (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "highValueOrderProbability"
           }
         ]
       },
@@ -7839,7 +8203,9 @@
               "zh": "进驻贸易站时，提升当前贸易站高品质贵金属订单的出现概率（工作时长影响概率），心情每小时消耗-0.25",
               "ja": "貿易所配置時、配置貿易所の高価値な金属オーダーの獲得率が上昇（勤務時間が確率に影響する）、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "highValueOrderProbability"
           }
         ]
       }
@@ -7880,7 +8246,8 @@
               "zh": "进驻制造站时，仓库容量上限+6，生产力+10%",
               "ja": "製造所配置時、保管上限+6、製造効率+10%",
               "en": "When this Operator is assigned to a Factory, capacity limit +6 and productivity +10%"
-            }
+            },
+            "storageLimit": 6
           }
         ]
       },
@@ -7946,6 +8313,10 @@
               "zh": "进驻控制中枢时，所有制造站生产力+2%（同种效果取最高）",
               "ja": "制御中枢配置時、全製造所の製造効率+2%（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to the Control Center, all Factories' productivity +2% (only the most effective one will take effect when assigned Operators have the same skill effect)"
+            },
+            "globalEffect": {
+              "facility": "factory",
+              "stackKey": "all-factory-speed"
             }
           }
         ]
@@ -8072,7 +8443,8 @@
               "zh": "进驻贸易站时，订单获取效率+30%，且订单上限+1",
               "ja": "貿易所配置時、受注効率+30%、注文上限+1",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +30% and the order limit +1"
-            }
+            },
+            "orderLimit": 1
           }
         ]
       }
@@ -8103,7 +8475,7 @@
         "effects": [
           {
             "facility": "factory",
-            "efficiency": 0.15,
+            "efficiency": 0.25,
             "tags": [
               "factory",
               "bskill_man_spd_add2",
@@ -8113,6 +8485,10 @@
               "zh": "进驻制造站后，生产力首小时+15%，此后每小时+2%，最终达到+25%",
               "ja": "製造所配置時、最初の1時間製造効率+15%、その後まで1時間ごと更に+2%、最終的に+25%になる",
               "en": "When this Operator is assigned to a Factory, productivity +15% in the first hour and thereafter +2% per hour, up to +25%"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 1
             }
           }
         ]
@@ -8180,7 +8556,8 @@
               "zh": "进驻制造站时，仓库容量上限+8，心情每小时消耗-0.25",
               "ja": "製造所配置時、保管上限+8、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, capacity limit +8 and Morale consumed per hour -0.25"
-            }
+            },
+            "storageLimit": 8
           }
         ]
       },
@@ -8195,7 +8572,7 @@
         "effects": [
           {
             "facility": "factory",
-            "efficiency": 0.2,
+            "efficiency": 0.25,
             "tags": [
               "factory",
               "bskill_man_spd_add1",
@@ -8205,6 +8582,10 @@
               "zh": "进驻制造站后，生产力首小时+20%，此后每小时+1%，最终达到+25%",
               "ja": "製造所配置時、最初の1時間製造効率+20%、その後まで1時間ごと更に+1%、最終的に+25%になる",
               "en": "When this Operator is assigned to a Factory, productivity +20% in the first hour and thereafter +1% per hour, up to +25%"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 1
             }
           }
         ]
@@ -8346,7 +8727,7 @@
           {
             "facility": "power",
             "product": "power",
-            "efficiency": 0.1,
+            "efficiency": 0.15,
             "tags": [
               "power",
               "bskill_power_rec_spd&addition1",
@@ -8356,6 +8737,10 @@
               "zh": "进驻发电站时，无人机充能速度首小时+10%，此后每小时+1%，最终达到+15%",
               "ja": "発電所配置後から1時間の間、ドローンの回復速度+10%。その後、1時間ごとに+1%（最大+15%まで上昇可能）",
               "en": "When this Operator is assigned to a Power Plant, drone recovery rate is +10% in the first hour and thereafter +1% per hour, up to +15%"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 1
             }
           }
         ]
@@ -8372,7 +8757,7 @@
           {
             "facility": "power",
             "product": "power",
-            "efficiency": 0.15,
+            "efficiency": 0.2,
             "tags": [
               "power",
               "bskill_power_rec_spd&addition2",
@@ -8382,6 +8767,10 @@
               "zh": "进驻发电站时，无人机充能速度首小时+15%，此后每小时+1%，最终达到+20%",
               "ja": "発電所配置後から1時間の間、ドローンの回復速度+15%。その後、1時間ごとに+1%（最大+20%まで上昇可能）",
               "en": "When this Operator is assigned to a Power Plant, drone recovery rate is +15% in the first hour and thereafter +1% per hour, up to +20%"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 1
             }
           }
         ]
@@ -8449,6 +8838,10 @@
               "zh": "进驻贸易站时，每间宿舍每级+1%获取效率",
               "ja": "貿易所配置時、宿舎の合計レベルが1につき、受注効率+1%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +1% for every level of each Dormitory"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 20
             }
           }
         ]
@@ -8475,6 +8868,10 @@
               "zh": "进驻贸易站时，每间宿舍每级+2%获取效率",
               "ja": "貿易所配置時、宿舎の合計レベルが1につき、受注効率+2%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +2% for every level of each Dormitory"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 20
             }
           }
         ]
@@ -8592,7 +8989,8 @@
               "zh": "当与德克萨斯在同一个贸易站时，心情每小时消耗-0.1，订单上限+2",
               "ja": "テキサスと同じ貿易所に配置時、1時間ごとの体力消費量-0.1、注文上限+2",
               "en": "When this Operator is assigned to the same Trading Post as Texas, Morale consumed each hour -0.1, and order limit +2"
-            }
+            },
+            "orderLimit": 2
           }
         ]
       },
@@ -8626,7 +9024,8 @@
               "zh": "当与德克萨斯在同一个贸易站时，心情每小时消耗-0.1，订单上限+4",
               "ja": "テキサスと同じ貿易所に配置時、1時間ごとの体力消費量-0.1、注文上限+4",
               "en": "When this Operator is assigned to the same Trading Post as Texas, Morale consumed each hour -0.1, and order limit +4"
-            }
+            },
+            "orderLimit": 4
           }
         ]
       }
@@ -8769,6 +9168,11 @@
               "zh": "进驻控制中枢时，会客室线索搜集速度+25%（同种效果取最高）",
               "ja": "制御中枢配置時、応接室の手がかり捜索速度+25%（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to the Control Center, clue collection speed +25% (Only the strongest effect of this type takes place)."
+            },
+            "globalEffect": {
+              "facility": "reception",
+              "product": "clue",
+              "stackKey": "reception-clue-speed"
             }
           }
         ]
@@ -8963,7 +9367,8 @@
       "en": "Fang the Fire-Sharpened"
     },
     "affiliations": [
-      "rhodes"
+      "rhodes",
+      "reserve1"
     ],
     "rarity": 5,
     "profession": "先鋒",
@@ -9014,6 +9419,14 @@
               "zh": "进驻制造站时，当前制造站内每个A1小队干员为自身+10%的生产力",
               "ja": "製造所配置時、配置製造所のA1小隊のオペレーター数1につき、製造効率+10%",
               "en": "When this Operator is assigned to a Factory, gain +10% productivity for each A1 Detachment Operator in the same Factory."
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "reserve1"
+              ],
+              "scope": "sameFacility",
+              "includeSelf": true
             }
           }
         ]
@@ -9298,6 +9711,12 @@
               "zh": "进驻贸易站时，当前贸易站内干员提升的每个订单上限，提供4%订单获取效率",
               "ja": "貿易所配置時、配置貿易所の注文上限増加量1につき、受注効率+4%",
               "en": "When this Operator is assigned to a Trading Post, provides an additional 4% order acquisition efficiency for every order limit increase provided by all other Operators assigned to that Trading Post"
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "facilityOrderLimit",
+              "scope": "sameFacility",
+              "per": 1
             }
           }
         ]
@@ -9517,6 +9936,14 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，每个存在3名谢拉格干员的贸易站，订单获取效率+10%"
+            },
+            "scaling": {
+              "type": "facilityGroupAffiliation",
+              "affiliations": [
+                "kjerag"
+              ],
+              "facility": "trading",
+              "min": 3
             }
           }
         ]
@@ -9595,11 +10022,26 @@
               "zh": "进驻控制中枢时，每个进驻在贸易站的谢拉格干员，订单获取效率-15%，订单上限+6",
               "ja": "制御中枢配属時、貿易所に配属したカランド貿易所属オペレーターの受注効率-15%、注文上限+6。",
               "en": "When this Operator is assigned to the Control Center, all Karlan Trade Operators assigned to Trading Posts gain order acquisition efficiency -15% and order limit +6"
-            }
+            },
+            "orderLimit": 6
           }
         ]
       }
     ]
+  },
+  {
+    "id": "char_358_lisa",
+    "name": {
+      "zh": "铃兰",
+      "ja": "スズラン",
+      "en": "Suzuran"
+    },
+    "affiliations": [
+      "siracusa"
+    ],
+    "rarity": 6,
+    "profession": "補助",
+    "skills": []
   },
   {
     "id": "char_192_falco",
@@ -9636,7 +10078,8 @@
               "zh": "进驻贸易站时，订单获取效率+10%，且订单上限+2",
               "ja": "貿易所配置時、受注効率+10%、注文上限+2",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +10% and the order limit +2"
-            }
+            },
+            "orderLimit": 2
           }
         ]
       }
@@ -9745,7 +10188,13 @@
               "zh": "进驻控制中枢时，当自身心情大于12时，人间烟火+15；当自身心情处于12以下时，感知信息+10",
               "ja": "制御中枢配置時、自身の体力が12を上回る時、俗世之憂+15。自身の体力が12を下回る時、知覚情報+10",
               "en": "When this Operator is assigned to the Control Center and own Morale is above 12,Worldly Plight +15; When own Morale is below12, Perception Information +10 instead"
-            }
+            },
+            "resourceEffects": [
+              {
+                "resource": "worldlyPlight",
+                "amount": 15
+              }
+            ]
           }
         ]
       }
@@ -9919,7 +10368,9 @@
               "zh": "进驻贸易站后，如果下笔赤金订单交付数大于3（违约订单不视作赤金订单），则其龙门币收益+250，心情每小时消耗-0.25",
               "ja": "貿易所配置時、次に受注する金属オーダーの納品数が3を上回るならば（違約オーダーは金属オーダーと見なされない）、当該オーダーの報酬金額が+250追加され、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, if the amount of Pure Gold traded is higher than 3 (Defaulted trades do not count), increase the LMD gained by +250, and Morale consumed per hour is reduced by -0.25"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "goldOrderValueExpectation"
           }
         ]
       },
@@ -9945,7 +10396,9 @@
               "zh": "进驻贸易站后，如果下笔赤金订单交付数大于3（违约订单不视作赤金订单），则其龙门币收益+500，心情每小时消耗-0.25",
               "ja": "貿易所配置時、次に受注する金属オーダーの納品数が3を上回るならば（違約オーダーは金属オーダーと見なされない）、当該オーダーの報酬金額が+500追加され、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, if the amount of Pure Gold traded is higher than 3 (Defaulted trades do not count), increase the LMD gained by +500, and Morale consumed per hour is reduced by -0.25"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "goldOrderValueExpectation"
           }
         ]
       }
@@ -9975,7 +10428,6 @@
         "effects": [
           {
             "facility": "factory",
-            "product": "power",
             "efficiency": 0.05,
             "tags": [
               "factory",
@@ -9986,7 +10438,12 @@
               "zh": "进驻制造站时，当前制造站内其他干员提供的生产力全部归零（不包含根据设施数量提供加成的生产力），每个发电站为当前制造站+5%的生产力",
               "ja": "製造所配置時、自身以外の配属オペレーター全員の製造効率を０にする（施設の数量による製造効率上昇に影響なし）。発電所1か所につき、製造効率+5%",
               "en": "When this Operator is assigned to a Factory, the productivity contributed by all other Operators in that Factory becomes 0 (excluding productivity granted based on facility count), but each Power Plant increases that Factory's productivity by +5%"
-            }
+            },
+            "scaling": {
+              "type": "facilityCount",
+              "facility": "power"
+            },
+            "suppressesOtherFactoryEfficiency": true
           }
         ]
       }
@@ -10167,7 +10624,9 @@
               "zh": "进驻控制中枢时，部分设施内处于工作状态的干员心情每小时恢复+0.1；同时控制中枢内部分技能可以为其他设施内处于工作状态的干员额外提供心情恢复",
               "ja": "制御中枢配置時、一部の施設内で仕事中のオペレーターの体力が1時間ごとに+0.1回復し、制御中枢内の一部のスキルにより、他の施設内で仕事中のオペレーターの体力が追加で回復",
               "en": "When this Operator is assigned to the Control Center, working Operators in certain facilities will recover +0.1 Morale per hour, and some skills in the Control Center will provide additional Morale recovery for Operators working in other facilities"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "crossFacilityMoraleRecoveryNotScored"
           }
         ]
       }
@@ -10257,6 +10716,11 @@
               "zh": "进驻制造站时，每1点魔物料理+1%生产力",
               "ja": "製造所配置時、魔物料理1つにつき製造効率+1%",
               "en": "When this Operator is assigned to a Factory, +1% productivity for every 1 Monster Meal"
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "resource",
+              "resource": "magicFood"
             }
           }
         ]
@@ -10299,7 +10763,8 @@
               "zh": "进驻贸易站时，订单获取效率+25%，且订单上限+1",
               "ja": "貿易所配置時、受注効率+25%、注文上限+1",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +25% and the order limit +1"
-            }
+            },
+            "orderLimit": 1
           }
         ]
       }
@@ -10439,7 +10904,7 @@
           {
             "facility": "factory",
             "product": "morale",
-            "efficiency": 0.05,
+            "efficiency": 0,
             "tags": [
               "factory",
               "bskill_man_spd_bd_n1",
@@ -10449,7 +10914,15 @@
               "zh": "进驻制造站时，宿舍内每有1名干员则感知信息+1，同时每1点感知信息转化为1点思维链环",
               "ja": "製造所配置時、宿舎中のオペレーター1人につき、知覚情報+1。1の知覚情報が1の思念連鎖に転化される",
               "en": "When this Operator is assigned to a Factory, for every 1 operator in the Dormitory, Perception Information +1. Additionally, every 1 points of Perception Information is converted into 1 points of Chain of Thought"
-            }
+            },
+            "resourceEffects": [
+              {
+                "resource": "perceptionInfo",
+                "amount": 20
+              }
+            ],
+            "ignoredForOptimization": true,
+            "unsupportedReason": "dormOccupancyResourceGeneratorFoldedIntoConsumer"
           }
         ]
       },
@@ -10474,6 +10947,12 @@
               "zh": "进驻制造站时，每2点思维链环+1%生产力",
               "ja": "製造所配置時、思念連鎖2につき、製造効率+1%",
               "en": "When this Operator is assigned to Factory, for every 2 points of Chain of Thought, productivity +1%"
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "resource",
+              "resource": "perceptionInfo",
+              "per": 2
             }
           }
         ]
@@ -10499,6 +10978,12 @@
               "zh": "进驻制造站时，每1点思维链环+1%生产力",
               "ja": "製造所配置時、思念連鎖1につき、製造効率+1%",
               "en": "When this Operator is assigned to Factory, for every 1 points of Chain of Thought, productivity +1%"
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "resource",
+              "resource": "perceptionInfo",
+              "per": 1
             }
           }
         ]
@@ -10607,7 +11092,8 @@
               "zh": "进驻制造站时，仓库容量上限+6，生产力+10%",
               "ja": "製造所配置時、保管上限+6、製造効率+10%",
               "en": "When this Operator is assigned to a Factory, capacity limit +6 and productivity +10%"
-            }
+            },
+            "storageLimit": 6
           }
         ]
       },
@@ -10715,6 +11201,11 @@
               "zh": "进驻控制中枢时，所有贸易站订单效率+7%（同种效果取最高）",
               "ja": "制御中枢配置時、全貿易所の受注効率+7%（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to the Control Center, all Trading Posts' order efficiency +7% (only the most effective one will take effect when assigned Operators have the same skill effect)"
+            },
+            "globalEffect": {
+              "facility": "trading",
+              "product": "lmd",
+              "stackKey": "all-trading-speed"
             }
           }
         ]
@@ -10741,7 +11232,9 @@
               "zh": "进驻贸易站时，小幅提升当前贸易站高品质贵金属订单的出现概率（工作时长影响概率），心情每小时消耗-0.25",
               "ja": "貿易所配置時、配置貿易所の高価値な金属オーダーの獲得率がわずかに上昇（勤務時間が確率に影響する）、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased slightly (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "highValueOrderProbability"
           }
         ]
       },
@@ -10767,7 +11260,9 @@
               "zh": "进驻贸易站时，提升当前贸易站高品质贵金属订单的出现概率（工作时长影响概率），心情每小时消耗-0.25",
               "ja": "貿易所配置時、配置貿易所の高価値な金属オーダーの獲得率が上昇（勤務時間が確率に影響する）、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "highValueOrderProbability"
           }
         ]
       }
@@ -10831,26 +11326,32 @@
               "bskill_tra_par1",
               "trading"
             ],
-            "conditions": [
-              {
-                "type": "sameFacilityOperator",
-                "operatorIds": [
-                  "char_112_siege"
-                ]
-              },
-              {
-                "type": "sameFacilityAffiliation",
-                "affiliations": [
-                  "glasgow"
-                ],
-                "min": 1
-              }
-            ],
             "description": {
               "zh": "进驻贸易站时，同个贸易站中每有1名格拉斯哥帮干员，当前贸易站订单获取效率+20%；当与推进之王在同一个贸易站时，订单获取效率额外+35%",
               "ja": "貿易所配置時、同じ貿易所に配置されているグラスゴーオペレーター1人につき、配置貿易所の受注効率+20%。シージと同じ貿易所に配置されている場合、追加で受注効率+35%",
               "en": "When this Operator is assigned to a Trading Post, for every Glasgow Gang Operator in the same Trading Post, order acquisition efficiency +20%; when in the same Trading Post as Siege, additional order acquisition efficiency +35%"
-            }
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "glasgow"
+              ],
+              "scope": "sameFacility",
+              "includeSelf": true
+            },
+            "conditionalBonuses": [
+              {
+                "efficiency": 0.35,
+                "conditions": [
+                  {
+                    "type": "sameFacilityOperator",
+                    "operatorIds": [
+                      "char_112_siege"
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       }
@@ -10942,6 +11443,11 @@
               "zh": "进驻控制中枢时，会客室线索搜集速度+15%（同种效果取最高）",
               "ja": "制御中枢配置時、応接室の手がかり捜索速度+15%（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to the Control Center, clue collection speed +15% (Only the strongest effect of this type takes place)."
+            },
+            "globalEffect": {
+              "facility": "reception",
+              "product": "clue",
+              "stackKey": "reception-clue-speed"
             }
           }
         ]
@@ -11108,25 +11614,25 @@
           {
             "facility": "power",
             "product": "power",
-            "efficiency": 0.1,
+            "efficiency": 0.03,
             "tags": [
               "power",
               "bskill_power_rec_rhine",
               "power"
             ],
-            "conditions": [
-              {
-                "type": "facilityAffiliation",
-                "affiliations": [
-                  "rhine"
-                ],
-                "min": 1
-              }
-            ],
             "description": {
               "zh": "进驻发电站时，无人机充能速度+10%，基建内（不包含副手及活动室使用者）每有1名除自身以外的莱茵生命干员（最多5名），充能速度额外+3%",
               "ja": "発電所配置時、ドローンの回復速度+10%。基地内の自身以外（補佐と活動室利用者を除く）のライン生命オペレーター1人につき（最大5人まで）、追加でドローン回復速度+3%",
               "en": "When this Operator is assigned to a Power Plant, drone charging speed +10%; for every other Rhine Lab Operator in base (excluding Assistants and Activity Room users, caps at 5), additional charging speed +3%"
+            },
+            "baseEfficiency": 0.1,
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "rhine"
+              ],
+              "scope": "base",
+              "max": 5
             }
           }
         ]
@@ -11167,7 +11673,8 @@
               "zh": "进驻制造站时，生产力+20%，仓库容量上限-8",
               "ja": "製造所配置時、製造効率+20%、保管上限-8",
               "en": "When this Operator is assigned to a Factory, Productivity +20% and capacity limit -8"
-            }
+            },
+            "storageLimit": -8
           }
         ]
       },
@@ -11193,7 +11700,8 @@
               "zh": "进驻制造站时，仓库容量上限+16，心情每小时消耗-0.25",
               "ja": "製造所配置時、保管上限+16、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, capacity limit +16 and Morale consumed per hour -0.25"
-            }
+            },
+            "storageLimit": 16
           }
         ]
       }
@@ -11301,7 +11809,8 @@
               "zh": "进驻制造站时，仓库容量上限+10，心情每小时消耗-0.25",
               "ja": "製造所配置時、保管上限+10、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, capacity limit +10 and Morale consumed per hour -0.25"
-            }
+            },
+            "storageLimit": 10
           }
         ]
       },
@@ -11327,6 +11836,10 @@
               "zh": "进驻制造站时，每间宿舍每级为贵金属类配方的生产力+1%",
               "ja": "製造所配置時、宿舎の合計レベルが1につき、金属製造の製造効率+1%",
               "en": "When this Operator is assigned to a Factory, Precious Metal productivity +1% for every level of each Dormitory"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 20
             }
           }
         ]
@@ -11389,6 +11902,14 @@
             ],
             "description": {
               "zh": "进驻制造站时，基建内（不包含副手及活动室使用者）每有1名莱茵生命干员（最多5名），贵金属类配方的生产力+3%"
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "rhine"
+              ],
+              "max": 5
             }
           }
         ]
@@ -11550,6 +12071,11 @@
               "zh": "进驻控制中枢时，所有宿舍内所有干员的心情每小时恢复+0.05（同种效果取最高）",
               "ja": "制御中枢配置時、全ての宿舎内のオペレーターの1時間ごとの体力回復量+0.05（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to the Control Center, all Operators in Dormitories recover +0.05 Morale per hour (strongest effect of the same type applies)"
+            },
+            "globalEffect": {
+              "facility": "dormitory",
+              "product": "morale",
+              "stackKey": "all-dorm-recovery"
             }
           }
         ]
@@ -11579,7 +12105,7 @@
           {
             "facility": "factory",
             "product": "battleRecord",
-            "efficiency": 0.3,
+            "efficiency": 0,
             "tags": [
               "factory",
               "bskill_formula_spd_headb1",
@@ -11587,7 +12113,8 @@
             ],
             "description": {
               "zh": "进驻制造站时，作战记录类配方的生产力+30%"
-            }
+            },
+            "baseEfficiency": 0.3
           }
         ]
       },
@@ -11609,7 +12136,21 @@
             ],
             "description": {
               "zh": "进驻制造站时，作战记录类配方的生产力+30%，当与乌萨斯学生自治团干员在同一个制造站时，作战记录类配方的生产力额外+10%"
-            }
+            },
+            "conditionalBonuses": [
+              {
+                "efficiency": 0.1,
+                "conditions": [
+                  {
+                    "type": "sameFacilityAffiliation",
+                    "affiliations": [
+                      "student"
+                    ],
+                    "min": 1
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -11631,6 +12172,18 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，自身心情每小时消耗+0.5，每个进驻在会客室的乌萨斯学生自治团干员，线索搜集速度+10%"
+            },
+            "globalEffect": {
+              "facility": "reception",
+              "product": "clue",
+              "stackKey": "student-reception-clue-speed"
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "student"
+              ],
+              "facility": "reception"
             }
           }
         ]
@@ -11672,7 +12225,8 @@
               "zh": "进驻制造站时，仓库容量上限+8，心情每小时消耗-0.25",
               "ja": "製造所配置時、保管上限+8、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, capacity limit +8 and Morale consumed per hour -0.25"
-            }
+            },
+            "storageLimit": 8
           }
         ]
       },
@@ -11739,7 +12293,8 @@
               "zh": "进驻制造站时，仓库容量上限+10，心情每小时消耗-0.25",
               "ja": "製造所配置時、保管上限+10、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, capacity limit +10 and Morale consumed per hour -0.25"
-            }
+            },
+            "storageLimit": 10
           }
         ]
       },
@@ -11764,6 +12319,12 @@
               "zh": "进驻制造站时，当前制造站内干员根据自身提升的仓库容量提供一定的生产力。提升16格以下的，每格仓库容量提供1%生产力；提升大于16格的，每格仓库容量提供3%生产力（无法与回收利用叠加，且优先生效）",
               "ja": "製造所配置時、配属オペレーター各自の保管上限増加値が16以下の場合、増加値が1につき、製造効率+1%。保管上限増加値が16を超える場合、増加値1につき、製造効率+3%（「再利用」の効果より優先適用、重複不可）",
               "en": "When this Operator is assigned to a Factory, increases the productivity of Operators in that Factory based upon their increased capacity limit. Operators with 16 or less increased capacity limit gain 1% productivity; Operators with greater than 16 increased capacity limit gain 3% productivity (This effect does not stack with Recycling and takes priority over it)."
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "facilityStorageLimit",
+              "scope": "sameFacility",
+              "includeSelf": true
             }
           }
         ]
@@ -11806,7 +12367,8 @@
               "zh": "进驻制造站时，生产力+25%，仓库容量上限-12，心情每小时消耗+0.25",
               "ja": "製造所配置時、製造効率+25%、保管上限-12、1時間ごとの体力消費量+0.25",
               "en": "When this Operator is assigned to a Factory, productivity +25%, capacity limit -12, and Morale consumed per hour +0.25"
-            }
+            },
+            "storageLimit": -12
           }
         ]
       },
@@ -11873,7 +12435,8 @@
               "zh": "进驻贸易站时，当前贸易站每级+1个订单上限",
               "ja": "貿易所配置時、配置貿易所のレベル1ごとに注文上限+1",
               "en": "When this Operator is assigned to a Trading Post, +1 order limit for every level of that Trading Post"
-            }
+            },
+            "orderLimit": 3
           }
         ]
       },
@@ -11940,7 +12503,8 @@
               "zh": "进驻贸易站时，订单获取效率+30%，且订单上限+1",
               "ja": "貿易所配置時、受注効率+30%、注文上限+1",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +30% and the order limit +1"
-            }
+            },
+            "orderLimit": 1
           }
         ]
       },
@@ -11966,6 +12530,11 @@
               "zh": "进驻贸易站时，每1点魔物料理+1%订单效率",
               "ja": "貿易所配置時、魔物料理1つにつき受注効率+1%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +1% for every 1 Monster Meal"
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "resource",
+              "resource": "magicFood"
             }
           }
         ]
@@ -12008,7 +12577,13 @@
               "zh": "进驻控制中枢时，自身心情每小时消耗+0.5，木天蓼+8",
               "ja": "制御中枢配置時、自身の1時間ごとの体力消費量+0.5、マタタビ+8",
               "en": "When this Operator is assigned to the Control Center, self Morale loss per hour +0.5, Felvine +8"
-            }
+            },
+            "resourceEffects": [
+              {
+                "resource": "catnip",
+                "amount": 8
+              }
+            ]
           }
         ]
       },
@@ -12033,6 +12608,10 @@
               "zh": "当与怪物猎人小队干员进驻控制中枢一起工作时，所有制造站生产力+2%（同种效果取最高）",
               "ja": "アイルーと愉快な仲間たち所属オペレーターと共に制御中枢に配置時、全製造所の製造効率+2%（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned together with other Soubo Adventurers Operators to the Control Center, all Factories' productivity +2% (Only the strongest effect of this type takes place)"
+            },
+            "globalEffect": {
+              "facility": "factory",
+              "stackKey": "all-factory-speed"
             }
           }
         ]
@@ -12064,7 +12643,7 @@
           {
             "facility": "trading",
             "product": "gold",
-            "efficiency": 0.05,
+            "efficiency": 0,
             "tags": [
               "trading",
               "bskill_tra_flow_gc1",
@@ -12074,7 +12653,9 @@
               "zh": "进驻贸易站时，订单获取效率+5%，每有4条赤金生产线，则为当前贸易站额外提供2条赤金生产线",
               "ja": "貿易所配置時、受注効率+5%、純金生産ラインの数4につき、配置貿易所の純金生産ラインの数追加で+2",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +5%, and for every 4 Pure Gold Production Line, Trading Post gains another 2 Pure Gold Production Line"
-            }
+            },
+            "baseEfficiency": 0.05,
+            "unsupportedReason": "goldProductionLineCountNotModeled"
           }
         ]
       },
@@ -12090,7 +12671,7 @@
           {
             "facility": "trading",
             "product": "gold",
-            "efficiency": 0.05,
+            "efficiency": 0,
             "tags": [
               "trading",
               "bskill_tra_flow_gc2",
@@ -12100,7 +12681,9 @@
               "zh": "进驻贸易站时，订单获取效率+5%，每有2条赤金生产线，则为当前贸易站额外提供2条赤金生产线",
               "ja": "貿易所配置時、受注効率+5%、純金生産ラインの数2につき、配置貿易所の純金生産ラインの数追加で+2",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +5%, and for every 2 Pure Gold Production Line, Trading Post gains another 2 Pure Gold Production Line"
-            }
+            },
+            "baseEfficiency": 0.05,
+            "unsupportedReason": "goldProductionLineCountNotModeled"
           }
         ]
       }
@@ -12167,7 +12750,8 @@
               "zh": "进驻制造站时，当自身心情落差大于12时，生产力+10%，仓库容量+6",
               "ja": "製造所配置時、自身の体力減少分が12を上回る時、製造効率+10%、保管上限+6",
               "en": "When this Operator is assigned to a Factory, if own Morale difference is greater than 12, Productivity +10%, storage capacity +6"
-            }
+            },
+            "storageLimit": 6
           }
         ]
       }
@@ -12233,7 +12817,9 @@
               "zh": "进驻控制中枢时，人力办公室联络速度小于30%时（其中包含基础联络速度5%），则联络速度额外+20%（该加成全局效果唯一，不受其它加成影响）",
               "ja": "制御中枢配置時、事務連絡速度が30%(基本連絡速度5％を含む)を下回るとき、連絡速度が+20%増加(同類の効果は重複適用しない、他の基地スキルの影響を受けない)",
               "en": "When this Operator is assigned to the Control Center, if the HR contacting speed of the HR Office is lower than 30% (including the base 5%), increase the HR contacting speed by +20% (unique effect across the entire base, unaffected by other effects)"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "officeContactSpeedNotModeled"
           }
         ]
       }
@@ -12301,7 +12887,8 @@
               "zh": "进驻制造站时，仓库容量上限+8，心情每小时消耗-0.25",
               "ja": "製造所配置時、保管上限+8、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, capacity limit +8 and Morale consumed per hour -0.25"
-            }
+            },
+            "storageLimit": 8
           }
         ]
       }
@@ -12506,7 +13093,13 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，热情值+20；每有8点热情值，自身心情每小时消耗+0.01，所有贸易站订单效率+1%（同种效果取最高）"
-            }
+            },
+            "resourceEffects": [
+              {
+                "resource": "passion",
+                "amount": 20
+              }
+            ]
           }
         ]
       },
@@ -12632,7 +13225,13 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，宿舍内每有1名干员，热情值+1"
-            }
+            },
+            "resourceEffects": [
+              {
+                "resource": "passion",
+                "amount": 5
+              }
+            ]
           }
         ]
       },
@@ -12654,6 +13253,11 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，所有宿舍内所有干员的心情每小时恢复+0.05（同种效果取最高）；当与丰川祥子一起进驻控制中枢时，丰川祥子的心情每小时恢复+0.1"
+            },
+            "globalEffect": {
+              "facility": "dormitory",
+              "product": "morale",
+              "stackKey": "all-dorm-recovery"
             }
           }
         ]
@@ -12684,7 +13288,6 @@
         "effects": [
           {
             "facility": "factory",
-            "product": "power",
             "efficiency": 0.05,
             "tags": [
               "factory",
@@ -12695,7 +13298,12 @@
               "zh": "进驻制造站时，当前制造站内其他干员提供的生产力全部归零（不包含根据设施数量提供加成的生产力），每个发电站为当前制造站+5%的生产力",
               "ja": "製造所配置時、自身以外の配属オペレーター全員の製造効率を０にする（施設の数量による製造効率上昇に影響なし）。発電所1か所につき、製造効率+5%",
               "en": "When this Operator is assigned to a Factory, the productivity contributed by all other Operators in that Factory becomes 0 (excluding productivity granted based on facility count), but each Power Plant increases that Factory's productivity by +5%"
-            }
+            },
+            "scaling": {
+              "type": "facilityCount",
+              "facility": "power"
+            },
+            "suppressesOtherFactoryEfficiency": true
           }
         ]
       },
@@ -12710,7 +13318,6 @@
         "effects": [
           {
             "facility": "factory",
-            "product": "power",
             "efficiency": 0.1,
             "tags": [
               "factory",
@@ -12721,7 +13328,12 @@
               "zh": "进驻制造站时，当前制造站内其他干员提供的生产力全部归零（不包含根据设施数量提供加成的生产力），每个发电站为当前制造站+10%的生产力",
               "ja": "製造所配置時、自身以外の配属オペレーター全員の製造効率を０にする（施設の数量による製造効率上昇に影響なし）。発電所1か所につき、製造効率+10%",
               "en": "When this Operator is assigned to a Factory, the productivity contributed by all other Operators in that Factory becomes 0 (excluding productivity granted based on facility count), but each Power Plant increases that Factory's productivity by +10%"
-            }
+            },
+            "scaling": {
+              "type": "facilityCount",
+              "facility": "power"
+            },
+            "suppressesOtherFactoryEfficiency": true
           }
         ]
       },
@@ -12905,6 +13517,14 @@
               "zh": "进驻控制中枢时，控制中枢内每个彩虹小队干员可使控制中枢内所有干员的心情每小时恢复+0.05",
               "ja": "制御中枢配置時、制御中枢内のレインボー小隊所属オペレーター1人につき、中枢内全員の体力が1時間ごとに+0.05回復",
               "en": "When this Operator is assigned to the Control Center, each Operator from Team Rainbow increases the Morale of all Operators in the Control Center by +0.05 per hour"
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "rainbow"
+              ],
+              "facility": "control",
+              "includeSelf": true
             }
           }
         ]
@@ -13012,7 +13632,8 @@
               "zh": "进驻制造站时，仓库容量上限+10，生产力+10%",
               "ja": "製造所配置時、保管上限+10、製造効率+10%",
               "en": "When this Operator is assigned to a Factory, capacity limit +10 and productivity +10%"
-            }
+            },
+            "storageLimit": 10
           }
         ]
       },
@@ -13213,7 +13834,20 @@
               "zh": "进驻贸易站时，订单获取效率+25%；当乌尔比安在基建内时（不包含副手及活动室使用者），订单获取效率额外+5%",
               "ja": "貿易所配置時、受注効率+25%。ウルピアヌスが基地内に配置されているとき（補佐と活動室利用者である場合を除く）、追加で受注効率+5%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +25%; When Ulpianus is in the Base (excluding Assistants and Activity Room users), increase order acquisition efficiency by an additional +5%"
-            }
+            },
+            "conditionalBonuses": [
+              {
+                "efficiency": 0.05,
+                "conditions": [
+                  {
+                    "type": "assignedOperator",
+                    "operatorIds": [
+                      "char_4145_ulpia"
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -13239,7 +13873,20 @@
               "zh": "进驻贸易站时，订单获取效率+30%；当乌尔比安在基建内时（不包含副手及活动室使用者），订单获取效率额外+10%",
               "ja": "貿易所配置時、受注効率+30%。ウルピアヌスが基地内に配置されているとき（補佐と活動室利用者である場合を除く）、追加で受注効率+10%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +30%; When Ulpianus is in the Base (excluding Assistants and Activity Room users), increase order acquisition efficiency by an additional +10%"
-            }
+            },
+            "conditionalBonuses": [
+              {
+                "efficiency": 0.1,
+                "conditions": [
+                  {
+                    "type": "assignedOperator",
+                    "operatorIds": [
+                      "char_4145_ulpia"
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       }
@@ -13332,7 +13979,8 @@
               "zh": "进驻制造站时，生产作战记录类配方时，仓库容量上限+4",
               "ja": "製造所で作戦記録を製造時、保管上限+4",
               "en": "When this Operator is assigned to a Factory, capacity limit is increased by +4 when producing Battle Records"
-            }
+            },
+            "storageLimit": 4
           }
         ]
       }
@@ -13374,6 +14022,11 @@
               "zh": "进驻控制中枢时，所有贸易站订单效率+7%（同种效果取最高）",
               "ja": "制御中枢配置時、全貿易所の受注効率+7%（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to the Control Center, all Trading Posts' order efficiency +7% (only the most effective one will take effect when assigned Operators have the same skill effect)"
+            },
+            "globalEffect": {
+              "facility": "trading",
+              "product": "lmd",
+              "stackKey": "all-trading-speed"
             }
           }
         ]
@@ -13415,7 +14068,8 @@
               "zh": "进驻制造站时，生产力+25%，仓库容量上限-12，心情每小时消耗+0.25",
               "ja": "製造所配置時、製造効率+25%、保管上限-12、1時間ごとの体力消費量+0.25",
               "en": "When this Operator is assigned to a Factory, productivity +25%, capacity limit -12, and Morale consumed per hour +0.25"
-            }
+            },
+            "storageLimit": -12
           }
         ]
       },
@@ -13441,7 +14095,8 @@
               "zh": "进驻制造站时，仓库容量上限+16，心情每小时消耗-0.25",
               "ja": "製造所配置時、保管上限+16、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, capacity limit +16 and Morale consumed per hour -0.25"
-            }
+            },
+            "storageLimit": 16
           }
         ]
       }
@@ -13616,7 +14271,8 @@
               "zh": "进驻贸易站时，订单上限+5，心情每小时消耗-0.25",
               "ja": "貿易所配置時、注文上限+5、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, order limit +5 and Morale consumed per hour -0.25"
-            }
+            },
+            "orderLimit": 5
           }
         ]
       },
@@ -13816,6 +14472,12 @@
               "zh": "进驻制造站时，每3点人间烟火+1%生产力",
               "ja": "製造所配置時、俗世之憂3につき、製造効率+1%",
               "en": "When this Operator is assigned to a Factory, for every 3 Worldly Plight, Productivity +1%"
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "resource",
+              "resource": "worldlyPlight",
+              "per": 3
             }
           }
         ]
@@ -13857,6 +14519,11 @@
               "zh": "进驻会客室时，线索搜集速度提升5%，同时每1点情报储备额外提升5%",
               "ja": "応接室配置時、手がかり捜索速度+5%。また、情報備蓄1につき、さらに+5%",
               "en": "When this Operator is assigned to the Reception Room, increases Clue search speed by 5%, with an additional 5% for every 1 Intelligence Reserve"
+            },
+            "baseEfficiency": 0.05,
+            "scaling": {
+              "type": "resource",
+              "resource": "intelReserve"
             }
           }
         ]
@@ -14175,7 +14842,8 @@
               "zh": "进驻贸易站时，订单获取效率+10%，且订单上限+2",
               "ja": "貿易所配置時、受注効率+10%、注文上限+2",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +10% and the order limit +2"
-            }
+            },
+            "orderLimit": 2
           }
         ]
       },
@@ -14201,7 +14869,8 @@
               "zh": "进驻贸易站时，订单获取效率+10%，且订单上限+4",
               "ja": "貿易所配置時、受注効率+10%、注文上限+4",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +10% and the order limit +4"
-            }
+            },
+            "orderLimit": 4
           }
         ]
       },
@@ -14530,7 +15199,7 @@
           {
             "facility": "trading",
             "product": "lmd",
-            "efficiency": 0.05,
+            "efficiency": 0.03,
             "tags": [
               "trading",
               "bskill_tra_spd&limit_felyne",
@@ -14540,6 +15209,12 @@
               "zh": "进驻贸易站时，订单获取效率+5%，且订单上限+2，同时每有1个木天蓼，则订单获取效率+3%",
               "ja": "貿易所配置時、受注効率+5%、注文上限+2、マタタビ1個につき、受注効率+3%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +5%, order limit +2, plus an additional order acquisition efficiency +3% for every Felvine"
+            },
+            "orderLimit": 2,
+            "baseEfficiency": 0.05,
+            "scaling": {
+              "type": "resource",
+              "resource": "catnip"
             }
           }
         ]
@@ -14555,7 +15230,7 @@
         "effects": [
           {
             "facility": "factory",
-            "efficiency": 0.05,
+            "efficiency": 0.01,
             "tags": [
               "factory",
               "bskill_man_spd&limit_felyne",
@@ -14565,6 +15240,12 @@
               "zh": "进驻制造站时，仓库容量上限+8，生产力+5%，同时每有1个木天蓼，则生产力+1%",
               "ja": "製造所配置時、保管上限+8、製造効率+5%、マタタビ1個につき、製造効率+1%",
               "en": "When this Operator is assigned to a Factory, capacity limit +8, Productivity +5%, plus an additional Productivity +1% for every Felvine"
+            },
+            "storageLimit": 8,
+            "baseEfficiency": 0.05,
+            "scaling": {
+              "type": "resource",
+              "resource": "catnip"
             }
           }
         ]
@@ -14606,7 +15287,8 @@
               "zh": "进驻贸易站时，订单上限+5，心情每小时消耗-0.25",
               "ja": "貿易所配置時、注文上限+5、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, order limit +5 and Morale consumed per hour -0.25"
-            }
+            },
+            "orderLimit": 5
           }
         ]
       },
@@ -15079,6 +15761,14 @@
               "zh": "进驻控制中枢时，每个进驻在制造站的骑士干员生产力+7%",
               "ja": "制御中枢配置時、製造所に配置されている騎士オペレーター1人につき、製造効率+7%",
               "en": "When this Operator is assigned to the Control Center, all Knight Operators assigned to Factories gain productivity +7%"
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "kazimierz",
+                "pinus"
+              ],
+              "facility": "factory"
             }
           }
         ]
@@ -15146,7 +15836,21 @@
               "zh": "进驻贸易站时，订单获取效率+30%；当前贸易站内存在格拉斯哥帮干员时，订单获取效率额外+10%",
               "ja": "貿易所配置時、受注効率+30%、配置貿易所にグラスゴー所属オペレーターがいる場合、追加で受注効率+10%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +30%; if a Glasgow Gang Operator is assigned to the same Trading Post, increase order acquisition efficiency by an additional +10%"
-            }
+            },
+            "conditionalBonuses": [
+              {
+                "efficiency": 0.1,
+                "conditions": [
+                  {
+                    "type": "sameFacilityAffiliation",
+                    "affiliations": [
+                      "glasgow"
+                    ],
+                    "min": 1
+                  }
+                ]
+              }
+            ]
           }
         ]
       }
@@ -15190,20 +15894,14 @@
                 "operatorIds": [
                   "char_4088_hodrer"
                 ]
-              },
-              {
-                "type": "facilityOperator",
-                "facility": "reception",
-                "operatorIds": [
-                  "char_4087_ines"
-                ]
               }
             ],
             "description": {
               "zh": "进驻控制中枢时，当伊内丝入驻会客室时，会客室线索搜集速度+5%；当赫德雷入驻贸易站时，赫德雷所在贸易站订单上限+1",
               "ja": "制御中枢配置時、イネスが応接室に配置されているとき、応接室の手がかり捜索速度+5%。ヘドリーが貿易所に配置されているとき、ヘドリーのいる貿易所の注文上限+1",
               "en": "When this Operator is assigned to the Control Center: if Ines is assigned to the Reception Room, clue collection speed +5%; if Hoederer is assigned to a Trading Post, that Trading Post's order limit +1."
-            }
+            },
+            "orderLimit": 1
           }
         ]
       },
@@ -15232,20 +15930,14 @@
                 "operatorIds": [
                   "char_4088_hodrer"
                 ]
-              },
-              {
-                "type": "facilityOperator",
-                "facility": "reception",
-                "operatorIds": [
-                  "char_4087_ines"
-                ]
               }
             ],
             "description": {
               "zh": "进驻控制中枢时，当伊内丝入驻会客室时，会客室线索搜集速度+5%；当赫德雷入驻贸易站时，赫德雷所在贸易站订单上限+2",
               "ja": "制御中枢配置時、イネスが応接室に配置されているとき、応接室の手がかり捜索速度+5%。ヘドリーが貿易所に配置されているとき、ヘドリーのいる貿易所の注文上限+2",
               "en": "When this Operator is assigned to the Control Center: if Ines is assigned to the Reception Room, clue collection speed +5%; if Hoederer is assigned to a Trading Post, that Trading Post's order limit +2."
-            }
+            },
+            "orderLimit": 2
           }
         ]
       },
@@ -15306,6 +15998,10 @@
             ],
             "description": {
               "zh": "进驻制造站时，训练室每级为当前制造站+10%生产力，最多30%"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 3
             }
           }
         ]
@@ -15403,7 +16099,6 @@
         "effects": [
           {
             "facility": "factory",
-            "product": "power",
             "efficiency": 0.1,
             "tags": [
               "factory",
@@ -15414,7 +16109,12 @@
               "zh": "进驻制造站时，当前制造站内其他干员提供的生产力全部归零（不包含根据设施数量提供加成的生产力），每个发电站为当前制造站+10%的生产力",
               "ja": "製造所配置時、自身以外の配属オペレーター全員の製造効率を０にする（施設の数量による製造効率上昇に影響なし）。発電所1か所につき、製造効率+10%",
               "en": "When this Operator is assigned to a Factory, the productivity contributed by all other Operators in that Factory becomes 0 (excluding productivity granted based on facility count), but each Power Plant increases that Factory's productivity by +10%"
-            }
+            },
+            "scaling": {
+              "type": "facilityCount",
+              "facility": "power"
+            },
+            "suppressesOtherFactoryEfficiency": true
           }
         ]
       },
@@ -15429,7 +16129,6 @@
         "effects": [
           {
             "facility": "factory",
-            "product": "power",
             "efficiency": 0.15,
             "tags": [
               "factory",
@@ -15440,7 +16139,12 @@
               "zh": "进驻制造站时，当前制造站内其他干员提供的生产力全部归零（不包含根据设施数量提供加成的生产力），每个发电站为当前制造站+15%的生产力",
               "ja": "製造所配置時、自身以外の配属オペレーター全員の製造効率を０にする（施設の数量による製造効率上昇に影響なし）。発電所1か所につき、製造効率+15%",
               "en": "When this Operator is assigned to a Factory, the productivity contributed by all other Operators in that Factory becomes 0 (excluding productivity granted based on facility count), but each Power Plant increases that Factory's productivity by +15%"
-            }
+            },
+            "scaling": {
+              "type": "facilityCount",
+              "facility": "power"
+            },
+            "suppressesOtherFactoryEfficiency": true
           }
         ]
       }
@@ -15574,7 +16278,18 @@
               "zh": "进驻贸易站时，宿舍内每有1名干员则人间烟火+1，同时每有1点人间烟火，则订单获取效率+1%",
               "ja": "貿易所配置時、宿舎にいるオペレーター1人につき、俗世之憂+1、俗世之憂1につき、受注効率+1%",
               "en": "When this Operator is assigned to a Trading Post, each Operator in the Dormitory grantsWorldly Plight+1, and for every 1pointWorldly Plight, grant +1% order acquisition efficiency"
-            }
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "resource",
+              "resource": "worldlyPlight"
+            },
+            "resourceEffects": [
+              {
+                "resource": "worldlyPlight",
+                "amount": 20
+              }
+            ]
           }
         ]
       }
@@ -15615,7 +16330,9 @@
               "zh": "进驻贸易站时，小幅提升当前贸易站高品质贵金属订单的出现概率（工作时长影响概率），心情每小时消耗-0.25",
               "ja": "貿易所配置時、配置貿易所の高価値な金属オーダーの獲得率がわずかに上昇（勤務時間が確率に影響する）、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased slightly (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "highValueOrderProbability"
           }
         ]
       },
@@ -15683,7 +16400,9 @@
               "zh": "进驻控制中枢时，控制中枢内所有干员的心情每小时恢复+0.05；当自身心情处于12以下时，人间烟火+15",
               "ja": "制御中枢配置時、制御中枢内全員の体力が1時間ごとに+0.05回復。自身の体力が12を以下の時、俗世之憂+15",
               "en": "When this Operator is assigned to the Control Center, increases Morale of all Operators in the Control Center by +0.05 per hour; and when self Morale is below 12, Worldly Plight+15"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "lowMoraleBranchNotAssumed"
           }
         ]
       },
@@ -15709,7 +16428,13 @@
               "zh": "进驻控制中枢时，自身心情每小时消耗+0.5；当自身心情大于12时，感知信息+10",
               "ja": "制御中枢配置時、自身の1時間ごとの体力消費量+0.5。自身の体力が12を上回る時、知覚情報+10",
               "en": "When this Operator is assigned to the Control Center, decreases own morale consumption by+0.5; and when self morale is above12, Perception Information+10"
-            }
+            },
+            "resourceEffects": [
+              {
+                "resource": "perceptionInfo",
+                "amount": 10
+              }
+            ]
           }
         ]
       }
@@ -15739,7 +16464,7 @@
         "effects": [
           {
             "facility": "factory",
-            "efficiency": 0.15,
+            "efficiency": 0.25,
             "tags": [
               "factory",
               "bskill_man_spd_add2",
@@ -15749,6 +16474,10 @@
               "zh": "进驻制造站后，生产力首小时+15%，此后每小时+2%，最终达到+25%",
               "ja": "製造所配置時、最初の1時間製造効率+15%、その後まで1時間ごと更に+2%、最終的に+25%になる",
               "en": "When this Operator is assigned to a Factory, productivity +15% in the first hour and thereafter +2% per hour, up to +25%"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 1
             }
           }
         ]
@@ -15775,7 +16504,8 @@
               "zh": "进驻制造站时，生产作战记录类配方时，仓库容量上限+12",
               "ja": "製造所で作戦記録を製造時、保管上限+12",
               "en": "When this Operator is assigned to a Factory, capacity limit is increased by +12 when producing Battle Records"
-            }
+            },
+            "storageLimit": 12
           }
         ]
       }
@@ -16750,6 +17480,14 @@
               "zh": "进驻制造站时，基建内（不包含副手及活动室使用者）每有1名黑钢国际干员（最多3名），贵金属类配方的生产力+2%，心情每小时消耗-0.15",
               "ja": "製造所配置時、基地に配置された（補佐と活動室利用者を除く）BSWオペレーター1人につき（最大3人まで）、金属製造の製造効率+2%、体力消費が1時間ごと-0.15",
               "en": "When this Operator is assigned to a Factory, for each Blacksteel Worldwide Operator in the Base (excluding Assistants and Activity Room users, caps at 3), Precious Metal productivity +2% and Morale consumed per hour -0.15"
+            },
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "blacksteel"
+              ],
+              "max": 3
             }
           }
         ]
@@ -16985,7 +17723,8 @@
               "zh": "进驻贸易站时，订单获取效率+15%，且订单上限+2",
               "ja": "貿易所配置時、受注効率+15%、注文上限+2",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +15% and the order limit +2"
-            }
+            },
+            "orderLimit": 2
           }
         ]
       },
@@ -17078,7 +17817,8 @@
               "zh": "进驻贸易站时，订单获取效率+15%，且订单上限+4",
               "ja": "貿易所配置時、受注効率+15%、注文上限+4",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +15% and the order limit +4"
-            }
+            },
+            "orderLimit": 4
           }
         ]
       }
@@ -17290,7 +18030,9 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，人力办公室联络速度+10%（同种效果取最高）"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "officeContactSpeedNotModeled"
           }
         ]
       },
@@ -17312,7 +18054,8 @@
             ],
             "description": {
               "zh": "进驻贸易站时，订单上限+3，且每有一个泡影国狩猎小队干员进驻贸易站，订单获取效率+20%"
-            }
+            },
+            "orderLimit": 3
           }
         ]
       }
@@ -17369,27 +18112,24 @@
         "effects": [
           {
             "facility": "control",
-            "product": "gold",
+            "product": "battleRecord",
             "efficiency": 0.1,
             "tags": [
               "control",
               "bskill_ctrl_psk",
               "control"
             ],
-            "conditions": [
-              {
-                "type": "facilityAffiliation",
-                "facility": "factory",
-                "affiliations": [
-                  "pinus"
-                ],
-                "min": 1
-              }
-            ],
             "description": {
               "zh": "进驻控制中枢时，每个进驻在制造站的红松骑士团干员，作战记录类配方的生产力+10%，贵金属类配方的生产力-10%",
               "ja": "制御中枢配置時、製造所に配置されたレッドパイン騎士団オペレーター1人につき、作戦記録製造の製造効率+10%、金属製造の製造効率-10%",
               "en": "When this Operator is assigned to the Control Center, each Pinus Sylvestris Operator assigned to Factories have +10% productivity towards Battle Records and -10% productivity towards Precious Metals"
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "pinus"
+              ],
+              "facility": "factory"
             }
           }
         ]
@@ -17432,6 +18172,11 @@
               "zh": "进驻控制中枢时，所有宿舍内所有干员的心情每小时恢复+0.05（同种效果取最高）",
               "ja": "制御中枢配置時、全ての宿舎内のオペレーターの1時間ごとの体力回復量+0.05（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to the Control Center, all Operators in Dormitories recover +0.05 Morale per hour (strongest effect of the same type applies)"
+            },
+            "globalEffect": {
+              "facility": "dormitory",
+              "product": "morale",
+              "stackKey": "all-dorm-recovery"
             }
           }
         ]
@@ -17498,7 +18243,8 @@
               "zh": "进驻制造站时，仓库容量上限+10，心情每小时消耗-0.25",
               "ja": "製造所配置時、保管上限+10、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, capacity limit +10 and Morale consumed per hour -0.25"
-            }
+            },
+            "storageLimit": 10
           }
         ]
       }
@@ -17993,7 +18739,7 @@
           {
             "facility": "reception",
             "product": "clue",
-            "efficiency": 0.2,
+            "efficiency": 0.3,
             "tags": [
               "reception",
               "bskill_meet_spd_hast1",
@@ -18003,6 +18749,10 @@
               "zh": "进驻会客室时，线索搜集速度提升20%，此后每小时提升2%，最终达到30%",
               "ja": "応接室配置時、手がかり捜索速度+20%。その後、さらに1時間ごとに+2%（最大+30%まで）",
               "en": "When this Operator is assigned to the Reception Room, Clue search speed increases by 20%, then by another 2% per hour, up to a maximum of 30%"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 1
             }
           }
         ]
@@ -18167,7 +18917,6 @@
         "effects": [
           {
             "facility": "factory",
-            "product": "power",
             "efficiency": 0.05,
             "tags": [
               "factory",
@@ -18178,7 +18927,12 @@
               "zh": "进驻制造站时，当前制造站内其他干员提供的生产力全部归零（不包含根据设施数量提供加成的生产力），每个发电站为当前制造站+5%的生产力",
               "ja": "製造所配置時、自身以外の配属オペレーター全員の製造効率を０にする（施設の数量による製造効率上昇に影響なし）。発電所1か所につき、製造効率+5%",
               "en": "When this Operator is assigned to a Factory, the productivity contributed by all other Operators in that Factory becomes 0 (excluding productivity granted based on facility count), but each Power Plant increases that Factory's productivity by +5%"
-            }
+            },
+            "scaling": {
+              "type": "facilityCount",
+              "facility": "power"
+            },
+            "suppressesOtherFactoryEfficiency": true
           }
         ]
       }
@@ -18288,7 +19042,8 @@
               "zh": "进驻贸易站时，订单获取效率+15%，且订单上限+2",
               "ja": "貿易所配置時、受注効率+15%、注文上限+2",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +15% and the order limit +2"
-            }
+            },
+            "orderLimit": 2
           }
         ]
       },
@@ -18314,7 +19069,8 @@
               "zh": "进驻贸易站时，订单获取效率+20%，且订单上限+4",
               "ja": "貿易所配置時、受注効率+20%、注文上限+4",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +20% and the order limit +4"
-            }
+            },
+            "orderLimit": 4
           }
         ]
       }
@@ -18592,7 +19348,13 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，热情值+10；会客室线索搜集速度提升+5%（同种效果取最高）"
-            }
+            },
+            "resourceEffects": [
+              {
+                "resource": "passion",
+                "amount": 10
+              }
+            ]
           }
         ]
       },
@@ -18614,7 +19376,16 @@
             ],
             "description": {
               "zh": "当与丰川祥子一起进驻控制中枢时，丰川祥子心情每小时消耗+0.05，会客室线索搜集速度额外提升+5%（同种效果取最高）"
-            }
+            },
+            "conditions": [
+              {
+                "type": "assignedOperator",
+                "facility": "control",
+                "operatorIds": [
+                  "char_4182_oblvns"
+                ]
+              }
+            ]
           }
         ]
       }
@@ -18646,7 +19417,7 @@
           {
             "facility": "dormitory",
             "product": "morale",
-            "efficiency": 0.05,
+            "efficiency": 0.06,
             "tags": [
               "dormitory",
               "bskill_dorm_sui",
@@ -18656,6 +19427,15 @@
               "zh": "进驻宿舍时，基建内（不包含副手及活动室使用者）每名岁干员为该宿舍内所有干员心情每小时恢复速度+0.06（最多生效4名，且同种效果取最高）",
               "ja": "配置宿舎内、基地に配置された（補佐と活動室利用者を除く）歳オペレーター1人につき、全員の1時間ごとの体力回復量+0.06（最大4人まで、同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to a Dormitory, Morale recovery per hour of all Operators in that Dormitory +0.06 for each Sui Operator in the Base (excluding Assistants and Activity Room users, caps at 4 Operators, strongest effect of the same type applies)"
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "sui"
+              ],
+              "scope": "base",
+              "includeSelf": true,
+              "max": 4
             }
           }
         ]
@@ -18697,7 +19477,8 @@
               "zh": "进驻贸易站时，订单获取效率+25%，且订单上限+1",
               "ja": "貿易所配置時、受注効率+25%、注文上限+1",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +25% and the order limit +1"
-            }
+            },
+            "orderLimit": 1
           }
         ]
       },
@@ -19036,7 +19817,9 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，如训练室有干员在进行技能专精，则该干员的专精技能训练速度+5%（同种效果取最高）"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "trainingRoomNotModeled"
           }
         ]
       },
@@ -19098,6 +19881,14 @@
               "zh": "进驻控制中枢时，控制中枢内每个彩虹小队干员可使控制中枢内所有干员的心情每小时恢复+0.05",
               "ja": "制御中枢配置時、制御中枢内のレインボー小隊所属オペレーター1人につき、中枢内全員の体力が1時間ごとに+0.05回復",
               "en": "When this Operator is assigned to the Control Center, each Operator from Team Rainbow increases the Morale of all Operators in the Control Center by +0.05 per hour"
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "rainbow"
+              ],
+              "facility": "control",
+              "includeSelf": true
             }
           }
         ]
@@ -19113,7 +19904,7 @@
         "effects": [
           {
             "facility": "control",
-            "efficiency": 0.05,
+            "efficiency": 0,
             "tags": [
               "control",
               "bskill_ctrl_tachanka",
@@ -19123,7 +19914,29 @@
               "zh": "进驻控制中枢时，控制中枢内每有1名乌萨斯学生自治团干员，则乌萨斯特饮+1",
               "ja": "制御中枢配置時、制御中枢内のウルサス学生自治団所属オペレーター1人につき、ウルサスドリンク+1本",
               "en": "When this Operator is assigned to the Control Center, for each Ursus Student Self-Governing Group Operator, Ursus Specialty Beverage+1"
-            }
+            },
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "student"
+              ],
+              "facility": "control",
+              "includeSelf": true
+            },
+            "resourceEffects": [
+              {
+                "resource": "ursusDrink",
+                "amount": 1,
+                "scaling": {
+                  "type": "affiliation",
+                  "affiliations": [
+                    "student"
+                  ],
+                  "facility": "control",
+                  "includeSelf": true
+                }
+              }
+            ]
           }
         ]
       }
@@ -19164,7 +19977,9 @@
               "zh": "进驻贸易站时，小幅提升当前贸易站高品质贵金属订单的出现概率（工作时长影响概率），心情每小时消耗-0.25",
               "ja": "貿易所配置時、配置貿易所の高価値な金属オーダーの獲得率がわずかに上昇（勤務時間が確率に影響する）、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased slightly (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "highValueOrderProbability"
           }
         ]
       },
@@ -19190,7 +20005,9 @@
               "zh": "进驻贸易站时，提升当前贸易站高品质贵金属订单的出现概率（工作时长影响概率），心情每小时消耗-0.25",
               "ja": "貿易所配置時、配置貿易所の高価値な金属オーダーの獲得率が上昇（勤務時間が確率に影響する）、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "highValueOrderProbability"
           }
         ]
       }
@@ -19307,7 +20124,8 @@
     },
     "affiliations": [
       "kazimierz",
-      "pinus"
+      "pinus",
+      "platform"
     ],
     "rarity": 1,
     "profession": "狙撃",
@@ -19360,7 +20178,16 @@
               "zh": "进驻发电站时，野鬃所在的制造站生产力+5%",
               "ja": "発電所配置時、ワイルドメインの配置された製造所の製造効率+5%",
               "en": "When this Operator is assigned to a Power Plant, increases the productivity of the Factory Wild Mane is assigned to by +5%"
-            }
+            },
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "factory",
+                "operatorIds": [
+                  "char_496_wildmn"
+                ]
+              }
+            ]
           }
         ]
       }
@@ -19400,7 +20227,9 @@
               "zh": "进驻制造站时，基建内除活动室外每间设施每级+1个工程机器人，上限64个",
               "ja": "製造所配置時、基地内の施設（活動室を除く）のレベル合計値1につき、建設ロボット+1、上限数は64",
               "en": "When this Operator is assigned to a Factory, gain +1 Engineering Robot per level per building (excluding Activity Rooms), max 64"
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "constructionRobotResourceGeneratorFoldedIntoProductionSkills"
           }
         ]
       },
@@ -19425,6 +20254,10 @@
               "zh": "进驻制造站时，每16个工程机器人+5%生产力",
               "ja": "製造所配置時、建設ロボット16につき、製造効率+5%",
               "en": "When this Operator is assigned to a Factory, for every 16 Engineering Robot present, productivity +5%"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 4
             }
           }
         ]
@@ -19450,6 +20283,10 @@
               "zh": "进驻制造站时，每8个工程机器人+5%生产力",
               "ja": "製造所配置時、建設ロボット8につき、製造効率+5%",
               "en": "When this Operator is assigned to a Factory, for every 8 Engineering Robot present, productivity +5%"
+            },
+            "scaling": {
+              "type": "fixed",
+              "count": 8
             }
           }
         ]
@@ -19492,7 +20329,21 @@
               "zh": "进驻控制中枢时，自身心情每小时消耗+0.5；每个岁干员进驻在宿舍和活动室以外的设施则人间烟火+5（最多5名）",
               "ja": "制御中枢配置時、自身の1時間ごとの体力消費量が+0.5。宿舎と活動室以外の施設内の歳所属オペレーター1人につき、俗世之憂+5（最大5人まで）",
               "en": "When this Operator is assigned to the Control Center, self Morale loss per hour +0.5; for each Sui Operator assigned to buildings other than Dormitories and Activity Rooms, Worldly Plight+5 (max 5)"
-            }
+            },
+            "resourceEffects": [
+              {
+                "resource": "worldlyPlight",
+                "amount": 5,
+                "scaling": {
+                  "type": "affiliation",
+                  "affiliations": [
+                    "sui"
+                  ],
+                  "includeSelf": true,
+                  "max": 5
+                }
+              }
+            ]
           }
         ]
       },
@@ -19518,7 +20369,14 @@
               "zh": "进驻控制中枢时，其他设施内处于工作状态的干员心情每小时恢复+0.05；同时每有20点人间烟火，则额外+0.05，（与控制中枢加成有特殊比较规则）",
               "ja": "制御中枢配置時、他の施設内で仕事中のオペレーターの体力が1時間ごとに+0.05回復し、俗世之憂20につき、体力が追加で+0.05回復（制御中枢内の他のスキル間とは特殊比較方式が適用される）",
               "en": "When this Operator is assigned to the Control Center, Operators working in other buildings recover +0.05 Morale per hour, with an additional +0.05 for every 20 Worldly Plight (Special Comparison Rules apply with Control Center bonus)"
-            }
+            },
+            "baseEfficiency": 0.05,
+            "scaling": {
+              "type": "resource",
+              "resource": "worldlyPlight",
+              "per": 20
+            },
+            "unsupportedReason": "specialControlMoraleStackComparisonNotModeled"
           }
         ]
       }
@@ -19559,7 +20417,9 @@
               "zh": "进驻控制中枢时，如训练室有干员在进行技能专精，则该干员的专精技能训练速度+5%（同种效果取最高）",
               "ja": "制御中枢配置時、訓練室で訓練を行っているオペレーターがいる場合、当該オペレーターの訓練速度+5%（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to the Control Center, if an Operator is conducting Skill Specialization in the Training Room, that Operator's Specialization training speed +5% (Only the strongest effect of this type takes place)."
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "trainingRoomNotModeled"
           }
         ]
       },
@@ -19709,7 +20569,8 @@
               "zh": "进驻贸易站时，订单获取效率+25%，且订单上限+1",
               "ja": "貿易所配置時、受注効率+25%、注文上限+1",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +25% and the order limit +1"
-            }
+            },
+            "orderLimit": 1
           }
         ]
       }
@@ -19723,7 +20584,8 @@
       "en": "Castle-3"
     },
     "affiliations": [
-      "rhodes"
+      "rhodes",
+      "platform"
     ],
     "rarity": 1,
     "profession": "前衛",
@@ -19790,7 +20652,8 @@
       "en": "CONFESS-47"
     },
     "affiliations": [
-      "laterano"
+      "laterano",
+      "platform"
     ],
     "rarity": 1,
     "profession": "先鋒",
@@ -19867,7 +20730,8 @@
       "en": "Friston-3"
     },
     "affiliations": [
-      "rhodes"
+      "rhodes",
+      "platform"
     ],
     "rarity": 1,
     "profession": "重装",
@@ -20001,7 +20865,8 @@
       "en": "Lancet-2"
     },
     "affiliations": [
-      "rhodes"
+      "rhodes",
+      "platform"
     ],
     "rarity": 1,
     "profession": "医療",
@@ -20095,7 +20960,8 @@
               "zh": "进驻制造站时，仓库容量上限+10，心情每小时消耗-0.25",
               "ja": "製造所配置時、保管上限+10、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, capacity limit +10 and Morale consumed per hour -0.25"
-            }
+            },
+            "storageLimit": 10
           }
         ]
       },
@@ -20195,6 +21061,10 @@
               "zh": "进驻控制中枢时，所有制造站生产力+2%（同种效果取最高）",
               "ja": "制御中枢配置時、全製造所の製造効率+2%（同種の効果は高いほうのみ適用）",
               "en": "When this Operator is assigned to the Control Center, all Factories' productivity +2% (only the most effective one will take effect when assigned Operators have the same skill effect)"
+            },
+            "globalEffect": {
+              "facility": "factory",
+              "stackKey": "all-factory-speed"
             }
           }
         ]
@@ -20209,7 +21079,8 @@
       "en": "PhonoR-0"
     },
     "affiliations": [
-      "rhodes"
+      "rhodes",
+      "platform"
     ],
     "rarity": 1,
     "profession": "補助",
@@ -20262,7 +21133,9 @@
               "zh": "进驻发电站时，如果逻各斯进驻在训练室协助位，则无人机充能速度+5%",
               "ja": "発電所配置時、ロゴスが訓練室で協力者として配置されている場合、ドローンの回復速度+5%",
               "en": "When this Operator is assigned to a Power Plant, if Logos is assigned to be the Trainer in the Training Room, increases the drone recovery rate by +5%."
-            }
+            },
+            "ignoredForOptimization": true,
+            "unsupportedReason": "trainingRoomConditionNotModeled"
           }
         ]
       }
@@ -20276,7 +21149,8 @@
       "en": "THRM-EX"
     },
     "affiliations": [
-      "rhodes"
+      "rhodes",
+      "platform"
     ],
     "rarity": 1,
     "profession": "特殊",
