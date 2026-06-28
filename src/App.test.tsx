@@ -15,6 +15,8 @@ const silverashAlter = operators.find((operator) => operator.id === "char_1045_s
 const makiri = operators.find((operator) => operator.id === "char_4199_makiri")!;
 const haruka = operators.find((operator) => operator.id === "char_4202_haruka")!;
 const mantra = operators.find((operator) => operator.id === "char_4204_mantra")!;
+const bellone = operators.find((operator) => operator.id === "char_4037_demetr")!;
+const snegurochka = operators.find((operator) => operator.id === "char_4208_wintim")!;
 const missingEnglishNameOperator = operators.find((operator) => !operator.name.en)!;
 const missingEnglishFallbackName = localizeText(missingEnglishNameOperator.name, "en");
 
@@ -60,6 +62,8 @@ describe("App", () => {
     expect(haruka.name.ja).toBe("ハルカ");
     expect(mantra.name.ja).toBe("マントラ");
     expect(mantra.name.en).toBe("Mantra");
+    expect(bellone.name.ja).toBe("ベッローネ");
+    expect(snegurochka.name.ja).toBe("スネグーラチカ");
   });
 
   it("marks missing selected-language names without excluding operators", async () => {
