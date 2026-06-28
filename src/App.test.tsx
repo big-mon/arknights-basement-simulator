@@ -30,6 +30,8 @@ const reprise = operators.find((operator) => operator.id === "char_4031_liesel")
 const akkord = operators.find((operator) => operator.id === "char_4051_akkord")!;
 const taraxacum = operators.find((operator) => operator.id === "char_4222_taraxa")!;
 const radian = operators.find((operator) => operator.id === "char_4195_radian")!;
+const xiangPerfumer = operators.find((operator) => operator.id === "char_1022_flwr2")!;
+const wang = operators.find((operator) => operator.id === "char_2027_wang")!;
 const missingEnglishNameOperator = operators.find((operator) => !operator.name.en)!;
 const missingEnglishFallbackName = localizeText(missingEnglishNameOperator.name, "en");
 
@@ -90,6 +92,8 @@ describe("App", () => {
     expect(akkord.name.ja).toBe("アコルト");
     expect(taraxacum.name.ja).toBe("タラクサクム");
     expect(radian.name.ja).toBe("レイディアン");
+    expect(xiangPerfumer.name.ja).toBe("萃香パフューマー");
+    expect(wang.name.ja).toBe("ウァン");
   });
 
   it("marks missing selected-language names without excluding operators", async () => {
