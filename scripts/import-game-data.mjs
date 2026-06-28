@@ -81,7 +81,7 @@ function roomTypeToFacility(roomType) {
   }
 }
 
-function inferProduct(description, roomType) {
+function inferProductFromDescription(description, roomType) {
   const text = String(description);
   if (roomType === "MEETING") return "clue";
   if (/源石|Originium/i.test(text)) return "originium";
@@ -91,6 +91,15 @@ function inferProduct(description, roomType) {
   if (/无人机|发电站|drone|power/i.test(text) || roomType === "POWER") return "power";
   if (/心情|恢复|宿舍|morale|dorm/i.test(text) || roomType === "DORMITORY") return "morale";
   return undefined;
+}
+
+function inferProduct(description, roomType) {
+  const normalizedRoomType = String(roomType ?? "").toUpperCase();
+  const product = inferProductFromDescription(description, roomType);
+  if (normalizedRoomType === "MANUFACTURE" && (product === "morale" || product === "power" || product === "lmd")) {
+    return undefined;
+  }
+  return product;
 }
 
 function inferEfficiency(description) {
@@ -370,6 +379,15 @@ function dedupeConditions(conditions) {
   });
 }
 
+function referencedOperatorIdsFromEffect(effect) {
+  const conditions = [
+    ...(effect.conditions ?? []),
+    ...(effect.conditionalBonuses ?? []).flatMap((bonus) => bonus.conditions ?? [])
+  ];
+
+  return conditions.flatMap((condition) => ("operatorIds" in condition ? condition.operatorIds : []));
+}
+
 function normalize(languages, nameOverrides, baseSkillOverrides) {
   const characters = languages.zh.characters;
   const building = languages.zh.building;
@@ -461,11 +479,7 @@ function normalize(languages, nameOverrides, baseSkillOverrides) {
   const overriddenOperators = applyBaseSkillOverrides(normalizedOperators, baseSkillOverrides);
   const referencedOperatorIds = new Set(
     overriddenOperators.flatMap((operator) =>
-      operator.skills.flatMap((skill) =>
-        skill.effects.flatMap((effect) =>
-          (effect.conditions ?? []).flatMap((condition) => ("operatorIds" in condition ? condition.operatorIds : []))
-        )
-      )
+      operator.skills.flatMap((skill) => skill.effects.flatMap((effect) => referencedOperatorIdsFromEffect(effect)))
     )
   );
 

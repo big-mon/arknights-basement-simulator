@@ -569,6 +569,37 @@ describe("optimizer", () => {
     expect(candidates.some((assignment) => assignment.operatorId === saileach.id && assignment.skillId === "control_hire_spd[000]")).toBe(false);
   });
 
+  it("retains skillless operators referenced by conditional bonus requirements", () => {
+    const operatorIds = new Set(operators.map((operator) => operator.id));
+    const conditionalOperatorIds = new Set(
+      operators.flatMap((operator) =>
+        operator.skills.flatMap((skill) =>
+          skill.effects.flatMap((effect) =>
+            (effect.conditionalBonuses ?? []).flatMap((bonus) =>
+              (bonus.conditions ?? []).flatMap((condition) => ("operatorIds" in condition ? condition.operatorIds : []))
+            )
+          )
+        )
+      )
+    );
+
+    expect([...conditionalOperatorIds].filter((operatorId) => !operatorIds.has(operatorId))).toEqual([]);
+    expect(operators.find((operator) => operator.id === "char_113_cqbw")?.name.en).toBe("W");
+    expect(operators.find((operator) => operator.id === "char_4145_ulpia")?.name.en).toBe("Ulpianus");
+  });
+
+  it("keeps morale-cost factory capacity skills product-neutral", () => {
+    const state = createDefaultState();
+    ownOperators(state, [bubble.id]);
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const bubbleStorageSkill = bubble.skills.find((skill) => skill.id === "manu_prod_limit&cost[010]")!;
+    const bubbleStorageEffect = bubbleStorageSkill.effects.find((effect) => effect.storageLimit === 10)!;
+    const candidates = findCandidates(factory, state);
+
+    expect(bubbleStorageEffect.product).toBeUndefined();
+    expect(candidates.some((assignment) => assignment.operatorId === bubble.id && assignment.skillId === bubbleStorageSkill.id)).toBe(true);
+  });
+
   it("scales Vermeil from same-factory storage limit increases", () => {
     const state = createDefaultState();
     ownOperators(state, [vermeil.id, bubble.id]);
