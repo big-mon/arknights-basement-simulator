@@ -21,7 +21,9 @@ const defaultOwnedGoldFactoryOperator = operators.find((operator) =>
   operator.skills.some(
     (skill) =>
       skill.unlockPhase === 0 &&
-      skill.effects.some((effect) => effect.facility === "factory" && (!effect.product || effect.product === "gold"))
+      skill.effects.some(
+        (effect) => effect.facility === "factory" && (!effect.product || effect.product === "gold") && !effect.suppressesOtherFactoryEfficiency
+      )
   )
 )!;
 const texas = operators.find((operator) => operator.id === "char_102_texas")!;
@@ -96,6 +98,7 @@ const bubble = operators.find((operator) => operator.id === "char_381_bubble")!;
 const degenbrecher = operators.find((operator) => operator.id === "char_4116_blkkgt")!;
 const obliviator = operators.find((operator) => operator.id === "char_4182_oblvns")!;
 const mortis = operators.find((operator) => operator.id === "char_4183_mortis")!;
+const mrNothing = operators.find((operator) => operator.id === "char_455_nothin")!;
 
 function ownBaselineRoster(state: ReturnType<typeof createDefaultState>) {
   for (const operator of operators) {
@@ -521,12 +524,12 @@ describe("optimizer", () => {
       { id: "reception-1", type: "reception", name: "Reception", slotCount: 2, product: "clue" }
     ];
     const plan = generateAssignmentPlan(state);
-    const receptionAssignment = plan.facilityPlans
-      .find((facilityPlan) => facilityPlan.facility.type === "reception")!
-      .assignments.find((assignment) => assignment.operatorId === may.id)!;
+    const receptionPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.type === "reception")!;
+    const receptionAssignment = receptionPlan.assignments.find((assignment) => assignment.operatorId === may.id)!;
 
     expect(plan.facilityPlans.some((facilityPlan) => facilityPlan.assignments.some((assignment) => assignment.operatorId === lee.id))).toBe(true);
-    expect(receptionAssignment.efficiency).toBeCloseTo(0.48);
+    expect(receptionAssignment.efficiency).toBeCloseTo(0.23);
+    expect(receptionPlan.expectedEfficiency).toBeCloseTo(0.48);
   });
 
   it("scales Terra Research Commission from catnip generated in the control center", () => {
@@ -556,6 +559,16 @@ describe("optimizer", () => {
     }).find((assignment) => assignment.operatorId === iana.id)!;
 
     expect(withIntelReserve.efficiency - base.efficiency).toBeCloseTo(0.1);
+  });
+
+  it("includes a candidate's own generated resources while scoring resource-scaling skills", () => {
+    const state = createDefaultState();
+    ownOperators(state, [mrNothing.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const candidate = findCandidates(trading, state).find((assignment) => assignment.operatorId === mrNothing.id)!;
+
+    expect(candidate.skillId).toBe("trade_ord_spd_bd_n2[000]");
+    expect(candidate.efficiency).toBeCloseTo(0.23);
   });
 
   it("does not score high-value order probability as generic trading efficiency", () => {
@@ -648,19 +661,23 @@ describe("optimizer", () => {
     ownOperators(baseState, [obliviator.id, defaultOwnedGoldFactoryOperator.id]);
     baseState.roster[defaultOwnedGoldFactoryOperator.id].elite = 0;
     const basePlan = generateAssignmentPlan(baseState);
-    const baseGoldAssignment = basePlan.facilityPlans
-      .find((facilityPlan) => facilityPlan.facility.product === "gold")!
-      .assignments.find((assignment) => assignment.operatorId === defaultOwnedGoldFactoryOperator.id)!;
+    const baseGoldPlan = basePlan.facilityPlans.find(
+      (facilityPlan) =>
+        facilityPlan.facility.product === "gold" &&
+        facilityPlan.assignments.some((assignment) => assignment.operatorId === defaultOwnedGoldFactoryOperator.id)
+    )!;
 
     const passionState = createDefaultState();
     ownOperators(passionState, [obliviator.id, mortis.id, defaultOwnedGoldFactoryOperator.id]);
     passionState.roster[defaultOwnedGoldFactoryOperator.id].elite = 0;
     const passionPlan = generateAssignmentPlan(passionState);
-    const passionGoldAssignment = passionPlan.facilityPlans
-      .find((facilityPlan) => facilityPlan.facility.product === "gold")!
-      .assignments.find((assignment) => assignment.operatorId === defaultOwnedGoldFactoryOperator.id)!;
+    const passionGoldPlan = passionPlan.facilityPlans.find(
+      (facilityPlan) =>
+        facilityPlan.facility.product === "gold" &&
+        facilityPlan.assignments.some((assignment) => assignment.operatorId === defaultOwnedGoldFactoryOperator.id)
+    )!;
 
-    expect(passionGoldAssignment.efficiency - baseGoldAssignment.efficiency).toBeCloseTo(0.01);
+    expect(passionGoldPlan.expectedEfficiency - baseGoldPlan.expectedEfficiency).toBeCloseTo(0.01);
   });
 
   it("does not count Snegurochka's storage-only first skill as production", () => {
@@ -685,7 +702,10 @@ describe("optimizer", () => {
     )!;
     const snegurochkaAssignment = factoryPlan.assignments.find((assignment) => assignment.operatorId === snegurochka.id)!;
 
-    expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === defaultOwnedGoldFactoryOperator.id)).toBe(true);
+    expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === defaultOwnedGoldFactoryOperator.id)).toBe(false);
+    expect(plan.facilityPlans.some((facilityPlan) => facilityPlan.assignments.some((assignment) => assignment.operatorId === defaultOwnedGoldFactoryOperator.id))).toBe(
+      true
+    );
     expect(snegurochkaAssignment.suppressesOtherFactoryEfficiency).toBe(true);
     expect(factoryPlan.expectedEfficiency).toBeCloseTo(snegurochkaAssignment.efficiency);
   });

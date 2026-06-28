@@ -101,15 +101,17 @@ function buildFacilityPlans(
     const candidates = findCandidates(facility, state, globalBonus, context)
       .filter((candidate) => !usedOperatorIds.has(candidate.operatorId))
       .sort((a, b) => b.score - a.score);
-    const assignments = candidates.slice(0, facility.slotCount);
+    const selectedAssignments = candidates.slice(0, facility.slotCount);
+    const suppressingAssignments = selectedAssignments.filter((assignment) => assignment.suppressesOtherFactoryEfficiency);
+    const assignments = suppressingAssignments.length ? suppressingAssignments : selectedAssignments;
     assignments.forEach((assignment) => usedOperatorIds.add(assignment.operatorId));
 
-    const expectedEfficiency = effectiveFacilityEfficiency(assignments);
+    const expectedEfficiency = effectiveFacilityEfficiency(assignments) + globalBonus;
     facilityPlans.push({
       facility,
       assignments,
       expectedEfficiency,
-      score: effectiveFacilityScore(assignments, facility, state.preference),
+      score: effectiveFacilityScore(assignments, facility, state.preference, globalBonus),
       alternatives: []
     });
   }
@@ -242,8 +244,7 @@ function bestSkillForFacility(
       const eliteBonus = elite * 0.015;
       const scalingMultiplier = effectScalingMultiplier(effect, operator, facility, context);
       const conditionalBonus = effectConditionalBonus(effect, operator, facility, context);
-      const effectiveEfficiency =
-        (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier + conditionalBonus + eliteBonus + globalBonus;
+      const effectiveEfficiency = (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier + conditionalBonus + eliteBonus;
       const storageLimit = activeFacilityLimit(operator, elite, facility, context, "storageLimit");
       const orderLimit = activeFacilityLimit(operator, elite, facility, context, "orderLimit");
       assignments.push({
@@ -293,8 +294,8 @@ function effectiveFacilityEfficiency(assignments: Assignment[]) {
   return countedAssignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
 }
 
-function effectiveFacilityScore(assignments: Assignment[], facility: FacilitySlot, preference: OptimizationPreference) {
-  return effectiveFacilityEfficiency(assignments) * productWeight(facility.product, preference) * facilityWeight(facility);
+function effectiveFacilityScore(assignments: Assignment[], facility: FacilitySlot, preference: OptimizationPreference, globalBonus = 0) {
+  return (effectiveFacilityEfficiency(assignments) + globalBonus) * productWeight(facility.product, preference) * facilityWeight(facility);
 }
 
 function effectScalingMultiplier(
@@ -329,7 +330,7 @@ function effectScalingMultiplier(
   }
 
   if (effect.scaling.type === "resource") {
-    const resource = effect.scaling.resource ? resourceAmount(effect.scaling.resource, context) : 0;
+    const resource = effect.scaling.resource ? resourceAmount(effect.scaling.resource, context, operator, facility) : 0;
     const count = effect.scaling.per ? Math.floor(resource / effect.scaling.per) : resource;
     return effect.scaling.max ? Math.min(count, effect.scaling.max) : count;
   }
@@ -494,40 +495,48 @@ function effectConditionalBonus(
   );
 }
 
-function resourceAmount(resource: string, context?: AssignmentEvaluationContext) {
+function resourceAmount(resource: string, context?: AssignmentEvaluationContext, candidateOperator?: Operator, candidateFacility?: FacilitySlot) {
   if (!context) {
     return 0;
   }
 
-  return context.assignments.reduce((sum, assignment) => {
+  const assignedResource = context.assignments.reduce((sum, assignment) => {
+    if (candidateOperator && assignment.operatorId === candidateOperator.id) {
+      return sum;
+    }
     const operator = operators.find((candidate) => candidate.id === assignment.operatorId);
     const facility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
     if (!operator || !facility) {
       return sum;
     }
 
-    const effects = operator.skills
-      .filter((skill: BaseSkill) => skill.unlockPhase <= clampEliteForOperator(operator, context.roster?.[operator.id]?.elite ?? 0))
-      .flatMap((skill) => skill.effects)
-      .filter((effect) => effect.facility === facility.type && effect.resourceEffects?.some((resourceEffect) => resourceEffect.resource === resource))
-      .filter((effect) => effectConditionsSatisfied(effect, operator, facility, context));
-
-    return (
-      sum +
-      effects.reduce(
-        (effectSum, effect) =>
-          effectSum +
-          (effect.resourceEffects ?? [])
-            .filter((resourceEffect) => resourceEffect.resource === resource)
-            .reduce(
-              (resourceSum, resourceEffect) =>
-                resourceSum + resourceEffect.amount * resourceEffectMultiplier(resourceEffect, operator, facility, context),
-              0
-            ),
-        0
-      )
-    );
+    return sum + resourceAmountFromOperator(resource, operator, facility, context);
   }, 0);
+
+  const candidateResource =
+    candidateOperator && candidateFacility ? resourceAmountFromOperator(resource, candidateOperator, candidateFacility, context) : 0;
+
+  return assignedResource + candidateResource;
+}
+
+function resourceAmountFromOperator(resource: string, operator: Operator, facility: FacilitySlot, context: AssignmentEvaluationContext) {
+  const effects = operator.skills
+    .filter((skill: BaseSkill) => skill.unlockPhase <= clampEliteForOperator(operator, context.roster?.[operator.id]?.elite ?? 0))
+    .flatMap((skill) => skill.effects)
+    .filter((effect) => effectMatchesFacility(effect, facility) && effect.resourceEffects?.some((resourceEffect) => resourceEffect.resource === resource))
+    .filter((effect) => effectConditionsSatisfied(effect, operator, facility, context));
+
+  return effects.reduce(
+    (effectSum, effect) =>
+      effectSum +
+      (effect.resourceEffects ?? [])
+        .filter((resourceEffect) => resourceEffect.resource === resource)
+        .reduce(
+          (resourceSum, resourceEffect) => resourceSum + resourceEffect.amount * resourceEffectMultiplier(resourceEffect, operator, facility, context),
+          0
+        ),
+    0
+  );
 }
 
 function resourceEffectMultiplier(
