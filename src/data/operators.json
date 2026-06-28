@@ -3305,7 +3305,7 @@
   {
     "id": "char_4195_radian",
     "name": {
-      "ja": "アーク",
+      "ja": "レイディアン",
       "zh": "电弧"
     },
     "affiliations": [
@@ -4399,7 +4399,7 @@
   {
     "id": "char_4222_taraxa",
     "name": {
-      "ja": "風絮",
+      "ja": "タラクサクム",
       "zh": "风絮"
     },
     "affiliations": [
@@ -4571,7 +4571,7 @@
   {
     "id": "char_4031_liesel",
     "name": {
-      "ja": "復奏",
+      "ja": "リプレーザ",
       "zh": "复奏"
     },
     "affiliations": [
@@ -15280,7 +15280,7 @@
   {
     "id": "char_4226_veen",
     "name": {
-      "ja": "ヴィー",
+      "ja": "ヴィイ",
       "zh": "维伊"
     },
     "affiliations": [
@@ -16174,7 +16174,7 @@
   {
     "id": "char_4051_akkord",
     "name": {
-      "ja": "協律",
+      "ja": "アコルト",
       "zh": "协律"
     },
     "affiliations": [

@@ -25,6 +25,11 @@ const cairn = operators.find((operator) => operator.id === "char_4214_cairn")!;
 const crackbone = operators.find((operator) => operator.id === "char_4225_tanya")!;
 const kichisei = operators.find((operator) => operator.id === "char_4203_kichi")!;
 const snowHunter = operators.find((operator) => operator.id === "char_4211_snhunt")!;
+const veen = operators.find((operator) => operator.id === "char_4226_veen")!;
+const reprise = operators.find((operator) => operator.id === "char_4031_liesel")!;
+const akkord = operators.find((operator) => operator.id === "char_4051_akkord")!;
+const taraxacum = operators.find((operator) => operator.id === "char_4222_taraxa")!;
+const radian = operators.find((operator) => operator.id === "char_4195_radian")!;
 const missingEnglishNameOperator = operators.find((operator) => !operator.name.en)!;
 const missingEnglishFallbackName = localizeText(missingEnglishNameOperator.name, "en");
 
@@ -80,6 +85,11 @@ describe("App", () => {
     expect(crackbone.name.ja).toBe("クラックボーン");
     expect(kichisei.name.ja).toBe("キチセイ");
     expect(snowHunter.name.ja).toBe("スノーハンター");
+    expect(veen.name.ja).toBe("ヴィイ");
+    expect(reprise.name.ja).toBe("リプレーザ");
+    expect(akkord.name.ja).toBe("アコルト");
+    expect(taraxacum.name.ja).toBe("タラクサクム");
+    expect(radian.name.ja).toBe("レイディアン");
   });
 
   it("marks missing selected-language names without excluding operators", async () => {
