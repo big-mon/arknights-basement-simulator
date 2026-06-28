@@ -19241,8 +19241,9 @@
   {
     "id": "char_4204_mantra",
     "name": {
-      "ja": "真言",
-      "zh": "真言"
+      "ja": "マントラ",
+      "zh": "真言",
+      "en": "Mantra"
     },
     "affiliations": [
       "rhodes",

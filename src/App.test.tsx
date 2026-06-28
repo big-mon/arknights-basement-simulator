@@ -14,6 +14,7 @@ const phonor = operators.find((operator) => operator.id === "char_4136_phonor")!
 const silverashAlter = operators.find((operator) => operator.id === "char_1045_svash2")!;
 const makiri = operators.find((operator) => operator.id === "char_4199_makiri")!;
 const haruka = operators.find((operator) => operator.id === "char_4202_haruka")!;
+const mantra = operators.find((operator) => operator.id === "char_4204_mantra")!;
 const missingEnglishNameOperator = operators.find((operator) => !operator.name.en)!;
 const missingEnglishFallbackName = localizeText(missingEnglishNameOperator.name, "en");
 
@@ -57,6 +58,8 @@ describe("App", () => {
     expect(operators.filter((operator) => !operator.name.ja)).toHaveLength(0);
     expect(makiri.name.ja).toBe("マツキリ");
     expect(haruka.name.ja).toBe("ハルカ");
+    expect(mantra.name.ja).toBe("マントラ");
+    expect(mantra.name.en).toBe("Mantra");
   });
 
   it("marks missing selected-language names without excluding operators", async () => {
