@@ -20,6 +20,11 @@ const snegurochka = operators.find((operator) => operator.id === "char_4208_wint
 const rhodesCovert = operators.find((operator) => operator.id === "char_4215_buddy")!;
 const varkalis = operators.find((operator) => operator.id === "char_4166_varkis")!;
 const nyamu = operators.find((operator) => operator.id === "char_4185_amoris")!;
+const zinogreCatapult = operators.find((operator) => operator.id === "char_1049_catap2")!;
+const cairn = operators.find((operator) => operator.id === "char_4214_cairn")!;
+const crackbone = operators.find((operator) => operator.id === "char_4225_tanya")!;
+const kichisei = operators.find((operator) => operator.id === "char_4203_kichi")!;
+const snowHunter = operators.find((operator) => operator.id === "char_4211_snhunt")!;
 const missingEnglishNameOperator = operators.find((operator) => !operator.name.en)!;
 const missingEnglishFallbackName = localizeText(missingEnglishNameOperator.name, "en");
 
@@ -70,6 +75,11 @@ describe("App", () => {
     expect(rhodesCovert.name.ja).toBe("ロドスアイランド隠密隊");
     expect(varkalis.name.ja).toBe("ヴァルカリス");
     expect(nyamu.name.ja).toBe("祐天寺にゃむ");
+    expect(zinogreCatapult.name.ja).toBe("ジンオウSカタパルト");
+    expect(cairn.name.ja).toBe("ケルン");
+    expect(crackbone.name.ja).toBe("クラックボーン");
+    expect(kichisei.name.ja).toBe("キチセイ");
+    expect(snowHunter.name.ja).toBe("スノーハンター");
   });
 
   it("marks missing selected-language names without excluding operators", async () => {
