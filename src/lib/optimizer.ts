@@ -244,14 +244,16 @@ function bestSkillForFacility(
       const conditionalBonus = effectConditionalBonus(effect, operator, facility, context);
       const effectiveEfficiency =
         (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier + conditionalBonus + eliteBonus + globalBonus;
+      const storageLimit = activeFacilityLimit(operator, elite, facility, context, "storageLimit");
+      const orderLimit = activeFacilityLimit(operator, elite, facility, context, "orderLimit");
       assignments.push({
         facilityId: facility.id,
         operatorId: operator.id,
         skillId: skill.id,
         score: effectiveEfficiency * productMultiplier * facilityWeight(facility),
         efficiency: effectiveEfficiency,
-        storageLimit: effect.storageLimit,
-        orderLimit: effect.orderLimit,
+        storageLimit,
+        orderLimit,
         ...(effect.suppressesOtherFactoryEfficiency ? { suppressesOtherFactoryEfficiency: true } : {}),
         fatigueHours: fatigueHoursByFacility[facility.type],
         recoveryHours: facility.type === "dormitory" ? 0 : Math.max(4, recoveryBaseHours - globalBonus * 8),
@@ -261,6 +263,28 @@ function bestSkillForFacility(
   }
 
   return assignments.sort((a, b) => b.score - a.score).slice(0, 1);
+}
+
+function activeFacilityLimit(
+  operator: Operator,
+  elite: number,
+  facility: FacilitySlot,
+  context: AssignmentEvaluationContext | undefined,
+  key: "storageLimit" | "orderLimit"
+) {
+  const activeLimits = operator.skills
+    .filter((skill) => skill.unlockPhase <= elite)
+    .flatMap((skill) => skill.effects)
+    .filter((effect) => !effect.ignoredForOptimization)
+    .filter((effect) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
+    .map((effect) => effect[key])
+    .filter((value): value is number => typeof value === "number");
+
+  if (!activeLimits.length) {
+    return undefined;
+  }
+
+  return activeLimits.reduce((selected, value) => (Math.abs(value) > Math.abs(selected) ? value : selected));
 }
 
 function effectiveFacilityEfficiency(assignments: Assignment[]) {
@@ -562,7 +586,7 @@ function effectConditionsSatisfied(
   return conditionsSatisfied(effect.conditions ?? [], operator, facility, context);
 }
 
-function conditionsSatisfied(
+export function conditionsSatisfied(
   conditions: BaseSkillEffect["conditions"],
   operator: Operator,
   facility: FacilitySlot,
@@ -614,7 +638,8 @@ function conditionsSatisfied(
         const matchesFacility = condition.facility ? assignedFacility?.type === condition.facility : true;
         return matchesFacility && operatorHasAnyAffiliation(assignment.operatorId, condition.affiliations);
       }).length;
-    return count >= (condition.min ?? 1) && (condition.max === undefined || count <= condition.max);
+    const min = condition.min ?? (condition.max === undefined ? 1 : 0);
+    return count >= min && (condition.max === undefined || count <= condition.max);
   });
 }
 

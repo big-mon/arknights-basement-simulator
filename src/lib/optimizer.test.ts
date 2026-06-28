@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createDefaultState, createFacilitiesForLayout, operators } from "../data/defaults";
 import { exportState, importState } from "./storage";
-import { findCandidates, generateAssignmentPlan } from "./optimizer";
+import { conditionsSatisfied, findCandidates, generateAssignmentPlan } from "./optimizer";
 import type { Assignment, FacilitySlot } from "../types";
 
 const factoryEliteLockedOperator = operators.find((operator) =>
@@ -473,8 +473,16 @@ describe("optimizer", () => {
     ownOperators(state, [greyyAlter.id]);
     const power = state.facilities.find((facility) => facility.id === "power-1")!;
     const candidate = findCandidates(power, state).find((assignment) => assignment.operatorId === greyyAlter.id)!;
+    const dawnlight = greyyAlter.skills.find((skill) => skill.id === "power_count[000]")!.effects[0];
 
     expect(candidate.efficiency).toBeCloseTo(0.23);
+    expect(
+      conditionsSatisfied(dawnlight.conditions, greyyAlter, power, {
+        facilities: state.facilities,
+        assignments: [],
+        roster: state.roster
+      })
+    ).toBe(true);
   });
 
   it("uses max steady-state values for time-ramping factory skills", () => {
@@ -590,14 +598,20 @@ describe("optimizer", () => {
 
   it("keeps morale-cost factory capacity skills product-neutral", () => {
     const state = createDefaultState();
-    ownOperators(state, [bubble.id]);
+    ownOperators(state, [bubble.id, vermeil.id]);
     const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
     const bubbleStorageSkill = bubble.skills.find((skill) => skill.id === "manu_prod_limit&cost[010]")!;
     const bubbleStorageEffect = bubbleStorageSkill.effects.find((effect) => effect.storageLimit === 10)!;
     const candidates = findCandidates(factory, state);
+    const withVermeil = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(factory, vermeil.id, { storageLimit: 8 })]
+    }).find((assignment) => assignment.operatorId === bubble.id)!;
 
     expect(bubbleStorageEffect.product).toBeUndefined();
     expect(candidates.some((assignment) => assignment.operatorId === bubble.id && assignment.skillId === bubbleStorageSkill.id)).toBe(true);
+    expect(withVermeil.skillId).toBe("manu_prod_spd_variable3[000]");
+    expect(withVermeil.storageLimit).toBe(10);
   });
 
   it("scales Vermeil from same-factory storage limit increases", () => {
