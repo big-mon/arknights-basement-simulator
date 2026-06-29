@@ -81,6 +81,13 @@ const windflit = operators.find((operator) => operator.id === "char_433_windft")
 const silverashAlter = operators.find((operator) => operator.id === "char_1045_svash2")!;
 const pramanix = operators.find((operator) => operator.id === "char_174_slbell")!;
 const courier = operators.find((operator) => operator.id === "char_198_blackd")!;
+const thirdKjeragOperator = operators.find(
+  (operator) =>
+    operator.id !== silverashAlter.id &&
+    operator.id !== pramanix.id &&
+    operator.id !== courier.id &&
+    operator.affiliations?.includes("kjerag")
+)!;
 const hedley = operators.find((operator) => operator.id === "char_4088_hodrer")!;
 const ines = operators.find((operator) => operator.id === "char_4087_ines")!;
 const w = operators.find((operator) => operator.id === "char_113_cqbw")!;
@@ -760,6 +767,23 @@ describe("optimizer", () => {
     expect(candidate.score).toBeCloseTo(0.01 * state.preference.lmd * 100 * matchingTradingPostCount);
   });
 
+  it("deduplicates non-stacking global control boosts in the control center", () => {
+    const state = createDefaultState();
+    const duplicateTradingBoostOperators = operators
+      .filter((operator) =>
+        operator.skills.some((skill) =>
+          skill.effects.some((effect) => effect.facility === "control" && effect.globalEffect?.stackKey === "all-trading-speed")
+        )
+      )
+      .slice(0, 3);
+    ownOperators(state, duplicateTradingBoostOperators.map((operator) => operator.id));
+    const plan = generateAssignmentPlan(state);
+    const controlPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.type === "control")!;
+
+    expect(duplicateTradingBoostOperators.length).toBeGreaterThan(1);
+    expect(controlPlan.assignments.filter((assignment) => assignment.globalStackKey?.endsWith(":all-trading-speed")).length).toBe(1);
+  });
+
   it("does not count Snegurochka's storage-only first skill as production", () => {
     const state = createDefaultState();
     ownOperators(state, [snegurochka.id]);
@@ -830,6 +854,18 @@ describe("optimizer", () => {
     expect(vulcanCandidate.storageLimit).toBe(16);
   });
 
+  it("does not fill factory slots with standalone negative productivity candidates", () => {
+    const state = createDefaultState();
+    ownOperators(state, [bena.id, vulcan.id]);
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    state.facilities = [factory];
+    const plan = generateAssignmentPlan(state);
+    const factoryPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === factory.id)!;
+
+    expect(factoryPlan.assignments).toEqual([]);
+    expect(factoryPlan.expectedEfficiency).toBe(0);
+  });
+
   it("does not add other factory productivity when Snegurochka suppresses same-factory effects", () => {
     const state = createDefaultState();
     ownOperators(state, [snegurochka.id, defaultOwnedGoldFactoryOperator.id]);
@@ -851,14 +887,14 @@ describe("optimizer", () => {
 
   it("counts trading posts with three Kjerag operators for SilverAsh the Dignified Lord", () => {
     const state = createDefaultState();
-    ownOperators(state, [silverashAlter.id, pramanix.id, courier.id]);
+    ownOperators(state, [silverashAlter.id, pramanix.id, courier.id, thirdKjeragOperator.id]);
     const control = state.facilities.find((facility) => facility.id === "control-1")!;
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
     const base = findCandidates(control, state, 0, {
       facilities: state.facilities,
       assignments: [contextAssignment(trading, pramanix.id), contextAssignment(trading, courier.id)]
     }).find((candidate) => candidate.operatorId === silverashAlter.id)!;
-    const withThreeKjerag = findCandidates(control, state, 0, {
+    const withStaleSilverAsh = findCandidates(control, state, 0, {
       facilities: state.facilities,
       assignments: [
         contextAssignment(trading, pramanix.id),
@@ -866,11 +902,21 @@ describe("optimizer", () => {
         contextAssignment(trading, silverashAlter.id)
       ]
     }).find((candidate) => candidate.operatorId === silverashAlter.id)!;
+    const withThreeOtherKjerag = findCandidates(control, state, 0, {
+      facilities: state.facilities,
+      assignments: [
+        contextAssignment(trading, pramanix.id),
+        contextAssignment(trading, courier.id),
+        contextAssignment(trading, thirdKjeragOperator.id)
+      ]
+    }).find((candidate) => candidate.operatorId === silverashAlter.id)!;
 
     expect(pramanix.affiliations).toContain("kjerag");
     expect(courier.affiliations).toContain("kjerag");
+    expect(thirdKjeragOperator.affiliations).toContain("kjerag");
     expect(base.efficiency).toBeCloseTo(0.03);
-    expect(withThreeKjerag.efficiency).toBeCloseTo(0.13);
+    expect(withStaleSilverAsh.efficiency).toBeCloseTo(0.03);
+    expect(withThreeOtherKjerag.efficiency).toBeCloseTo(0.13);
   });
 
   it("adds Hedley's Ines bonus when Ines is assigned anywhere in the base", () => {

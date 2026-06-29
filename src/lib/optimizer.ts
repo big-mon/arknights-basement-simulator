@@ -151,7 +151,7 @@ function assignmentSignature(facilityPlans: FacilityPlan[]) {
 }
 
 function selectAssignmentsForFacility(candidates: Assignment[], slotCount: number) {
-  const nonSuppressingAssignments = candidates.filter((assignment) => !assignment.suppressesOtherFactoryEfficiency).slice(0, slotCount);
+  const nonSuppressingAssignments = selectNonSuppressingAssignments(candidates, slotCount);
   const suppressingAssignment = candidates.find((assignment) => assignment.suppressesOtherFactoryEfficiency);
   if (!suppressingAssignment) {
     return nonSuppressingAssignments;
@@ -159,6 +159,41 @@ function selectAssignmentsForFacility(candidates: Assignment[], slotCount: numbe
 
   const nonSuppressingScore = nonSuppressingAssignments.reduce((sum, assignment) => sum + assignment.score, 0);
   return suppressingAssignment.score > nonSuppressingScore ? [suppressingAssignment] : nonSuppressingAssignments;
+}
+
+function selectNonSuppressingAssignments(candidates: Assignment[], slotCount: number) {
+  const assignments: Assignment[] = [];
+  const globalStackKeys = new Set<string>();
+
+  for (const candidate of candidates) {
+    if (candidate.suppressesOtherFactoryEfficiency) {
+      continue;
+    }
+    if (candidate.globalStackKey && globalStackKeys.has(candidate.globalStackKey)) {
+      continue;
+    }
+    if (candidate.score < 0 && !hasPositiveLimitSynergy(candidate, assignments)) {
+      continue;
+    }
+
+    assignments.push(candidate);
+    if (candidate.globalStackKey) {
+      globalStackKeys.add(candidate.globalStackKey);
+    }
+    if (assignments.length >= slotCount) {
+      break;
+    }
+  }
+
+  return assignments;
+}
+
+function hasPositiveLimitSynergy(candidate: Assignment, selectedAssignments: Assignment[]) {
+  return selectedAssignments.some(
+    (assignment) =>
+      ((candidate.storageLimit ?? 0) > 0 && assignment.scalesWithFacilityStat?.includes("storageLimit")) ||
+      ((candidate.orderLimit ?? 0) > 0 && assignment.scalesWithFacilityStat?.includes("orderLimit"))
+  );
 }
 
 function buildRotationWindows(activeAssignments: Assignment[], restAssignments: Assignment[], rotationCount = 2) {
@@ -265,6 +300,7 @@ function bestSkillForFacility(
       const scoreFacilityCount = externalGlobalEffect ? matchingGlobalEffectFacilityCount(effect, context) : 1;
       const storageLimit = activeFacilityLimit(operator, elite, facility, context, "storageLimit");
       const orderLimit = activeFacilityLimit(operator, elite, facility, context, "orderLimit");
+      const statScalingKeys = statScalingKeysForEffect(effect);
       assignments.push({
         facilityId: facility.id,
         operatorId: operator.id,
@@ -274,6 +310,8 @@ function bestSkillForFacility(
         storageLimit,
         orderLimit,
         ...(effect.suppressesOtherFactoryEfficiency ? { suppressesOtherFactoryEfficiency: true } : {}),
+        ...(effect.globalEffect?.stackKey ? { globalStackKey: globalEffectStackIdentity(effect) } : {}),
+        ...(statScalingKeys.length ? { scalesWithFacilityStat: statScalingKeys } : {}),
         fatigueHours: fatigueHoursByFacility[facility.type],
         recoveryHours: facility.type === "dormitory" ? 0 : Math.max(4, recoveryBaseHours - globalBonus * 8),
         reason: `${localizeText(skill.name, language)}: ${localizeText(effect.description, language)}`
@@ -439,6 +477,9 @@ function facilityGroupAffiliationCount(
 
   const facilityCounts = new Map<string, number>();
   for (const assignment of context.assignments) {
+    if (assignment.operatorId === operator.id) {
+      continue;
+    }
     const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
     if (!assignedFacility || (effect.scaling.facility && assignedFacility.type !== effect.scaling.facility)) {
       continue;
@@ -731,6 +772,20 @@ function globalEffectMatchesFacility(effect: BaseSkillEffect, facility: Facility
 
 function isExternalGlobalEffect(effect: BaseSkillEffect, facility: FacilitySlot) {
   return Boolean(effect.globalEffect && effect.globalEffect.facility !== facility.type);
+}
+
+function globalEffectStackIdentity(effect: BaseSkillEffect) {
+  return `${effect.globalEffect?.facility}:${effect.globalEffect?.product ?? "*"}:${effect.globalEffect?.stackKey}`;
+}
+
+function statScalingKeysForEffect(effect: BaseSkillEffect): NonNullable<Assignment["scalesWithFacilityStat"]> {
+  if (effect.scaling?.type === "facilityStorageLimit") {
+    return ["storageLimit"];
+  }
+  if (effect.scaling?.type === "facilityOrderLimit") {
+    return ["orderLimit"];
+  }
+  return [];
 }
 
 function matchingGlobalEffectFacilityCount(effect: BaseSkillEffect, context?: AssignmentEvaluationContext) {

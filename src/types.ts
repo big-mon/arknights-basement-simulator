@@ -164,6 +164,8 @@ export interface Assignment {
   storageLimit?: number;
   orderLimit?: number;
   suppressesOtherFactoryEfficiency?: boolean;
+  globalStackKey?: string;
+  scalesWithFacilityStat?: Array<"storageLimit" | "orderLimit">;
   fatigueHours: number;
   recoveryHours: number;
   reason: string;
