@@ -77,6 +77,7 @@ const lemuenExusiaiSkill = lemuen.skills.find((skill) => skill.id === "trade_ord
 const muelsyse = operators.find((operator) => operator.id === "char_249_mlyss")!;
 const saria = operators.find((operator) => operator.id === "char_202_demkni")!;
 const eunectes = operators.find((operator) => operator.id === "char_416_zumama")!;
+const windflit = operators.find((operator) => operator.id === "char_433_windft")!;
 const silverashAlter = operators.find((operator) => operator.id === "char_1045_svash2")!;
 const pramanix = operators.find((operator) => operator.id === "char_174_slbell")!;
 const courier = operators.find((operator) => operator.id === "char_198_blackd")!;
@@ -116,6 +117,7 @@ const degenbrecher = operators.find((operator) => operator.id === "char_4116_blk
 const obliviator = operators.find((operator) => operator.id === "char_4182_oblvns")!;
 const mortis = operators.find((operator) => operator.id === "char_4183_mortis")!;
 const mrNothing = operators.find((operator) => operator.id === "char_455_nothin")!;
+const weedy = operators.find((operator) => operator.id === "char_400_weedy")!;
 
 function ownBaselineRoster(state: ReturnType<typeof createDefaultState>) {
   for (const operator of operators) {
@@ -658,6 +660,19 @@ describe("optimizer", () => {
     expect(withStoragePartner.efficiency).toBeCloseTo(0.39);
   });
 
+  it("ignores negative storage limit modifiers for Vermeil scaling", () => {
+    const state = createDefaultState();
+    ownOperators(state, [vermeil.id, bubble.id]);
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const base = findCandidates(factory, state).find((assignment) => assignment.operatorId === vermeil.id)!;
+    const withNegativeStorage = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(factory, bubble.id, { storageLimit: -12 })]
+    }).find((assignment) => assignment.operatorId === vermeil.id)!;
+
+    expect(withNegativeStorage.efficiency).toBeCloseTo(base.efficiency);
+  });
+
   it("scales Degenbrecher from same-trading-post order limit increases", () => {
     const state = createDefaultState();
     ownOperators(state, [degenbrecher.id, silverashAlter.id]);
@@ -670,6 +685,19 @@ describe("optimizer", () => {
 
     expect(base.efficiency).toBeCloseTo(0.28);
     expect(withOrderLimit.efficiency).toBeCloseTo(0.53);
+  });
+
+  it("ignores negative order limit modifiers for Degenbrecher scaling", () => {
+    const state = createDefaultState();
+    ownOperators(state, [degenbrecher.id, silverashAlter.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const base = findCandidates(trading, state).find((assignment) => assignment.operatorId === degenbrecher.id)!;
+    const withNegativeOrderLimit = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(trading, silverashAlter.id, { orderLimit: -6 })]
+    }).find((assignment) => assignment.operatorId === degenbrecher.id)!;
+
+    expect(withNegativeOrderLimit.efficiency).toBeCloseTo(base.efficiency);
   });
 
   it("scales Sakiko Togawa's gold factory control effect from passion", () => {
@@ -718,6 +746,18 @@ describe("optimizer", () => {
     expect(boostTradingPlan.expectedEfficiency - baseTradingPlan.expectedEfficiency).toBeCloseTo(0.01);
   });
 
+  it("scores all-room global boosts for every matching facility", () => {
+    const state = createDefaultState();
+    ownOperators(state, [mortis.id]);
+    state.roster[mortis.id].elite = 0;
+    const control = state.facilities.find((facility) => facility.type === "control")!;
+    const candidate = findCandidates(control, state).find((assignment) => assignment.operatorId === mortis.id)!;
+    const matchingTradingPostCount = state.facilities.filter((facility) => facility.type === "trading" && facility.product === "lmd").length;
+
+    expect(candidate.efficiency).toBe(0);
+    expect(candidate.score).toBeCloseTo(0.01 * state.preference.lmd * 100 * matchingTradingPostCount);
+  });
+
   it("does not count Snegurochka's storage-only first skill as production", () => {
     const state = createDefaultState();
     ownOperators(state, [snegurochka.id]);
@@ -727,6 +767,18 @@ describe("optimizer", () => {
 
     expect(candidate.suppressesOtherFactoryEfficiency).toBe(true);
     expect(candidate.efficiency).toBe(0);
+  });
+
+  it("keeps only one suppressing factory operator in a single factory plan", () => {
+    const state = createDefaultState();
+    ownOperators(state, [weedy.id, eunectes.id, windflit.id]);
+    const plan = generateAssignmentPlan(state);
+
+    expect(
+      plan.facilityPlans
+        .filter((facilityPlan) => facilityPlan.facility.type === "factory")
+        .every((facilityPlan) => facilityPlan.assignments.filter((assignment) => assignment.suppressesOtherFactoryEfficiency).length <= 1)
+    ).toBe(true);
   });
 
   it("does not add other factory productivity when Snegurochka suppresses same-factory effects", () => {

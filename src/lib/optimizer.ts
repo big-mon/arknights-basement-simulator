@@ -101,9 +101,7 @@ function buildFacilityPlans(
     const candidates = findCandidates(facility, state, globalBonus, context)
       .filter((candidate) => !usedOperatorIds.has(candidate.operatorId))
       .sort((a, b) => b.score - a.score);
-    const selectedAssignments = candidates.slice(0, facility.slotCount);
-    const suppressingAssignments = selectedAssignments.filter((assignment) => assignment.suppressesOtherFactoryEfficiency);
-    const assignments = suppressingAssignments.length ? suppressingAssignments : selectedAssignments;
+    const assignments = selectAssignmentsForFacility(candidates, facility.slotCount);
     assignments.forEach((assignment) => usedOperatorIds.add(assignment.operatorId));
 
     const expectedEfficiency = effectiveFacilityEfficiency(assignments) + globalBonus;
@@ -130,10 +128,12 @@ function attachRotationAlternatives(state: AppState, facilityPlans: FacilityPlan
 
   return facilityPlans.map((plan) => {
     const globalBonus = calculateGlobalBonus(state, plan.facility, context);
-    const alternatives = findCandidates(plan.facility, state, globalBonus, context)
-      .filter((candidate) => !firstRotationOperatorIds.has(candidate.operatorId))
-      .filter((candidate) => !secondRotationOperatorIds.has(candidate.operatorId))
-      .slice(0, plan.facility.slotCount);
+    const alternatives = selectAssignmentsForFacility(
+      findCandidates(plan.facility, state, globalBonus, context)
+        .filter((candidate) => !firstRotationOperatorIds.has(candidate.operatorId))
+        .filter((candidate) => !secondRotationOperatorIds.has(candidate.operatorId)),
+      plan.facility.slotCount
+    );
 
     alternatives.forEach((assignment) => secondRotationOperatorIds.add(assignment.operatorId));
 
@@ -148,6 +148,12 @@ function assignmentSignature(facilityPlans: FacilityPlan[]) {
   return facilityPlans
     .flatMap((plan) => plan.assignments.map((assignment) => `${assignment.facilityId}:${assignment.operatorId}:${assignment.skillId}`))
     .join("|");
+}
+
+function selectAssignmentsForFacility(candidates: Assignment[], slotCount: number) {
+  const selectedAssignments = candidates.slice(0, slotCount);
+  const suppressingAssignment = selectedAssignments.find((assignment) => assignment.suppressesOtherFactoryEfficiency);
+  return suppressingAssignment ? [suppressingAssignment] : selectedAssignments;
 }
 
 function buildRotationWindows(activeAssignments: Assignment[], restAssignments: Assignment[], rotationCount = 2) {
@@ -251,13 +257,14 @@ function bestSkillForFacility(
         ? productWeight(effect.globalEffect?.product ?? facility.product, preference)
         : productMultiplier;
       const scoreFacilityWeight = externalGlobalEffect ? facilityTypeWeight(effect.globalEffect?.facility ?? facility.type) : facilityWeight(facility);
+      const scoreFacilityCount = externalGlobalEffect ? matchingGlobalEffectFacilityCount(effect, context) : 1;
       const storageLimit = activeFacilityLimit(operator, elite, facility, context, "storageLimit");
       const orderLimit = activeFacilityLimit(operator, elite, facility, context, "orderLimit");
       assignments.push({
         facilityId: facility.id,
         operatorId: operator.id,
         skillId: skill.id,
-        score: (externalGlobalEffect ? rawEfficiency : effectiveEfficiency) * scoreProductMultiplier * scoreFacilityWeight,
+        score: (externalGlobalEffect ? rawEfficiency : effectiveEfficiency) * scoreProductMultiplier * scoreFacilityWeight * scoreFacilityCount,
         efficiency: effectiveEfficiency,
         storageLimit,
         orderLimit,
@@ -388,8 +395,8 @@ function facilityAssignmentStat(
         const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
         return scalingMatchesFacility(effect.scaling, facility, assignment, assignedFacility);
       })
-      .reduce((sum, assignment) => sum + (assignment[key] ?? 0), 0) ?? 0;
-  const selfTotal = effect.scaling?.includeSelf ? effect[key] ?? 0 : 0;
+      .reduce((sum, assignment) => sum + Math.max(assignment[key] ?? 0, 0), 0) ?? 0;
+  const selfTotal = effect.scaling?.includeSelf ? Math.max(effect[key] ?? 0, 0) : 0;
   return assignedTotal + selfTotal;
 }
 
@@ -719,6 +726,14 @@ function globalEffectMatchesFacility(effect: BaseSkillEffect, facility: Facility
 
 function isExternalGlobalEffect(effect: BaseSkillEffect, facility: FacilitySlot) {
   return Boolean(effect.globalEffect && effect.globalEffect.facility !== facility.type);
+}
+
+function matchingGlobalEffectFacilityCount(effect: BaseSkillEffect, context?: AssignmentEvaluationContext) {
+  if (!effect.globalEffect || !context) {
+    return 1;
+  }
+  const count = context.facilities.filter((facility) => facility.type !== "dormitory" && globalEffectMatchesFacility(effect, facility)).length;
+  return Math.max(count, 1);
 }
 
 function productWeight(product: ProductType, preference: OptimizationPreference): number {
