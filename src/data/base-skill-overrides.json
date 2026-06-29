@@ -2613,6 +2613,11 @@
             "index": 0,
             "patch": {
               "efficiency": 0.01,
+              "globalEffect": {
+                "facility": "trading",
+                "product": "lmd",
+                "stackKey": "all-trading-speed"
+              },
               "resourceEffects": [
                 {
                   "resource": "passion",

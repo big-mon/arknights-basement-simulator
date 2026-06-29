@@ -26,6 +26,20 @@ const defaultOwnedGoldFactoryOperator = operators.find((operator) =>
       )
   )
 )!;
+const defaultOwnedTradingOperator = operators.find((operator) =>
+  operator.rarity <= 4 &&
+  operator.skills.some(
+    (skill) =>
+      skill.unlockPhase === 0 &&
+      skill.effects.some(
+        (effect) =>
+          effect.facility === "trading" &&
+          (!effect.product || effect.product === "lmd") &&
+          !effect.ignoredForOptimization &&
+          !effect.conditions?.length
+      )
+  )
+)!;
 const texas = operators.find((operator) => operator.id === "char_102_texas")!;
 const lappland = operators.find((operator) => operator.id === "char_140_whitew")!;
 const texasLapplandSkill = texas.skills.find((skill) => skill.id === "trade_ord_spd&cost_P[000]")!;
@@ -392,19 +406,18 @@ describe("optimizer", () => {
   });
 
   it("uses skillless referenced operators to satisfy named operator conditions", () => {
-    const state = createDefaultState();
-    ownOperators(state, [vulpisfoglia.id, suzuran.id]);
+    const withoutSuzuranState = createDefaultState();
+    ownOperators(withoutSuzuranState, [vulpisfoglia.id]);
+    const withSuzuranState = createDefaultState();
+    ownOperators(withSuzuranState, [vulpisfoglia.id, suzuran.id]);
     const reception: FacilitySlot = { id: "reception-1", type: "reception", name: "Reception", slotCount: 2, product: "clue" };
-    const withoutSuzuran = findCandidates(reception, state).find((candidate) => candidate.operatorId === vulpisfoglia.id)!;
-    const withSuzuran = findCandidates(reception, state, 0, {
-      facilities: [...state.facilities, reception],
-      assignments: [contextAssignment(reception, suzuran.id)]
-    }).find((candidate) => candidate.operatorId === vulpisfoglia.id)!;
+    const withoutSuzuran = findCandidates(reception, withoutSuzuranState).find((candidate) => candidate.operatorId === vulpisfoglia.id)!;
+    const withOwnedSuzuran = findCandidates(reception, withSuzuranState).find((candidate) => candidate.operatorId === vulpisfoglia.id)!;
 
     expect(suzuran.skills).toHaveLength(0);
     expect(withoutSuzuran.skillId).not.toBe(vulpisfogliaSuzuranSkill.id);
-    expect(withSuzuran.skillId).toBe(vulpisfogliaSuzuranSkill.id);
-    expect(withSuzuran.efficiency).toBeGreaterThan(withoutSuzuran.efficiency);
+    expect(withOwnedSuzuran.skillId).toBe(vulpisfogliaSuzuranSkill.id);
+    expect(withOwnedSuzuran.efficiency).toBeGreaterThan(withoutSuzuran.efficiency);
   });
 
   it("scales Muelsyse's power bonus by other Rhine operators assigned in the base", () => {
@@ -681,6 +694,28 @@ describe("optimizer", () => {
     )!;
 
     expect(passionGoldPlan.expectedEfficiency - baseGoldPlan.expectedEfficiency).toBeCloseTo(0.01);
+  });
+
+  it("applies Mortis's trading boost globally without counting it as control efficiency", () => {
+    const baseState = createDefaultState();
+    ownOperators(baseState, [defaultOwnedTradingOperator.id]);
+    const basePlan = generateAssignmentPlan(baseState);
+    const baseTradingPlan = basePlan.facilityPlans.find((facilityPlan) =>
+      facilityPlan.assignments.some((assignment) => assignment.operatorId === defaultOwnedTradingOperator.id)
+    )!;
+
+    const boostState = createDefaultState();
+    ownOperators(boostState, [defaultOwnedTradingOperator.id, mortis.id]);
+    boostState.roster[mortis.id].elite = 0;
+    const boostPlan = generateAssignmentPlan(boostState);
+    const boostTradingPlan = boostPlan.facilityPlans.find((facilityPlan) =>
+      facilityPlan.assignments.some((assignment) => assignment.operatorId === defaultOwnedTradingOperator.id)
+    )!;
+    const controlPlan = boostPlan.facilityPlans.find((facilityPlan) => facilityPlan.facility.type === "control")!;
+    const mortisAssignment = controlPlan.assignments.find((assignment) => assignment.operatorId === mortis.id)!;
+
+    expect(mortisAssignment.efficiency).toBe(0);
+    expect(boostTradingPlan.expectedEfficiency - baseTradingPlan.expectedEfficiency).toBeCloseTo(0.01);
   });
 
   it("does not count Snegurochka's storage-only first skill as production", () => {

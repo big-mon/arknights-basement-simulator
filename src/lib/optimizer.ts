@@ -244,14 +244,20 @@ function bestSkillForFacility(
       const eliteBonus = elite * 0.015;
       const scalingMultiplier = effectScalingMultiplier(effect, operator, facility, context);
       const conditionalBonus = effectConditionalBonus(effect, operator, facility, context);
-      const effectiveEfficiency = (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier + conditionalBonus + eliteBonus;
+      const rawEfficiency = (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier + conditionalBonus + eliteBonus;
+      const externalGlobalEffect = isExternalGlobalEffect(effect, facility);
+      const effectiveEfficiency = externalGlobalEffect ? 0 : rawEfficiency;
+      const scoreProductMultiplier = externalGlobalEffect
+        ? productWeight(effect.globalEffect?.product ?? facility.product, preference)
+        : productMultiplier;
+      const scoreFacilityWeight = externalGlobalEffect ? facilityTypeWeight(effect.globalEffect?.facility ?? facility.type) : facilityWeight(facility);
       const storageLimit = activeFacilityLimit(operator, elite, facility, context, "storageLimit");
       const orderLimit = activeFacilityLimit(operator, elite, facility, context, "orderLimit");
       assignments.push({
         facilityId: facility.id,
         operatorId: operator.id,
         skillId: skill.id,
-        score: effectiveEfficiency * productMultiplier * facilityWeight(facility),
+        score: (externalGlobalEffect ? rawEfficiency : effectiveEfficiency) * scoreProductMultiplier * scoreFacilityWeight,
         efficiency: effectiveEfficiency,
         storageLimit,
         orderLimit,
@@ -610,9 +616,10 @@ export function conditionsSatisfied(
 
   return conditions.every((condition) => {
     if (condition.type === "sameFacilityOperator") {
-      return context.assignments.some(
+      const assigned = context.assignments.some(
         (assignment) => assignment.facilityId === facility.id && condition.operatorIds.includes(assignment.operatorId)
       );
+      return assigned || hasOwnedSkilllessPrerequisite(condition.operatorIds, context);
     }
 
     if (condition.type === "facilityOperator" || condition.type === "assignedOperator") {
@@ -621,10 +628,7 @@ export function conditionsSatisfied(
         const matchesFacility = condition.type === "assignedOperator" && !condition.facility ? true : assignedFacility?.type === condition.facility;
         return matchesFacility && condition.operatorIds.includes(assignment.operatorId);
       });
-      const ownedPrerequisite =
-        condition.type === "assignedOperator" &&
-        !condition.facility &&
-        condition.operatorIds.some((operatorId) => context.roster?.[operatorId]?.owned && operatorIsSkillless(operatorId));
+      const ownedPrerequisite = hasOwnedSkilllessPrerequisite(condition.operatorIds, context);
       return assigned || ownedPrerequisite;
     }
 
@@ -664,6 +668,10 @@ function operatorHasAnyAffiliation(operatorId: string, affiliations: string[]) {
 
 function operatorIsSkillless(operatorId: string) {
   return operators.find((candidate) => candidate.id === operatorId)?.skills.length === 0;
+}
+
+function hasOwnedSkilllessPrerequisite(operatorIds: string[], context: AssignmentEvaluationContext) {
+  return operatorIds.some((operatorId) => context.roster?.[operatorId]?.owned && operatorIsSkillless(operatorId));
 }
 
 function calculateGlobalBonus(state: AppState, facility: FacilitySlot, context: AssignmentEvaluationContext): number {
@@ -709,6 +717,10 @@ function globalEffectMatchesFacility(effect: BaseSkillEffect, facility: Facility
   );
 }
 
+function isExternalGlobalEffect(effect: BaseSkillEffect, facility: FacilitySlot) {
+  return Boolean(effect.globalEffect && effect.globalEffect.facility !== facility.type);
+}
+
 function productWeight(product: ProductType, preference: OptimizationPreference): number {
   if (product === "gold") {
     return preference.gold;
@@ -729,13 +741,17 @@ function productWeight(product: ProductType, preference: OptimizationPreference)
 }
 
 function facilityWeight(facility: FacilitySlot): number {
-  if (facility.type === "factory" || facility.type === "trading") {
+  return facilityTypeWeight(facility.type);
+}
+
+function facilityTypeWeight(facilityType: FacilitySlot["type"]): number {
+  if (facilityType === "factory" || facilityType === "trading") {
     return 100;
   }
-  if (facility.type === "power") {
+  if (facilityType === "power") {
     return 65;
   }
-  if (facility.type === "control") {
+  if (facilityType === "control") {
     return 55;
   }
   return 35;
