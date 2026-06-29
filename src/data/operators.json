@@ -1768,7 +1768,7 @@
               "ja": "製造所配置時、製造効率-20%、保管上限+17、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, productivity -20%, capacity limit +17, and Morale consumed per hour -0.25"
             },
-            "efficiency": 0.05,
+            "efficiency": -0.2,
             "storageLimit": 17
           }
         ]
@@ -7132,7 +7132,7 @@
               "ja": "製造所配置時、製造効率-5%、保管上限+16、1時間ごとの体力消費量-0.15",
               "en": "When this Operator is assigned to a Factory, productivity -5%, capacity limit +16, and Morale consumed per hour -0.15"
             },
-            "efficiency": 0.05,
+            "efficiency": -0.05,
             "storageLimit": 16
           }
         ]
@@ -7158,7 +7158,7 @@
               "ja": "製造所配置時、製造効率-5%、保管上限+19、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Factory, productivity -5%, capacity limit +19, and Morale consumed per hour -0.25"
             },
-            "efficiency": 0.05,
+            "efficiency": -0.05,
             "storageLimit": 19
           }
         ]

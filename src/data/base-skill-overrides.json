@@ -255,7 +255,7 @@
           {
             "index": 0,
             "patch": {
-              "efficiency": 0.05,
+              "efficiency": -0.2,
               "storageLimit": 17
             }
           }
@@ -1217,7 +1217,7 @@
           {
             "index": 0,
             "patch": {
-              "efficiency": 0.05,
+              "efficiency": -0.05,
               "storageLimit": 16
             }
           }
@@ -1228,7 +1228,7 @@
           {
             "index": 0,
             "patch": {
-              "efficiency": 0.05,
+              "efficiency": -0.05,
               "storageLimit": 19
             }
           }

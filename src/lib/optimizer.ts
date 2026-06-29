@@ -151,9 +151,14 @@ function assignmentSignature(facilityPlans: FacilityPlan[]) {
 }
 
 function selectAssignmentsForFacility(candidates: Assignment[], slotCount: number) {
-  const selectedAssignments = candidates.slice(0, slotCount);
-  const suppressingAssignment = selectedAssignments.find((assignment) => assignment.suppressesOtherFactoryEfficiency);
-  return suppressingAssignment ? [suppressingAssignment] : selectedAssignments;
+  const nonSuppressingAssignments = candidates.filter((assignment) => !assignment.suppressesOtherFactoryEfficiency).slice(0, slotCount);
+  const suppressingAssignment = candidates.find((assignment) => assignment.suppressesOtherFactoryEfficiency);
+  if (!suppressingAssignment) {
+    return nonSuppressingAssignments;
+  }
+
+  const nonSuppressingScore = nonSuppressingAssignments.reduce((sum, assignment) => sum + assignment.score, 0);
+  return suppressingAssignment.score > nonSuppressingScore ? [suppressingAssignment] : nonSuppressingAssignments;
 }
 
 function buildRotationWindows(activeAssignments: Assignment[], restAssignments: Assignment[], rotationCount = 2) {

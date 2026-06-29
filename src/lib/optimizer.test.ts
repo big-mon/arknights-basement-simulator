@@ -112,12 +112,14 @@ const lancet = operators.find((operator) => operator.id === "char_285_medic2")!;
 const justiceKnight = operators.find((operator) => operator.id === "char_4000_jnight")!;
 const vigil = operators.find((operator) => operator.id === "char_427_vigil")!;
 const vermeil = operators.find((operator) => operator.id === "char_190_clour")!;
+const bena = operators.find((operator) => operator.id === "char_369_bena")!;
 const bubble = operators.find((operator) => operator.id === "char_381_bubble")!;
 const degenbrecher = operators.find((operator) => operator.id === "char_4116_blkkgt")!;
 const obliviator = operators.find((operator) => operator.id === "char_4182_oblvns")!;
 const mortis = operators.find((operator) => operator.id === "char_4183_mortis")!;
 const mrNothing = operators.find((operator) => operator.id === "char_455_nothin")!;
 const weedy = operators.find((operator) => operator.id === "char_400_weedy")!;
+const vulcan = operators.find((operator) => operator.id === "char_163_hpsts")!;
 
 function ownBaselineRoster(state: ReturnType<typeof createDefaultState>) {
   for (const operator of operators) {
@@ -779,6 +781,53 @@ describe("optimizer", () => {
         .filter((facilityPlan) => facilityPlan.facility.type === "factory")
         .every((facilityPlan) => facilityPlan.assignments.filter((assignment) => assignment.suppressesOtherFactoryEfficiency).length <= 1)
     ).toBe(true);
+  });
+
+  it("keeps the normal factory group when it beats a suppressing operator alone", () => {
+    const state = createDefaultState();
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    state.facilities = [factory, ...state.facilities.filter((facility) => facility.type === "power")];
+    const normalFactoryOperators = operators
+      .filter(
+        (operator) =>
+          operator.id !== windflit.id &&
+          operator.skills.some((skill) =>
+            skill.effects.some(
+              (effect) =>
+                skill.unlockPhase <= 2 &&
+                effect.facility === "factory" &&
+                (!effect.product || effect.product === factory.product) &&
+                !effect.conditions?.length &&
+                !effect.ignoredForOptimization &&
+                !effect.suppressesOtherFactoryEfficiency &&
+                effect.efficiency >= 0.2
+            )
+          )
+      )
+      .slice(0, factory.slotCount);
+    ownOperators(state, [windflit.id, ...normalFactoryOperators.map((operator) => operator.id)]);
+
+    const plan = generateAssignmentPlan(state);
+    const factoryPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === factory.id)!;
+
+    expect(normalFactoryOperators).toHaveLength(factory.slotCount);
+    expect(factoryPlan.assignments).toHaveLength(factory.slotCount);
+    expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === windflit.id)).toBe(false);
+  });
+
+  it("models Bena and Vulcan capacity skills as negative factory productivity", () => {
+    const state = createDefaultState();
+    ownOperators(state, [bena.id, vulcan.id]);
+    state.roster[bena.id].elite = 0;
+    state.roster[vulcan.id].elite = 0;
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const benaCandidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === bena.id)!;
+    const vulcanCandidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === vulcan.id)!;
+
+    expect(benaCandidate.efficiency).toBeCloseTo(-0.2);
+    expect(benaCandidate.storageLimit).toBe(17);
+    expect(vulcanCandidate.efficiency).toBeCloseTo(-0.05);
+    expect(vulcanCandidate.storageLimit).toBe(16);
   });
 
   it("does not add other factory productivity when Snegurochka suppresses same-factory effects", () => {
