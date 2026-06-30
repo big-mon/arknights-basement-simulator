@@ -881,6 +881,9 @@ describe("optimizer", () => {
     expect(wisadelAssignment.remoteFacilityStatBonuses).toContainEqual(
       expect.objectContaining({ key: "orderLimit", facility: "trading", amount: 2, operatorIds: [hedley.id] })
     );
+    expect(wisadelAssignment.remoteFacilityStatBonuses).not.toContainEqual(
+      expect.objectContaining({ key: "orderLimit", facility: "trading", amount: 1, operatorIds: [hedley.id] })
+    );
     expect(withWisadel.efficiency - withoutWisadel.efficiency).toBeCloseTo(0.25);
   });
 

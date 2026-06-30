@@ -497,12 +497,38 @@ function activeRemoteFacilityStatBonuses(
   facility: FacilitySlot,
   context: AssignmentEvaluationContext | undefined
 ) {
-  return operator.skills
+  const bonuses = operator.skills
     .filter((skill) => skill.unlockPhase <= elite)
     .flatMap((skill) => skill.effects)
     .filter((effect) => !effect.ignoredForOptimization)
     .filter((effect) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
     .flatMap((effect) => remoteFacilityStatBonusesForEffect(effect));
+
+  return strongestRemoteFacilityStatBonuses(bonuses);
+}
+
+function strongestRemoteFacilityStatBonuses(
+  bonuses: NonNullable<Assignment["remoteFacilityStatBonuses"]>
+): NonNullable<Assignment["remoteFacilityStatBonuses"]> {
+  const selectedBonuses = new Map<string, NonNullable<Assignment["remoteFacilityStatBonuses"]>[number]>();
+  for (const bonus of bonuses) {
+    const key = remoteFacilityStatBonusIdentity(bonus);
+    const selected = selectedBonuses.get(key);
+    if (!selected || Math.abs(bonus.amount) > Math.abs(selected.amount)) {
+      selectedBonuses.set(key, bonus);
+    }
+  }
+  return [...selectedBonuses.values()];
+}
+
+function remoteFacilityStatBonusIdentity(bonus: NonNullable<Assignment["remoteFacilityStatBonuses"]>[number]) {
+  return [
+    bonus.key,
+    bonus.facility,
+    bonus.min ?? "",
+    [...(bonus.affiliations ?? [])].sort().join(","),
+    [...(bonus.operatorIds ?? [])].sort().join(",")
+  ].join("|");
 }
 
 function activeRemoteFacilityEfficiencyBonuses(
