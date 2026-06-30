@@ -185,6 +185,33 @@ function selectNonSuppressingAssignments(candidates: Assignment[], slotCount: nu
     }
   }
 
+  for (const candidate of candidates) {
+    if (candidate.score >= 0 || candidate.suppressesOtherFactoryEfficiency || assignments.includes(candidate)) {
+      continue;
+    }
+    if (candidate.globalStackKey && globalStackKeys.has(candidate.globalStackKey)) {
+      continue;
+    }
+
+    const replacement = bestLimitPartnerReplacement(candidate, assignments, slotCount);
+    if (!replacement) {
+      continue;
+    }
+
+    if (replacement.replaceIndex === undefined) {
+      assignments.push(candidate);
+    } else {
+      const replacedAssignment = assignments[replacement.replaceIndex];
+      if (replacedAssignment?.globalStackKey) {
+        globalStackKeys.delete(replacedAssignment.globalStackKey);
+      }
+      assignments[replacement.replaceIndex] = candidate;
+    }
+    if (candidate.globalStackKey) {
+      globalStackKeys.add(candidate.globalStackKey);
+    }
+  }
+
   return assignments;
 }
 
@@ -194,6 +221,58 @@ function hasPositiveLimitSynergy(candidate: Assignment, selectedAssignments: Ass
       ((candidate.storageLimit ?? 0) > 0 && assignment.scalesWithFacilityStat?.includes("storageLimit")) ||
       ((candidate.orderLimit ?? 0) > 0 && assignment.scalesWithFacilityStat?.includes("orderLimit"))
   );
+}
+
+function bestLimitPartnerReplacement(
+  candidate: Assignment,
+  selectedAssignments: Assignment[],
+  slotCount: number
+): { gain: number; replaceIndex?: number } | undefined {
+  if (!hasPositiveLimitSynergy(candidate, selectedAssignments)) {
+    return undefined;
+  }
+
+  if (selectedAssignments.length < slotCount) {
+    const addedScore = limitSynergyScore(candidate, selectedAssignments) + candidate.score;
+    return addedScore > 0 ? { gain: addedScore } : undefined;
+  }
+
+  return selectedAssignments
+    .map((removedAssignment, replaceIndex) => {
+      const remainingAssignments = selectedAssignments.filter((_, index) => index !== replaceIndex);
+      return {
+        replaceIndex,
+        gain: limitSynergyScore(candidate, remainingAssignments) + candidate.score - removedAssignment.score
+      };
+    })
+    .filter((replacement) => replacement.gain > 0)
+    .sort((a, b) => b.gain - a.gain)[0];
+}
+
+function limitSynergyScore(limitPartner: Assignment, selectedAssignments: Assignment[]) {
+  return selectedAssignments.reduce((sum, assignment) => {
+    return (
+      sum +
+      (assignment.facilityStatScalings ?? []).reduce((innerSum, scaling) => {
+        const addedLimit = scaling.key === "storageLimit" ? limitPartner.storageLimit ?? 0 : limitPartner.orderLimit ?? 0;
+        if (addedLimit <= 0) {
+          return innerSum;
+        }
+        return innerSum + statScalingDelta(scaling, addedLimit) * scaling.efficiencyPerStep * scaling.scorePerEfficiency;
+      }, 0)
+    );
+  }, 0);
+}
+
+function statScalingDelta(scaling: NonNullable<Assignment["facilityStatScalings"]>[number], addedLimit: number) {
+  const before = statScalingStepCount(scaling.current, scaling);
+  const after = statScalingStepCount(scaling.current + addedLimit, scaling);
+  return Math.max(after - before, 0);
+}
+
+function statScalingStepCount(value: number, scaling: NonNullable<Assignment["facilityStatScalings"]>[number]) {
+  const scaled = scaling.per ? Math.floor(value / scaling.per) : value;
+  return scaling.max ? Math.min(scaled, scaling.max) : scaled;
 }
 
 function buildRotationWindows(activeAssignments: Assignment[], restAssignments: Assignment[], rotationCount = 2) {
@@ -301,6 +380,8 @@ function bestSkillForFacility(
       const storageLimit = activeFacilityLimit(operator, elite, facility, context, "storageLimit");
       const orderLimit = activeFacilityLimit(operator, elite, facility, context, "orderLimit");
       const statScalingKeys = statScalingKeysForEffect(effect);
+      const facilityStatScalings = facilityStatScalingsForEffect(effect, operator, facility, preference, context);
+      const remoteFacilityStatBonuses = activeRemoteFacilityStatBonuses(operator, elite, facility, context);
       assignments.push({
         facilityId: facility.id,
         operatorId: operator.id,
@@ -312,6 +393,8 @@ function bestSkillForFacility(
         ...(effect.suppressesOtherFactoryEfficiency ? { suppressesOtherFactoryEfficiency: true } : {}),
         ...(effect.globalEffect?.stackKey ? { globalStackKey: globalEffectStackIdentity(effect) } : {}),
         ...(statScalingKeys.length ? { scalesWithFacilityStat: statScalingKeys } : {}),
+        ...(facilityStatScalings.length ? { facilityStatScalings } : {}),
+        ...(remoteFacilityStatBonuses.length ? { remoteFacilityStatBonuses } : {}),
         fatigueHours: fatigueHoursByFacility[facility.type],
         recoveryHours: facility.type === "dormitory" ? 0 : Math.max(4, recoveryBaseHours - globalBonus * 8),
         reason: `${localizeText(skill.name, language)}: ${localizeText(effect.description, language)}`
@@ -342,6 +425,20 @@ function activeFacilityLimit(
   }
 
   return activeLimits.reduce((selected, value) => (Math.abs(value) > Math.abs(selected) ? value : selected));
+}
+
+function activeRemoteFacilityStatBonuses(
+  operator: Operator,
+  elite: number,
+  facility: FacilitySlot,
+  context: AssignmentEvaluationContext | undefined
+) {
+  return operator.skills
+    .filter((skill) => skill.unlockPhase <= elite)
+    .flatMap((skill) => skill.effects)
+    .filter((effect) => !effect.ignoredForOptimization)
+    .filter((effect) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
+    .flatMap((effect) => remoteFacilityStatBonusesForEffect(effect));
 }
 
 function effectiveFacilityEfficiency(assignments: Assignment[]) {
@@ -439,8 +536,37 @@ function facilityAssignmentStat(
         return scalingMatchesFacility(effect.scaling, facility, assignment, assignedFacility);
       })
       .reduce((sum, assignment) => sum + Math.max(assignment[key] ?? 0, 0), 0) ?? 0;
+  const remoteTotal =
+    context?.assignments.reduce((sum, assignment) => {
+      return (
+        sum +
+        (assignment.remoteFacilityStatBonuses ?? []).reduce(
+          (innerSum, bonus) => (remoteFacilityStatBonusApplies(bonus, key, facility, context) ? innerSum + Math.max(bonus.amount, 0) : innerSum),
+          0
+        )
+      );
+    }, 0) ?? 0;
   const selfTotal = effect.scaling?.includeSelf ? Math.max(effect[key] ?? 0, 0) : 0;
-  return assignedTotal + selfTotal;
+  return assignedTotal + remoteTotal + selfTotal;
+}
+
+function remoteFacilityStatBonusApplies(
+  bonus: NonNullable<Assignment["remoteFacilityStatBonuses"]>[number],
+  key: "storageLimit" | "orderLimit",
+  facility: FacilitySlot,
+  context: AssignmentEvaluationContext
+) {
+  if (bonus.key !== key || bonus.facility !== facility.type) {
+    return false;
+  }
+  if (!bonus.affiliations?.length) {
+    return true;
+  }
+
+  const matchingAssignments = context.assignments.filter(
+    (assignment) => assignment.facilityId === facility.id && operatorHasAnyAffiliation(assignment.operatorId, bonus.affiliations ?? [])
+  );
+  return matchingAssignments.length >= (bonus.min ?? 1);
 }
 
 function facilityCount(effect: BaseSkillEffect, context?: AssignmentEvaluationContext) {
@@ -786,6 +912,67 @@ function statScalingKeysForEffect(effect: BaseSkillEffect): NonNullable<Assignme
     return ["orderLimit"];
   }
   return [];
+}
+
+function facilityStatScalingsForEffect(
+  effect: BaseSkillEffect,
+  operator: Operator,
+  facility: FacilitySlot,
+  preference: OptimizationPreference,
+  context?: AssignmentEvaluationContext
+): NonNullable<Assignment["facilityStatScalings"]> {
+  if (effect.scaling?.type === "facilityStorageLimit") {
+    return [
+      {
+        key: "storageLimit",
+        current: facilityAssignmentStat(effect, operator, facility, context, "storageLimit"),
+        efficiencyPerStep: effect.efficiency,
+        scorePerEfficiency: productWeight(facility.product, preference) * facilityWeight(facility),
+        max: effect.scaling.max
+      }
+    ];
+  }
+  if (effect.scaling?.type === "facilityOrderLimit") {
+    return [
+      {
+        key: "orderLimit",
+        current: facilityAssignmentStat(effect, operator, facility, context, "orderLimit"),
+        efficiencyPerStep: effect.efficiency,
+        scorePerEfficiency: productWeight(facility.product, preference) * facilityWeight(facility),
+        per: effect.scaling.per,
+        max: effect.scaling.max
+      }
+    ];
+  }
+  return [];
+}
+
+function remoteFacilityStatBonusesForEffect(effect: BaseSkillEffect): NonNullable<Assignment["remoteFacilityStatBonuses"]> {
+  const bonuses: NonNullable<Assignment["remoteFacilityStatBonuses"]> = [];
+  for (const condition of effect.conditions ?? []) {
+    if (condition.type !== "facilityAffiliation" || !condition.facility) {
+      continue;
+    }
+    if (effect.storageLimit) {
+      bonuses.push({
+        key: "storageLimit",
+        facility: condition.facility,
+        amount: effect.storageLimit,
+        affiliations: condition.affiliations,
+        min: condition.min
+      });
+    }
+    if (effect.orderLimit) {
+      bonuses.push({
+        key: "orderLimit",
+        facility: condition.facility,
+        amount: effect.orderLimit,
+        affiliations: condition.affiliations,
+        min: condition.min
+      });
+    }
+  }
+  return bonuses;
 }
 
 function matchingGlobalEffectFacilityCount(effect: BaseSkillEffect, context?: AssignmentEvaluationContext) {

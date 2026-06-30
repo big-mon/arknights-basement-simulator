@@ -88,6 +88,7 @@ const thirdKjeragOperator = operators.find(
     operator.id !== courier.id &&
     operator.affiliations?.includes("kjerag")
 )!;
+const gnosis = operators.find((operator) => operator.id === "char_206_gnosis")!;
 const hedley = operators.find((operator) => operator.id === "char_4088_hodrer")!;
 const ines = operators.find((operator) => operator.id === "char_4087_ines")!;
 const w = operators.find((operator) => operator.id === "char_113_cqbw")!;
@@ -696,6 +697,41 @@ describe("optimizer", () => {
     expect(withOrderLimit.efficiency).toBeCloseTo(0.53);
   });
 
+  it("routes Gnosis's remote order-limit bonus to Karlan trading post partners", () => {
+    const state = createDefaultState();
+    const karlanTradingPartner = operators.find(
+      (operator) =>
+        operator.id !== degenbrecher.id &&
+        operator.id !== gnosis.id &&
+        operator.affiliations?.includes("karlan") &&
+        operator.skills.some((skill) =>
+          skill.effects.some((effect) => effect.facility === "trading" && (!effect.product || effect.product === "lmd"))
+        )
+    )!;
+    ownOperators(state, [degenbrecher.id, karlanTradingPartner.id, gnosis.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const karlanTradingAssignment = contextAssignment(trading, karlanTradingPartner.id, { orderLimit: 4 });
+    const gnosisAssignment = findCandidates(control, state, 0, {
+      facilities: state.facilities,
+      assignments: [karlanTradingAssignment]
+    }).find((assignment) => assignment.operatorId === gnosis.id)!;
+    const withoutGnosis = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [karlanTradingAssignment]
+    }).find((assignment) => assignment.operatorId === degenbrecher.id)!;
+    const withGnosis = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [karlanTradingAssignment, gnosisAssignment]
+    }).find((assignment) => assignment.operatorId === degenbrecher.id)!;
+
+    expect(karlanTradingPartner.affiliations).toContain("karlan");
+    expect(gnosisAssignment.remoteFacilityStatBonuses).toContainEqual(
+      expect.objectContaining({ key: "orderLimit", facility: "trading", amount: 6 })
+    );
+    expect(withGnosis.efficiency - withoutGnosis.efficiency).toBeCloseTo(0.25);
+  });
+
   it("ignores negative order limit modifiers for Degenbrecher scaling", () => {
     const state = createDefaultState();
     ownOperators(state, [degenbrecher.id, silverashAlter.id]);
@@ -864,6 +900,40 @@ describe("optimizer", () => {
 
     expect(factoryPlan.assignments).toEqual([]);
     expect(factoryPlan.expectedEfficiency).toBe(0);
+  });
+
+  it("can replace a normal factory worker with a negative capacity partner when the room gains output", () => {
+    const state = createDefaultState();
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    state.facilities = [factory];
+    const normalFactoryOperators = operators
+      .filter((operator) =>
+        operator.skills.some((skill) =>
+          skill.effects.some(
+            (effect) =>
+              skill.unlockPhase <= 2 &&
+              operator.id !== vermeil.id &&
+              operator.id !== vulcan.id &&
+              effect.facility === "factory" &&
+              (!effect.product || effect.product === factory.product) &&
+              !effect.conditions?.length &&
+              !effect.ignoredForOptimization &&
+              !effect.suppressesOtherFactoryEfficiency &&
+              effect.efficiency >= 0.2 &&
+              effect.efficiency <= 0.3
+          )
+        )
+      )
+      .slice(0, 2);
+    ownOperators(state, [vermeil.id, vulcan.id, ...normalFactoryOperators.map((operator) => operator.id)]);
+    state.roster[vulcan.id].elite = 2;
+
+    const plan = generateAssignmentPlan(state);
+    const factoryPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === factory.id)!;
+
+    expect(normalFactoryOperators).toHaveLength(2);
+    expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === vermeil.id)).toBe(true);
+    expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === vulcan.id)).toBe(true);
   });
 
   it("does not add other factory productivity when Snegurochka suppresses same-factory effects", () => {

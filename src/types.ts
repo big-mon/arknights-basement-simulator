@@ -166,6 +166,21 @@ export interface Assignment {
   suppressesOtherFactoryEfficiency?: boolean;
   globalStackKey?: string;
   scalesWithFacilityStat?: Array<"storageLimit" | "orderLimit">;
+  facilityStatScalings?: Array<{
+    key: "storageLimit" | "orderLimit";
+    current: number;
+    efficiencyPerStep: number;
+    scorePerEfficiency: number;
+    per?: number;
+    max?: number;
+  }>;
+  remoteFacilityStatBonuses?: Array<{
+    key: "storageLimit" | "orderLimit";
+    facility: FacilityType;
+    amount: number;
+    affiliations?: string[];
+    min?: number;
+  }>;
   fatigueHours: number;
   recoveryHours: number;
   reason: string;
