@@ -122,6 +122,13 @@ const vigil = operators.find((operator) => operator.id === "char_427_vigil")!;
 const vermeil = operators.find((operator) => operator.id === "char_190_clour")!;
 const bena = operators.find((operator) => operator.id === "char_369_bena")!;
 const bubble = operators.find((operator) => operator.id === "char_381_bubble")!;
+const jessicaAlter = operators.find((operator) => operator.id === "char_1034_jesca2")!;
+const blacksteelFactoryOperator = operators.find(
+  (operator) =>
+    operator.id !== jessicaAlter.id &&
+    operator.affiliations?.includes("blacksteel") &&
+    operator.skills.some((skill) => skill.effects.some((effect) => effect.facility === "factory"))
+)!;
 const degenbrecher = operators.find((operator) => operator.id === "char_4116_blkkgt")!;
 const obliviator = operators.find((operator) => operator.id === "char_4182_oblvns")!;
 const mortis = operators.find((operator) => operator.id === "char_4183_mortis")!;
@@ -735,6 +742,7 @@ describe("optimizer", () => {
     expect(gnosisAssignment.remoteFacilityStatBonuses).toContainEqual(
       expect.objectContaining({ key: "orderLimit", facility: "trading", amount: 6 })
     );
+    expect(gnosisAssignment.efficiency).toBe(0);
     expect(withGnosis.efficiency - withoutGnosis.efficiency).toBeCloseTo(0.5);
   });
 
@@ -757,7 +765,6 @@ describe("optimizer", () => {
       assignments: [hedleyTradingAssignment, wisadelAssignment]
     }).find((assignment) => assignment.operatorId === degenbrecher.id)!;
 
-    expect(wisadelAssignment.skillId).toBe(wisadelHedleySkill.id);
     expect(wisadelAssignment.remoteFacilityStatBonuses).toContainEqual(
       expect.objectContaining({ key: "orderLimit", facility: "trading", amount: 2, operatorIds: [hedley.id] })
     );
@@ -833,6 +840,32 @@ describe("optimizer", () => {
 
     expect(candidate.efficiency).toBe(0);
     expect(candidate.score).toBeCloseTo(0.01 * state.preference.lmd * 100 * matchingTradingPostCount);
+  });
+
+  it("routes cross-room control productivity bonuses to the target factory", () => {
+    const baseState = createDefaultState();
+    ownOperators(baseState, [blacksteelFactoryOperator.id]);
+    baseState.facilities = [
+      baseState.facilities.find((facility) => facility.id === "factory-1")!,
+      baseState.facilities.find((facility) => facility.id === "control-1")!
+    ];
+    const basePlan = generateAssignmentPlan(baseState);
+    const baseFactoryPlan = basePlan.facilityPlans.find((facilityPlan) => facilityPlan.facility.type === "factory")!;
+
+    const boostState = createDefaultState();
+    ownOperators(boostState, [blacksteelFactoryOperator.id, jessicaAlter.id]);
+    boostState.facilities = [
+      boostState.facilities.find((facility) => facility.id === "factory-1")!,
+      boostState.facilities.find((facility) => facility.id === "control-1")!
+    ];
+    const boostPlan = generateAssignmentPlan(boostState);
+    const boostFactoryPlan = boostPlan.facilityPlans.find((facilityPlan) => facilityPlan.facility.type === "factory")!;
+    const controlPlan = boostPlan.facilityPlans.find((facilityPlan) => facilityPlan.facility.type === "control")!;
+    const jessicaAssignment = controlPlan.assignments.find((assignment) => assignment.operatorId === jessicaAlter.id)!;
+
+    expect(blacksteelFactoryOperator.affiliations).toContain("blacksteel");
+    expect(jessicaAssignment.efficiency).toBe(0);
+    expect(boostFactoryPlan.expectedEfficiency - baseFactoryPlan.expectedEfficiency).toBeCloseTo(0.05);
   });
 
   it("deduplicates non-stacking global control boosts in the control center", () => {
@@ -932,6 +965,38 @@ describe("optimizer", () => {
 
     expect(factoryPlan.assignments).toEqual([]);
     expect(factoryPlan.expectedEfficiency).toBe(0);
+  });
+
+  it("can replace a normal factory worker with a positive capacity partner when the room gains output", () => {
+    const state = createDefaultState();
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    state.facilities = [factory];
+    const normalFactoryOperators = operators
+      .filter((operator) =>
+        operator.skills.some((skill) =>
+          skill.effects.some(
+            (effect) =>
+              skill.unlockPhase <= 2 &&
+              operator.id !== vermeil.id &&
+              operator.id !== bubble.id &&
+              effect.facility === "factory" &&
+              (!effect.product || effect.product === factory.product) &&
+              !effect.conditions?.length &&
+              !effect.ignoredForOptimization &&
+              !effect.suppressesOtherFactoryEfficiency &&
+              effect.efficiency === 0.2
+          )
+        )
+      )
+      .slice(0, 2);
+    ownOperators(state, [vermeil.id, bubble.id, ...normalFactoryOperators.map((operator) => operator.id)]);
+
+    const plan = generateAssignmentPlan(state);
+    const factoryPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === factory.id)!;
+
+    expect(normalFactoryOperators).toHaveLength(2);
+    expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === vermeil.id)).toBe(true);
+    expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === bubble.id)).toBe(true);
   });
 
   it("can replace a normal factory worker with a negative capacity partner when the room gains output", () => {

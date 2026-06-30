@@ -3268,7 +3268,7 @@
               "ja": "エクシアと同じ貿易所に配置時、1時間ごとの体力消費量-0.3",
               "en": "When this Operator is assigned to the same Trading Post as Exusiai, Morale consumed each hour -0.3"
             },
-            "efficiency": 0.05,
+            "efficiency": 0,
             "conditions": [
               {
                 "type": "sameFacilityOperator",

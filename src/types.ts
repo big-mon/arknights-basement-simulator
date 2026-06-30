@@ -182,6 +182,14 @@ export interface Assignment {
     operatorIds?: string[];
     min?: number;
   }>;
+  remoteFacilityEfficiencyBonuses?: Array<{
+    facility: FacilityType;
+    amount: number;
+    product?: ProductType;
+    affiliations?: string[];
+    operatorIds?: string[];
+    min?: number;
+  }>;
   fatigueHours: number;
   recoveryHours: number;
   reason: string;
