@@ -1242,33 +1242,34 @@ function remoteFacilityCountScore(
   }
 
   return bonuses.reduce((sum, bonus) => {
-    const matchingFacilities = context.facilities.filter((facility) => facility.type !== "dormitory");
-    const facilityScore = matchingFacilities.reduce((facilitySum, facility) => {
-      const candidateScore = operators.reduce((operatorSum, operator) => {
-        if (operator.id === sourceOperatorId) {
-          return operatorSum;
-        }
-        const rosterEntry = context.roster?.[operator.id];
-        if (!rosterEntry?.owned) {
-          return operatorSum;
-        }
-        const elite = clampEliteForOperator(operator, rosterEntry.elite);
-        const bestEffectScore = operator.skills
-          .filter((skill) => skill.unlockPhase <= elite)
-          .flatMap((skill) => skill.effects)
-          .filter((effect) => !effect.ignoredForOptimization)
-          .filter((effect) => effectMatchesFacility(effect, facility))
-          .filter((effect) => effect.scaling?.type === "facilityCount" && effect.scaling.facility === bonus.facility)
-          .reduce(
-            (best, effect) =>
-              Math.max(best, bonus.amount * effect.efficiency * productWeight(facility.product, preference) * facilityWeight(facility)),
-            0
-          );
-        return operatorSum + bestEffectScore;
-      }, 0);
-      return facilitySum + candidateScore;
+    const beneficiaryScore = operators.reduce((operatorSum, operator) => {
+      if (operator.id === sourceOperatorId) {
+        return operatorSum;
+      }
+      const rosterEntry = context.roster?.[operator.id];
+      if (!rosterEntry?.owned) {
+        return operatorSum;
+      }
+      const elite = clampEliteForOperator(operator, rosterEntry.elite);
+      const bestAssignmentScore = context.facilities
+        .filter((facility) => facility.type !== "dormitory")
+        .reduce((facilityBest, facility) => {
+          const bestEffectScore = operator.skills
+            .filter((skill) => skill.unlockPhase <= elite)
+            .flatMap((skill) => skill.effects)
+            .filter((effect) => !effect.ignoredForOptimization)
+            .filter((effect) => effectMatchesFacility(effect, facility))
+            .filter((effect) => effect.scaling?.type === "facilityCount" && effect.scaling.facility === bonus.facility)
+            .reduce(
+              (best, effect) =>
+                Math.max(best, bonus.amount * effect.efficiency * productWeight(facility.product, preference) * facilityWeight(facility)),
+              0
+            );
+          return Math.max(facilityBest, bestEffectScore);
+        }, 0);
+      return operatorSum + bestAssignmentScore;
     }, 0);
-    return sum + facilityScore;
+    return sum + beneficiaryScore;
   }, 0);
 }
 

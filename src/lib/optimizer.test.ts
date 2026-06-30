@@ -513,6 +513,7 @@ describe("optimizer", () => {
     }).find((assignment) => assignment.operatorId === weedy.id)!;
 
     expect(eunectesControlAssignment.efficiency).toBe(0);
+    expect(eunectesControlAssignment.score).toBeCloseTo(10.5);
     expect(eunectesControlAssignment.remoteFacilityCountBonuses).toContainEqual({ facility: "power", amount: 2 });
     expect(withVirtualPowerPlants.efficiency - base.efficiency).toBeCloseTo(0.3);
   });
