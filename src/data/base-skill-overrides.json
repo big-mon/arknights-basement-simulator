@@ -39,6 +39,7 @@
           {
             "index": 0,
             "patch": {
+              "product": "battleRecord",
               "efficiency": 0.1,
               "scaling": {
                 "type": "affiliation",
@@ -83,6 +84,38 @@
                 "type": "fixed",
                 "count": 1
               }
+            }
+          }
+        ],
+        "addEffects": [
+          {
+            "facility": "control",
+            "product": "gold",
+            "tags": [
+              "control",
+              "bskill_ctrl_psk",
+              "control"
+            ],
+            "description": {
+              "en": "When this Operator is assigned to the Control Center, each Pinus Sylvestris Operator assigned to Factories have +10% productivity towards Battle Records and -10% productivity towards Precious Metals"
+            },
+            "efficiency": -0.1,
+            "conditions": [
+              {
+                "type": "facilityAffiliation",
+                "facility": "factory",
+                "affiliations": [
+                  "pinus"
+                ],
+                "min": 1
+              }
+            ],
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "pinus"
+              ],
+              "facility": "factory"
             }
           }
         ]

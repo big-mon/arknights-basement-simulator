@@ -416,6 +416,9 @@ function bestSkillForFacility(
         : productMultiplier;
       const scoreFacilityWeight = externalGlobalEffect ? facilityTypeWeight(effect.globalEffect?.facility ?? facility.type) : facilityWeight(facility);
       const scoreFacilityCount = externalGlobalEffect ? matchingGlobalEffectFacilityCount(effect, context) : 1;
+      if (externalGlobalEffect && scoreFacilityCount === 0) {
+        continue;
+      }
       const storageLimit = activeFacilityLimit(operator, elite, facility, context, "storageLimit");
       const orderLimit = activeFacilityLimit(operator, elite, facility, context, "orderLimit");
       const statScalingKeys = statScalingKeysForEffect(effect);
@@ -1163,7 +1166,7 @@ function matchingGlobalEffectFacilityCount(effect: BaseSkillEffect, context?: As
     return 1;
   }
   const count = context.facilities.filter((facility) => facility.type !== "dormitory" && globalEffectMatchesFacility(effect, facility)).length;
-  return Math.max(count, 1);
+  return count;
 }
 
 function productWeight(product: ProductType, preference: OptimizationPreference): number {

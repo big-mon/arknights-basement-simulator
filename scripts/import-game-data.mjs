@@ -510,7 +510,7 @@ function applyBaseSkillOverrides(operators, overrides) {
         return effectOverride ? { ...effect, ...structuredClone(effectOverride.patch) } : effect;
       });
 
-      return { ...skill, effects };
+      return { ...skill, effects: [...effects, ...structuredClone(skillOverride.addEffects ?? [])] };
     });
     const addAffiliations = operatorOverride.addAffiliations ?? [];
     const affiliations = addAffiliations.length ? [...new Set([...(operator.affiliations ?? []), ...addAffiliations])] : operator.affiliations;

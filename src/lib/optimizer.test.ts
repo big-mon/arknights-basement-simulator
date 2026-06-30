@@ -123,10 +123,17 @@ const vermeil = operators.find((operator) => operator.id === "char_190_clour")!;
 const bena = operators.find((operator) => operator.id === "char_369_bena")!;
 const bubble = operators.find((operator) => operator.id === "char_381_bubble")!;
 const jessicaAlter = operators.find((operator) => operator.id === "char_1034_jesca2")!;
+const flametail = operators.find((operator) => operator.id === "char_420_flamtl")!;
 const blacksteelFactoryOperator = operators.find(
   (operator) =>
     operator.id !== jessicaAlter.id &&
     operator.affiliations?.includes("blacksteel") &&
+    operator.skills.some((skill) => skill.effects.some((effect) => effect.facility === "factory"))
+)!;
+const pinusFactoryOperator = operators.find(
+  (operator) =>
+    operator.id !== flametail.id &&
+    operator.affiliations?.includes("pinus") &&
     operator.skills.some((skill) => skill.effects.some((effect) => effect.facility === "factory"))
 )!;
 const degenbrecher = operators.find((operator) => operator.id === "char_4116_blkkgt")!;
@@ -584,6 +591,17 @@ describe("optimizer", () => {
     expect(receptionPlan.expectedEfficiency).toBeCloseTo(0.48);
   });
 
+  it("does not score control-center global boosts when no target room exists", () => {
+    const state = createDefaultState();
+    ownOperators(state, [lee.id]);
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+
+    const leeCandidate = findCandidates(control, state).find((assignment) => assignment.operatorId === lee.id);
+
+    expect(state.facilities.some((facility) => facility.type === "reception")).toBe(false);
+    expect(leeCandidate).toBeUndefined();
+  });
+
   it("scales Terra Research Commission from catnip generated in the control center", () => {
     const state = createDefaultState();
     ownOperators(state, [terraResearchCommission.id, yatoAlter.id]);
@@ -883,6 +901,25 @@ describe("optimizer", () => {
     expect(blacksteelFactoryOperator.affiliations).toContain("blacksteel");
     expect(jessicaAssignment.efficiency).toBe(0);
     expect(boostFactoryPlan.expectedEfficiency - baseFactoryPlan.expectedEfficiency).toBeCloseTo(0.05);
+  });
+
+  it("models Flametail's Pinus factory product modifiers with product-specific signs", () => {
+    const state = createDefaultState();
+    ownOperators(state, [flametail.id, pinusFactoryOperator.id]);
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const factory = { ...state.facilities.find((facility) => facility.id === "factory-1")!, product: "battleRecord" as const };
+    const candidate = findCandidates(control, state, 0, {
+      facilities: [control, factory],
+      assignments: [contextAssignment(factory, pinusFactoryOperator.id)]
+    }).find((assignment) => assignment.operatorId === flametail.id)!;
+
+    expect(pinusFactoryOperator.affiliations).toContain("pinus");
+    expect(candidate.remoteFacilityEfficiencyBonuses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ facility: "factory", product: "battleRecord", amount: 0.1, affiliations: ["pinus"] }),
+        expect.objectContaining({ facility: "factory", product: "gold", amount: -0.1, affiliations: ["pinus"] })
+      ])
+    );
   });
 
   it("deduplicates non-stacking global control boosts in the control center", () => {
