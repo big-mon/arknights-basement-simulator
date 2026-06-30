@@ -547,6 +547,7 @@ export function App() {
                       key={`${window.label}-${facilityPlan.facility.id}`}
                       facilityPlan={facilityPlan}
                       assignments={rotationAssignmentsForFacility(facilityPlan, rotationIndex)}
+                      expectedEfficiency={rotationExpectedEfficiencyForFacility(facilityPlan, rotationIndex)}
                       language={language}
                       operatorNameById={(operatorId) => operatorNameById(operators, operatorId, language)}
                     />
@@ -620,4 +621,15 @@ function rotationAssignmentsForFacility(facilityPlan: FacilityPlan, rotationInde
   }
 
   return facilityPlan.alternatives.slice(0, facilityPlan.facility.slotCount);
+}
+
+function rotationExpectedEfficiencyForFacility(facilityPlan: FacilityPlan, rotationIndex: number) {
+  if (rotationIndex === 0) {
+    return facilityPlan.expectedEfficiency;
+  }
+
+  return (
+    facilityPlan.alternativeExpectedEfficiency ??
+    facilityPlan.alternatives.slice(0, facilityPlan.facility.slotCount).reduce((sum, assignment) => sum + assignment.efficiency, 0)
+  );
 }

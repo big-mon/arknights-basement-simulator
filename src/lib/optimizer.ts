@@ -128,7 +128,7 @@ function attachRotationAlternatives(state: AppState, facilityPlans: FacilityPlan
     roster: state.roster
   };
 
-  return facilityPlans.map((plan) => {
+  const plansWithAlternatives = facilityPlans.map((plan) => {
     const alternatives = selectAssignmentsForFacility(
       findCandidates(plan.facility, state, 0, context)
         .filter((candidate) => !firstRotationOperatorIds.has(candidate.operatorId))
@@ -141,6 +141,20 @@ function attachRotationAlternatives(state: AppState, facilityPlans: FacilityPlan
     return {
       ...plan,
       alternatives
+    };
+  });
+  const alternativeContext: AssignmentEvaluationContext = {
+    assignments: plansWithAlternatives.flatMap((plan) => plan.alternatives),
+    facilities: state.facilities,
+    roster: state.roster
+  };
+
+  return plansWithAlternatives.map((plan) => {
+    const globalBonus = calculateGlobalBonus(state, plan.facility, alternativeContext);
+    const remoteEfficiencyBonus = calculateRemoteFacilityEfficiencyBonus(plan.facility, alternativeContext);
+    return {
+      ...plan,
+      alternativeExpectedEfficiency: effectiveFacilityEfficiency(plan.alternatives) + globalBonus + remoteEfficiencyBonus
     };
   });
 }

@@ -406,6 +406,39 @@ describe("App", () => {
     expect(screen.getByText("+48%")).toBeInTheDocument();
   });
 
+  it("shows facility-level expected efficiency in alternative recommendation cards", () => {
+    const assignment: Assignment = {
+      facilityId: "reception-1",
+      operatorId: amiya.id,
+      skillId: "candidate",
+      score: 0.23,
+      efficiency: 0.23,
+      fatigueHours: 24,
+      recoveryHours: 8,
+      reason: "candidate"
+    };
+    const facilityPlan: FacilityPlan = {
+      facility: { id: "reception-1", type: "reception", name: "Reception", slotCount: 2, product: "clue" },
+      assignments: [],
+      expectedEfficiency: 0,
+      alternativeExpectedEfficiency: 0.48,
+      score: 0.48,
+      alternatives: [assignment]
+    };
+
+    render(
+      <FacilityPlanCard
+        facilityPlan={facilityPlan}
+        assignments={facilityPlan.alternatives.slice(0, facilityPlan.facility.slotCount)}
+        expectedEfficiency={facilityPlan.alternativeExpectedEfficiency}
+        language="ja"
+        operatorNameById={() => amiyaName}
+      />
+    );
+
+    expect(screen.getByText("+48%")).toBeInTheDocument();
+  });
+
   it("switches layout between 243 and 153 presets from the top controls", async () => {
     const user = userEvent.setup();
     render(<App />);

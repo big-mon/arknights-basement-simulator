@@ -210,6 +210,7 @@ export interface FacilityPlan {
   facility: FacilitySlot;
   assignments: Assignment[];
   expectedEfficiency: number;
+  alternativeExpectedEfficiency?: number;
   score: number;
   alternatives: Assignment[];
 }
