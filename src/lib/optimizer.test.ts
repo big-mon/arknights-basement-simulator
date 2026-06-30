@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import baseSkillOverrides from "../data/base-skill-overrides.json";
 import { createDefaultState, createFacilitiesForLayout, operators } from "../data/defaults";
 import { exportState, importState } from "./storage";
 import { conditionsSatisfied, findCandidates, generateAssignmentPlan } from "./optimizer";
@@ -694,6 +695,22 @@ describe("optimizer", () => {
     expect([...conditionalOperatorIds].filter((operatorId) => !operatorIds.has(operatorId))).toEqual([]);
     expect(operators.find((operator) => operator.id === "char_113_cqbw")?.name.en).toBe("W");
     expect(operators.find((operator) => operator.id === "char_4145_ulpia")?.name.en).toBe("Ulpianus");
+  });
+
+  it("keeps checked-in base skill overrides aligned with generated operator data", () => {
+    const alannaProduct = baseSkillOverrides.char_4178_alanna.skills["manu_token_prod_spd[010]"].effects[0].patch.product;
+    const texasEfficiency = baseSkillOverrides.char_102_texas.skills["trade_ord_limit&cost_P[010]"].effects[0].patch.efficiency;
+    const aromaOverride = baseSkillOverrides.char_446_aroma.skills["manu_prod_spd_addition[100]"] as { addEffects?: unknown[] };
+    const aromaAddEffects = aromaOverride.addEffects;
+    const flametailOverride = baseSkillOverrides.char_420_flamtl.skills["control_mp_psk[000]"];
+
+    expect(alannaProduct).toBe("gold");
+    expect(texasEfficiency).toBe(0);
+    expect(aromaAddEffects).toBeUndefined();
+    expect(flametailOverride.effects[0].patch.product).toBe("battleRecord");
+    expect(flametailOverride.addEffects).toEqual(
+      expect.arrayContaining([expect.objectContaining({ facility: "control", product: "gold", efficiency: -0.1 })])
+    );
   });
 
   it("keeps morale-cost factory capacity skills product-neutral", () => {
