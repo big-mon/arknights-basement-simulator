@@ -139,6 +139,7 @@ const pinusFactoryOperator = operators.find(
     operator.skills.some((skill) => skill.effects.some((effect) => effect.facility === "factory"))
 )!;
 const degenbrecher = operators.find((operator) => operator.id === "char_4116_blkkgt")!;
+const matterhorn = operators.find((operator) => operator.id === "char_199_yak")!;
 const obliviator = operators.find((operator) => operator.id === "char_4182_oblvns")!;
 const mortis = operators.find((operator) => operator.id === "char_4183_mortis")!;
 const mrNothing = operators.find((operator) => operator.id === "char_455_nothin")!;
@@ -744,16 +745,19 @@ describe("optimizer", () => {
     const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
     const bubbleStorageSkill = bubble.skills.find((skill) => skill.id === "manu_prod_limit&cost[010]")!;
     const bubbleStorageEffect = bubbleStorageSkill.effects.find((effect) => effect.storageLimit === 10)!;
-    const candidates = findCandidates(factory, state);
+    const candidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === bubble.id)!;
     const withVermeil = findCandidates(factory, state, 0, {
       facilities: state.facilities,
       assignments: [contextAssignment(factory, vermeil.id, { storageLimit: 8 })]
     }).find((assignment) => assignment.operatorId === bubble.id)!;
 
     expect(bubbleStorageEffect.product).toBeUndefined();
-    expect(candidates.some((assignment) => assignment.operatorId === bubble.id && assignment.skillId === bubbleStorageSkill.id)).toBe(true);
+    expect(candidate.skillId).toBe("manu_prod_spd_variable3[000]");
+    expect(candidate.storageLimit).toBe(10);
+    expect(candidate.efficiency).toBeCloseTo(0.13);
     expect(withVermeil.skillId).toBe("manu_prod_spd_variable3[000]");
     expect(withVermeil.storageLimit).toBe(10);
+    expect(withVermeil.efficiency).toBeCloseTo(0.21);
   });
 
   it("scales Vermeil from same-factory storage limit increases", () => {
@@ -1223,9 +1227,30 @@ describe("optimizer", () => {
     expect(pramanix.affiliations).toContain("kjerag");
     expect(courier.affiliations).toContain("kjerag");
     expect(thirdKjeragOperator.affiliations).toContain("kjerag");
-    expect(base.efficiency).toBeCloseTo(0.03);
-    expect(withStaleSilverAsh.efficiency).toBeCloseTo(0.03);
-    expect(withThreeOtherKjerag.efficiency).toBeCloseTo(0.13);
+    expect(base.efficiency).toBe(0);
+    expect(withStaleSilverAsh.efficiency).toBe(0);
+    expect(withThreeOtherKjerag.efficiency).toBe(0);
+    expect(withThreeOtherKjerag.remoteFacilityEfficiencyBonuses).toContainEqual({
+      facility: "trading",
+      amount: 0.1,
+      product: "lmd",
+      groupAffiliations: ["kjerag"],
+      min: 3
+    });
+  });
+
+  it("applies SilverAsh the Dignified Lord's Kjerag boost to matching trading posts", () => {
+    const state = createDefaultState();
+    ownOperators(state, [silverashAlter.id, courier.id, degenbrecher.id, matterhorn.id]);
+    state.facilities = state.facilities.filter((facility) => facility.id === "control-1" || facility.id === "trading-1");
+    const plan = generateAssignmentPlan(state);
+    const tradingPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === "trading-1")!;
+    const controlPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === "control-1")!;
+    const assignedEfficiency = tradingPlan.assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
+
+    expect(controlPlan.assignments.some((assignment) => assignment.operatorId === silverashAlter.id)).toBe(true);
+    expect(tradingPlan.assignments.filter((assignment) => assignment.operatorId !== silverashAlter.id).length).toBe(3);
+    expect(tradingPlan.expectedEfficiency - assignedEfficiency).toBeCloseTo(0.1);
   });
 
   it("adds Hedley's Ines bonus when Ines is assigned anywhere in the base", () => {

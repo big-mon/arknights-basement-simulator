@@ -403,7 +403,7 @@ function bestSkillForFacility(
       const remoteFacilityCountBonuses = activeRemoteFacilityCountBonuses(operator, elite, facility, context);
       const productMultiplier = productWeight(facility.product, preference);
       const eliteBonus = elite * 0.015;
-      const scalingMultiplier = effectScalingMultiplier(effect, operator, facility, context);
+      const scalingMultiplier = effectScalingMultiplier(effect, operator, elite, facility, context);
       const conditionalBonus = effectConditionalBonus(effect, operator, facility, context);
       const rawEfficiency = (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier + conditionalBonus + eliteBonus;
       const externalGlobalEffect = isExternalGlobalEffect(effect, facility);
@@ -424,7 +424,7 @@ function bestSkillForFacility(
       const storageLimit = activeFacilityLimit(operator, elite, facility, context, "storageLimit");
       const orderLimit = activeFacilityLimit(operator, elite, facility, context, "orderLimit");
       const statScalingKeys = statScalingKeysForEffect(effect);
-      const facilityStatScalings = facilityStatScalingsForEffect(effect, operator, facility, preference, context);
+      const facilityStatScalings = facilityStatScalingsForEffect(effect, operator, elite, facility, preference, context);
       const skilllessPrerequisiteOperatorIds = skilllessFacilityPrerequisiteOperatorIds(effect.conditions ?? [], facility, context);
       assignments.push({
         facilityId: facility.id,
@@ -532,6 +532,7 @@ function effectiveFacilityScore(assignments: Assignment[], facility: FacilitySlo
 function effectScalingMultiplier(
   effect: BaseSkillEffect,
   operator: Operator,
+  elite: number,
   facility: FacilitySlot,
   context?: AssignmentEvaluationContext
 ) {
@@ -567,12 +568,12 @@ function effectScalingMultiplier(
   }
 
   if (effect.scaling.type === "facilityStorageLimit") {
-    const count = facilityAssignmentStat(effect, operator, facility, context, "storageLimit");
+    const count = facilityAssignmentStat(effect, operator, elite, facility, context, "storageLimit");
     return effect.scaling.max ? Math.min(count, effect.scaling.max) : count;
   }
 
   if (effect.scaling.type === "facilityOrderLimit") {
-    const count = facilityAssignmentStat(effect, operator, facility, context, "orderLimit");
+    const count = facilityAssignmentStat(effect, operator, elite, facility, context, "orderLimit");
     const scaled = effect.scaling.per ? Math.floor(count / effect.scaling.per) : count;
     return effect.scaling.max ? Math.min(scaled, effect.scaling.max) : scaled;
   }
@@ -600,6 +601,7 @@ function effectScalingMultiplier(
 function facilityAssignmentStat(
   effect: BaseSkillEffect,
   operator: Operator,
+  elite: number,
   facility: FacilitySlot,
   context: AssignmentEvaluationContext | undefined,
   key: "storageLimit" | "orderLimit"
@@ -624,7 +626,7 @@ function facilityAssignmentStat(
         )
       );
     }, 0) ?? 0;
-  const selfTotal = effect.scaling?.includeSelf ? Math.max(effect[key] ?? 0, 0) : 0;
+  const selfTotal = effect.scaling?.includeSelf ? Math.max(activeFacilityLimit(operator, elite, facility, context, key) ?? 0, 0) : 0;
   return assignedTotal + remoteTotal + selfTotal;
 }
 
@@ -669,6 +671,12 @@ function remoteFacilityEfficiencyBonusAmount(
 ) {
   if (bonus.facility !== facility.type || (bonus.product && bonus.product !== facility.product)) {
     return 0;
+  }
+  if (bonus.groupAffiliations?.length) {
+    const matchingAssignments = context.assignments.filter(
+      (assignment) => assignment.facilityId === facility.id && operatorHasAnyAffiliation(assignment.operatorId, bonus.groupAffiliations ?? [])
+    );
+    return matchingAssignments.length >= (bonus.min ?? 1) ? bonus.amount : 0;
   }
   if (!bonus.affiliations?.length && !bonus.operatorIds?.length) {
     return bonus.amount;
@@ -1019,7 +1027,7 @@ function calculateGlobalBonus(state: AppState, facility: FacilitySlot, context: 
       .filter((effect) => effectConditionsSatisfied(effect, operator, assignedFacility, context));
 
     for (const effect of activeEffects) {
-      const scalingMultiplier = effectScalingMultiplier(effect, operator, assignedFacility, context);
+      const scalingMultiplier = effectScalingMultiplier(effect, operator, elite, assignedFacility, context);
       buckets.push({ stackKey: effect.globalEffect?.stackKey, value: (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier });
     }
   }
@@ -1068,6 +1076,7 @@ function statScalingKeysForEffect(effect: BaseSkillEffect): NonNullable<Assignme
 function facilityStatScalingsForEffect(
   effect: BaseSkillEffect,
   operator: Operator,
+  elite: number,
   facility: FacilitySlot,
   preference: OptimizationPreference,
   context?: AssignmentEvaluationContext
@@ -1076,7 +1085,7 @@ function facilityStatScalingsForEffect(
     return [
       {
         key: "storageLimit",
-        current: facilityAssignmentStat(effect, operator, facility, context, "storageLimit"),
+        current: facilityAssignmentStat(effect, operator, elite, facility, context, "storageLimit"),
         efficiencyPerStep: effect.efficiency,
         scorePerEfficiency: productWeight(facility.product, preference) * facilityWeight(facility),
         max: effect.scaling.max
@@ -1087,7 +1096,7 @@ function facilityStatScalingsForEffect(
     return [
       {
         key: "orderLimit",
-        current: facilityAssignmentStat(effect, operator, facility, context, "orderLimit"),
+        current: facilityAssignmentStat(effect, operator, elite, facility, context, "orderLimit"),
         efficiencyPerStep: effect.efficiency,
         scorePerEfficiency: productWeight(facility.product, preference) * facilityWeight(facility),
         per: effect.scaling.per,
@@ -1121,10 +1130,25 @@ function remoteFacilityEfficiencyBonusesForEffect(effect: BaseSkillEffect): NonN
   if (
     effect.facility !== "control" ||
     effect.globalEffect ||
-    effect.scaling?.type !== "affiliation" ||
-    !effect.scaling.facility ||
+    !effect.scaling?.facility ||
     effect.scaling.facility === effect.facility
   ) {
+    return [];
+  }
+
+  if (effect.scaling.type === "facilityGroupAffiliation") {
+    return [
+      {
+        facility: effect.scaling.facility,
+        amount: effect.efficiency,
+        ...(effect.product && effect.product !== "morale" ? { product: effect.product } : {}),
+        groupAffiliations: effect.scaling.affiliations,
+        min: effect.scaling.min
+      }
+    ];
+  }
+
+  if (effect.scaling.type !== "affiliation") {
     return [];
   }
 

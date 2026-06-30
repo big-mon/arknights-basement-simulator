@@ -193,6 +193,7 @@ export interface Assignment {
     amount: number;
     product?: ProductType;
     affiliations?: string[];
+    groupAffiliations?: string[];
     operatorIds?: string[];
     min?: number;
   }>;
