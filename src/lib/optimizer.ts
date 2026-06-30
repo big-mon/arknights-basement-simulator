@@ -1016,10 +1016,10 @@ export function conditionsSatisfied(
       if (condition.type === "assignedOperator" && condition.facility) {
         return assigned;
       }
-      const ownedPrerequisite = allowOwnedSkilllessPrerequisites && hasOwnedSkilllessPrerequisite(condition.operatorIds, context);
       if (condition.type === "assignedOperator") {
-        return assigned || ownedPrerequisite;
+        return assigned;
       }
+      const ownedPrerequisite = allowOwnedSkilllessPrerequisites && hasOwnedSkilllessPrerequisite(condition.operatorIds, context);
       return assigned || (condition.facility === facility.type ? ownedPrerequisite : false);
     }
 
@@ -1076,8 +1076,7 @@ function skilllessPrerequisiteOperatorIdsForConditions(
   const operatorIds = conditions.flatMap((condition) => {
     if (
       condition.type === "sameFacilityOperator" ||
-      (condition.type === "facilityOperator" && condition.facility === facility.type) ||
-      (condition.type === "assignedOperator" && !condition.facility)
+      (condition.type === "facilityOperator" && condition.facility === facility.type)
     ) {
       const operatorId = condition.operatorIds.find((candidateId) => context.roster?.[candidateId]?.owned && operatorIsSkillless(candidateId));
       return operatorId ? [operatorId] : [];
@@ -1100,7 +1099,10 @@ function skilllessConditionalBonusesForEffect(
   return (effect.conditionalBonuses ?? [])
     .map((bonus) => {
       const operatorIds = bonus.conditions.flatMap((condition) => {
-        if (condition.type === "assignedOperator" && !condition.facility) {
+        if (
+          condition.type === "sameFacilityOperator" ||
+          (condition.type === "facilityOperator" && condition.facility === facility.type)
+        ) {
           const operatorId = condition.operatorIds.find((candidateId) => context.roster?.[candidateId]?.owned && operatorIsSkillless(candidateId));
           return operatorId ? [operatorId] : [];
         }
@@ -1109,8 +1111,7 @@ function skilllessConditionalBonusesForEffect(
       const remainingConditions = bonus.conditions.filter(
         (condition) =>
           !(
-            condition.type === "assignedOperator" &&
-            !condition.facility &&
+            (condition.type === "sameFacilityOperator" || (condition.type === "facilityOperator" && condition.facility === facility.type)) &&
             condition.operatorIds.some((candidateId) => context.roster?.[candidateId]?.owned && operatorIsSkillless(candidateId))
           )
       );

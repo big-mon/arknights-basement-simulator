@@ -345,12 +345,14 @@ describe("optimizer", () => {
     expect(ashWithRainbowSquad.efficiency).toBeCloseTo(0.18);
   });
 
-  it("requires Hedley in a trading post for Wis'adel's control center order bonus", () => {
+  it("models Wis'adel's Hoederer and Ines control-center branches independently", () => {
     const state = createDefaultState();
-    ownOperators(state, [wisadel.id, hedley.id]);
+    ownOperators(state, [wisadel.id, hedley.id, ines.id]);
     state.roster[wisadel.id].elite = 0;
     const control = state.facilities.find((facility) => facility.id === "control-1")!;
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const reception: FacilitySlot = { id: "reception-1", type: "reception", name: "Reception", slotCount: 2, product: "clue" };
+    const facilities = [...state.facilities, reception];
 
     expect(findCandidates(control, state).some((candidate) => candidate.skillId === wisadelHedleySkill.id)).toBe(false);
     expect(
@@ -359,6 +361,14 @@ describe("optimizer", () => {
         assignments: [contextAssignment(trading, hedley.id)]
       }).some((candidate) => candidate.skillId === wisadelHedleySkill.id)
     ).toBe(true);
+    const withInesReception = findCandidates(control, state, 0, {
+      facilities,
+      assignments: [contextAssignment(reception, ines.id)]
+    }).find((candidate) => candidate.skillId === wisadelHedleySkill.id)!;
+
+    expect(withInesReception.score).toBeGreaterThan(0);
+    expect(withInesReception.remoteFacilityStatBonuses).toBeUndefined();
+    expect(withInesReception.globalStackKey).toBe("reception:clue:reception-clue-speed");
   });
 
   it("requires same-facility affiliation matches for same-room faction skills", () => {
@@ -1284,7 +1294,7 @@ describe("optimizer", () => {
     expect(tradingPlan.expectedEfficiency - assignedEfficiency).toBeCloseTo(0.1);
   });
 
-  it("reserves a work-area slot for Hedley's skillless W bonus", () => {
+  it("requires W to be assigned somewhere before applying Hedley's optional W bonus", () => {
     const state = createDefaultState();
     ownOperators(state, [hedley.id, ines.id]);
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
@@ -1297,35 +1307,48 @@ describe("optimizer", () => {
     state.roster[w.id].owned = true;
     state.roster[w.id].elite = 2;
     const withOwnedW = findCandidates(trading, state).find((candidate) => candidate.operatorId === hedley.id)!;
+    const withAssignedW = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(control, w.id)]
+    }).find((candidate) => candidate.operatorId === hedley.id)!;
 
     expect(w.skills).toHaveLength(0);
     expect(base.efficiency).toBeCloseTo(0.33);
     expect(withInes.efficiency).toBeCloseTo(0.38);
-    expect(withOwnedW.efficiency).toBeCloseTo(0.38);
-    expect(withOwnedW.skilllessPrerequisiteOperatorIds).toContain(w.id);
+    expect(withOwnedW.efficiency).toBeCloseTo(0.33);
+    expect(withOwnedW.skilllessPrerequisiteOperatorIds).toBeUndefined();
+    expect(withAssignedW.efficiency).toBeCloseTo(0.38);
   });
 
-  it("reserves a work-area slot for Underflow's skillless Ulpianus bonus", () => {
+  it("requires Ulpianus to be assigned somewhere before applying Underflow's optional bonus", () => {
     const state = createDefaultState();
     ownOperators(state, [underflow.id, ulpianus.id]);
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
     const candidate = findCandidates(trading, state).find((assignment) => assignment.operatorId === underflow.id)!;
+    const withAssignedUlpianus = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(control, ulpianus.id)]
+    }).find((assignment) => assignment.operatorId === underflow.id)!;
 
     expect(ulpianus.skills).toHaveLength(0);
-    expect(candidate.efficiency).toBeCloseTo(0.43);
-    expect(candidate.skilllessPrerequisiteOperatorIds).toContain(ulpianus.id);
+    expect(candidate.efficiency).toBeCloseTo(0.33);
+    expect(candidate.skilllessPrerequisiteOperatorIds).toBeUndefined();
+    expect(withAssignedUlpianus.efficiency).toBeCloseTo(0.43);
   });
 
-  it("falls back to base assignment when an optional skillless bonus has no free work-area slot", () => {
+  it("does not spend a trading slot on a base-wide optional skillless prerequisite", () => {
     const state = createDefaultState();
-    ownOperators(state, [underflow.id, ulpianus.id]);
-    state.facilities = state.facilities.map((facility) => (facility.id === "trading-1" ? { ...facility, slotCount: 1 } : facility));
+    ownOperators(state, [underflow.id, ulpianus.id, defaultOwnedTradingOperator.id]);
+    state.facilities = state.facilities.map((facility) => (facility.id === "trading-1" ? { ...facility, slotCount: 2 } : facility));
     const plan = generateAssignmentPlan(state);
     const tradingPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === "trading-1")!;
     const assignment = tradingPlan.assignments.find((candidate) => candidate.operatorId === underflow.id)!;
 
     expect(assignment.efficiency).toBeCloseTo(0.33);
     expect(assignment.skilllessPrerequisiteOperatorIds).toBeUndefined();
+    expect(tradingPlan.assignments.some((candidate) => candidate.operatorId === ulpianus.id)).toBe(false);
+    expect(tradingPlan.assignments.some((candidate) => candidate.operatorId === defaultOwnedTradingOperator.id)).toBe(true);
   });
 
   it("discovers the Lemuen and Exusiai trading post pairing in assignment plans", () => {

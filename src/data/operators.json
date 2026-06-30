@@ -15994,6 +15994,27 @@
               }
             ],
             "orderLimit": 1
+          },
+          {
+            "facility": "control",
+            "description": {
+              "en": "When this Operator is assigned to the Control Center, if Ines is assigned to the Reception Room, clue collection speed +5%."
+            },
+            "efficiency": 0.05,
+            "globalEffect": {
+              "facility": "reception",
+              "product": "clue",
+              "stackKey": "reception-clue-speed"
+            },
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "reception",
+                "operatorIds": [
+                  "char_4087_ines"
+                ]
+              }
+            ]
           }
         ]
       },
@@ -16030,6 +16051,27 @@
               }
             ],
             "orderLimit": 2
+          },
+          {
+            "facility": "control",
+            "description": {
+              "en": "When this Operator is assigned to the Control Center, if Ines is assigned to the Reception Room, clue collection speed +5%."
+            },
+            "efficiency": 0.05,
+            "globalEffect": {
+              "facility": "reception",
+              "product": "clue",
+              "stackKey": "reception-clue-speed"
+            },
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "reception",
+                "operatorIds": [
+                  "char_4087_ines"
+                ]
+              }
+            ]
           }
         ]
       },
