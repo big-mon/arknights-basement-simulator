@@ -517,6 +517,21 @@ describe("optimizer", () => {
     expect(withVirtualPowerPlants.efficiency - base.efficiency).toBeCloseTo(0.3);
   });
 
+  it("does not score Eunectes's virtual power plants from her own factory skill", () => {
+    const state = createDefaultState();
+    ownOperators(state, [eunectes.id, lancet.id]);
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const power = state.facilities.find((facility) => facility.id === "power-1")!;
+    const candidate = findCandidates(control, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(power, lancet.id)]
+    }).find((assignment) => assignment.operatorId === eunectes.id)!;
+
+    expect(candidate.efficiency).toBe(0);
+    expect(candidate.score).toBe(0);
+    expect(candidate.remoteFacilityCountBonuses).toContainEqual({ facility: "power", amount: 2 });
+  });
+
   it("scales Snegurochka by every operator assigned to the same factory", () => {
     const state = createDefaultState();
     ownOperators(state, [snegurochka.id, texas.id, lappland.id]);

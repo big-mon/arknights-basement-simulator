@@ -412,7 +412,7 @@ function bestSkillForFacility(
       const remoteFacilityCountEffect = facility.type === "control" && remoteFacilityCountBonuses.length > 0;
       const effectiveEfficiency = externalGlobalEffect || remoteFacilityEfficiencyEffect || remoteFacilityStatEffect || remoteFacilityCountEffect ? 0 : rawEfficiency;
       const remoteEfficiencyScore = remoteFacilityEfficiencyScore(remoteFacilityEfficiencyBonuses, preference, context);
-      const remoteCountScore = remoteFacilityCountScore(remoteFacilityCountBonuses, preference, context);
+      const remoteCountScore = remoteFacilityCountScore(remoteFacilityCountBonuses, operator.id, preference, context);
       const scoreProductMultiplier = externalGlobalEffect
         ? productWeight(effect.globalEffect?.product ?? facility.product, preference)
         : productMultiplier;
@@ -1193,6 +1193,7 @@ function remoteFacilityEfficiencyScore(
 
 function remoteFacilityCountScore(
   bonuses: NonNullable<Assignment["remoteFacilityCountBonuses"]>,
+  sourceOperatorId: string,
   preference: OptimizationPreference,
   context?: AssignmentEvaluationContext
 ) {
@@ -1204,6 +1205,9 @@ function remoteFacilityCountScore(
     const matchingFacilities = context.facilities.filter((facility) => facility.type !== "dormitory");
     const facilityScore = matchingFacilities.reduce((facilitySum, facility) => {
       const candidateScore = operators.reduce((operatorSum, operator) => {
+        if (operator.id === sourceOperatorId) {
+          return operatorSum;
+        }
         const rosterEntry = context.roster?.[operator.id];
         if (!rosterEntry?.owned) {
           return operatorSum;
