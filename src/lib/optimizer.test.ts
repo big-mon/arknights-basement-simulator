@@ -1038,6 +1038,17 @@ describe("optimizer", () => {
     expect(controlPlan.assignments.filter((assignment) => assignment.globalStackKey?.endsWith(":all-trading-speed")).length).toBe(1);
   });
 
+  it("scores global control boosts without generic elite bonus", () => {
+    const state = createDefaultState();
+    ownOperators(state, [amiya.id]);
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const candidate = findCandidates(control, state).find((assignment) => assignment.operatorId === amiya.id)!;
+
+    expect(candidate.skillId).toBe("control_tra_spd[000]");
+    expect(candidate.efficiency).toBe(0);
+    expect(candidate.score).toBeCloseTo(4.2);
+  });
+
   it("does not count Snegurochka's storage-only first skill as production", () => {
     const state = createDefaultState();
     ownOperators(state, [snegurochka.id]);
@@ -1272,7 +1283,7 @@ describe("optimizer", () => {
     expect(tradingPlan.expectedEfficiency - assignedEfficiency).toBeCloseTo(0.1);
   });
 
-  it("adds Hedley's Ines bonus when Ines is assigned anywhere in the base", () => {
+  it("reserves a work-area slot for Hedley's skillless W bonus", () => {
     const state = createDefaultState();
     ownOperators(state, [hedley.id, ines.id]);
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
@@ -1290,9 +1301,10 @@ describe("optimizer", () => {
     expect(base.efficiency).toBeCloseTo(0.33);
     expect(withInes.efficiency).toBeCloseTo(0.38);
     expect(withOwnedW.efficiency).toBeCloseTo(0.38);
+    expect(withOwnedW.skilllessPrerequisiteOperatorIds).toContain(w.id);
   });
 
-  it("adds Underflow's Ulpianus bonus from owned skillless prerequisites", () => {
+  it("reserves a work-area slot for Underflow's skillless Ulpianus bonus", () => {
     const state = createDefaultState();
     ownOperators(state, [underflow.id, ulpianus.id]);
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
@@ -1300,6 +1312,17 @@ describe("optimizer", () => {
 
     expect(ulpianus.skills).toHaveLength(0);
     expect(candidate.efficiency).toBeCloseTo(0.43);
+    expect(candidate.skilllessPrerequisiteOperatorIds).toContain(ulpianus.id);
+  });
+
+  it("does not select assigned-operator skillless bonuses without a free work-area slot", () => {
+    const state = createDefaultState();
+    ownOperators(state, [underflow.id, ulpianus.id]);
+    state.facilities = state.facilities.map((facility) => (facility.id === "trading-1" ? { ...facility, slotCount: 1 } : facility));
+    const plan = generateAssignmentPlan(state);
+    const tradingPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === "trading-1")!;
+
+    expect(tradingPlan.assignments.some((assignment) => assignment.operatorId === underflow.id)).toBe(false);
   });
 
   it("discovers the Lemuen and Exusiai trading post pairing in assignment plans", () => {

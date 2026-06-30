@@ -419,6 +419,7 @@ function bestSkillForFacility(
       const eliteBonus = elite * 0.015;
       const scalingMultiplier = effectScalingMultiplier(effect, operator, elite, facility, context);
       const conditionalBonus = effectConditionalBonus(effect, operator, facility, context);
+      const globalEffectEfficiency = (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier;
       const rawEfficiency = (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier + conditionalBonus + eliteBonus;
       const externalGlobalEffect = isExternalGlobalEffect(effect, facility);
       const remoteFacilityEfficiencyEffect = isRemoteFacilityEfficiencyEffect(effect, facility);
@@ -439,13 +440,13 @@ function bestSkillForFacility(
       const orderLimit = activeFacilityLimit(operator, elite, facility, context, "orderLimit");
       const statScalingKeys = statScalingKeysForEffect(effect);
       const facilityStatScalings = facilityStatScalingsForEffect(effect, operator, elite, facility, preference, context);
-      const skilllessPrerequisiteOperatorIds = skilllessFacilityPrerequisiteOperatorIds(effect.conditions ?? [], facility, context);
+      const skilllessPrerequisiteOperatorIds = skilllessPrerequisiteOperatorIdsForEffect(effect, facility, context);
       assignments.push({
         facilityId: facility.id,
         operatorId: operator.id,
         skillId: skill.id,
         score:
-          (remoteFacilityEfficiencyEffect ? 0 : (externalGlobalEffect ? rawEfficiency : effectiveEfficiency) * scoreProductMultiplier * scoreFacilityWeight * scoreFacilityCount) +
+          (remoteFacilityEfficiencyEffect ? 0 : (externalGlobalEffect ? globalEffectEfficiency : effectiveEfficiency) * scoreProductMultiplier * scoreFacilityWeight * scoreFacilityCount) +
           remoteEfficiencyScore +
           remoteCountScore,
         efficiency: effectiveEfficiency,
@@ -1030,16 +1031,24 @@ function hasOwnedSkilllessPrerequisite(operatorIds: string[], context: Assignmen
   return operatorIds.some((operatorId) => context.roster?.[operatorId]?.owned && operatorIsSkillless(operatorId));
 }
 
-function skilllessFacilityPrerequisiteOperatorIds(
-  conditions: NonNullable<BaseSkillEffect["conditions"]>,
+function skilllessPrerequisiteOperatorIdsForEffect(
+  effect: BaseSkillEffect,
   facility: FacilitySlot,
   context?: AssignmentEvaluationContext
 ) {
   if (!context) {
     return [];
   }
+  const conditions = [
+    ...(effect.conditions ?? []),
+    ...((effect.conditionalBonuses ?? []).flatMap((bonus) => bonus.conditions))
+  ];
   const operatorIds = conditions.flatMap((condition) => {
-    if (condition.type === "sameFacilityOperator" || (condition.type === "facilityOperator" && condition.facility === facility.type)) {
+    if (
+      condition.type === "sameFacilityOperator" ||
+      (condition.type === "facilityOperator" && condition.facility === facility.type) ||
+      (condition.type === "assignedOperator" && !condition.facility)
+    ) {
       const operatorId = condition.operatorIds.find((candidateId) => context.roster?.[candidateId]?.owned && operatorIsSkillless(candidateId));
       return operatorId ? [operatorId] : [];
     }
