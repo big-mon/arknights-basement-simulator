@@ -857,6 +857,7 @@ describe("optimizer", () => {
       expect.objectContaining({ key: "orderLimit", facility: "trading", amount: 6 })
     );
     expect(gnosisAssignment.efficiency).toBe(0);
+    expect(gnosisAssignment.score).toBeGreaterThan(0);
     expect(withGnosis.efficiency - withoutGnosis.efficiency).toBeCloseTo(0.5);
   });
 
@@ -1315,14 +1316,16 @@ describe("optimizer", () => {
     expect(candidate.skilllessPrerequisiteOperatorIds).toContain(ulpianus.id);
   });
 
-  it("does not select assigned-operator skillless bonuses without a free work-area slot", () => {
+  it("falls back to base assignment when an optional skillless bonus has no free work-area slot", () => {
     const state = createDefaultState();
     ownOperators(state, [underflow.id, ulpianus.id]);
     state.facilities = state.facilities.map((facility) => (facility.id === "trading-1" ? { ...facility, slotCount: 1 } : facility));
     const plan = generateAssignmentPlan(state);
     const tradingPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === "trading-1")!;
+    const assignment = tradingPlan.assignments.find((candidate) => candidate.operatorId === underflow.id)!;
 
-    expect(tradingPlan.assignments.some((assignment) => assignment.operatorId === underflow.id)).toBe(false);
+    expect(assignment.efficiency).toBeCloseTo(0.33);
+    expect(assignment.skilllessPrerequisiteOperatorIds).toBeUndefined();
   });
 
   it("discovers the Lemuen and Exusiai trading post pairing in assignment plans", () => {
