@@ -439,6 +439,23 @@ describe("optimizer", () => {
     expect(withOwnedSuzuran.efficiency).toBeGreaterThan(withoutSuzuran.efficiency);
   });
 
+  it("reserves room slots for skillless facility prerequisites", () => {
+    const state = createDefaultState();
+    const reception: FacilitySlot = { id: "reception-1", type: "reception", name: "Reception", slotCount: 2, product: "clue" };
+    state.facilities = [reception];
+    ownOperators(state, [vulpisfoglia.id, suzuran.id]);
+
+    const plan = generateAssignmentPlan(state);
+    const receptionPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === reception.id)!;
+    const suzuranAssignment = receptionPlan.assignments.find((assignment) => assignment.operatorId === suzuran.id)!;
+
+    expect(suzuran.skills).toHaveLength(0);
+    expect(receptionPlan.assignments).toHaveLength(2);
+    expect(receptionPlan.assignments.some((assignment) => assignment.operatorId === vulpisfoglia.id)).toBe(true);
+    expect(suzuranAssignment.skillId).toBe("skillless-prerequisite");
+    expect(suzuranAssignment.skilllessPrerequisiteFor).toBe(vulpisfoglia.id);
+  });
+
   it("scales Muelsyse's power bonus by other Rhine operators assigned in the base", () => {
     const state = createDefaultState();
     ownOperators(state, [muelsyse.id, saria.id]);
@@ -997,6 +1014,18 @@ describe("optimizer", () => {
     expect(normalFactoryOperators).toHaveLength(2);
     expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === vermeil.id)).toBe(true);
     expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === bubble.id)).toBe(true);
+  });
+
+  it("does not select more non-suppressing candidates than the room has slots", () => {
+    const state = createDefaultState();
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    state.facilities = [factory];
+    ownAllRoster(state);
+
+    const plan = generateAssignmentPlan(state);
+    const factoryPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === factory.id)!;
+
+    expect(factoryPlan.assignments.length).toBeLessThanOrEqual(factory.slotCount);
   });
 
   it("can replace a normal factory worker with a negative capacity partner when the room gains output", () => {

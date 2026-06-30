@@ -165,6 +165,8 @@ export interface Assignment {
   orderLimit?: number;
   suppressesOtherFactoryEfficiency?: boolean;
   globalStackKey?: string;
+  skilllessPrerequisiteOperatorIds?: string[];
+  skilllessPrerequisiteFor?: string;
   scalesWithFacilityStat?: Array<"storageLimit" | "orderLimit">;
   facilityStatScalings?: Array<{
     key: "storageLimit" | "orderLimit";
