@@ -541,7 +541,7 @@ function facilityAssignmentStat(
       return (
         sum +
         (assignment.remoteFacilityStatBonuses ?? []).reduce(
-          (innerSum, bonus) => (remoteFacilityStatBonusApplies(bonus, key, facility, context) ? innerSum + Math.max(bonus.amount, 0) : innerSum),
+          (innerSum, bonus) => innerSum + remoteFacilityStatBonusAmount(bonus, key, facility, context),
           0
         )
       );
@@ -550,23 +550,26 @@ function facilityAssignmentStat(
   return assignedTotal + remoteTotal + selfTotal;
 }
 
-function remoteFacilityStatBonusApplies(
+function remoteFacilityStatBonusAmount(
   bonus: NonNullable<Assignment["remoteFacilityStatBonuses"]>[number],
   key: "storageLimit" | "orderLimit",
   facility: FacilitySlot,
   context: AssignmentEvaluationContext
 ) {
   if (bonus.key !== key || bonus.facility !== facility.type) {
-    return false;
+    return 0;
   }
-  if (!bonus.affiliations?.length) {
-    return true;
+  if (!bonus.affiliations?.length && !bonus.operatorIds?.length) {
+    return Math.max(bonus.amount, 0);
   }
 
   const matchingAssignments = context.assignments.filter(
-    (assignment) => assignment.facilityId === facility.id && operatorHasAnyAffiliation(assignment.operatorId, bonus.affiliations ?? [])
+    (assignment) =>
+      assignment.facilityId === facility.id &&
+      ((bonus.affiliations?.length && operatorHasAnyAffiliation(assignment.operatorId, bonus.affiliations)) ||
+        (bonus.operatorIds?.length && bonus.operatorIds.includes(assignment.operatorId)))
   );
-  return matchingAssignments.length >= (bonus.min ?? 1);
+  return matchingAssignments.length >= (bonus.min ?? 1) ? matchingAssignments.length * Math.max(bonus.amount, 0) : 0;
 }
 
 function facilityCount(effect: BaseSkillEffect, context?: AssignmentEvaluationContext) {
@@ -950,29 +953,45 @@ function facilityStatScalingsForEffect(
 function remoteFacilityStatBonusesForEffect(effect: BaseSkillEffect): NonNullable<Assignment["remoteFacilityStatBonuses"]> {
   const bonuses: NonNullable<Assignment["remoteFacilityStatBonuses"]> = [];
   for (const condition of effect.conditions ?? []) {
-    if (condition.type !== "facilityAffiliation" || !condition.facility) {
-      continue;
-    }
     if (effect.storageLimit) {
-      bonuses.push({
-        key: "storageLimit",
-        facility: condition.facility,
-        amount: effect.storageLimit,
-        affiliations: condition.affiliations,
-        min: condition.min
-      });
+      const bonus = remoteFacilityStatBonusForCondition(condition, "storageLimit", effect.storageLimit);
+      if (bonus) {
+        bonuses.push(bonus);
+      }
     }
     if (effect.orderLimit) {
-      bonuses.push({
-        key: "orderLimit",
-        facility: condition.facility,
-        amount: effect.orderLimit,
-        affiliations: condition.affiliations,
-        min: condition.min
-      });
+      const bonus = remoteFacilityStatBonusForCondition(condition, "orderLimit", effect.orderLimit);
+      if (bonus) {
+        bonuses.push(bonus);
+      }
     }
   }
   return bonuses;
+}
+
+function remoteFacilityStatBonusForCondition(
+  condition: NonNullable<BaseSkillEffect["conditions"]>[number],
+  key: "storageLimit" | "orderLimit",
+  amount: number
+): NonNullable<Assignment["remoteFacilityStatBonuses"]>[number] | undefined {
+  if (condition.type === "facilityAffiliation" && condition.facility) {
+    return {
+      key,
+      facility: condition.facility,
+      amount,
+      affiliations: condition.affiliations,
+      min: condition.min
+    };
+  }
+  if (condition.type === "facilityOperator") {
+    return {
+      key,
+      facility: condition.facility,
+      amount,
+      operatorIds: condition.operatorIds
+    };
+  }
+  return undefined;
 }
 
 function matchingGlobalEffectFacilityCount(effect: BaseSkillEffect, context?: AssignmentEvaluationContext) {

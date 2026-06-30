@@ -699,37 +699,69 @@ describe("optimizer", () => {
 
   it("routes Gnosis's remote order-limit bonus to Karlan trading post partners", () => {
     const state = createDefaultState();
-    const karlanTradingPartner = operators.find(
-      (operator) =>
-        operator.id !== degenbrecher.id &&
-        operator.id !== gnosis.id &&
-        operator.affiliations?.includes("karlan") &&
-        operator.skills.some((skill) =>
-          skill.effects.some((effect) => effect.facility === "trading" && (!effect.product || effect.product === "lmd"))
-        )
-    )!;
-    ownOperators(state, [degenbrecher.id, karlanTradingPartner.id, gnosis.id]);
+    const karlanTradingPartners = operators
+      .filter(
+        (operator) =>
+          operator.id !== degenbrecher.id &&
+          operator.id !== gnosis.id &&
+          operator.affiliations?.includes("karlan") &&
+          operator.skills.some((skill) =>
+            skill.effects.some((effect) => effect.facility === "trading" && (!effect.product || effect.product === "lmd"))
+          )
+      )
+      .slice(0, 2);
+    ownOperators(state, [degenbrecher.id, gnosis.id, ...karlanTradingPartners.map((operator) => operator.id)]);
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
     const control = state.facilities.find((facility) => facility.id === "control-1")!;
-    const karlanTradingAssignment = contextAssignment(trading, karlanTradingPartner.id, { orderLimit: 4 });
+    const karlanTradingAssignments = [
+      contextAssignment(trading, karlanTradingPartners[0].id, { orderLimit: 4 }),
+      contextAssignment(trading, karlanTradingPartners[1].id)
+    ];
     const gnosisAssignment = findCandidates(control, state, 0, {
       facilities: state.facilities,
-      assignments: [karlanTradingAssignment]
+      assignments: karlanTradingAssignments
     }).find((assignment) => assignment.operatorId === gnosis.id)!;
     const withoutGnosis = findCandidates(trading, state, 0, {
       facilities: state.facilities,
-      assignments: [karlanTradingAssignment]
+      assignments: karlanTradingAssignments
     }).find((assignment) => assignment.operatorId === degenbrecher.id)!;
     const withGnosis = findCandidates(trading, state, 0, {
       facilities: state.facilities,
-      assignments: [karlanTradingAssignment, gnosisAssignment]
+      assignments: [...karlanTradingAssignments, gnosisAssignment]
     }).find((assignment) => assignment.operatorId === degenbrecher.id)!;
 
-    expect(karlanTradingPartner.affiliations).toContain("karlan");
+    expect(karlanTradingPartners).toHaveLength(2);
+    expect(karlanTradingPartners.every((operator) => operator.affiliations?.includes("karlan"))).toBe(true);
     expect(gnosisAssignment.remoteFacilityStatBonuses).toContainEqual(
       expect.objectContaining({ key: "orderLimit", facility: "trading", amount: 6 })
     );
-    expect(withGnosis.efficiency - withoutGnosis.efficiency).toBeCloseTo(0.25);
+    expect(withGnosis.efficiency - withoutGnosis.efficiency).toBeCloseTo(0.5);
+  });
+
+  it("routes Wis'adel's named remote order-limit bonus to Hoederer", () => {
+    const state = createDefaultState();
+    ownOperators(state, [degenbrecher.id, hedley.id, wisadel.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const hedleyTradingAssignment = contextAssignment(trading, hedley.id, { orderLimit: 8 });
+    const wisadelAssignment = findCandidates(control, state, 0, {
+      facilities: state.facilities,
+      assignments: [hedleyTradingAssignment]
+    }).find((assignment) => assignment.operatorId === wisadel.id)!;
+    const withoutWisadel = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [hedleyTradingAssignment]
+    }).find((assignment) => assignment.operatorId === degenbrecher.id)!;
+    const withWisadel = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [hedleyTradingAssignment, wisadelAssignment]
+    }).find((assignment) => assignment.operatorId === degenbrecher.id)!;
+
+    expect(wisadelAssignment.skillId).toBe(wisadelHedleySkill.id);
+    expect(wisadelAssignment.remoteFacilityStatBonuses).toContainEqual(
+      expect.objectContaining({ key: "orderLimit", facility: "trading", amount: 2, operatorIds: [hedley.id] })
+    );
+    expect(withWisadel.efficiency - withoutWisadel.efficiency).toBeCloseTo(0.25);
   });
 
   it("ignores negative order limit modifiers for Degenbrecher scaling", () => {

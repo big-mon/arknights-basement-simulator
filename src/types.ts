@@ -179,6 +179,7 @@ export interface Assignment {
     facility: FacilityType;
     amount: number;
     affiliations?: string[];
+    operatorIds?: string[];
     min?: number;
   }>;
   fatigueHours: number;
