@@ -100,7 +100,7 @@ function buildFacilityPlans(
     const globalBonus = calculateGlobalBonus(state, facility, context);
     const remoteEfficiencyBonus = calculateRemoteFacilityEfficiencyBonus(facility, context);
     const facilityBonus = globalBonus + remoteEfficiencyBonus;
-    const candidates = findCandidates(facility, state, globalBonus, context)
+    const candidates = findCandidates(facility, state, 0, context)
       .filter((candidate) => !usedOperatorIds.has(candidate.operatorId))
       .sort((a, b) => b.score - a.score);
     const assignments = selectAssignmentsForFacility(candidates, facility.slotCount);
@@ -129,9 +129,8 @@ function attachRotationAlternatives(state: AppState, facilityPlans: FacilityPlan
   };
 
   return facilityPlans.map((plan) => {
-    const globalBonus = calculateGlobalBonus(state, plan.facility, context);
     const alternatives = selectAssignmentsForFacility(
-      findCandidates(plan.facility, state, globalBonus, context)
+      findCandidates(plan.facility, state, 0, context)
         .filter((candidate) => !firstRotationOperatorIds.has(candidate.operatorId))
         .filter((candidate) => !secondRotationOperatorIds.has(candidate.operatorId)),
       plan.facility.slotCount
@@ -410,7 +409,7 @@ function bestSkillForFacility(
       const remoteFacilityEfficiencyEffect = isRemoteFacilityEfficiencyEffect(effect, facility);
       const remoteFacilityStatEffect = facility.type === "control" && remoteFacilityStatBonuses.length > 0;
       const effectiveEfficiency = externalGlobalEffect || remoteFacilityEfficiencyEffect || remoteFacilityStatEffect ? 0 : rawEfficiency;
-      const remoteEfficiencyScore = remoteFacilityEfficiencyScore(effect, preference, context);
+      const remoteEfficiencyScore = remoteFacilityEfficiencyScore(remoteFacilityEfficiencyBonuses, preference, context);
       const scoreProductMultiplier = externalGlobalEffect
         ? productWeight(effect.globalEffect?.product ?? facility.product, preference)
         : productMultiplier;
@@ -428,9 +427,9 @@ function bestSkillForFacility(
         facilityId: facility.id,
         operatorId: operator.id,
         skillId: skill.id,
-        score: remoteFacilityEfficiencyEffect
-          ? remoteEfficiencyScore
-          : (externalGlobalEffect ? rawEfficiency : effectiveEfficiency) * scoreProductMultiplier * scoreFacilityWeight * scoreFacilityCount,
+        score:
+          (remoteFacilityEfficiencyEffect ? 0 : (externalGlobalEffect ? rawEfficiency : effectiveEfficiency) * scoreProductMultiplier * scoreFacilityWeight * scoreFacilityCount) +
+          remoteEfficiencyScore,
         efficiency: effectiveEfficiency,
         storageLimit,
         orderLimit,
@@ -1118,11 +1117,15 @@ function remoteFacilityEfficiencyBonusesForEffect(effect: BaseSkillEffect): NonN
   ];
 }
 
-function remoteFacilityEfficiencyScore(effect: BaseSkillEffect, preference: OptimizationPreference, context?: AssignmentEvaluationContext) {
+function remoteFacilityEfficiencyScore(
+  bonuses: NonNullable<Assignment["remoteFacilityEfficiencyBonuses"]>,
+  preference: OptimizationPreference,
+  context?: AssignmentEvaluationContext
+) {
   if (!context) {
     return 0;
   }
-  return remoteFacilityEfficiencyBonusesForEffect(effect).reduce((sum, bonus) => {
+  return bonuses.reduce((sum, bonus) => {
     return (
       sum +
       context.facilities

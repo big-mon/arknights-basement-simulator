@@ -53,6 +53,7 @@ const lowRarityPowerOperator = operators.find(
     )
 )!;
 const eyjafjalla = operators.find((operator) => operator.id === "char_180_amgoat")!;
+const amiya = operators.find((operator) => operator.id === "char_002_amiya")!;
 const lava = operators.find((operator) => operator.id === "char_121_lava")!;
 const leto = operators.find((operator) => operator.id === "char_194_leto")!;
 const gummy = operators.find((operator) => operator.id === "char_196_sunbr")!;
@@ -602,6 +603,22 @@ describe("optimizer", () => {
     expect(leeCandidate).toBeUndefined();
   });
 
+  it("does not let control-center production boosts shorten facility recovery", () => {
+    const state = createDefaultState();
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    state.facilities = [control, trading];
+    ownOperators(state, [amiya.id, defaultOwnedTradingOperator.id]);
+
+    const plan = generateAssignmentPlan(state);
+    const tradingPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === trading.id)!;
+    const tradingAssignment = tradingPlan.assignments.find((assignment) => assignment.operatorId === defaultOwnedTradingOperator.id)!;
+
+    expect(plan.facilityPlans.some((facilityPlan) => facilityPlan.assignments.some((assignment) => assignment.operatorId === amiya.id))).toBe(true);
+    expect(tradingPlan.expectedEfficiency).toBeGreaterThan(tradingAssignment.efficiency);
+    expect(tradingAssignment.recoveryHours).toBe(8);
+  });
+
   it("scales Terra Research Commission from catnip generated in the control center", () => {
     const state = createDefaultState();
     ownOperators(state, [terraResearchCommission.id, yatoAlter.id]);
@@ -920,6 +937,23 @@ describe("optimizer", () => {
         expect.objectContaining({ facility: "factory", product: "gold", amount: -0.1, affiliations: ["pinus"] })
       ])
     );
+    expect(candidate.score).toBeGreaterThan(0);
+  });
+
+  it("scores Flametail's mixed-sign remote factory modifiers as a net effect", () => {
+    const state = createDefaultState();
+    ownOperators(state, [flametail.id, pinusFactoryOperator.id]);
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const factory = { ...state.facilities.find((facility) => facility.id === "factory-1")!, product: "gold" as const };
+    const candidate = findCandidates(control, state, 0, {
+      facilities: [control, factory],
+      assignments: [contextAssignment(factory, pinusFactoryOperator.id)]
+    }).find((assignment) => assignment.operatorId === flametail.id)!;
+
+    expect(candidate.remoteFacilityEfficiencyBonuses).toEqual(
+      expect.arrayContaining([expect.objectContaining({ facility: "factory", product: "gold", amount: -0.1, affiliations: ["pinus"] })])
+    );
+    expect(candidate.score).toBeLessThan(0);
   });
 
   it("deduplicates non-stacking global control boosts in the control center", () => {
