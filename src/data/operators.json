@@ -2495,7 +2495,13 @@
               "ja": "発電所配置時、他の発電所に作業用プラットフォーム が配置されていない場合、発電所の施設数+1（施設の数以外に影響なし）",
               "en": "When this Operator is assigned to a Power Plant, if there are no Operation Platforms in other Power Plants, Power Plant +1(only affects facility quantity)"
             },
-            "efficiency": 0.05,
+            "efficiency": 0,
+            "facilityCountBonuses": [
+              {
+                "facility": "power",
+                "amount": 1
+              }
+            ],
             "conditions": [
               {
                 "type": "facilityAffiliation",
@@ -13442,7 +13448,13 @@
               "ja": "制御中枢配置時、Lancet-2が発電所に配置されている場合、追加で発電所の施設数+2（施設の数以外に影響なし）",
               "en": "When this Operator is assigned to the Control Center, if Lancet-2 is assigned to a Power Plant, Power Plant count +2 (only affects the facility count)"
             },
-            "efficiency": 0.05,
+            "efficiency": 0,
+            "facilityCountBonuses": [
+              {
+                "facility": "power",
+                "amount": 2
+              }
+            ],
             "conditions": [
               {
                 "type": "facilityOperator",

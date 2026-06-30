@@ -491,6 +491,31 @@ describe("optimizer", () => {
     expect(candidate.efficiency).toBeCloseTo(0.33);
   });
 
+  it("counts Eunectes's virtual power plants for facility-count scaling", () => {
+    const state = createDefaultState();
+    ownOperators(state, [eunectes.id, lancet.id, weedy.id]);
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const power = state.facilities.find((facility) => facility.id === "power-1")!;
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const lancetAssignment = contextAssignment(power, lancet.id);
+    const eunectesControlAssignment = findCandidates(control, state, 0, {
+      facilities: state.facilities,
+      assignments: [lancetAssignment]
+    }).find((assignment) => assignment.operatorId === eunectes.id)!;
+    const base = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: [lancetAssignment]
+    }).find((assignment) => assignment.operatorId === weedy.id)!;
+    const withVirtualPowerPlants = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: [lancetAssignment, eunectesControlAssignment]
+    }).find((assignment) => assignment.operatorId === weedy.id)!;
+
+    expect(eunectesControlAssignment.efficiency).toBe(0);
+    expect(eunectesControlAssignment.remoteFacilityCountBonuses).toContainEqual({ facility: "power", amount: 2 });
+    expect(withVirtualPowerPlants.efficiency - base.efficiency).toBeCloseTo(0.3);
+  });
+
   it("scales Snegurochka by every operator assigned to the same factory", () => {
     const state = createDefaultState();
     ownOperators(state, [snegurochka.id, texas.id, lappland.id]);

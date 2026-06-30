@@ -58,6 +58,10 @@ export interface BaseSkillEffect {
     amount: number;
     scaling?: NonNullable<BaseSkillEffect["scaling"]>;
   }>;
+  facilityCountBonuses?: Array<{
+    facility: FacilityType;
+    amount: number;
+  }>;
   storageLimit?: number;
   orderLimit?: number;
   ignoredForOptimization?: boolean;
@@ -191,6 +195,10 @@ export interface Assignment {
     affiliations?: string[];
     operatorIds?: string[];
     min?: number;
+  }>;
+  remoteFacilityCountBonuses?: Array<{
+    facility: FacilityType;
+    amount: number;
   }>;
   fatigueHours: number;
   recoveryHours: number;

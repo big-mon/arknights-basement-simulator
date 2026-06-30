@@ -400,6 +400,7 @@ function bestSkillForFacility(
 
       const remoteFacilityStatBonuses = activeRemoteFacilityStatBonuses(operator, elite, facility, context);
       const remoteFacilityEfficiencyBonuses = activeRemoteFacilityEfficiencyBonuses(operator, elite, facility, context);
+      const remoteFacilityCountBonuses = activeRemoteFacilityCountBonuses(operator, elite, facility, context);
       const productMultiplier = productWeight(facility.product, preference);
       const eliteBonus = elite * 0.015;
       const scalingMultiplier = effectScalingMultiplier(effect, operator, facility, context);
@@ -408,8 +409,10 @@ function bestSkillForFacility(
       const externalGlobalEffect = isExternalGlobalEffect(effect, facility);
       const remoteFacilityEfficiencyEffect = isRemoteFacilityEfficiencyEffect(effect, facility);
       const remoteFacilityStatEffect = facility.type === "control" && remoteFacilityStatBonuses.length > 0;
-      const effectiveEfficiency = externalGlobalEffect || remoteFacilityEfficiencyEffect || remoteFacilityStatEffect ? 0 : rawEfficiency;
+      const remoteFacilityCountEffect = facility.type === "control" && remoteFacilityCountBonuses.length > 0;
+      const effectiveEfficiency = externalGlobalEffect || remoteFacilityEfficiencyEffect || remoteFacilityStatEffect || remoteFacilityCountEffect ? 0 : rawEfficiency;
       const remoteEfficiencyScore = remoteFacilityEfficiencyScore(remoteFacilityEfficiencyBonuses, preference, context);
+      const remoteCountScore = remoteFacilityCountScore(remoteFacilityCountBonuses, preference, context);
       const scoreProductMultiplier = externalGlobalEffect
         ? productWeight(effect.globalEffect?.product ?? facility.product, preference)
         : productMultiplier;
@@ -429,7 +432,8 @@ function bestSkillForFacility(
         skillId: skill.id,
         score:
           (remoteFacilityEfficiencyEffect ? 0 : (externalGlobalEffect ? rawEfficiency : effectiveEfficiency) * scoreProductMultiplier * scoreFacilityWeight * scoreFacilityCount) +
-          remoteEfficiencyScore,
+          remoteEfficiencyScore +
+          remoteCountScore,
         efficiency: effectiveEfficiency,
         storageLimit,
         orderLimit,
@@ -440,6 +444,7 @@ function bestSkillForFacility(
         ...(facilityStatScalings.length ? { facilityStatScalings } : {}),
         ...(remoteFacilityStatBonuses.length ? { remoteFacilityStatBonuses } : {}),
         ...(remoteFacilityEfficiencyBonuses.length ? { remoteFacilityEfficiencyBonuses } : {}),
+        ...(remoteFacilityCountBonuses.length ? { remoteFacilityCountBonuses } : {}),
         fatigueHours: fatigueHoursByFacility[facility.type],
         recoveryHours: facility.type === "dormitory" ? 0 : Math.max(4, recoveryBaseHours - globalBonus * 8),
         reason: `${localizeText(skill.name, language)}: ${localizeText(effect.description, language)}`
@@ -498,6 +503,20 @@ function activeRemoteFacilityEfficiencyBonuses(
     .filter((effect) => !effect.ignoredForOptimization)
     .filter((effect) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
     .flatMap((effect) => remoteFacilityEfficiencyBonusesForEffect(effect));
+}
+
+function activeRemoteFacilityCountBonuses(
+  operator: Operator,
+  elite: number,
+  facility: FacilitySlot,
+  context: AssignmentEvaluationContext | undefined
+) {
+  return operator.skills
+    .filter((skill) => skill.unlockPhase <= elite)
+    .flatMap((skill) => skill.effects)
+    .filter((effect) => !effect.ignoredForOptimization)
+    .filter((effect) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
+    .flatMap((effect) => effect.facilityCountBonuses ?? []);
 }
 
 function effectiveFacilityEfficiency(assignments: Assignment[]) {
@@ -669,7 +688,16 @@ function facilityCount(effect: BaseSkillEffect, context?: AssignmentEvaluationCo
     return 0;
   }
 
-  const count = context.facilities.filter((facility) => !effect.scaling?.facility || facility.type === effect.scaling.facility).length;
+  const physicalCount = context.facilities.filter((facility) => !effect.scaling?.facility || facility.type === effect.scaling.facility).length;
+  const virtualCount = context.assignments.reduce(
+    (sum, assignment) =>
+      sum +
+      (assignment.remoteFacilityCountBonuses ?? [])
+        .filter((bonus) => !effect.scaling?.facility || bonus.facility === effect.scaling.facility)
+        .reduce((bonusSum, bonus) => bonusSum + bonus.amount, 0),
+    0
+  );
+  const count = physicalCount + virtualCount;
   return effect.scaling.max ? Math.min(count, effect.scaling.max) : count;
 }
 
@@ -1136,6 +1164,43 @@ function remoteFacilityEfficiencyScore(
           0
         )
     );
+  }, 0);
+}
+
+function remoteFacilityCountScore(
+  bonuses: NonNullable<Assignment["remoteFacilityCountBonuses"]>,
+  preference: OptimizationPreference,
+  context?: AssignmentEvaluationContext
+) {
+  if (!context) {
+    return 0;
+  }
+
+  return bonuses.reduce((sum, bonus) => {
+    const matchingFacilities = context.facilities.filter((facility) => facility.type !== "dormitory");
+    const facilityScore = matchingFacilities.reduce((facilitySum, facility) => {
+      const candidateScore = operators.reduce((operatorSum, operator) => {
+        const rosterEntry = context.roster?.[operator.id];
+        if (!rosterEntry?.owned) {
+          return operatorSum;
+        }
+        const elite = clampEliteForOperator(operator, rosterEntry.elite);
+        const bestEffectScore = operator.skills
+          .filter((skill) => skill.unlockPhase <= elite)
+          .flatMap((skill) => skill.effects)
+          .filter((effect) => !effect.ignoredForOptimization)
+          .filter((effect) => effectMatchesFacility(effect, facility))
+          .filter((effect) => effect.scaling?.type === "facilityCount" && effect.scaling.facility === bonus.facility)
+          .reduce(
+            (best, effect) =>
+              Math.max(best, bonus.amount * effect.efficiency * productWeight(facility.product, preference) * facilityWeight(facility)),
+            0
+          );
+        return operatorSum + bestEffectScore;
+      }, 0);
+      return facilitySum + candidateScore;
+    }, 0);
+    return sum + facilityScore;
   }, 0);
 }
 

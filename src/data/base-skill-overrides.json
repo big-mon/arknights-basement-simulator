@@ -363,7 +363,13 @@
           {
             "index": 0,
             "patch": {
-              "efficiency": 0.05,
+              "efficiency": 0,
+              "facilityCountBonuses": [
+                {
+                  "facility": "power",
+                  "amount": 1
+                }
+              ],
               "conditions": [
                 {
                   "type": "facilityAffiliation",
@@ -2703,7 +2709,13 @@
           {
             "index": 0,
             "patch": {
-              "efficiency": 0.05,
+              "efficiency": 0,
+              "facilityCountBonuses": [
+                {
+                  "facility": "power",
+                  "amount": 2
+                }
+              ],
               "conditions": [
                 {
                   "type": "facilityOperator",
