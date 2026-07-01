@@ -6,6 +6,7 @@ import type {
   Assignment,
   AssignmentPlan,
   BaseSkill,
+  BaseSkillCondition,
   BaseSkillEffect,
   FacilityPlan,
   FacilitySlot,
@@ -25,6 +26,8 @@ type GlobalBonusBucket = {
   stackKey?: string;
   value: number;
 };
+
+type FacilityAffiliationCondition = Extract<BaseSkillCondition, { type: "facilityAffiliation" }>;
 
 const fatigueHoursByFacility: Record<FacilitySlot["type"], number> = {
   factory: 12,
@@ -682,7 +685,7 @@ function effectScalingMultiplier(
     return facilityProductCount(effect, context);
   }
 
-  if (effect.scaling.type === "facilityGroupAffiliation") {
+  if (effect.scaling?.type === "facilityGroupAffiliation") {
     return facilityGroupAffiliationCount(effect, operator, facility, context);
   }
 
@@ -1343,16 +1346,14 @@ function remoteFacilityStatBonusesForEffect(effect: BaseSkillEffect): NonNullabl
 }
 
 function remoteFacilityEfficiencyBonusesForEffect(effect: BaseSkillEffect): NonNullable<Assignment["remoteFacilityEfficiencyBonuses"]> {
-  if (
-    effect.facility !== "control" ||
-    effect.globalEffect ||
-    !effect.scaling?.facility ||
-    effect.scaling.facility === effect.facility
-  ) {
+  if (effect.facility !== "control" || effect.globalEffect) {
     return [];
   }
 
-  if (effect.scaling.type === "facilityGroupAffiliation") {
+  if (effect.scaling?.type === "facilityGroupAffiliation") {
+    if (!effect.scaling.facility || effect.scaling.facility === effect.facility) {
+      return [];
+    }
     return [
       {
         facility: effect.scaling.facility,
@@ -1364,22 +1365,31 @@ function remoteFacilityEfficiencyBonusesForEffect(effect: BaseSkillEffect): NonN
     ];
   }
 
-  if (effect.scaling.type !== "affiliation") {
+  if (effect.scaling && effect.scaling.type !== "affiliation") {
     return [];
   }
 
-  const matchingCondition = effect.conditions?.find(
-    (condition) =>
-      condition.type === "facilityAffiliation" &&
-      condition.facility === effect.scaling?.facility &&
-      condition.affiliations.some((affiliation) => effect.scaling?.affiliations?.includes(affiliation))
-  );
+  const matchingCondition = (effect.conditions ?? [])
+    .filter((condition): condition is FacilityAffiliationCondition => condition.type === "facilityAffiliation")
+    .find(
+      (condition) =>
+        condition.facility &&
+        condition.facility !== effect.facility &&
+        (!effect.scaling?.facility || condition.facility === effect.scaling.facility) &&
+        condition.affiliations.some((affiliation) => !effect.scaling?.affiliations?.length || effect.scaling.affiliations.includes(affiliation))
+    );
+  const targetFacility = effect.scaling?.facility ?? matchingCondition?.facility;
+  const targetAffiliations = effect.scaling?.affiliations ?? matchingCondition?.affiliations;
+  if (!targetFacility || targetFacility === effect.facility || !targetAffiliations?.length) {
+    return [];
+  }
+
   return [
     {
-      facility: effect.scaling.facility,
+      facility: targetFacility,
       amount: effect.efficiency,
       ...(effect.product && effect.product !== "morale" ? { product: effect.product } : {}),
-      affiliations: effect.scaling.affiliations,
+      affiliations: targetAffiliations,
       ...(matchingCondition && "min" in matchingCondition ? { min: matchingCondition.min } : {})
     }
   ];

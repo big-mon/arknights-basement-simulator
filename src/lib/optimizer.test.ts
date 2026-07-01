@@ -294,15 +294,36 @@ describe("optimizer", () => {
     ownOperators(state, [delphine.id, glasgowOperator.id]);
     const control = state.facilities.find((facility) => facility.id === "control-1")!;
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const delphineWithGlasgow = findCandidates(control, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(trading, glasgowOperator.id)]
+    }).find((candidate) => candidate.skillId === delphineGlasgowSkill.id)!;
 
     expect(glasgowOperator.affiliations).toContain("glasgow");
     expect(findCandidates(control, state).some((candidate) => candidate.skillId === delphineGlasgowSkill.id)).toBe(false);
-    expect(
-      findCandidates(control, state, 0, {
-        facilities: state.facilities,
-        assignments: [contextAssignment(trading, glasgowOperator.id)]
-      }).some((candidate) => candidate.skillId === delphineGlasgowSkill.id)
-    ).toBe(true);
+    expect(delphineWithGlasgow).toBeDefined();
+    expect(delphineWithGlasgow.efficiency).toBe(0);
+    expect(delphineWithGlasgow.remoteFacilityEfficiencyBonuses).toContainEqual({
+      facility: "trading",
+      amount: 0.1,
+      product: "lmd",
+      affiliations: ["glasgow"],
+      min: 1
+    });
+  });
+
+  it("applies Delphine's Glasgow boost to matching trading posts", () => {
+    const state = createDefaultState();
+    ownOperators(state, [delphine.id, glasgowOperator.id]);
+    state.facilities = state.facilities.filter((facility) => facility.id === "control-1" || facility.id === "trading-1");
+    const plan = generateAssignmentPlan(state);
+    const tradingPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === "trading-1")!;
+    const controlPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === "control-1")!;
+    const assignedEfficiency = tradingPlan.assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
+
+    expect(controlPlan.assignments.some((assignment) => assignment.operatorId === delphine.id)).toBe(true);
+    expect(tradingPlan.assignments.some((assignment) => assignment.operatorId === glasgowOperator.id)).toBe(true);
+    expect(tradingPlan.expectedEfficiency - assignedEfficiency).toBeCloseTo(0.1);
   });
 
   it("keeps Abyssal Hunter affiliation data without gating Gladiia's control recovery effect", () => {
@@ -959,6 +980,13 @@ describe("optimizer", () => {
     expect(gnosisAssignment.remoteFacilityStatBonuses).toContainEqual(
       expect.objectContaining({ key: "orderLimit", facility: "trading", amount: 6 })
     );
+    expect(gnosisAssignment.remoteFacilityEfficiencyBonuses).toContainEqual({
+      facility: "trading",
+      amount: 0.05,
+      product: "lmd",
+      affiliations: ["karlan"],
+      min: 1
+    });
     expect(gnosisAssignment.efficiency).toBe(0);
     expect(gnosisAssignment.score).toBeGreaterThan(0);
     expect(withGnosis.efficiency - withoutGnosis.efficiency).toBeCloseTo(0.5);
