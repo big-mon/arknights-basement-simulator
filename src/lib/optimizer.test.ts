@@ -119,6 +119,8 @@ const minimalist = operators.find((operator) => operator.id === "char_4054_malis
 const greyyAlter = operators.find((operator) => operator.id === "char_1027_greyy2")!;
 const pozemka = operators.find((operator) => operator.id === "char_4055_bgsnow")!;
 const kirara = operators.find((operator) => operator.id === "char_478_kirara")!;
+const waaiFu = operators.find((operator) => operator.id === "char_243_waaifu")!;
+const shu = operators.find((operator) => operator.id === "char_2025_shu")!;
 const alanna = operators.find((operator) => operator.id === "char_4178_alanna")!;
 const lancet = operators.find((operator) => operator.id === "char_285_medic2")!;
 const justiceKnight = operators.find((operator) => operator.id === "char_4000_jnight")!;
@@ -183,6 +185,24 @@ function contextAssignment(facility: FacilitySlot, operatorId: string, patch: Pa
     reason: "context",
     ...patch
   };
+}
+
+function assignmentsForFacilitySlots(assignments: Assignment[], slotCount: number): Assignment[] {
+  const selected: Assignment[] = [];
+  let occupiedSlots = 0;
+
+  for (const assignment of assignments) {
+    if (assignment.doesNotConsumeFacilitySlot) {
+      selected.push(assignment);
+      continue;
+    }
+    if (occupiedSlots < slotCount) {
+      selected.push(assignment);
+      occupiedSlots += 1;
+    }
+  }
+
+  return selected;
 }
 
 describe("optimizer", () => {
@@ -838,6 +858,25 @@ describe("optimizer", () => {
     expect(withVermeil.skillId).toBe("manu_prod_spd_variable3[000]");
     expect(withVermeil.storageLimit).toBe(10);
     expect(withVermeil.efficiency).toBeCloseTo(0.21);
+  });
+
+  it("keeps morale-only factory skills out of production candidates", () => {
+    const waaiFuState = createDefaultState();
+    ownOperators(waaiFuState, [waaiFu.id]);
+    waaiFuState.roster[waaiFu.id].elite = 0;
+    const waaiFuFactory = waaiFuState.facilities.find((facility) => facility.id === "factory-1")!;
+    const waaiFuMoraleEffect = waaiFu.skills.find((skill) => skill.id === "manu_cost_all[000]")!.effects[0];
+
+    const shuState = createDefaultState();
+    ownOperators(shuState, [shu.id]);
+    shuState.roster[shu.id].elite = 0;
+    const shuFactory = shuState.facilities.find((facility) => facility.id === "factory-1")!;
+    const shuMoraleEffect = shu.skills.find((skill) => skill.id === "manu_cost[000]")!.effects[0];
+
+    expect(waaiFuMoraleEffect.product).toBe("morale");
+    expect(shuMoraleEffect.product).toBe("morale");
+    expect(findCandidates(waaiFuFactory, waaiFuState).some((assignment) => assignment.skillId === "manu_cost_all[000]")).toBe(false);
+    expect(findCandidates(shuFactory, shuState).some((assignment) => assignment.skillId === "manu_cost[000]")).toBe(false);
   });
 
   it("scales Vermeil from same-factory storage limit increases", () => {
@@ -1512,7 +1551,7 @@ describe("optimizer", () => {
     const plan = generateAssignmentPlan(state);
     const firstRotationIds = new Set(plan.facilityPlans.flatMap((facilityPlan) => facilityPlan.assignments.map((assignment) => assignment.operatorId)));
     const secondRotationAssignments = plan.facilityPlans.flatMap((facilityPlan) =>
-      facilityPlan.alternatives.slice(0, facilityPlan.facility.slotCount)
+      assignmentsForFacilitySlots(facilityPlan.alternatives, facilityPlan.facility.slotCount)
     );
     const secondRotationIds = secondRotationAssignments.map((assignment) => assignment.operatorId);
 

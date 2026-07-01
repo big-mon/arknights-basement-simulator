@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
-import { App } from "./App";
+import { App, assignmentsForFacilitySlots } from "./App";
 import { FacilityPlanCard } from "./components/FacilityPlanCard";
 import { createDefaultState, operators } from "./data/defaults";
 import { productLabels } from "./i18n";
@@ -429,7 +429,7 @@ describe("App", () => {
     render(
       <FacilityPlanCard
         facilityPlan={facilityPlan}
-        assignments={facilityPlan.alternatives.slice(0, facilityPlan.facility.slotCount)}
+        assignments={assignmentsForFacilitySlots(facilityPlan.alternatives, facilityPlan.facility.slotCount)}
         expectedEfficiency={facilityPlan.alternativeExpectedEfficiency}
         language="ja"
         operatorNameById={() => amiyaName}
@@ -437,6 +437,60 @@ describe("App", () => {
     );
 
     expect(screen.getByText("+48%")).toBeInTheDocument();
+  });
+
+  it("keeps non-slot prerequisites from hiding alternative room occupants", () => {
+    const assignments: Assignment[] = [
+      {
+        facilityId: "trading-1",
+        operatorId: "operator-a",
+        skillId: "candidate-a",
+        score: 30,
+        efficiency: 0.3,
+        fatigueHours: 12,
+        recoveryHours: 8,
+        reason: "candidate-a"
+      },
+      {
+        facilityId: "base",
+        operatorId: "operator-prerequisite",
+        skillId: "base-skillless-prerequisite",
+        score: 0,
+        efficiency: 0,
+        fatigueHours: 12,
+        recoveryHours: 8,
+        baseSkilllessPrerequisiteFor: "operator-a",
+        doesNotConsumeFacilitySlot: true,
+        reason: "Base-wide skillless prerequisite"
+      },
+      {
+        facilityId: "trading-1",
+        operatorId: "operator-b",
+        skillId: "candidate-b",
+        score: 25,
+        efficiency: 0.25,
+        fatigueHours: 12,
+        recoveryHours: 8,
+        reason: "candidate-b"
+      },
+      {
+        facilityId: "trading-1",
+        operatorId: "operator-c",
+        skillId: "candidate-c",
+        score: 20,
+        efficiency: 0.2,
+        fatigueHours: 12,
+        recoveryHours: 8,
+        reason: "candidate-c"
+      }
+    ];
+
+    expect(assignmentsForFacilitySlots(assignments, 3).map((assignment) => assignment.operatorId)).toEqual([
+      "operator-a",
+      "operator-prerequisite",
+      "operator-b",
+      "operator-c"
+    ]);
   });
 
   it("switches layout between 243 and 153 presets from the top controls", async () => {

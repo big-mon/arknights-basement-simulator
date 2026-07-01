@@ -96,7 +96,7 @@ function inferProductFromDescription(description, roomType) {
 function inferProduct(description, roomType) {
   const normalizedRoomType = String(roomType ?? "").toUpperCase();
   const product = inferProductFromDescription(description, roomType);
-  if (normalizedRoomType === "MANUFACTURE" && (product === "morale" || product === "power" || product === "lmd")) {
+  if (normalizedRoomType === "MANUFACTURE" && (product === "power" || product === "lmd")) {
     return undefined;
   }
   return product;

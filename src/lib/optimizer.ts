@@ -307,7 +307,7 @@ function bestLimitPartnerReplacement(
     return undefined;
   }
 
-  if (selectedAssignments.length < slotCount) {
+  if (facilitySlotOccupancy(selectedAssignments) < slotCount) {
     const addedScore = limitSynergyScore(candidate, selectedAssignments) + candidate.score;
     return addedScore > 0 ? { gain: addedScore } : undefined;
   }
@@ -316,12 +316,13 @@ function bestLimitPartnerReplacement(
     .map((removedAssignment, replaceIndex) => {
       const remainingAssignments = selectedAssignments.filter((_, index) => index !== replaceIndex);
       return {
+        consumesFacilitySlot: assignmentConsumesFacilitySlot(removedAssignment),
         locked: assignmentIsSkilllessPrerequisiteLocked(removedAssignment, selectedAssignments),
         replaceIndex,
         gain: limitSynergyScore(candidate, remainingAssignments) + candidate.score - removedAssignment.score
       };
     })
-    .filter((replacement) => !replacement.locked && replacement.gain > 0)
+    .filter((replacement) => replacement.consumesFacilitySlot && !replacement.locked && replacement.gain > 0)
     .sort((a, b) => b.gain - a.gain)[0];
 }
 

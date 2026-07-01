@@ -615,12 +615,12 @@ function selectedPreferencePreset(preference: { gold: number; battleRecord: numb
   return "balanced";
 }
 
-function rotationAssignmentsForFacility(facilityPlan: FacilityPlan, rotationIndex: number): Assignment[] {
+export function rotationAssignmentsForFacility(facilityPlan: FacilityPlan, rotationIndex: number): Assignment[] {
   if (rotationIndex === 0) {
     return facilityPlan.assignments;
   }
 
-  return facilityPlan.alternatives.slice(0, facilityPlan.facility.slotCount);
+  return assignmentsForFacilitySlots(facilityPlan.alternatives, facilityPlan.facility.slotCount);
 }
 
 function rotationExpectedEfficiencyForFacility(facilityPlan: FacilityPlan, rotationIndex: number) {
@@ -630,6 +630,24 @@ function rotationExpectedEfficiencyForFacility(facilityPlan: FacilityPlan, rotat
 
   return (
     facilityPlan.alternativeExpectedEfficiency ??
-    facilityPlan.alternatives.slice(0, facilityPlan.facility.slotCount).reduce((sum, assignment) => sum + assignment.efficiency, 0)
+    assignmentsForFacilitySlots(facilityPlan.alternatives, facilityPlan.facility.slotCount).reduce((sum, assignment) => sum + assignment.efficiency, 0)
   );
+}
+
+export function assignmentsForFacilitySlots(assignments: Assignment[], slotCount: number): Assignment[] {
+  const selected: Assignment[] = [];
+  let occupiedSlots = 0;
+
+  for (const assignment of assignments) {
+    if (assignment.doesNotConsumeFacilitySlot) {
+      selected.push(assignment);
+      continue;
+    }
+    if (occupiedSlots < slotCount) {
+      selected.push(assignment);
+      occupiedSlots += 1;
+    }
+  }
+
+  return selected;
 }

@@ -6621,6 +6621,7 @@
         "effects": [
           {
             "facility": "factory",
+            "product": "morale",
             "tags": [
               "factory",
               "bskill_man_cost_all",
@@ -14529,6 +14530,7 @@
         "effects": [
           {
             "facility": "factory",
+            "product": "morale",
             "tags": [
               "factory",
               "bskill_man_cost_room1",
