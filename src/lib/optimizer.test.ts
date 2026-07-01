@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import baseSkillOverrides from "../data/base-skill-overrides.json";
 import { createDefaultState, createFacilitiesForLayout, operators } from "../data/defaults";
 import { exportState, importState } from "./storage";
-import { conditionsSatisfied, findCandidates, generateAssignmentPlan } from "./optimizer";
-import type { Assignment, FacilitySlot } from "../types";
+import { attachRotationAlternatives, conditionsSatisfied, findCandidates, generateAssignmentPlan } from "./optimizer";
+import type { Assignment, FacilityPlan, FacilitySlot } from "../types";
 
 const factoryEliteLockedOperator = operators.find((operator) =>
   operator.skills.some(
@@ -1635,6 +1635,28 @@ describe("optimizer", () => {
     expect(secondRotationAssignments.length).toBeGreaterThan(0);
     expect(secondRotationIds.every((operatorId) => !firstRotationIds.has(operatorId))).toBe(true);
     expect(new Set(secondRotationIds).size).toBe(secondRotationIds.length);
+  });
+
+  it("evaluates alternative rotation conditions from alternative assignments only", () => {
+    const state = createDefaultState();
+    ownOperators(state, [lemuen.id, exusiai.id]);
+    const trading = { ...state.facilities.find((facility) => facility.id === "trading-1")!, slotCount: 1 };
+    state.facilities = [trading];
+    const firstRotationPlan: FacilityPlan = {
+      facility: trading,
+      assignments: [contextAssignment(trading, exusiai.id, { efficiency: 0.35, score: 35 })],
+      expectedEfficiency: 0.35,
+      score: 35,
+      alternatives: []
+    };
+
+    const planWithAlternatives = attachRotationAlternatives(state, [firstRotationPlan])[0];
+    const lemuenAlternative = planWithAlternatives.alternatives.find((assignment) => assignment.operatorId === lemuen.id)!;
+
+    expect(planWithAlternatives.alternatives.some((assignment) => assignment.operatorId === exusiai.id)).toBe(false);
+    expect(lemuenAlternative.skillId).not.toBe(lemuenExusiaiSkill.id);
+    expect(lemuenAlternative.efficiency).toBeCloseTo(0.23);
+    expect(planWithAlternatives.alternativeExpectedEfficiency).toBeCloseTo(0.23);
   });
 
   it("excludes dormitories from production assignment plans", () => {

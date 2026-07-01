@@ -122,30 +122,20 @@ function buildFacilityPlans(
   return facilityPlans;
 }
 
-function attachRotationAlternatives(state: AppState, facilityPlans: FacilityPlan[]): FacilityPlan[] {
+export function attachRotationAlternatives(state: AppState, facilityPlans: FacilityPlan[]): FacilityPlan[] {
   const firstRotationOperatorIds = new Set(facilityPlans.flatMap((plan) => plan.assignments.map((assignment) => assignment.operatorId)));
-  const secondRotationOperatorIds = new Set<string>();
-  const context: AssignmentEvaluationContext = {
-    assignments: facilityPlans.flatMap((plan) => plan.assignments),
-    facilities: state.facilities,
-    roster: state.roster
-  };
+  let plansWithAlternatives = buildAlternativeFacilityPlans(state, facilityPlans, firstRotationOperatorIds, []);
 
-  const plansWithAlternatives = facilityPlans.map((plan) => {
-    const alternatives = selectAssignmentsForFacility(
-      findCandidates(plan.facility, state, 0, context)
-        .filter((candidate) => !firstRotationOperatorIds.has(candidate.operatorId))
-        .filter((candidate) => !secondRotationOperatorIds.has(candidate.operatorId)),
-      plan.facility.slotCount
-    );
+  for (let index = 0; index < 3; index += 1) {
+    const previousSignature = alternativeAssignmentSignature(plansWithAlternatives);
+    const contextAssignments = plansWithAlternatives.flatMap((plan) => plan.alternatives);
+    const nextPlans = buildAlternativeFacilityPlans(state, facilityPlans, firstRotationOperatorIds, contextAssignments);
+    plansWithAlternatives = nextPlans;
+    if (alternativeAssignmentSignature(nextPlans) === previousSignature) {
+      break;
+    }
+  }
 
-    alternatives.forEach((assignment) => secondRotationOperatorIds.add(assignment.operatorId));
-
-    return {
-      ...plan,
-      alternatives
-    };
-  });
   const alternativeContext: AssignmentEvaluationContext = {
     assignments: plansWithAlternatives.flatMap((plan) => plan.alternatives),
     facilities: state.facilities,
@@ -162,9 +152,45 @@ function attachRotationAlternatives(state: AppState, facilityPlans: FacilityPlan
   });
 }
 
+function buildAlternativeFacilityPlans(
+  state: AppState,
+  facilityPlans: FacilityPlan[],
+  firstRotationOperatorIds: Set<string>,
+  contextAssignments: Assignment[]
+) {
+  const secondRotationOperatorIds = new Set<string>();
+  const context: AssignmentEvaluationContext = {
+    assignments: contextAssignments,
+    facilities: state.facilities,
+    roster: state.roster
+  };
+
+  return facilityPlans.map((plan) => {
+    const alternatives = selectAssignmentsForFacility(
+      findCandidates(plan.facility, state, 0, context)
+        .filter((candidate) => !firstRotationOperatorIds.has(candidate.operatorId))
+        .filter((candidate) => !secondRotationOperatorIds.has(candidate.operatorId)),
+      plan.facility.slotCount
+    );
+
+    alternatives.forEach((assignment) => secondRotationOperatorIds.add(assignment.operatorId));
+
+    return {
+      ...plan,
+      alternatives
+    };
+  });
+}
+
 function assignmentSignature(facilityPlans: FacilityPlan[]) {
   return facilityPlans
     .flatMap((plan) => plan.assignments.map((assignment) => `${assignment.facilityId}:${assignment.operatorId}:${assignment.skillId}`))
+    .join("|");
+}
+
+function alternativeAssignmentSignature(facilityPlans: FacilityPlan[]) {
+  return facilityPlans
+    .flatMap((plan) => plan.alternatives.map((assignment) => `${assignment.facilityId}:${assignment.operatorId}:${assignment.skillId}`))
     .join("|");
 }
 
