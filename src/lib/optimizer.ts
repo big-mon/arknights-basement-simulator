@@ -29,6 +29,45 @@ type GlobalBonusBucket = {
 
 type FacilityAffiliationCondition = Extract<BaseSkillCondition, { type: "facilityAffiliation" }>;
 
+type ComplexBaseSkillHandlerInput = {
+  operator: Operator;
+  skill: BaseSkill;
+  effect: BaseSkillEffect;
+};
+
+type ComplexBaseSkillHandler = {
+  remoteFacilityStatBonuses?: (
+    input: ComplexBaseSkillHandlerInput
+  ) => NonNullable<Assignment["remoteFacilityStatBonuses"]>;
+  remoteFacilityEfficiencyBonuses?: (
+    input: ComplexBaseSkillHandlerInput
+  ) => NonNullable<Assignment["remoteFacilityEfficiencyBonuses"]>;
+};
+
+const complexBaseSkillHandlers: Record<string, Record<string, ComplexBaseSkillHandler>> = {
+  char_4110_delphn: {
+    "control_tra_limit&spd[010]": controlFacilityAffiliationRemoteEfficiencyHandler()
+  },
+  char_1034_jesca2: {
+    "control_bd_spd[000]": controlFacilityAffiliationRemoteEfficiencyHandler()
+  },
+  char_1045_svash2: {
+    "control_tra_limit&spd3[000]": controlFacilityGroupAffiliationRemoteEfficiencyHandler()
+  },
+  char_206_gnosis: {
+    "control_tra_limit&spd[000]": controlFacilityAffiliationRemoteStatAndEfficiencyHandler()
+  },
+  char_420_flamtl: {
+    "control_mp_psk[000]": controlFacilityAffiliationRemoteEfficiencyHandler()
+  }
+};
+
+export function registeredComplexBaseSkillHandlerKeys() {
+  return Object.entries(complexBaseSkillHandlers).flatMap(([operatorId, handlers]) =>
+    Object.keys(handlers).map((skillId) => `${operatorId}:${skillId}`)
+  );
+}
+
 const fatigueHoursByFacility: Record<FacilitySlot["type"], number> = {
   factory: 12,
   trading: 12,
@@ -493,7 +532,7 @@ function bestSkillForFacility(
       const globalEffectEfficiency = (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier;
       const rawEfficiency = (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier + conditionalBonus + eliteBonus;
       const externalGlobalEffect = isExternalGlobalEffect(effect, facility);
-      const remoteFacilityEfficiencyEffect = isRemoteFacilityEfficiencyEffect(effect, facility);
+      const remoteFacilityEfficiencyEffect = facility.type === "control" && remoteFacilityEfficiencyBonuses.length > 0;
       const remoteFacilityStatEffect = facility.type === "control" && remoteFacilityStatBonuses.length > 0;
       const remoteFacilityCountEffect = facility.type === "control" && remoteFacilityCountBonuses.length > 0;
       const effectiveEfficiency = externalGlobalEffect || remoteFacilityEfficiencyEffect || remoteFacilityStatEffect || remoteFacilityCountEffect ? 0 : rawEfficiency;
@@ -611,10 +650,10 @@ function activeRemoteFacilityStatBonuses(
 ) {
   const bonuses = operator.skills
     .filter((skill) => skill.unlockPhase <= elite)
-    .flatMap((skill) => skill.effects)
-    .filter((effect) => !effect.ignoredForOptimization)
-    .filter((effect) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
-    .flatMap((effect) => remoteFacilityStatBonusesForEffect(effect));
+    .flatMap((skill) => skill.effects.map((effect) => ({ skill, effect })))
+    .filter(({ effect }) => !effect.ignoredForOptimization)
+    .filter(({ effect }) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
+    .flatMap(({ skill, effect }) => remoteFacilityStatBonusesForEffect(operator, skill, effect));
 
   return strongestRemoteFacilityStatBonuses(bonuses);
 }
@@ -651,10 +690,10 @@ function activeRemoteFacilityEfficiencyBonuses(
 ) {
   return operator.skills
     .filter((skill) => skill.unlockPhase <= elite)
-    .flatMap((skill) => skill.effects)
-    .filter((effect) => !effect.ignoredForOptimization)
-    .filter((effect) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
-    .flatMap((effect) => remoteFacilityEfficiencyBonusesForEffect(effect));
+    .flatMap((skill) => skill.effects.map((effect) => ({ skill, effect })))
+    .filter(({ effect }) => !effect.ignoredForOptimization)
+    .filter(({ effect }) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
+    .flatMap(({ skill, effect }) => remoteFacilityEfficiencyBonusesForEffect(operator, skill, effect));
 }
 
 function activeRemoteFacilityCountBonuses(
@@ -1298,10 +1337,6 @@ function isExternalGlobalEffect(effect: BaseSkillEffect, facility: FacilitySlot)
   return Boolean(effect.globalEffect && effect.globalEffect.facility !== facility.type);
 }
 
-function isRemoteFacilityEfficiencyEffect(effect: BaseSkillEffect, facility: FacilitySlot) {
-  return Boolean(effect.facility === "control" && facility.type === "control" && remoteFacilityEfficiencyBonusesForEffect(effect).length);
-}
-
 function globalEffectStackIdentity(effect: BaseSkillEffect) {
   return `${effect.globalEffect?.facility}:${effect.globalEffect?.product ?? "*"}:${effect.globalEffect?.stackKey}`;
 }
@@ -1350,7 +1385,39 @@ function facilityStatScalingsForEffect(
   return [];
 }
 
-function remoteFacilityStatBonusesForEffect(effect: BaseSkillEffect): NonNullable<Assignment["remoteFacilityStatBonuses"]> {
+function getComplexBaseSkillHandler(operator: Operator, skill: BaseSkill) {
+  return complexBaseSkillHandlers[operator.id]?.[skill.id];
+}
+
+function controlFacilityAffiliationRemoteEfficiencyHandler(): ComplexBaseSkillHandler {
+  return {
+    remoteFacilityEfficiencyBonuses: ({ effect }) => controlFacilityAffiliationRemoteEfficiencyBonuses(effect)
+  };
+}
+
+function controlFacilityGroupAffiliationRemoteEfficiencyHandler(): ComplexBaseSkillHandler {
+  return {
+    remoteFacilityEfficiencyBonuses: ({ effect }) => controlFacilityGroupAffiliationRemoteEfficiencyBonuses(effect)
+  };
+}
+
+function controlFacilityAffiliationRemoteStatAndEfficiencyHandler(): ComplexBaseSkillHandler {
+  return {
+    remoteFacilityStatBonuses: ({ effect }) => genericRemoteFacilityStatBonusesForEffect(effect),
+    remoteFacilityEfficiencyBonuses: ({ effect }) => controlFacilityAffiliationRemoteEfficiencyBonuses(effect)
+  };
+}
+
+function remoteFacilityStatBonusesForEffect(
+  operator: Operator,
+  skill: BaseSkill,
+  effect: BaseSkillEffect
+): NonNullable<Assignment["remoteFacilityStatBonuses"]> {
+  const handler = getComplexBaseSkillHandler(operator, skill);
+  return handler?.remoteFacilityStatBonuses?.({ operator, skill, effect }) ?? genericRemoteFacilityStatBonusesForEffect(effect);
+}
+
+function genericRemoteFacilityStatBonusesForEffect(effect: BaseSkillEffect): NonNullable<Assignment["remoteFacilityStatBonuses"]> {
   const bonuses: NonNullable<Assignment["remoteFacilityStatBonuses"]> = [];
   for (const condition of effect.conditions ?? []) {
     if (effect.storageLimit) {
@@ -1369,26 +1436,57 @@ function remoteFacilityStatBonusesForEffect(effect: BaseSkillEffect): NonNullabl
   return bonuses;
 }
 
-function remoteFacilityEfficiencyBonusesForEffect(effect: BaseSkillEffect): NonNullable<Assignment["remoteFacilityEfficiencyBonuses"]> {
+function remoteFacilityEfficiencyBonusesForEffect(
+  operator: Operator,
+  skill: BaseSkill,
+  effect: BaseSkillEffect
+): NonNullable<Assignment["remoteFacilityEfficiencyBonuses"]> {
+  const handler = getComplexBaseSkillHandler(operator, skill);
+  return handler?.remoteFacilityEfficiencyBonuses?.({ operator, skill, effect }) ?? genericRemoteFacilityEfficiencyBonusesForEffect(effect);
+}
+
+function genericRemoteFacilityEfficiencyBonusesForEffect(effect: BaseSkillEffect): NonNullable<Assignment["remoteFacilityEfficiencyBonuses"]> {
   if (effect.facility !== "control" || effect.globalEffect) {
     return [];
   }
 
   if (effect.scaling?.type === "facilityGroupAffiliation") {
-    if (!effect.scaling.facility || effect.scaling.facility === effect.facility) {
-      return [];
-    }
-    return [
-      {
-        facility: effect.scaling.facility,
-        amount: effect.efficiency,
-        ...(effect.product && effect.product !== "morale" ? { product: effect.product } : {}),
-        groupAffiliations: effect.scaling.affiliations,
-        min: effect.scaling.min
-      }
-    ];
+    return controlFacilityGroupAffiliationRemoteEfficiencyBonuses(effect);
   }
 
+  if (effect.scaling && effect.scaling.type !== "affiliation") {
+    return [];
+  }
+
+  return controlFacilityAffiliationRemoteEfficiencyBonuses(effect);
+}
+
+function controlFacilityGroupAffiliationRemoteEfficiencyBonuses(
+  effect: BaseSkillEffect
+): NonNullable<Assignment["remoteFacilityEfficiencyBonuses"]> {
+  if (effect.facility !== "control" || effect.globalEffect || effect.scaling?.type !== "facilityGroupAffiliation") {
+    return [];
+  }
+  if (!effect.scaling.facility || effect.scaling.facility === effect.facility) {
+    return [];
+  }
+  return [
+    {
+      facility: effect.scaling.facility,
+      amount: effect.efficiency,
+      ...(effect.product && effect.product !== "morale" ? { product: effect.product } : {}),
+      groupAffiliations: effect.scaling.affiliations,
+      min: effect.scaling.min
+    }
+  ];
+}
+
+function controlFacilityAffiliationRemoteEfficiencyBonuses(
+  effect: BaseSkillEffect
+): NonNullable<Assignment["remoteFacilityEfficiencyBonuses"]> {
+  if (effect.facility !== "control" || effect.globalEffect) {
+    return [];
+  }
   if (effect.scaling && effect.scaling.type !== "affiliation") {
     return [];
   }

@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 import baseSkillOverrides from "../data/base-skill-overrides.json";
 import { createDefaultState, createFacilitiesForLayout, operators } from "../data/defaults";
 import { exportState, importState } from "./storage";
-import { attachRotationAlternatives, conditionsSatisfied, findCandidates, generateAssignmentPlan } from "./optimizer";
+import {
+  attachRotationAlternatives,
+  conditionsSatisfied,
+  findCandidates,
+  generateAssignmentPlan,
+  registeredComplexBaseSkillHandlerKeys
+} from "./optimizer";
 import type { Assignment, FacilityPlan, FacilitySlot } from "../types";
 
 const factoryEliteLockedOperator = operators.find((operator) =>
@@ -837,6 +843,30 @@ describe("optimizer", () => {
     expect(tuyeOverrides["trade_ord_spd&gold[000]"].effects[0].patch.product).toBe("lmd");
     expect(tuyeOverrides["trade_ord_spd&gold[010]"].effects[0].patch.product).toBe("lmd");
     expect(uOfficialOverrides["trade_ord_spd&wt[000]"].effects[0].patch.product).toBe("lmd");
+  });
+
+  it("registers handlers for complex remote control efficiency skills", () => {
+    const registeredKeys = new Set(registeredComplexBaseSkillHandlerKeys());
+    const remoteControlKeys = operators.flatMap((operator) =>
+      operator.skills.flatMap((skill) =>
+        skill.effects
+          .filter(
+            (effect) =>
+              effect.facility === "control" &&
+              !effect.globalEffect &&
+              (effect.scaling?.type === "facilityGroupAffiliation" ||
+                (effect.conditions ?? []).some(
+                  (condition) =>
+                    condition.type === "facilityAffiliation" &&
+                    condition.facility !== undefined &&
+                    condition.facility !== effect.facility
+                ))
+          )
+          .map(() => `${operator.id}:${skill.id}`)
+      )
+    );
+
+    expect([...new Set(remoteControlKeys)].sort()).toEqual([...registeredKeys].sort());
   });
 
   it("keeps active trading effects compatible with LMD trading rooms", () => {
