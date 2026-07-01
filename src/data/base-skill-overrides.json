@@ -1,0 +1,4138 @@
+{
+  "char_225_haak": {
+    "skills": {
+      "control_clue_cost[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "clueBiasNotModeled"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4178_alanna": {
+    "skills": {
+      "manu_token_prod_spd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "platform"
+                ],
+                "facility": "power"
+              }
+            }
+          }
+        ]
+      },
+      "manu_token_prod_spd[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "product": "gold",
+              "efficiency": 0.1,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "platform"
+                ],
+                "facility": "power"
+              }
+            }
+          }
+        ]
+      },
+      "manu_prod_spd_double[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.15,
+              "conditions": [
+                {
+                  "type": "sameFacilityOperator",
+                  "operatorIds": [
+                    "char_4081_warmy"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_446_aroma": {
+    "skills": {
+      "manu_prod_spd_addition[100]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.2,
+              "scaling": {
+                "type": "fixed",
+                "count": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_002_amiya": {
+    "skills": {
+      "control_tra_spd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.07,
+              "globalEffect": {
+                "facility": "trading",
+                "product": "lmd",
+                "stackKey": "all-trading-speed"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4132_ascln": {
+    "skills": {
+      "control_train_spd[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "trainingRoomNotModeled"
+            }
+          }
+        ]
+      },
+      "control_tra_spd[030]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.07,
+              "globalEffect": {
+                "facility": "trading",
+                "product": "lmd",
+                "stackKey": "all-trading-speed"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4123_ela": {
+    "skills": {
+      "control_clue_cost&faction[990]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "clueBiasNotModeled"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_236_rope": {
+    "skills": {
+      "trade_ord_limit&cost[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "orderLimit": 5
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4186_tmoris": {
+    "skills": {
+      "control_hire_spd&bd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "resourceEffects": [
+                {
+                  "resource": "passion",
+                  "amount": 10
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_252_bibeak": {
+    "skills": {
+      "trade_ord_wt&cost[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "highValueOrderProbability"
+            }
+          }
+        ]
+      },
+      "trade_ord_wt&cost[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "highValueOrderProbability"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_325_bison": {
+    "skills": {
+      "trade_ord_spd&limit[033]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.3,
+              "orderLimit": 1
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4037_demetr": {
+    "skills": {
+      "trade_ord_limit&cost_P[020]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "orderLimit": 2
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_369_bena": {
+    "skills": {
+      "manu_prod_spd&limit&cost[020]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": -0.2,
+              "storageLimit": 17
+            }
+          }
+        ]
+      },
+      "trade_ord_wt&cost[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "highValueOrderProbability"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4004_pudd": {
+    "skills": {
+      "control_token_prod_spd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.02,
+              "globalEffect": {
+                "facility": "factory",
+                "stackKey": "all-factory-speed"
+              },
+              "conditions": [
+                {
+                  "type": "facilityAffiliation",
+                  "facility": "power",
+                  "affiliations": [
+                    "platform"
+                  ],
+                  "min": 2
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4155_talr": {
+    "skills": {
+      "manu_prod_spd&limit&cost[200]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "storageLimit": 6
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_010_chen": {
+    "skills": {
+      "control_mp_cost&faction[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "lgd"
+                ],
+                "facility": "control",
+                "includeSelf": true
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1027_greyy2": {
+    "skills": {
+      "power_rec_drone[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "scaling": {
+                "type": "fixed",
+                "count": 20,
+                "max": 25
+              }
+            }
+          }
+        ]
+      },
+      "power_count[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "facilityCountBonuses": [
+                {
+                  "facility": "power",
+                  "amount": 1
+                }
+              ],
+              "conditions": [
+                {
+                  "type": "facilityAffiliation",
+                  "facility": "power",
+                  "affiliations": [
+                    "platform"
+                  ],
+                  "max": 0
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_427_vigil": {
+    "skills": {
+      "trade_ord_spd&meet[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "baseEfficiency": 0.25,
+              "scaling": {
+                "type": "facilityLevel",
+                "facility": "reception",
+                "max": 3
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4110_delphn": {
+    "skills": {
+      "control_tra_limit&spd[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "conditions": [
+                {
+                  "type": "facilityAffiliation",
+                  "facility": "trading",
+                  "affiliations": [
+                    "glasgow"
+                  ],
+                  "min": 1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4032_provs": {
+    "skills": {
+      "trade_ord_law[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "goldOrderValueExpectation"
+            }
+          }
+        ]
+      },
+      "trade_ord_against[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "goldOrderValueExpectation"
+            }
+          }
+        ]
+      },
+      "trade_ord_against[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "goldOrderValueExpectation"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4126_fuze": {
+    "skills": {
+      "manu_prod_bd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.2,
+              "storageLimit": 2
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_102_texas": {
+    "skills": {
+      "trade_ord_spd&cost_P[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.65,
+              "conditions": [
+                {
+                  "type": "sameFacilityOperator",
+                  "operatorIds": [
+                    "char_140_whitew"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "trade_ord_limit&cost_P[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "conditions": [
+                {
+                  "type": "sameFacilityOperator",
+                  "operatorIds": [
+                    "char_103_angel"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1034_jesca2": {
+    "skills": {
+      "trade_ord_spd&limit[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "orderLimit": 4
+            }
+          }
+        ]
+      },
+      "control_bd_spd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "blacksteel"
+                ],
+                "facility": "factory"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4195_radian": {
+    "skills": {
+      "control_dorm_rec_tag[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "globalEffect": {
+                "facility": "dormitory",
+                "product": "morale",
+                "stackKey": "elite-dorm-recovery"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4208_wintim": {
+    "skills": {
+      "manu_prod_spd&manu[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "storageLimit": 5,
+              "suppressesOtherFactoryEfficiency": true
+            }
+          }
+        ]
+      },
+      "manu_prod_spd&manu[100]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "scaling": {
+                "type": "affiliation",
+                "scope": "sameFacility",
+                "includeSelf": true
+              },
+              "storageLimit": 5,
+              "suppressesOtherFactoryEfficiency": true
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_452_bstalk": {
+    "skills": {
+      "manu_prod_limit&cost[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "storageLimit": 8
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4147_mitm": {
+    "skills": {
+      "trade_ord_wt&cost[003]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "highValueOrderProbability"
+            }
+          }
+        ]
+      },
+      "trade_ord_spd&meet[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "baseEfficiency": 0.15,
+              "scaling": {
+                "type": "facilityLevel",
+                "facility": "reception",
+                "max": 3
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4083_chimes": {
+    "skills": {
+      "trade_cost&bd2[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "moraleCostOnlyNotScored"
+            }
+          }
+        ]
+      },
+      "trade_cost&bd2[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "moraleCostOnlyNotScored"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4148_philae": {
+    "skills": {
+      "power_rec_spd&dorm&lv[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.005,
+              "scaling": {
+                "type": "fixed",
+                "count": 20
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_123_fang": {
+    "skills": {
+      "manu_prod_spd_addition[030]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "scaling": {
+                "type": "fixed",
+                "count": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4182_oblvns": {
+    "skills": {
+      "control_prod_bd_spd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.005,
+              "baseEfficiency": 0.005,
+              "scaling": {
+                "type": "resource",
+                "resource": "passion",
+                "per": 20
+              },
+              "globalEffect": {
+                "facility": "factory",
+                "product": "gold",
+                "stackKey": "oblivionis-gold-speed"
+              }
+            }
+          }
+        ]
+      },
+      "control_prod_bd_spd[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "baseEfficiency": 0.01,
+              "scaling": {
+                "type": "resource",
+                "resource": "passion",
+                "per": 20
+              },
+              "globalEffect": {
+                "facility": "factory",
+                "product": "gold",
+                "stackKey": "oblivionis-gold-speed"
+              }
+            }
+          }
+        ]
+      },
+      "control_mp_cost&bd3[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "moraleCostOnlyNotScored"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_474_glady": {
+    "addAffiliations": [
+      "abyssal"
+    ],
+    "skills": {
+      "control_mp_aegir1[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "abyssalDormMoraleStateNotModeled"
+            }
+          }
+        ]
+      },
+      "control_mp_aegir2[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "baseEfficiency": 0.05,
+              "unsupportedReason": "abyssalHunterSpecialBonusNotModeled"
+            }
+          }
+        ]
+      },
+      "control_mp_aegir2[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "baseEfficiency": 0.05,
+              "unsupportedReason": "abyssalHunterSpecialBonusNotModeled"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4163_rosesa": {
+    "skills": {
+      "trade_ord_limit&trade&lv[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "orderLimit": 3
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4088_hodrer": {
+    "skills": {
+      "trade_ord_par&per[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "conditionalBonuses": [
+                {
+                  "efficiency": 0.05,
+                  "conditions": [
+                    {
+                      "type": "assignedOperator",
+                      "operatorIds": [
+                        "char_4087_ines"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "trade_ord_par&per[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.3,
+              "conditionalBonuses": [
+                {
+                  "efficiency": 0.05,
+                  "conditions": [
+                    {
+                      "type": "assignedOperator",
+                      "operatorIds": [
+                        "char_4087_ines"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "efficiency": 0.05,
+                  "conditions": [
+                    {
+                      "type": "assignedOperator",
+                      "operatorIds": [
+                        "char_113_cqbw"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4046_ebnhlz": {
+    "skills": {
+      "trade_ord_spd_bd_n1[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "resourceEffects": [
+                {
+                  "resource": "perceptionInfo",
+                  "amount": 20
+                }
+              ],
+              "ignoredForOptimization": true,
+              "unsupportedReason": "dormOccupancyResourceGeneratorFoldedIntoConsumer"
+            }
+          }
+        ]
+      },
+      "trade_ord_spd_bd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "resource",
+                "resource": "perceptionInfo",
+                "per": 4
+              }
+            }
+          }
+        ]
+      },
+      "trade_ord_spd_bd[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "resource",
+                "resource": "perceptionInfo",
+                "per": 2
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_500_noirc": {
+    "skills": {
+      "manu_prod_spd&limit[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "storageLimit": 10
+            }
+          }
+        ]
+      },
+      "trade_ord_spd&limit[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "orderLimit": 2
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4140_lasher": {
+    "skills": {
+      "trade_ord_spd&limit[035]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.3,
+              "orderLimit": 1
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_226_hmau": {
+    "skills": {
+      "control_mp_cost&faction2[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "lee"
+                ],
+                "facility": "control",
+                "includeSelf": true
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4023_rfalcn": {
+    "skills": {
+      "control_dorm_rec[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "globalEffect": {
+                "facility": "dormitory",
+                "product": "morale",
+                "stackKey": "all-dorm-recovery"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_190_clour": {
+    "skills": {
+      "manu_prod_limit&cost[0000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "storageLimit": 8
+            }
+          }
+        ]
+      },
+      "manu_prod_spd_variable[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.02,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "facilityStorageLimit",
+                "scope": "sameFacility",
+                "includeSelf": true
+              },
+              "storageLimit": 8
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4055_bgsnow": {
+    "skills": {
+      "trade_ord_spd&gold[100]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "product": "lmd",
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "facilityProductCount",
+                "facility": "factory",
+                "product": "gold"
+              }
+            }
+          }
+        ]
+      },
+      "trade_ord_line_durin[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "product": "lmd",
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "durin"
+                ],
+                "scope": "base",
+                "max": 4
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_456_ash": {
+    "skills": {
+      "control_mp_cost&faction[990]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "rainbow"
+                ],
+                "facility": "control",
+                "includeSelf": true
+              }
+            }
+          }
+        ]
+      },
+      "control_mp_bd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "rainbow"
+                ],
+                "facility": "control",
+                "includeSelf": true
+              },
+              "resourceEffects": [
+                {
+                  "resource": "intelReserve",
+                  "amount": 1,
+                  "scaling": {
+                    "type": "affiliation",
+                    "affiliations": [
+                      "rainbow"
+                    ],
+                    "facility": "control",
+                    "includeSelf": true
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1030_noirc2": {
+    "skills": {
+      "control_mp_bd2[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "action4"
+                ],
+                "facility": "control",
+                "includeSelf": true
+              },
+              "resourceEffects": [
+                {
+                  "resource": "catnip",
+                  "amount": 2,
+                  "scaling": {
+                    "type": "affiliation",
+                    "affiliations": [
+                      "action4"
+                    ],
+                    "facility": "control",
+                    "includeSelf": true
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "control_token_tra_spd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.07,
+              "globalEffect": {
+                "facility": "trading",
+                "product": "lmd",
+                "stackKey": "all-trading-speed"
+              },
+              "conditions": [
+                {
+                  "type": "facilityAffiliation",
+                  "facility": "control",
+                  "affiliations": [
+                    "action4"
+                  ],
+                  "min": 1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_163_hpsts": {
+    "skills": {
+      "manu_prod_spd&limit&cost[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": -0.05,
+              "storageLimit": 16
+            }
+          }
+        ]
+      },
+      "manu_prod_spd&limit&cost[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": -0.05,
+              "storageLimit": 19
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4116_blkkgt": {
+    "skills": {
+      "trade_ord_spd&limit[100]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.2,
+              "orderLimit": -2
+            }
+          }
+        ]
+      },
+      "trade_ord_spd&limit[101]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "orderLimit": -6
+            }
+          }
+        ]
+      },
+      "trade_ord_spd_variable3[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "facilityOrderLimit",
+                "scope": "sameFacility",
+                "per": 5,
+                "max": 4
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_199_yak": {
+    "skills": {
+      "trade_ord_spd&limit[020]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.15,
+              "orderLimit": 2
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_272_strong": {
+    "skills": {
+      "trade_ord_limit_diff[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.04,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "currentOrderStateNotModeled"
+            }
+          }
+        ]
+      },
+      "trade_ord_limit_count[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "orderLimit": -1,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "currentOrderAndSpecialStackNotModeled"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4078_bdhkgt": {
+    "skills": {
+      "manu_bd_to_bd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "resourceConversionFoldedIntoConsumer"
+            }
+          }
+        ]
+      },
+      "manu_prod_spd_bd[200]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "resource",
+                "resource": "worldlyPlight",
+                "per": 5
+              }
+            }
+          }
+        ]
+      },
+      "manu_prod_spd_bd[201]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.02,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "resource",
+                "resource": "worldlyPlight",
+                "per": 5
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_306_leizi": {
+    "skills": {
+      "control_clue_cost[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "clueBiasNotModeled"
+            }
+          }
+        ]
+      },
+      "control_clue_cost[011]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "clueBiasNotModeled"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_328_cammou": {
+    "skills": {
+      "manu_formula_limit[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "storageLimit": 15
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_214_kafka": {
+    "skills": {
+      "trade_ord_wt&cost[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "highValueOrderProbability"
+            }
+          }
+        ]
+      },
+      "trade_ord_wt&cost[011]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "highValueOrderProbability"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_209_ardign": {
+    "skills": {
+      "manu_prod_spd&limit[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "storageLimit": 6
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_003_kalts": {
+    "skills": {
+      "control_prod_spd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.02,
+              "globalEffect": {
+                "facility": "factory",
+                "stackKey": "all-factory-speed"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_201_moeshd": {
+    "skills": {
+      "trade_ord_spd&limit[031]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.3,
+              "orderLimit": 1
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_124_kroos": {
+    "skills": {
+      "manu_prod_spd_addition[040]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "scaling": {
+                "type": "fixed",
+                "count": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_2013_cerber": {
+    "skills": {
+      "manu_prod_limit&cost[002]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "storageLimit": 8
+            }
+          }
+        ]
+      },
+      "manu_prod_spd_addition[031]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "scaling": {
+                "type": "fixed",
+                "count": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4015_spuria": {
+    "skills": {
+      "power_rec_spd&addition[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.15,
+              "scaling": {
+                "type": "fixed",
+                "count": 1
+              }
+            }
+          }
+        ]
+      },
+      "power_rec_spd&addition[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.2,
+              "scaling": {
+                "type": "fixed",
+                "count": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_332_archet": {
+    "skills": {
+      "trade_ord_spd&dorm&lv[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "scaling": {
+                "type": "fixed",
+                "count": 20
+              }
+            }
+          }
+        ]
+      },
+      "trade_ord_spd&dorm&lv[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.02,
+              "scaling": {
+                "type": "fixed",
+                "count": 20
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_140_whitew": {
+    "skills": {
+      "trade_ord_limit&cost_P[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "orderLimit": 2,
+              "conditions": [
+                {
+                  "type": "sameFacilityOperator",
+                  "operatorIds": [
+                    "char_102_texas"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "trade_ord_limit&cost_P[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "orderLimit": 4,
+              "conditions": [
+                {
+                  "type": "sameFacilityOperator",
+                  "operatorIds": [
+                    "char_102_texas"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_322_lmlee": {
+    "skills": {
+      "control_allCost_condChar[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "conditions": [
+                {
+                  "type": "facilityOperator",
+                  "facility": "control",
+                  "operatorIds": [
+                    "char_225_haak"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "control_upMeetingSpeed[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "globalEffect": {
+                "facility": "reception",
+                "product": "clue",
+                "stackKey": "reception-clue-speed"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4193_lemuen": {
+    "skills": {
+      "trade_ord_spd&multiPar[100]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.45,
+              "conditions": [
+                {
+                  "type": "sameFacilityOperator",
+                  "operatorIds": [
+                    "char_103_angel"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1036_fang2": {
+    "skills": {
+      "manu_prod_spd&fraction[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "reserve1"
+                ],
+                "scope": "sameFacility",
+                "includeSelf": true
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_194_leto": {
+    "skills": {
+      "manu_formula_spd_P[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.35,
+              "conditions": [
+                {
+                  "type": "facilityOperator",
+                  "facility": "trading",
+                  "operatorIds": [
+                    "char_196_sunbr"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1033_swire2": {
+    "skills": {
+      "trade_ord_spd_variable[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.04,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "facilityOrderLimit",
+                "scope": "sameFacility",
+                "per": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4102_threye": {
+    "skills": {
+      "meet_spd&bd[000]": {
+        "effects": [
+          {
+            "index": 1,
+            "patch": {
+              "efficiency": 0.25,
+              "conditions": [
+                {
+                  "type": "facilityOperator",
+                  "facility": "reception",
+                  "operatorIds": [
+                    "char_2012_typhon"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "meet_spd&bd[010]": {
+        "effects": [
+          {
+            "index": 1,
+            "patch": {
+              "efficiency": 0.25,
+              "conditions": [
+                {
+                  "type": "facilityOperator",
+                  "facility": "reception",
+                  "operatorIds": [
+                    "char_2012_typhon"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1045_svash2": {
+    "skills": {
+      "control_tra_limit&spd3[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "scaling": {
+                "type": "facilityGroupAffiliation",
+                "affiliations": [
+                  "kjerag"
+                ],
+                "facility": "trading",
+                "min": 3
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_206_gnosis": {
+    "skills": {
+      "control_tra_limit&spd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": -0.15,
+              "orderLimit": 6,
+              "conditions": [
+                {
+                  "type": "facilityAffiliation",
+                  "facility": "trading",
+                  "affiliations": [
+                    "karlan"
+                  ],
+                  "min": 1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_192_falco": {
+    "skills": {
+      "trade_ord_spd&limit[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "orderLimit": 2
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_2023_ling": {
+    "skills": {
+      "control_costToBD[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "resourceEffects": [
+                {
+                  "resource": "worldlyPlight",
+                  "amount": 15
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_486_takila": {
+    "skills": {
+      "trade_ord_long[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "goldOrderValueExpectation"
+            }
+          }
+        ]
+      },
+      "trade_ord_long[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "goldOrderValueExpectation"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_433_windft": {
+    "skills": {
+      "manu_prod_spd&power[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "facilityCount",
+                "facility": "power"
+              },
+              "suppressesOtherFactoryEfficiency": true
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4215_buddy": {
+    "skills": {
+      "meet_spd_notOwned_P[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "conditions": [
+                {
+                  "type": "facilityOperator",
+                  "facility": "control",
+                  "operatorIds": [
+                    "char_1048_orchd2"
+                  ]
+                },
+                {
+                  "type": "facilityOperator",
+                  "facility": "control",
+                  "operatorIds": [
+                    "char_278_orchid"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4064_mlynar": {
+    "skills": {
+      "control_mp_lonely[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "crossFacilityMoraleRecoveryNotScored"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4141_marcil": {
+    "skills": {
+      "manu_prod_spd_bd[400]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "resource",
+                "resource": "magicFood"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_208_melan": {
+    "skills": {
+      "trade_ord_spd&limit[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "orderLimit": 1
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_391_rosmon": {
+    "skills": {
+      "manu_prod_spd_bd_n1[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "resourceEffects": [
+                {
+                  "resource": "perceptionInfo",
+                  "amount": 20
+                }
+              ],
+              "ignoredForOptimization": true,
+              "unsupportedReason": "dormOccupancyResourceGeneratorFoldedIntoConsumer"
+            }
+          }
+        ]
+      },
+      "manu_prod_spd_bd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "resource",
+                "resource": "perceptionInfo",
+                "per": 2
+              }
+            }
+          }
+        ]
+      },
+      "manu_prod_spd_bd[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "resource",
+                "resource": "perceptionInfo",
+                "per": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_122_beagle": {
+    "skills": {
+      "manu_prod_spd&limit[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "storageLimit": 6
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4071_peper": {
+    "skills": {
+      "control_tra_spd[020]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.07,
+              "globalEffect": {
+                "facility": "trading",
+                "product": "lmd",
+                "stackKey": "all-trading-speed"
+              }
+            }
+          }
+        ]
+      },
+      "trade_ord_wt&cost[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "highValueOrderProbability"
+            }
+          }
+        ]
+      },
+      "trade_ord_wt&cost[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "highValueOrderProbability"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_154_morgan": {
+    "skills": {
+      "trade_ord_spd_par[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.2,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "glasgow"
+                ],
+                "scope": "sameFacility",
+                "includeSelf": true
+              },
+              "conditionalBonuses": [
+                {
+                  "efficiency": 0.35,
+                  "conditions": [
+                    {
+                      "type": "sameFacilityOperator",
+                      "operatorIds": [
+                        "char_112_siege"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4134_cetsyr": {
+    "skills": {
+      "control_upMeetingSpeed[100]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.15,
+              "globalEffect": {
+                "facility": "reception",
+                "product": "clue",
+                "stackKey": "reception-clue-speed"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_249_mlyss": {
+    "skills": {
+      "power_rec_rhine[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.03,
+              "baseEfficiency": 0.1,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "rhine"
+                ],
+                "scope": "base",
+                "max": 5
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4171_wulfen": {
+    "skills": {
+      "manu_prod_spd&limit&cost[300]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.2,
+              "storageLimit": -8
+            }
+          }
+        ]
+      },
+      "manu_prod_limit&cost[1020]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "storageLimit": 16
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4138_narant": {
+    "skills": {
+      "manu_prod_limit&cost[011]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "storageLimit": 10
+            }
+          }
+        ]
+      },
+      "manu_formula_spd&dorm&lv[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "scaling": {
+                "type": "fixed",
+                "count": 20
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4212_nasti": {
+    "skills": {
+      "manu_formula_spd&cost_bd[100]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.03,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "rhine"
+                ],
+                "max": 5
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4146_nymph": {
+    "skills": {
+      "control_dorm_rec[002]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "globalEffect": {
+                "facility": "dormitory",
+                "product": "morale",
+                "stackKey": "all-dorm-recovery"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1051_headb2": {
+    "addAffiliations": [
+      "student"
+    ],
+    "skills": {
+      "manu_formula_spd&bd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "baseEfficiency": 0.3
+            }
+          }
+        ]
+      },
+      "manu_formula_spd&bd[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.3,
+              "conditionalBonuses": [
+                {
+                  "efficiency": 0.1,
+                  "conditions": [
+                    {
+                      "type": "sameFacilityAffiliation",
+                      "affiliations": [
+                        "student"
+                      ],
+                      "min": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "control_meeting_bd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "student"
+                ],
+                "facility": "reception"
+              },
+              "globalEffect": {
+                "facility": "reception",
+                "product": "clue",
+                "stackKey": "student-reception-clue-speed"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_485_pallas": {
+    "skills": {
+      "manu_prod_limit&cost[003]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "storageLimit": 8
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_381_bubble": {
+    "skills": {
+      "manu_prod_limit&cost[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "storageLimit": 10
+            }
+          }
+        ]
+      },
+      "manu_prod_spd_variable3[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "facilityStorageLimit",
+                "scope": "sameFacility",
+                "includeSelf": true
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_281_popka": {
+    "skills": {
+      "manu_prod_spd&limit&cost[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "storageLimit": -12
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4058_pepe": {
+    "skills": {
+      "trade_ord_limit&trade&lv[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "orderLimit": 3
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4144_chilc": {
+    "skills": {
+      "trade_ord_spd&limit[036]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.3,
+              "orderLimit": 1
+            }
+          }
+        ]
+      },
+      "trade_ord_spd_bd[100]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "resource",
+                "resource": "magicFood"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1029_yato2": {
+    "skills": {
+      "control_mp_cost&bd2[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "resourceEffects": [
+                {
+                  "resource": "catnip",
+                  "amount": 8
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "control_token_prod_spd2[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.02,
+              "globalEffect": {
+                "facility": "factory",
+                "stackKey": "all-factory-speed"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_478_kirara": {
+    "skills": {
+      "trade_ord_line_gold[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "product": "lmd",
+              "efficiency": 0,
+              "baseEfficiency": 0.05,
+              "unsupportedReason": "goldProductionLineCountNotModeled"
+            }
+          }
+        ]
+      },
+      "trade_ord_line_gold[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "product": "lmd",
+              "efficiency": 0,
+              "baseEfficiency": 0.05,
+              "unsupportedReason": "goldProductionLineCountNotModeled"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4062_totter": {
+    "skills": {
+      "manu_prod_spd_addition&cost[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "storageLimit": 6
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_479_sleach": {
+    "skills": {
+      "control_hire_spd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.3,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "officeContactSpeedNotModeled"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_149_scave": {
+    "skills": {
+      "manu_prod_limit&cost[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "storageLimit": 8
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4026_vulpis": {
+    "skills": {
+      "meet_spd&bd[100]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.3,
+              "conditions": [
+                {
+                  "type": "facilityOperator",
+                  "facility": "reception",
+                  "operatorIds": [
+                    "char_358_lisa"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4183_mortis": {
+    "skills": {
+      "control_mp_bd&trade[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "globalEffect": {
+                "facility": "trading",
+                "product": "lmd",
+                "stackKey": "all-trading-speed"
+              },
+              "resourceEffects": [
+                {
+                  "resource": "passion",
+                  "amount": 20
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4184_dolris": {
+    "skills": {
+      "control_dorm_bd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "resourceEffects": [
+                {
+                  "resource": "passion",
+                  "amount": 5
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "control_dorm_rec2[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "globalEffect": {
+                "facility": "dormitory",
+                "product": "morale",
+                "stackKey": "all-dorm-recovery"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_416_zumama": {
+    "skills": {
+      "manu_prod_spd&power[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "facilityCount",
+                "facility": "power"
+              },
+              "suppressesOtherFactoryEfficiency": true
+            }
+          }
+        ]
+      },
+      "manu_prod_spd&power[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "scaling": {
+                "type": "facilityCount",
+                "facility": "power"
+              },
+              "suppressesOtherFactoryEfficiency": true
+            }
+          }
+        ]
+      },
+      "control_pow_bot[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "facilityCountBonuses": [
+                {
+                  "facility": "power",
+                  "amount": 2
+                }
+              ],
+              "conditions": [
+                {
+                  "type": "facilityOperator",
+                  "facility": "power",
+                  "operatorIds": [
+                    "char_285_medic2"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_457_blitz": {
+    "skills": {
+      "control_mp_cost&faction[990]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "rainbow"
+                ],
+                "facility": "control",
+                "includeSelf": true
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_150_snakek": {
+    "skills": {
+      "manu_prod_spd&limit[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "storageLimit": 10
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4137_udflow": {
+    "skills": {
+      "trade_ord_spd_ext[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "conditionalBonuses": [
+                {
+                  "efficiency": 0.05,
+                  "conditions": [
+                    {
+                      "type": "assignedOperator",
+                      "operatorIds": [
+                        "char_4145_ulpia"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "trade_ord_spd_ext[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.3,
+              "conditionalBonuses": [
+                {
+                  "efficiency": 0.1,
+                  "conditions": [
+                    {
+                      "type": "assignedOperator",
+                      "operatorIds": [
+                        "char_4145_ulpia"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1032_excu2": {
+    "skills": {
+      "manu_formula_limit[020]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "storageLimit": 4
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_308_swire": {
+    "skills": {
+      "control_tra_spd[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.07,
+              "globalEffect": {
+                "facility": "trading",
+                "product": "lmd",
+                "stackKey": "all-trading-speed"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_378_asbest": {
+    "skills": {
+      "manu_prod_spd&limit&cost[011]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "storageLimit": -12
+            }
+          }
+        ]
+      },
+      "manu_prod_limit&cost[020]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "storageLimit": 16
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_210_stward": {
+    "skills": {
+      "trade_ord_limit&cost[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "orderLimit": 5
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_2025_shu": {
+    "skills": {
+      "manu_prod_spd_bd[300]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "resource",
+                "resource": "worldlyPlight",
+                "per": 3
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4124_iana": {
+    "skills": {
+      "meet_spd_bd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "baseEfficiency": 0.05,
+              "scaling": {
+                "type": "resource",
+                "resource": "intelReserve"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_263_skadi": {
+    "addAffiliations": [
+      "abyssal"
+    ]
+  },
+  "char_365_aprl": {
+    "skills": {
+      "trade_ord_spd&limit[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "orderLimit": 2
+            }
+          }
+        ]
+      },
+      "trade_ord_spd&limit[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "orderLimit": 4
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4077_palico": {
+    "skills": {
+      "trade_ord_spd&limit&bd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.03,
+              "baseEfficiency": 0.05,
+              "scaling": {
+                "type": "resource",
+                "resource": "catnip"
+              },
+              "orderLimit": 2
+            }
+          }
+        ]
+      },
+      "manu_prod_spd&limit&bd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "baseEfficiency": 0.05,
+              "scaling": {
+                "type": "resource",
+                "resource": "catnip"
+              },
+              "storageLimit": 8
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_151_myrtle": {
+    "skills": {
+      "trade_ord_limit&cost[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "orderLimit": 5
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_2012_typhon": {
+    "skills": {
+      "meet_spd&sami[000]": {
+        "effects": [
+          {
+            "index": 1,
+            "patch": {
+              "efficiency": 0.15,
+              "conditions": [
+                {
+                  "type": "sameFacilityAffiliation",
+                  "affiliations": [
+                    "sami"
+                  ],
+                  "min": 1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4098_vvana": {
+    "skills": {
+      "control_prod_fraction[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.07,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "kazimierz",
+                  "pinus"
+                ],
+                "facility": "factory"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1019_siege2": {
+    "skills": {
+      "trade_ord_spd&par[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.3,
+              "conditionalBonuses": [
+                {
+                  "efficiency": 0.1,
+                  "conditions": [
+                    {
+                      "type": "sameFacilityAffiliation",
+                      "affiliations": [
+                        "glasgow"
+                      ],
+                      "min": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1035_wisdel": {
+    "skills": {
+      "control_meeting&ord[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "orderLimit": 1,
+              "conditions": [
+                {
+                  "type": "facilityOperator",
+                  "facility": "trading",
+                  "operatorIds": [
+                    "char_4088_hodrer"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "addEffects": [
+          {
+            "facility": "control",
+            "efficiency": 0.05,
+            "globalEffect": {
+              "facility": "reception",
+              "product": "clue",
+              "stackKey": "reception-clue-speed"
+            },
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "reception",
+                "operatorIds": [
+                  "char_4087_ines"
+                ]
+              }
+            ],
+            "description": {
+              "en": "When this Operator is assigned to the Control Center, if Ines is assigned to the Reception Room, clue collection speed +5%."
+            }
+          }
+        ]
+      },
+      "control_meeting&ord[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "orderLimit": 2,
+              "conditions": [
+                {
+                  "type": "facilityOperator",
+                  "facility": "trading",
+                  "operatorIds": [
+                    "char_4088_hodrer"
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "addEffects": [
+          {
+            "facility": "control",
+            "efficiency": 0.05,
+            "globalEffect": {
+              "facility": "reception",
+              "product": "clue",
+              "stackKey": "reception-clue-speed"
+            },
+            "conditions": [
+              {
+                "type": "facilityOperator",
+                "facility": "reception",
+                "operatorIds": [
+                  "char_4087_ines"
+                ]
+              }
+            ],
+            "description": {
+              "en": "When this Operator is assigned to the Control Center, if Ines is assigned to the Reception Room, clue collection speed +5%."
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4226_veen": {
+    "skills": {
+      "manu_prod_spd_train&lv[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "scaling": {
+                "type": "fixed",
+                "count": 3
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_400_weedy": {
+    "skills": {
+      "manu_prod_spd&power[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "scaling": {
+                "type": "facilityCount",
+                "facility": "power"
+              },
+              "suppressesOtherFactoryEfficiency": true
+            }
+          }
+        ]
+      },
+      "manu_prod_spd&power[020]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.15,
+              "scaling": {
+                "type": "facilityCount",
+                "facility": "power"
+              },
+              "suppressesOtherFactoryEfficiency": true
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_455_nothin": {
+    "skills": {
+      "trade_ord_spd_bd_n2[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.01,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "resource",
+                "resource": "worldlyPlight"
+              },
+              "resourceEffects": [
+                {
+                  "resource": "worldlyPlight",
+                  "amount": 20
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_254_vodfox": {
+    "skills": {
+      "trade_ord_wt&cost[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "highValueOrderProbability"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_2015_dusk": {
+    "skills": {
+      "control_mp_cost&bd1[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "lowMoraleBranchNotAssumed"
+            }
+          }
+        ]
+      },
+      "control_mp_cost&bd2[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "resourceEffects": [
+                {
+                  "resource": "perceptionInfo",
+                  "amount": 10
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_336_folivo": {
+    "skills": {
+      "manu_prod_spd_addition[041]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "scaling": {
+                "type": "fixed",
+                "count": 1
+              }
+            }
+          }
+        ]
+      },
+      "manu_formula_limit[0000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "storageLimit": 12
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1041_angel2": {
+    "skills": {
+      "trade_ord_spd_par[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.15,
+              "conditions": [
+                {
+                  "type": "sameFacilityAffiliation",
+                  "affiliations": [
+                    "laterano"
+                  ],
+                  "min": 1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4194_rmixer": {
+    "skills": {
+      "meet_spd_ext&P[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "conditions": [
+                {
+                  "type": "facilityOperator",
+                  "facility": "dormitory",
+                  "operatorIds": [
+                    "char_300_phenxi"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4105_almond": {
+    "skills": {
+      "manu_formula_spd&cost_bd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.02,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "blacksteel"
+                ],
+                "max": 3
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_198_blackd": {
+    "skills": {
+      "trade_ord_spd&limit[020]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.15,
+              "orderLimit": 2
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_173_slchan": {
+    "skills": {
+      "trade_ord_spd&limit[021]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.15,
+              "orderLimit": 4
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1048_orchd2": {
+    "skills": {
+      "control_hire_spd_all[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "officeContactSpeedNotModeled"
+            }
+          }
+        ]
+      },
+      "trade_ord_spd&limit_tag[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.2,
+              "orderLimit": 3
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_420_flamtl": {
+    "skills": {
+      "control_mp_psk[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "product": "battleRecord",
+              "efficiency": 0.1,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "pinus"
+                ],
+                "facility": "factory"
+              }
+            }
+          }
+        ],
+        "addEffects": [
+          {
+            "facility": "control",
+            "product": "gold",
+            "tags": [
+              "control",
+              "bskill_ctrl_psk",
+              "control"
+            ],
+            "description": {
+              "en": "When this Operator is assigned to the Control Center, each Pinus Sylvestris Operator assigned to Factories have +10% productivity towards Battle Records and -10% productivity towards Precious Metals"
+            },
+            "efficiency": -0.1,
+            "conditions": [
+              {
+                "type": "facilityAffiliation",
+                "facility": "factory",
+                "affiliations": [
+                  "pinus"
+                ],
+                "min": 1
+              }
+            ],
+            "scaling": {
+              "type": "affiliation",
+              "affiliations": [
+                "pinus"
+              ],
+              "facility": "factory"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1020_reed2": {
+    "skills": {
+      "control_dorm_rec[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "globalEffect": {
+                "facility": "dormitory",
+                "product": "morale",
+                "stackKey": "all-dorm-recovery"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_464_cement": {
+    "skills": {
+      "manu_prod_limit&cost[021]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "storageLimit": 10
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4087_ines": {
+    "skills": {
+      "meet_spd_hast[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.3,
+              "scaling": {
+                "type": "fixed",
+                "count": 1
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_472_pasngr": {
+    "skills": {
+      "manu_prod_spd&power[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "facilityCount",
+                "facility": "power"
+              },
+              "suppressesOtherFactoryEfficiency": true
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_172_svrash": {
+    "skills": {
+      "trade_ord_spd&limit[020]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.15,
+              "orderLimit": 2
+            }
+          }
+        ]
+      },
+      "trade_ord_spd&limit[022]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.2,
+              "orderLimit": 4
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_143_ghost": {
+    "addAffiliations": [
+      "abyssal"
+    ]
+  },
+  "char_4185_amoris": {
+    "skills": {
+      "control_meeting_spd&bd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "resourceEffects": [
+                {
+                  "resource": "passion",
+                  "amount": 10
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "control_mp&meet_spd[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "conditions": [
+                {
+                  "type": "assignedOperator",
+                  "facility": "control",
+                  "operatorIds": [
+                    "char_4182_oblvns"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_2026_yu": {
+    "skills": {
+      "dorm_rec_all&group[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.06,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "sui"
+                ],
+                "scope": "base",
+                "includeSelf": true,
+                "max": 4
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_109_fmout": {
+    "skills": {
+      "trade_ord_spd&limit[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "orderLimit": 1
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_197_poca": {
+    "skills": {
+      "control_mp_cost&faction[020]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "student"
+                ],
+                "facility": "control",
+                "includeSelf": true
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1044_hsgma2": {
+    "skills": {
+      "control_train_spd[012]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "trainingRoomNotModeled"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_459_tachak": {
+    "skills": {
+      "control_mp_cost&faction[990]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "rainbow"
+                ],
+                "facility": "control",
+                "includeSelf": true
+              }
+            }
+          }
+        ]
+      },
+      "control_mp_bd[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "scaling": {
+                "type": "affiliation",
+                "affiliations": [
+                  "student"
+                ],
+                "facility": "control",
+                "includeSelf": true
+              },
+              "resourceEffects": [
+                {
+                  "resource": "ursusDrink",
+                  "amount": 1,
+                  "scaling": {
+                    "type": "affiliation",
+                    "affiliations": [
+                      "student"
+                    ],
+                    "facility": "control",
+                    "includeSelf": true
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_499_kaitou": {
+    "skills": {
+      "trade_ord_wt&cost[002]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "highValueOrderProbability"
+            }
+          }
+        ]
+      },
+      "trade_ord_wt&cost[012]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "highValueOrderProbability"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4000_jnight": {
+    "addAffiliations": [
+      "platform"
+    ],
+    "skills": {
+      "power_prod_spd_P[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "conditions": [
+                {
+                  "type": "facilityOperator",
+                  "facility": "factory",
+                  "operatorIds": [
+                    "char_496_wildmn"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4054_malist": {
+    "skills": {
+      "manu_constrLv[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "constructionRobotResourceGeneratorFoldedIntoProductionSkills"
+            }
+          }
+        ]
+      },
+      "manu_prod_spd_bd[100]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "fixed",
+                "count": 4
+              }
+            }
+          }
+        ]
+      },
+      "manu_prod_spd_bd[110]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "scaling": {
+                "type": "fixed",
+                "count": 8
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_2024_chyue": {
+    "skills": {
+      "control_mp_cost&bd_up[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "resourceEffects": [
+                {
+                  "resource": "worldlyPlight",
+                  "amount": 5,
+                  "scaling": {
+                    "type": "affiliation",
+                    "affiliations": [
+                      "sui"
+                    ],
+                    "includeSelf": true,
+                    "max": 5
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "control_mp_bd_cost_expand[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "baseEfficiency": 0.05,
+              "scaling": {
+                "type": "resource",
+                "resource": "worldlyPlight",
+                "per": 20
+              },
+              "unsupportedReason": "specialControlMoraleStackComparisonNotModeled"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_1040_blaze2": {
+    "skills": {
+      "control_train_spd[011]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "trainingRoomNotModeled"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_278_orchid": {
+    "skills": {
+      "trade_ord_spd&limit[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.25,
+              "orderLimit": 1
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_286_cast3": {
+    "addAffiliations": [
+      "platform"
+    ]
+  },
+  "char_4188_confes": {
+    "addAffiliations": [
+      "platform"
+    ],
+    "skills": {
+      "power_rec_spd_ext&faction[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "conditions": [
+                {
+                  "type": "facilityAffiliation",
+                  "facility": "power",
+                  "affiliations": [
+                    "laterano"
+                  ],
+                  "min": 1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4093_frston": {
+    "addAffiliations": [
+      "platform"
+    ],
+    "skills": {
+      "power_rec_spd_P[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "conditions": [
+                {
+                  "type": "facilityOperator",
+                  "facility": "control",
+                  "operatorIds": [
+                    "char_003_kalts"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_285_medic2": {
+    "addAffiliations": [
+      "platform"
+    ]
+  },
+  "char_4198_christ": {
+    "skills": {
+      "manu_prod_limit&cost[012]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "storageLimit": 10
+            }
+          }
+        ]
+      },
+      "manu_prod_spd_double[100]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.3,
+              "conditions": [
+                {
+                  "type": "sameFacilityOperator",
+                  "operatorIds": [
+                    "char_1042_phatm2"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_402_tuye": {
+    "skills": {
+      "trade_ord_spd&gold[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "product": "lmd"
+            }
+          }
+        ]
+      },
+      "trade_ord_spd&gold[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "product": "lmd"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4091_ulika": {
+    "skills": {
+      "trade_ord_spd&wt[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "product": "lmd"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4179_monstr": {
+    "skills": {
+      "control_prod_spd[1000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.02,
+              "globalEffect": {
+                "facility": "factory",
+                "stackKey": "all-factory-speed"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4136_phonor": {
+    "addAffiliations": [
+      "platform"
+    ],
+    "skills": {
+      "power_rec_spd_P[001]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "ignoredForOptimization": true,
+              "unsupportedReason": "trainingRoomConditionNotModeled"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_376_therex": {
+    "addAffiliations": [
+      "platform"
+    ]
+  }
+}

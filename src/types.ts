@@ -25,13 +25,52 @@ export interface BaseSkillEffect {
   facility: FacilityType;
   product?: ProductType;
   efficiency: number;
+  baseEfficiency?: number;
   scaling?: {
-    type: "affiliation";
-    affiliations: string[];
+    type:
+      | "affiliation"
+      | "facilityGroupAffiliation"
+      | "facilityCount"
+      | "facilityProductCount"
+      | "facilityLevel"
+      | "fixed"
+      | "resource"
+      | "facilityStorageLimit"
+      | "facilityOrderLimit";
+    affiliations?: string[];
     facility?: FacilityType;
+    product?: ProductType;
+    resource?: string;
+    count?: number;
+    per?: number;
     includeSelf?: boolean;
     max?: number;
+    min?: number;
+    scope?: "base" | "facility" | "sameFacility";
   };
+  globalEffect?: {
+    facility: FacilityType;
+    product?: ProductType;
+    stackKey?: string;
+  };
+  resourceEffects?: Array<{
+    resource: string;
+    amount: number;
+    scaling?: NonNullable<BaseSkillEffect["scaling"]>;
+  }>;
+  facilityCountBonuses?: Array<{
+    facility: FacilityType;
+    amount: number;
+  }>;
+  storageLimit?: number;
+  orderLimit?: number;
+  ignoredForOptimization?: boolean;
+  unsupportedReason?: string;
+  conditionalBonuses?: Array<{
+    efficiency: number;
+    conditions: BaseSkillCondition[];
+  }>;
+  suppressesOtherFactoryEfficiency?: boolean;
   tags?: string[];
   conditions?: BaseSkillCondition[];
   description: LocalizedText;
@@ -48,6 +87,11 @@ export type BaseSkillCondition =
       operatorIds: string[];
     }
   | {
+      type: "assignedOperator";
+      facility?: FacilityType;
+      operatorIds: string[];
+    }
+  | {
       type: "sameFacilityAffiliation";
       affiliations: string[];
       min?: number;
@@ -57,6 +101,13 @@ export type BaseSkillCondition =
       facility?: FacilityType;
       affiliations: string[];
       min?: number;
+      max?: number;
+    }
+  | {
+      type: "facilityCount";
+      facility: FacilityType;
+      min?: number;
+      max?: number;
     };
 
 export interface BaseSkill {
@@ -114,6 +165,45 @@ export interface Assignment {
   skillId: string;
   score: number;
   efficiency: number;
+  storageLimit?: number;
+  orderLimit?: number;
+  suppressesOtherFactoryEfficiency?: boolean;
+  globalStackKey?: string;
+  skilllessPrerequisiteOperatorIds?: string[];
+  baseSkilllessPrerequisiteOperatorIds?: string[];
+  skilllessPrerequisiteFor?: string;
+  baseSkilllessPrerequisiteFor?: string;
+  doesNotConsumeFacilitySlot?: boolean;
+  scalesWithFacilityStat?: Array<"storageLimit" | "orderLimit">;
+  facilityStatScalings?: Array<{
+    key: "storageLimit" | "orderLimit";
+    current: number;
+    efficiencyPerStep: number;
+    scorePerEfficiency: number;
+    per?: number;
+    max?: number;
+  }>;
+  remoteFacilityStatBonuses?: Array<{
+    key: "storageLimit" | "orderLimit";
+    facility: FacilityType;
+    amount: number;
+    affiliations?: string[];
+    operatorIds?: string[];
+    min?: number;
+  }>;
+  remoteFacilityEfficiencyBonuses?: Array<{
+    facility: FacilityType;
+    amount: number;
+    product?: ProductType;
+    affiliations?: string[];
+    groupAffiliations?: string[];
+    operatorIds?: string[];
+    min?: number;
+  }>;
+  remoteFacilityCountBonuses?: Array<{
+    facility: FacilityType;
+    amount: number;
+  }>;
   fatigueHours: number;
   recoveryHours: number;
   reason: string;
@@ -123,6 +213,7 @@ export interface FacilityPlan {
   facility: FacilitySlot;
   assignments: Assignment[];
   expectedEfficiency: number;
+  alternativeExpectedEfficiency?: number;
   score: number;
   alternatives: Assignment[];
 }

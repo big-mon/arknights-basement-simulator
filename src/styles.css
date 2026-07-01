@@ -588,6 +588,40 @@ input[type="radio"] {
   line-height: 1.45;
 }
 
+.optimization-note {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #f4eee7;
+  color: #76553c;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.calculation-notes {
+  border-top: 1px solid #e5ded5;
+  padding: 20px 4px 0;
+  color: #5c554f;
+}
+
+.calculation-notes h2 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.calculation-notes ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 6px;
+}
+
+.calculation-notes li {
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
 .preference-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

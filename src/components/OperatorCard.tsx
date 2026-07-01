@@ -21,6 +21,7 @@ export function OperatorCard({
   const text = uiText[language];
   const operatorName = localizeText(operator.name, language);
   const missingSelectedLanguageName = !hasLocalizedText(operator.name, language);
+  const ignoredOptimizationLabel = ignoredOptimizationLabels[language];
 
   function toggleOwnedFromCard(event: MouseEvent<HTMLElement>) {
     if (isInteractiveCardTarget(event.target)) {
@@ -84,6 +85,7 @@ export function OperatorCard({
                   {facilityLabels[language][effect.facility]}
                   {effect.product ? ` / ${productLabels[language][effect.product]}` : ""}:{" "}
                   {localizeText(effect.description, language)}
+                  {effect.ignoredForOptimization ? <span className="optimization-note">{ignoredOptimizationLabel}</span> : null}
                 </p>
               ))}
             </li>
@@ -93,6 +95,12 @@ export function OperatorCard({
     </article>
   );
 }
+
+const ignoredOptimizationLabels: Record<LanguageCode, string> = {
+  ja: "最適化計算対象外",
+  zh: "不参与优化计算",
+  en: "Excluded from optimization"
+};
 
 function isInteractiveCardTarget(target: EventTarget) {
   return target instanceof Element && Boolean(target.closest("button, input, label, select, textarea, a"));
