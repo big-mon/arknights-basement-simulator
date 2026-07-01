@@ -117,6 +117,7 @@ const saileach = operators.find((operator) => operator.id === "char_479_sleach")
 const archetto = operators.find((operator) => operator.id === "char_332_archet")!;
 const minimalist = operators.find((operator) => operator.id === "char_4054_malist")!;
 const greyyAlter = operators.find((operator) => operator.id === "char_1027_greyy2")!;
+const pozemka = operators.find((operator) => operator.id === "char_4055_bgsnow")!;
 const alanna = operators.find((operator) => operator.id === "char_4178_alanna")!;
 const lancet = operators.find((operator) => operator.id === "char_285_medic2")!;
 const justiceKnight = operators.find((operator) => operator.id === "char_4000_jnight")!;
@@ -755,6 +756,10 @@ describe("optimizer", () => {
     const aromaOverride = baseSkillOverrides.char_446_aroma.skills["manu_prod_spd_addition[100]"] as { addEffects?: unknown[] };
     const aromaAddEffects = aromaOverride.addEffects;
     const flametailOverride = baseSkillOverrides.char_420_flamtl.skills["control_mp_psk[000]"];
+    const pozemkaOverrides = baseSkillOverrides.char_4055_bgsnow.skills;
+    const kiraraOverrides = baseSkillOverrides.char_478_kirara.skills;
+    const tuyeOverrides = baseSkillOverrides.char_402_tuye.skills;
+    const uOfficialOverrides = baseSkillOverrides.char_4091_ulika.skills;
 
     expect(alannaProduct).toBe("gold");
     expect(texasEfficiency).toBe(0);
@@ -763,6 +768,39 @@ describe("optimizer", () => {
     expect(flametailOverride.addEffects).toEqual(
       expect.arrayContaining([expect.objectContaining({ facility: "control", product: "gold", efficiency: -0.1 })])
     );
+    expect(pozemkaOverrides["trade_ord_spd&gold[100]"].effects[0].patch.product).toBe("lmd");
+    expect(pozemkaOverrides["trade_ord_line_durin[010]"].effects[0].patch.product).toBe("lmd");
+    expect(kiraraOverrides["trade_ord_line_gold[000]"].effects[0].patch.ignoredForOptimization).toBe(true);
+    expect(kiraraOverrides["trade_ord_line_gold[010]"].effects[0].patch.ignoredForOptimization).toBe(true);
+    expect(tuyeOverrides["trade_ord_spd&gold[000]"].effects[0].patch.product).toBe("lmd");
+    expect(tuyeOverrides["trade_ord_spd&gold[010]"].effects[0].patch.product).toBe("lmd");
+    expect(uOfficialOverrides["trade_ord_spd&wt[000]"].effects[0].patch.product).toBe("lmd");
+  });
+
+  it("keeps active trading effects compatible with LMD trading rooms", () => {
+    const mismatches = operators.flatMap((operator) =>
+      operator.skills.flatMap((skill) =>
+        skill.effects
+          .filter((effect) => effect.facility === "trading" && effect.product && effect.product !== "lmd" && !effect.ignoredForOptimization)
+          .map((effect) => ({ operatorId: operator.id, skillId: skill.id, product: effect.product }))
+      )
+    );
+
+    expect(mismatches).toEqual([]);
+  });
+
+  it("matches Pozemka's gold-line trading skills to LMD trading rooms", () => {
+    const state = createDefaultState();
+    ownOperators(state, [pozemka.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const candidate = findCandidates(trading, state).find((assignment) => assignment.operatorId === pozemka.id)!;
+    const salesPromotionEffect = pozemka.skills.find((skill) => skill.id === "trade_ord_spd&gold[100]")!.effects[0];
+    const durinLineEffect = pozemka.skills.find((skill) => skill.id === "trade_ord_line_durin[010]")!.effects[0];
+
+    expect(salesPromotionEffect.product).toBe("lmd");
+    expect(durinLineEffect.product).toBe("lmd");
+    expect(candidate.skillId).toBe("trade_ord_spd&gold[100]");
+    expect(candidate.efficiency).toBeCloseTo(0.13);
   });
 
   it("keeps morale-cost factory capacity skills product-neutral", () => {

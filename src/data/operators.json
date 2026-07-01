@@ -6531,7 +6531,7 @@
         "effects": [
           {
             "facility": "trading",
-            "product": "gold",
+            "product": "lmd",
             "tags": [
               "trading",
               "bskill_tra_flow_gs",
@@ -6562,7 +6562,7 @@
         "effects": [
           {
             "facility": "trading",
-            "product": "gold",
+            "product": "lmd",
             "tags": [
               "trading",
               "bskill_tra_flow_durin",
@@ -12742,6 +12742,7 @@
             },
             "efficiency": 0,
             "baseEfficiency": 0.05,
+            "ignoredForOptimization": true,
             "unsupportedReason": "goldProductionLineCountNotModeled"
           }
         ]
@@ -12770,6 +12771,7 @@
             },
             "efficiency": 0,
             "baseEfficiency": 0.05,
+            "ignoredForOptimization": true,
             "unsupportedReason": "goldProductionLineCountNotModeled"
           }
         ]
@@ -15578,7 +15580,7 @@
         "effects": [
           {
             "facility": "trading",
-            "product": "gold",
+            "product": "lmd",
             "tags": [
               "trading",
               "bskill_tra_flow_gs1",
@@ -15604,7 +15606,7 @@
         "effects": [
           {
             "facility": "trading",
-            "product": "gold",
+            "product": "lmd",
             "tags": [
               "trading",
               "bskill_tra_flow_gs2",
@@ -21418,7 +21420,7 @@
         "effects": [
           {
             "facility": "trading",
-            "product": "gold",
+            "product": "lmd",
             "tags": [
               "trading",
               "bskill_tra_spd&wt1",

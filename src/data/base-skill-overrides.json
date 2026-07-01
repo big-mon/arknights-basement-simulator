@@ -1072,6 +1072,7 @@
           {
             "index": 0,
             "patch": {
+              "product": "lmd",
               "efficiency": 0.05,
               "scaling": {
                 "type": "facilityProductCount",
@@ -1087,6 +1088,7 @@
           {
             "index": 0,
             "patch": {
+              "product": "lmd",
               "efficiency": 0.05,
               "scaling": {
                 "type": "affiliation",
@@ -2524,6 +2526,7 @@
             "patch": {
               "efficiency": 0,
               "baseEfficiency": 0.05,
+              "ignoredForOptimization": true,
               "unsupportedReason": "goldProductionLineCountNotModeled"
             }
           }
@@ -2536,6 +2539,7 @@
             "patch": {
               "efficiency": 0,
               "baseEfficiency": 0.05,
+              "ignoredForOptimization": true,
               "unsupportedReason": "goldProductionLineCountNotModeled"
             }
           }
@@ -4045,6 +4049,44 @@
                   ]
                 }
               ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_402_tuye": {
+    "skills": {
+      "trade_ord_spd&gold[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "product": "lmd"
+            }
+          }
+        ]
+      },
+      "trade_ord_spd&gold[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "product": "lmd"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4091_ulika": {
+    "skills": {
+      "trade_ord_spd&wt[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "product": "lmd"
             }
           }
         ]
