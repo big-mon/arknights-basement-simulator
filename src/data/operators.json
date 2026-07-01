@@ -12729,7 +12729,7 @@
         "effects": [
           {
             "facility": "trading",
-            "product": "gold",
+            "product": "lmd",
             "tags": [
               "trading",
               "bskill_tra_flow_gc1",
@@ -12742,7 +12742,6 @@
             },
             "efficiency": 0,
             "baseEfficiency": 0.05,
-            "ignoredForOptimization": true,
             "unsupportedReason": "goldProductionLineCountNotModeled"
           }
         ]
@@ -12758,7 +12757,7 @@
         "effects": [
           {
             "facility": "trading",
-            "product": "gold",
+            "product": "lmd",
             "tags": [
               "trading",
               "bskill_tra_flow_gc2",
@@ -12771,7 +12770,6 @@
             },
             "efficiency": 0,
             "baseEfficiency": 0.05,
-            "ignoredForOptimization": true,
             "unsupportedReason": "goldProductionLineCountNotModeled"
           }
         ]

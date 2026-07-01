@@ -194,16 +194,18 @@ function selectNonSuppressingAssignments(candidates: Assignment[], slotCount: nu
       continue;
     }
     const prerequisiteAssignments = skilllessPrerequisiteAssignments(candidate, assignments);
-    if (assignments.length + 1 + prerequisiteAssignments.length > slotCount) {
+    const basePrerequisiteAssignments = baseSkilllessPrerequisiteAssignments(candidate, assignments);
+    if (facilitySlotOccupancy(assignments) + 1 + prerequisiteAssignments.length > slotCount) {
       continue;
     }
 
     assignments.push(candidate);
     assignments.push(...prerequisiteAssignments);
+    assignments.push(...basePrerequisiteAssignments);
     if (candidate.globalStackKey) {
       globalStackKeys.add(candidate.globalStackKey);
     }
-    if (assignments.length >= slotCount) {
+    if (facilitySlotOccupancy(assignments) >= slotCount) {
       break;
     }
   }
@@ -222,6 +224,7 @@ function selectNonSuppressingAssignments(candidates: Assignment[], slotCount: nu
     if (prerequisiteAssignments.length > 0) {
       continue;
     }
+    const basePrerequisiteAssignments = baseSkilllessPrerequisiteAssignments(candidate, assignments);
 
     const replacement = bestLimitPartnerReplacement(candidate, assignments, slotCount);
     if (!replacement) {
@@ -237,12 +240,21 @@ function selectNonSuppressingAssignments(candidates: Assignment[], slotCount: nu
       }
       assignments[replacement.replaceIndex] = candidate;
     }
+    assignments.push(...basePrerequisiteAssignments);
     if (candidate.globalStackKey) {
       globalStackKeys.add(candidate.globalStackKey);
     }
   }
 
   return assignments;
+}
+
+function facilitySlotOccupancy(assignments: Assignment[]) {
+  return assignments.filter((assignment) => assignmentConsumesFacilitySlot(assignment)).length;
+}
+
+function assignmentConsumesFacilitySlot(assignment: Assignment) {
+  return !assignment.doesNotConsumeFacilitySlot;
 }
 
 function skilllessPrerequisiteAssignments(candidate: Assignment, selectedAssignments: Assignment[]) {
@@ -258,6 +270,23 @@ function skilllessPrerequisiteAssignments(candidate: Assignment, selectedAssignm
       recoveryHours: candidate.recoveryHours,
       skilllessPrerequisiteFor: candidate.operatorId,
       reason: "Skillless prerequisite"
+    }));
+}
+
+function baseSkilllessPrerequisiteAssignments(candidate: Assignment, selectedAssignments: Assignment[]) {
+  return (candidate.baseSkilllessPrerequisiteOperatorIds ?? [])
+    .filter((operatorId) => !selectedAssignments.some((assignment) => assignment.operatorId === operatorId))
+    .map((operatorId) => ({
+      facilityId: "base",
+      operatorId,
+      skillId: "base-skillless-prerequisite",
+      score: 0,
+      efficiency: 0,
+      fatigueHours: candidate.fatigueHours,
+      recoveryHours: candidate.recoveryHours,
+      baseSkilllessPrerequisiteFor: candidate.operatorId,
+      doesNotConsumeFacilitySlot: true,
+      reason: "Base-wide skillless prerequisite"
     }));
 }
 
@@ -298,7 +327,13 @@ function bestLimitPartnerReplacement(
 
 function assignmentIsSkilllessPrerequisiteLocked(assignment: Assignment, selectedAssignments: Assignment[]) {
   return Boolean(
-    assignment.skilllessPrerequisiteFor || selectedAssignments.some((selectedAssignment) => selectedAssignment.skilllessPrerequisiteFor === assignment.operatorId)
+    assignment.skilllessPrerequisiteFor ||
+      assignment.baseSkilllessPrerequisiteFor ||
+      selectedAssignments.some(
+        (selectedAssignment) =>
+          selectedAssignment.skilllessPrerequisiteFor === assignment.operatorId ||
+          selectedAssignment.baseSkilllessPrerequisiteFor === assignment.operatorId
+      )
   );
 }
 
@@ -448,13 +483,21 @@ function bestSkillForFacility(
       const statScalingKeys = statScalingKeysForEffect(effect);
       const facilityStatScalings = facilityStatScalingsForEffect(effect, operator, elite, facility, preference, context);
       const mandatorySkilllessPrerequisiteOperatorIds = skilllessPrerequisiteOperatorIdsForConditions(effect.conditions ?? [], facility, context);
+      const mandatoryBaseSkilllessPrerequisiteOperatorIds = baseSkilllessPrerequisiteOperatorIdsForConditions(effect.conditions ?? [], context);
       const optionalSkilllessConditionalBonuses = skilllessConditionalBonusesForEffect(effect, operator, facility, context);
-      const pushAssignment = (extraConditionalBonus: number, extraSkilllessPrerequisiteOperatorIds: string[]) => {
+      const pushAssignment = (
+        extraConditionalBonus: number,
+        extraSkilllessPrerequisiteOperatorIds: string[],
+        extraBaseSkilllessPrerequisiteOperatorIds: string[]
+      ) => {
         const variantRawEfficiency = rawEfficiency + extraConditionalBonus;
         const variantEffectiveEfficiency =
           externalGlobalEffect || remoteFacilityEfficiencyEffect || remoteFacilityStatEffect || remoteFacilityCountEffect ? 0 : variantRawEfficiency;
         const skilllessPrerequisiteOperatorIds = Array.from(
           new Set([...mandatorySkilllessPrerequisiteOperatorIds, ...extraSkilllessPrerequisiteOperatorIds])
+        );
+        const baseSkilllessPrerequisiteOperatorIds = Array.from(
+          new Set([...mandatoryBaseSkilllessPrerequisiteOperatorIds, ...extraBaseSkilllessPrerequisiteOperatorIds])
         );
         assignments.push({
           facilityId: facility.id,
@@ -473,6 +516,7 @@ function bestSkillForFacility(
           ...(effect.suppressesOtherFactoryEfficiency ? { suppressesOtherFactoryEfficiency: true } : {}),
           ...(effect.globalEffect?.stackKey ? { globalStackKey: globalEffectStackIdentity(effect) } : {}),
           ...(skilllessPrerequisiteOperatorIds.length ? { skilllessPrerequisiteOperatorIds } : {}),
+          ...(baseSkilllessPrerequisiteOperatorIds.length ? { baseSkilllessPrerequisiteOperatorIds } : {}),
           ...(statScalingKeys.length ? { scalesWithFacilityStat: statScalingKeys } : {}),
           ...(facilityStatScalings.length ? { facilityStatScalings } : {}),
           ...(remoteFacilityStatBonuses.length ? { remoteFacilityStatBonuses } : {}),
@@ -483,11 +527,12 @@ function bestSkillForFacility(
           reason: `${localizeText(skill.name, language)}: ${localizeText(effect.description, language)}`
         });
       };
-      pushAssignment(0, []);
+      pushAssignment(0, [], []);
       if (optionalSkilllessConditionalBonuses.length) {
         pushAssignment(
           optionalSkilllessConditionalBonuses.reduce((sum, bonus) => sum + bonus.efficiency, 0),
-          optionalSkilllessConditionalBonuses.flatMap((bonus) => bonus.operatorIds)
+          optionalSkilllessConditionalBonuses.flatMap((bonus) => bonus.operatorIds),
+          optionalSkilllessConditionalBonuses.flatMap((bonus) => bonus.baseOperatorIds)
         );
       }
     }
@@ -495,8 +540,14 @@ function bestSkillForFacility(
 
   const sortedAssignments = assignments.sort((a, b) => b.score - a.score);
   const bestAssignment = sortedAssignments[0];
-  const bestAssignmentWithoutPrerequisites = sortedAssignments.find((assignment) => !assignment.skilllessPrerequisiteOperatorIds?.length);
-  if (bestAssignment?.skilllessPrerequisiteOperatorIds?.length && bestAssignmentWithoutPrerequisites && bestAssignmentWithoutPrerequisites !== bestAssignment) {
+  const bestAssignmentWithoutPrerequisites = sortedAssignments.find(
+    (assignment) => !assignment.skilllessPrerequisiteOperatorIds?.length && !assignment.baseSkilllessPrerequisiteOperatorIds?.length
+  );
+  if (
+    (bestAssignment?.skilllessPrerequisiteOperatorIds?.length || bestAssignment?.baseSkilllessPrerequisiteOperatorIds?.length) &&
+    bestAssignmentWithoutPrerequisites &&
+    bestAssignmentWithoutPrerequisites !== bestAssignment
+  ) {
     return [bestAssignment, bestAssignmentWithoutPrerequisites];
   }
   return bestAssignment ? [bestAssignment] : [];
@@ -876,7 +927,12 @@ function effectConditionalBonus(
 ) {
   return (
     effect.conditionalBonuses?.reduce((sum, bonus) => {
-      if (conditionsSatisfied(bonus.conditions, operator, facility, context, { allowOwnedSkilllessPrerequisites: false })) {
+      if (
+        conditionsSatisfied(bonus.conditions, operator, facility, context, {
+          allowOwnedSkilllessPrerequisites: false,
+          allowBaseSkilllessPrerequisiteAssignments: false
+        })
+      ) {
         return sum + bonus.efficiency;
       }
       return sum;
@@ -989,7 +1045,7 @@ export function conditionsSatisfied(
   operator: Operator,
   facility: FacilitySlot,
   context?: AssignmentEvaluationContext,
-  options: { allowOwnedSkilllessPrerequisites?: boolean } = {}
+  options: { allowOwnedSkilllessPrerequisites?: boolean; allowBaseSkilllessPrerequisiteAssignments?: boolean } = {}
 ): boolean {
   if (!conditions?.length) {
     return true;
@@ -998,6 +1054,7 @@ export function conditionsSatisfied(
     return false;
   }
   const allowOwnedSkilllessPrerequisites = options.allowOwnedSkilllessPrerequisites ?? true;
+  const allowBaseSkilllessPrerequisiteAssignments = options.allowBaseSkilllessPrerequisiteAssignments ?? true;
 
   return conditions.every((condition) => {
     if (condition.type === "sameFacilityOperator") {
@@ -1010,6 +1067,14 @@ export function conditionsSatisfied(
     if (condition.type === "facilityOperator" || condition.type === "assignedOperator") {
       const assigned = context.assignments.some((assignment) => {
         const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
+        if (
+          condition.type === "assignedOperator" &&
+          !condition.facility &&
+          assignment.baseSkilllessPrerequisiteFor &&
+          !allowBaseSkilllessPrerequisiteAssignments
+        ) {
+          return false;
+        }
         const matchesFacility = condition.type === "assignedOperator" && !condition.facility ? true : assignedFacility?.type === condition.facility;
         return matchesFacility && condition.operatorIds.includes(assignment.operatorId);
       });
@@ -1086,6 +1151,23 @@ function skilllessPrerequisiteOperatorIdsForConditions(
   return Array.from(new Set(operatorIds));
 }
 
+function baseSkilllessPrerequisiteOperatorIdsForConditions(
+  conditions: NonNullable<BaseSkillEffect["conditions"]>,
+  context?: AssignmentEvaluationContext
+) {
+  if (!context) {
+    return [];
+  }
+  const operatorIds = conditions.flatMap((condition) => {
+    if (condition.type === "assignedOperator" && !condition.facility) {
+      const operatorId = condition.operatorIds.find((candidateId) => context.roster?.[candidateId]?.owned && operatorIsSkillless(candidateId));
+      return operatorId ? [operatorId] : [];
+    }
+    return [];
+  });
+  return Array.from(new Set(operatorIds));
+}
+
 function skilllessConditionalBonusesForEffect(
   effect: BaseSkillEffect,
   operator: Operator,
@@ -1108,20 +1190,37 @@ function skilllessConditionalBonusesForEffect(
         }
         return [];
       });
+      const baseOperatorIds = bonus.conditions.flatMap((condition) => {
+        if (condition.type === "assignedOperator" && !condition.facility) {
+          const operatorId = condition.operatorIds.find((candidateId) => context.roster?.[candidateId]?.owned && operatorIsSkillless(candidateId));
+          return operatorId ? [operatorId] : [];
+        }
+        return [];
+      });
       const remainingConditions = bonus.conditions.filter(
         (condition) =>
           !(
             (condition.type === "sameFacilityOperator" || (condition.type === "facilityOperator" && condition.facility === facility.type)) &&
+            condition.operatorIds.some((candidateId) => context.roster?.[candidateId]?.owned && operatorIsSkillless(candidateId))
+          ) &&
+          !(
+            condition.type === "assignedOperator" &&
+            !condition.facility &&
             condition.operatorIds.some((candidateId) => context.roster?.[candidateId]?.owned && operatorIsSkillless(candidateId))
           )
       );
       return {
         efficiency: bonus.efficiency,
         operatorIds: Array.from(new Set(operatorIds)),
+        baseOperatorIds: Array.from(new Set(baseOperatorIds)),
+        alreadySatisfied: conditionsSatisfied(bonus.conditions, operator, facility, context, {
+          allowOwnedSkilllessPrerequisites: false,
+          allowBaseSkilllessPrerequisiteAssignments: false
+        }),
         otherConditionsSatisfied: conditionsSatisfied(remainingConditions, operator, facility, context, { allowOwnedSkilllessPrerequisites: false })
       };
     })
-    .filter((bonus) => bonus.operatorIds.length > 0 && bonus.otherConditionsSatisfied);
+    .filter((bonus) => (bonus.operatorIds.length > 0 || bonus.baseOperatorIds.length > 0) && !bonus.alreadySatisfied && bonus.otherConditionsSatisfied);
 }
 
 function calculateGlobalBonus(state: AppState, facility: FacilitySlot, context: AssignmentEvaluationContext): number {
@@ -1467,7 +1566,7 @@ function facilityTypeWeight(facilityType: FacilitySlot["type"]): number {
 
 function buildWarnings(enabledFacilities: FacilitySlot[], facilityPlans: FacilityPlan[]): string[] {
   const warnings: string[] = [];
-  const shortPlans = facilityPlans.filter((plan) => plan.assignments.length < plan.facility.slotCount);
+  const shortPlans = facilityPlans.filter((plan) => facilitySlotOccupancy(plan.assignments) < plan.facility.slotCount);
 
   if (shortPlans.length > 0) {
     warnings.push("一部施設でスロット数に対して候補オペレーターが不足しています。所有設定か昇進段階を見直してください。");

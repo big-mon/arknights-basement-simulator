@@ -118,6 +118,7 @@ const archetto = operators.find((operator) => operator.id === "char_332_archet")
 const minimalist = operators.find((operator) => operator.id === "char_4054_malist")!;
 const greyyAlter = operators.find((operator) => operator.id === "char_1027_greyy2")!;
 const pozemka = operators.find((operator) => operator.id === "char_4055_bgsnow")!;
+const kirara = operators.find((operator) => operator.id === "char_478_kirara")!;
 const alanna = operators.find((operator) => operator.id === "char_4178_alanna")!;
 const lancet = operators.find((operator) => operator.id === "char_285_medic2")!;
 const justiceKnight = operators.find((operator) => operator.id === "char_4000_jnight")!;
@@ -770,8 +771,8 @@ describe("optimizer", () => {
     );
     expect(pozemkaOverrides["trade_ord_spd&gold[100]"].effects[0].patch.product).toBe("lmd");
     expect(pozemkaOverrides["trade_ord_line_durin[010]"].effects[0].patch.product).toBe("lmd");
-    expect(kiraraOverrides["trade_ord_line_gold[000]"].effects[0].patch.ignoredForOptimization).toBe(true);
-    expect(kiraraOverrides["trade_ord_line_gold[010]"].effects[0].patch.ignoredForOptimization).toBe(true);
+    expect(kiraraOverrides["trade_ord_line_gold[000]"].effects[0].patch.product).toBe("lmd");
+    expect(kiraraOverrides["trade_ord_line_gold[010]"].effects[0].patch.product).toBe("lmd");
     expect(tuyeOverrides["trade_ord_spd&gold[000]"].effects[0].patch.product).toBe("lmd");
     expect(tuyeOverrides["trade_ord_spd&gold[010]"].effects[0].patch.product).toBe("lmd");
     expect(uOfficialOverrides["trade_ord_spd&wt[000]"].effects[0].patch.product).toBe("lmd");
@@ -801,6 +802,21 @@ describe("optimizer", () => {
     expect(durinLineEffect.product).toBe("lmd");
     expect(candidate.skillId).toBe("trade_ord_spd&gold[100]");
     expect(candidate.efficiency).toBeCloseTo(0.13);
+  });
+
+  it("keeps Kirara's fixed trading bonus while excluding unsupported line scaling", () => {
+    const state = createDefaultState();
+    ownOperators(state, [kirara.id]);
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const candidate = findCandidates(trading, state).find((assignment) => assignment.operatorId === kirara.id)!;
+    const firstEffect = kirara.skills.find((skill) => skill.id === "trade_ord_line_gold[000]")!.effects[0];
+    const secondEffect = kirara.skills.find((skill) => skill.id === "trade_ord_line_gold[010]")!.effects[0];
+
+    expect(firstEffect.product).toBe("lmd");
+    expect(secondEffect.product).toBe("lmd");
+    expect(firstEffect.ignoredForOptimization).toBeUndefined();
+    expect(secondEffect.ignoredForOptimization).toBeUndefined();
+    expect(candidate.efficiency).toBeCloseTo(0.08);
   });
 
   it("keeps morale-cost factory capacity skills product-neutral", () => {
@@ -1332,7 +1348,7 @@ describe("optimizer", () => {
     expect(tradingPlan.expectedEfficiency - assignedEfficiency).toBeCloseTo(0.1);
   });
 
-  it("requires W to be assigned somewhere before applying Hedley's optional W bonus", () => {
+  it("uses owned skillless W as a base-wide prerequisite for Hedley's optional bonus", () => {
     const state = createDefaultState();
     ownOperators(state, [hedley.id, ines.id]);
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
@@ -1353,12 +1369,13 @@ describe("optimizer", () => {
     expect(w.skills).toHaveLength(0);
     expect(base.efficiency).toBeCloseTo(0.33);
     expect(withInes.efficiency).toBeCloseTo(0.38);
-    expect(withOwnedW.efficiency).toBeCloseTo(0.33);
+    expect(withOwnedW.efficiency).toBeCloseTo(0.38);
     expect(withOwnedW.skilllessPrerequisiteOperatorIds).toBeUndefined();
+    expect(withOwnedW.baseSkilllessPrerequisiteOperatorIds).toContain(w.id);
     expect(withAssignedW.efficiency).toBeCloseTo(0.38);
   });
 
-  it("requires Ulpianus to be assigned somewhere before applying Underflow's optional bonus", () => {
+  it("uses owned skillless Ulpianus as a base-wide prerequisite for Underflow's optional bonus", () => {
     const state = createDefaultState();
     ownOperators(state, [underflow.id, ulpianus.id]);
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
@@ -1370,8 +1387,9 @@ describe("optimizer", () => {
     }).find((assignment) => assignment.operatorId === underflow.id)!;
 
     expect(ulpianus.skills).toHaveLength(0);
-    expect(candidate.efficiency).toBeCloseTo(0.33);
+    expect(candidate.efficiency).toBeCloseTo(0.43);
     expect(candidate.skilllessPrerequisiteOperatorIds).toBeUndefined();
+    expect(candidate.baseSkilllessPrerequisiteOperatorIds).toContain(ulpianus.id);
     expect(withAssignedUlpianus.efficiency).toBeCloseTo(0.43);
   });
 
@@ -1382,10 +1400,15 @@ describe("optimizer", () => {
     const plan = generateAssignmentPlan(state);
     const tradingPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === "trading-1")!;
     const assignment = tradingPlan.assignments.find((candidate) => candidate.operatorId === underflow.id)!;
+    const basePrerequisite = tradingPlan.assignments.find((candidate) => candidate.operatorId === ulpianus.id)!;
+    const slotConsumingAssignments = tradingPlan.assignments.filter((candidate) => !candidate.doesNotConsumeFacilitySlot);
 
-    expect(assignment.efficiency).toBeCloseTo(0.33);
+    expect(assignment.efficiency).toBeCloseTo(0.43);
     expect(assignment.skilllessPrerequisiteOperatorIds).toBeUndefined();
-    expect(tradingPlan.assignments.some((candidate) => candidate.operatorId === ulpianus.id)).toBe(false);
+    expect(assignment.baseSkilllessPrerequisiteOperatorIds).toContain(ulpianus.id);
+    expect(basePrerequisite.baseSkilllessPrerequisiteFor).toBe(underflow.id);
+    expect(basePrerequisite.doesNotConsumeFacilitySlot).toBe(true);
+    expect(slotConsumingAssignments).toHaveLength(2);
     expect(tradingPlan.assignments.some((candidate) => candidate.operatorId === defaultOwnedTradingOperator.id)).toBe(true);
   });
 

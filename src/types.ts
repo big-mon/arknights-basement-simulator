@@ -170,7 +170,10 @@ export interface Assignment {
   suppressesOtherFactoryEfficiency?: boolean;
   globalStackKey?: string;
   skilllessPrerequisiteOperatorIds?: string[];
+  baseSkilllessPrerequisiteOperatorIds?: string[];
   skilllessPrerequisiteFor?: string;
+  baseSkilllessPrerequisiteFor?: string;
+  doesNotConsumeFacilitySlot?: boolean;
   scalesWithFacilityStat?: Array<"storageLimit" | "orderLimit">;
   facilityStatScalings?: Array<{
     key: "storageLimit" | "orderLimit";

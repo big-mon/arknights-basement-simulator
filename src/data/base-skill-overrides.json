@@ -2524,9 +2524,9 @@
           {
             "index": 0,
             "patch": {
+              "product": "lmd",
               "efficiency": 0,
               "baseEfficiency": 0.05,
-              "ignoredForOptimization": true,
               "unsupportedReason": "goldProductionLineCountNotModeled"
             }
           }
@@ -2537,9 +2537,9 @@
           {
             "index": 0,
             "patch": {
+              "product": "lmd",
               "efficiency": 0,
               "baseEfficiency": 0.05,
-              "ignoredForOptimization": true,
               "unsupportedReason": "goldProductionLineCountNotModeled"
             }
           }
