@@ -612,7 +612,7 @@ describe("optimizer", () => {
     expect(candidate.remoteFacilityCountBonuses).toContainEqual({ facility: "power", amount: 2 });
   });
 
-  it("scales Snegurochka by every operator assigned to the same factory", () => {
+  it("keeps Snegurochka suppressing scaling tied to retained factory occupants", () => {
     const state = createDefaultState();
     ownOperators(state, [snegurochka.id, texas.id, lappland.id]);
     state.roster[snegurochka.id].elite = 1;
@@ -623,7 +623,7 @@ describe("optimizer", () => {
     }).find((assignment) => assignment.operatorId === snegurochka.id)!;
 
     expect(candidate.suppressesOtherFactoryEfficiency).toBe(true);
-    expect(candidate.efficiency).toBeCloseTo(0.315);
+    expect(candidate.efficiency).toBeCloseTo(0.115);
   });
 
   it("uses max facility level for reception-level scaling skills", () => {
@@ -846,7 +846,7 @@ describe("optimizer", () => {
   });
 
   it("registers handlers for complex remote control efficiency skills", () => {
-    const registeredKeys = new Set(registeredComplexBaseSkillHandlerKeys());
+    const registeredKeys = new Set(registeredComplexBaseSkillHandlerKeys("remoteFacilityEfficiencyBonuses"));
     const remoteControlKeys = operators.flatMap((operator) =>
       operator.skills.flatMap((skill) =>
         skill.effects
@@ -867,6 +867,24 @@ describe("optimizer", () => {
     );
 
     expect([...new Set(remoteControlKeys)].sort()).toEqual([...registeredKeys].sort());
+  });
+
+  it("registers handlers for suppressing same-factory scaling skills", () => {
+    const registeredKeys = new Set(registeredComplexBaseSkillHandlerKeys("scalingMultiplier"));
+    const suppressingSameFacilityScalingKeys = operators.flatMap((operator) =>
+      operator.skills.flatMap((skill) =>
+        skill.effects
+          .filter(
+            (effect) =>
+              effect.suppressesOtherFactoryEfficiency &&
+              effect.scaling?.scope === "sameFacility" &&
+              Boolean(effect.scaling.includeSelf)
+          )
+          .map(() => `${operator.id}:${skill.id}`)
+      )
+    );
+
+    expect([...new Set(suppressingSameFacilityScalingKeys)].sort()).toEqual([...registeredKeys].sort());
   });
 
   it("keeps active trading effects compatible with LMD trading rooms", () => {
@@ -1436,6 +1454,7 @@ describe("optimizer", () => {
       true
     );
     expect(snegurochkaAssignment.suppressesOtherFactoryEfficiency).toBe(true);
+    expect(snegurochkaAssignment.efficiency).toBeCloseTo(0.115);
     expect(factoryPlan.expectedEfficiency).toBeCloseTo(snegurochkaAssignment.efficiency);
   });
 

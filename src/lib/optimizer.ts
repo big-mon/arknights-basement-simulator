@@ -33,9 +33,13 @@ type ComplexBaseSkillHandlerInput = {
   operator: Operator;
   skill: BaseSkill;
   effect: BaseSkillEffect;
+  elite: number;
+  facility: FacilitySlot;
+  context?: AssignmentEvaluationContext;
 };
 
 type ComplexBaseSkillHandler = {
+  scalingMultiplier?: (input: ComplexBaseSkillHandlerInput) => number;
   remoteFacilityStatBonuses?: (
     input: ComplexBaseSkillHandlerInput
   ) => NonNullable<Assignment["remoteFacilityStatBonuses"]>;
@@ -54,6 +58,9 @@ const complexBaseSkillHandlers: Record<string, Record<string, ComplexBaseSkillHa
   char_1045_svash2: {
     "control_tra_limit&spd3[000]": controlFacilityGroupAffiliationRemoteEfficiencyHandler()
   },
+  char_4208_wintim: {
+    "manu_prod_spd&manu[100]": suppressingSelfOnlySameFacilityScalingHandler()
+  },
   char_206_gnosis: {
     "control_tra_limit&spd[000]": controlFacilityAffiliationRemoteStatAndEfficiencyHandler()
   },
@@ -62,9 +69,11 @@ const complexBaseSkillHandlers: Record<string, Record<string, ComplexBaseSkillHa
   }
 };
 
-export function registeredComplexBaseSkillHandlerKeys() {
+export function registeredComplexBaseSkillHandlerKeys(capability?: keyof ComplexBaseSkillHandler) {
   return Object.entries(complexBaseSkillHandlers).flatMap(([operatorId, handlers]) =>
-    Object.keys(handlers).map((skillId) => `${operatorId}:${skillId}`)
+    Object.entries(handlers)
+      .filter(([, handler]) => !capability || Boolean(handler[capability]))
+      .map(([skillId]) => `${operatorId}:${skillId}`)
   );
 }
 
@@ -527,7 +536,9 @@ function bestSkillForFacility(
       const remoteFacilityCountBonuses = activeRemoteFacilityCountBonuses(operator, elite, facility, context);
       const productMultiplier = productWeight(facility.product, preference);
       const eliteBonus = elite * 0.015;
-      const scalingMultiplier = effectScalingMultiplier(effect, operator, elite, facility, context);
+      const complexHandler = getComplexBaseSkillHandler(operator, skill);
+      const handlerInput = { operator, skill, effect, elite, facility, context };
+      const scalingMultiplier = complexHandler?.scalingMultiplier?.(handlerInput) ?? effectScalingMultiplier(effect, operator, elite, facility, context);
       const conditionalBonus = effectConditionalBonus(effect, operator, facility, context);
       const globalEffectEfficiency = (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier;
       const rawEfficiency = (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier + conditionalBonus + eliteBonus;
@@ -653,7 +664,7 @@ function activeRemoteFacilityStatBonuses(
     .flatMap((skill) => skill.effects.map((effect) => ({ skill, effect })))
     .filter(({ effect }) => !effect.ignoredForOptimization)
     .filter(({ effect }) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
-    .flatMap(({ skill, effect }) => remoteFacilityStatBonusesForEffect(operator, skill, effect));
+    .flatMap(({ skill, effect }) => remoteFacilityStatBonusesForEffect(operator, skill, effect, elite, facility, context));
 
   return strongestRemoteFacilityStatBonuses(bonuses);
 }
@@ -693,7 +704,7 @@ function activeRemoteFacilityEfficiencyBonuses(
     .flatMap((skill) => skill.effects.map((effect) => ({ skill, effect })))
     .filter(({ effect }) => !effect.ignoredForOptimization)
     .filter(({ effect }) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
-    .flatMap(({ skill, effect }) => remoteFacilityEfficiencyBonusesForEffect(operator, skill, effect));
+    .flatMap(({ skill, effect }) => remoteFacilityEfficiencyBonusesForEffect(operator, skill, effect, elite, facility, context));
 }
 
 function activeRemoteFacilityCountBonuses(
@@ -1408,13 +1419,28 @@ function controlFacilityAffiliationRemoteStatAndEfficiencyHandler(): ComplexBase
   };
 }
 
+function suppressingSelfOnlySameFacilityScalingHandler(): ComplexBaseSkillHandler {
+  return {
+    scalingMultiplier: ({ operator, effect, facility }) => {
+      if (!effect.scaling?.includeSelf || !scalingCanIncludeSelf(effect.scaling, facility)) {
+        return 0;
+      }
+      const count = operatorMatchesSelfScalingAffiliation(operator, effect.scaling) ? 1 : 0;
+      return effect.scaling.max ? Math.min(count, effect.scaling.max) : count;
+    }
+  };
+}
+
 function remoteFacilityStatBonusesForEffect(
   operator: Operator,
   skill: BaseSkill,
-  effect: BaseSkillEffect
+  effect: BaseSkillEffect,
+  elite: number,
+  facility: FacilitySlot,
+  context: AssignmentEvaluationContext | undefined
 ): NonNullable<Assignment["remoteFacilityStatBonuses"]> {
   const handler = getComplexBaseSkillHandler(operator, skill);
-  return handler?.remoteFacilityStatBonuses?.({ operator, skill, effect }) ?? genericRemoteFacilityStatBonusesForEffect(effect);
+  return handler?.remoteFacilityStatBonuses?.({ operator, skill, effect, elite, facility, context }) ?? genericRemoteFacilityStatBonusesForEffect(effect);
 }
 
 function genericRemoteFacilityStatBonusesForEffect(effect: BaseSkillEffect): NonNullable<Assignment["remoteFacilityStatBonuses"]> {
@@ -1439,10 +1465,13 @@ function genericRemoteFacilityStatBonusesForEffect(effect: BaseSkillEffect): Non
 function remoteFacilityEfficiencyBonusesForEffect(
   operator: Operator,
   skill: BaseSkill,
-  effect: BaseSkillEffect
+  effect: BaseSkillEffect,
+  elite: number,
+  facility: FacilitySlot,
+  context: AssignmentEvaluationContext | undefined
 ): NonNullable<Assignment["remoteFacilityEfficiencyBonuses"]> {
   const handler = getComplexBaseSkillHandler(operator, skill);
-  return handler?.remoteFacilityEfficiencyBonuses?.({ operator, skill, effect }) ?? genericRemoteFacilityEfficiencyBonusesForEffect(effect);
+  return handler?.remoteFacilityEfficiencyBonuses?.({ operator, skill, effect, elite, facility, context }) ?? genericRemoteFacilityEfficiencyBonusesForEffect(effect);
 }
 
 function genericRemoteFacilityEfficiencyBonusesForEffect(effect: BaseSkillEffect): NonNullable<Assignment["remoteFacilityEfficiencyBonuses"]> {
