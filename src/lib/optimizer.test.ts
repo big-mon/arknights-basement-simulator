@@ -114,6 +114,7 @@ const iana = operators.find((operator) => operator.id === "char_4124_iana")!;
 const bibeak = operators.find((operator) => operator.id === "char_252_bibeak")!;
 const ascalon = operators.find((operator) => operator.id === "char_4132_ascln")!;
 const saileach = operators.find((operator) => operator.id === "char_479_sleach")!;
+const kaltsit = operators.find((operator) => operator.id === "char_003_kalts")!;
 const archetto = operators.find((operator) => operator.id === "char_332_archet")!;
 const minimalist = operators.find((operator) => operator.id === "char_4054_malist")!;
 const greyyAlter = operators.find((operator) => operator.id === "char_1027_greyy2")!;
@@ -203,6 +204,25 @@ function assignmentsForFacilitySlots(assignments: Assignment[], slotCount: numbe
   }
 
   return selected;
+}
+
+function productWeightForTest(product: FacilitySlot["product"], preference: ReturnType<typeof createDefaultState>["preference"]) {
+  if (product === "gold") {
+    return preference.gold;
+  }
+  if (product === "battleRecord") {
+    return preference.battleRecord;
+  }
+  if (product === "originium") {
+    return 0.05;
+  }
+  if (product === "lmd") {
+    return preference.lmd;
+  }
+  if (product === "power") {
+    return (preference.gold + preference.battleRecord + preference.lmd) / 3;
+  }
+  return 0.2;
 }
 
 describe("optimizer", () => {
@@ -982,7 +1002,7 @@ describe("optimizer", () => {
     );
     expect(gnosisAssignment.remoteFacilityEfficiencyBonuses).toContainEqual({
       facility: "trading",
-      amount: 0.05,
+      amount: -0.15,
       product: "lmd",
       affiliations: ["karlan"],
       min: 1
@@ -1181,6 +1201,22 @@ describe("optimizer", () => {
     expect(candidate.score).toBeCloseTo(4.2);
   });
 
+  it("scores product-neutral global factory boosts from target factory products", () => {
+    const state = createDefaultState();
+    ownOperators(state, [kaltsit.id]);
+    state.preference = { gold: 1, battleRecord: 3, lmd: 10 };
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const candidate = findCandidates(control, state).find((assignment) => assignment.operatorId === kaltsit.id)!;
+    const expectedScore = state.facilities
+      .filter((facility) => facility.type === "factory")
+      .reduce((sum, facility) => sum + 0.02 * productWeightForTest(facility.product, state.preference) * 100, 0);
+    const lmdFallbackScore = state.facilities.filter((facility) => facility.type === "factory").length * 0.02 * state.preference.lmd * 100;
+
+    expect(candidate.globalStackKey).toBe("factory:*:all-factory-speed");
+    expect(candidate.score).toBeCloseTo(expectedScore);
+    expect(candidate.score).not.toBeCloseTo(lmdFallbackScore);
+  });
+
   it("does not count Snegurochka's storage-only first skill as production", () => {
     const state = createDefaultState();
     ownOperators(state, [snegurochka.id]);
@@ -1261,6 +1297,19 @@ describe("optimizer", () => {
 
     expect(factoryPlan.assignments).toEqual([]);
     expect(factoryPlan.expectedEfficiency).toBe(0);
+  });
+
+  it("does not add negative capacity partners unless their limit synergy is net positive", () => {
+    const state = createDefaultState();
+    ownOperators(state, [bubble.id, bena.id]);
+    state.roster[bena.id].elite = 0;
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    state.facilities = [factory];
+    const plan = generateAssignmentPlan(state);
+    const factoryPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === factory.id)!;
+
+    expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === bubble.id)).toBe(true);
+    expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === bena.id)).toBe(false);
   });
 
   it("can replace a normal factory worker with a positive capacity partner when the room gains output", () => {

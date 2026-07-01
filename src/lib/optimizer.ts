@@ -193,7 +193,7 @@ function selectNonSuppressingAssignments(candidates: Assignment[], slotCount: nu
     if (candidate.globalStackKey && globalStackKeys.has(candidate.globalStackKey)) {
       continue;
     }
-    if (candidate.score < 0 && !hasPositiveLimitSynergy(candidate, assignments)) {
+    if (candidate.score < 0 && limitSynergyScore(candidate, assignments) + candidate.score <= 0) {
       continue;
     }
     const prerequisiteAssignments = skilllessPrerequisiteAssignments(candidate, assignments);
@@ -474,12 +474,8 @@ function bestSkillForFacility(
       const remoteStatScore = remoteFacilityStatScore(remoteFacilityStatBonuses, operator.id, preference, context);
       const remoteEfficiencyScore = remoteFacilityEfficiencyScore(remoteFacilityEfficiencyBonuses, preference, context);
       const remoteCountScore = remoteFacilityCountScore(remoteFacilityCountBonuses, operator.id, preference, context);
-      const scoreProductMultiplier = externalGlobalEffect
-        ? productWeight(effect.globalEffect?.product ?? facility.product, preference)
-        : productMultiplier;
-      const scoreFacilityWeight = externalGlobalEffect ? facilityTypeWeight(effect.globalEffect?.facility ?? facility.type) : facilityWeight(facility);
-      const scoreFacilityCount = externalGlobalEffect ? matchingGlobalEffectFacilityCount(effect, context) : 1;
-      if (externalGlobalEffect && scoreFacilityCount === 0) {
+      const globalEffectScoreMultiplier = externalGlobalEffect ? globalEffectTargetScoreMultiplier(effect, preference, context) : 0;
+      if (externalGlobalEffect && globalEffectScoreMultiplier === 0) {
         continue;
       }
       const storageLimit = activeFacilityLimit(operator, elite, facility, context, "storageLimit");
@@ -510,7 +506,9 @@ function bestSkillForFacility(
           score:
             (remoteFacilityEfficiencyEffect
               ? 0
-              : (externalGlobalEffect ? globalEffectEfficiency : variantEffectiveEfficiency) * scoreProductMultiplier * scoreFacilityWeight * scoreFacilityCount) +
+              : externalGlobalEffect
+                ? globalEffectEfficiency * globalEffectScoreMultiplier
+                : variantEffectiveEfficiency * productMultiplier * facilityWeight(facility)) +
             remoteStatScore +
             remoteEfficiencyScore +
             remoteCountScore,
@@ -1531,12 +1529,18 @@ function remoteFacilityStatBonusForCondition(
   return undefined;
 }
 
-function matchingGlobalEffectFacilityCount(effect: BaseSkillEffect, context?: AssignmentEvaluationContext) {
+function globalEffectTargetScoreMultiplier(
+  effect: BaseSkillEffect,
+  preference: OptimizationPreference,
+  context?: AssignmentEvaluationContext
+) {
   if (!effect.globalEffect || !context) {
-    return 1;
+    return 0;
   }
-  const count = context.facilities.filter((facility) => facility.type !== "dormitory" && globalEffectMatchesFacility(effect, facility)).length;
-  return count;
+
+  return context.facilities
+    .filter((facility) => facility.type !== "dormitory" && globalEffectMatchesFacility(effect, facility))
+    .reduce((sum, facility) => sum + productWeight(facility.product, preference) * facilityWeight(facility), 0);
 }
 
 function productWeight(product: ProductType, preference: OptimizationPreference): number {

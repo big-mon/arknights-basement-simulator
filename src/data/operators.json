@@ -10052,7 +10052,7 @@
               "ja": "制御中枢配属時、貿易所に配属したカランド貿易所属オペレーターの受注効率-15%、注文上限+6。",
               "en": "When this Operator is assigned to the Control Center, all Karlan Trade Operators assigned to Trading Posts gain order acquisition efficiency -15% and order limit +6"
             },
-            "efficiency": 0.05,
+            "efficiency": -0.15,
             "conditions": [
               {
                 "type": "facilityAffiliation",

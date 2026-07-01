@@ -1848,7 +1848,7 @@
           {
             "index": 0,
             "patch": {
-              "efficiency": 0,
+              "efficiency": -0.15,
               "orderLimit": 6,
               "conditions": [
                 {
