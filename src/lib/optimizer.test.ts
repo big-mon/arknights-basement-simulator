@@ -135,6 +135,8 @@ const vigil = operators.find((operator) => operator.id === "char_427_vigil")!;
 const vermeil = operators.find((operator) => operator.id === "char_190_clour")!;
 const bena = operators.find((operator) => operator.id === "char_369_bena")!;
 const bubble = operators.find((operator) => operator.id === "char_381_bubble")!;
+const asbestos = operators.find((operator) => operator.id === "char_378_asbest")!;
+const wulfenite = operators.find((operator) => operator.id === "char_4171_wulfen")!;
 const jessicaAlter = operators.find((operator) => operator.id === "char_1034_jesca2")!;
 const flametail = operators.find((operator) => operator.id === "char_420_flamtl")!;
 const blacksteelFactoryOperator = operators.find(
@@ -1099,6 +1101,35 @@ describe("optimizer", () => {
     }).find((assignment) => assignment.operatorId === degenbrecher.id)!;
 
     expect(withNegativeOrderLimit.efficiency).toBeCloseTo(base.efficiency);
+  });
+
+  it("nets simultaneous positive and negative facility limit modifiers", () => {
+    const state = createDefaultState();
+    ownOperators(state, [asbestos.id, wulfenite.id]);
+    state.roster[asbestos.id].elite = 2;
+    state.roster[wulfenite.id].elite = 2;
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const asbestosCandidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === asbestos.id)!;
+    const wulfeniteCandidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === wulfenite.id)!;
+
+    expect(asbestosCandidate.storageLimit).toBe(4);
+    expect(wulfeniteCandidate.storageLimit).toBe(8);
+  });
+
+  it("keeps strongest same-sign facility limit upgrade instead of summing variants", () => {
+    const state = createDefaultState();
+    ownOperators(state, [vulcan.id, degenbrecher.id]);
+    state.roster[vulcan.id].elite = 2;
+    state.roster[degenbrecher.id].elite = 2;
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const vulcanCandidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === vulcan.id)!;
+    const degenbrecherCandidate = findCandidates(trading, state).find(
+      (assignment) => assignment.operatorId === degenbrecher.id
+    )!;
+
+    expect(vulcanCandidate.storageLimit).toBe(19);
+    expect(degenbrecherCandidate.orderLimit).toBe(-6);
   });
 
   it("scales Sakiko Togawa's gold factory control effect from passion", () => {

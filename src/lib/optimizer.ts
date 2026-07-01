@@ -650,7 +650,17 @@ function activeFacilityLimit(
     return undefined;
   }
 
-  return activeLimits.reduce((selected, value) => (Math.abs(value) > Math.abs(selected) ? value : selected));
+  return netActiveFacilityLimit(activeLimits);
+}
+
+function netActiveFacilityLimit(activeLimits: number[]) {
+  const positiveLimit = activeLimits
+    .filter((value) => value > 0)
+    .reduce((selected, value) => Math.max(selected, value), 0);
+  const negativeLimit = activeLimits
+    .filter((value) => value < 0)
+    .reduce((selected, value) => Math.min(selected, value), 0);
+  return positiveLimit + negativeLimit;
 }
 
 function activeRemoteFacilityStatBonuses(
