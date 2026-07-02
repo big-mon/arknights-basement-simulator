@@ -1,10 +1,12 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
-import { App } from "./App";
+import { App, assignmentsForFacilitySlots } from "./App";
+import { FacilityPlanCard } from "./components/FacilityPlanCard";
 import { createDefaultState, operators } from "./data/defaults";
 import { productLabels } from "./i18n";
 import { localizeText } from "./lib/localization";
+import type { Assignment, FacilityPlan } from "./types";
 
 const amiya = operators.find((operator) => operator.id === "char_002_amiya")!;
 const amiyaName = localizeText(amiya.name, "ja");
@@ -17,6 +19,8 @@ const haruka = operators.find((operator) => operator.id === "char_4202_haruka")!
 const mantra = operators.find((operator) => operator.id === "char_4204_mantra")!;
 const bellone = operators.find((operator) => operator.id === "char_4037_demetr")!;
 const snegurochka = operators.find((operator) => operator.id === "char_4208_wintim")!;
+const suzuran = operators.find((operator) => operator.id === "char_358_lisa")!;
+const bibeak = operators.find((operator) => operator.id === "char_252_bibeak")!;
 const rhodesCovert = operators.find((operator) => operator.id === "char_4215_buddy")!;
 const varkalis = operators.find((operator) => operator.id === "char_4166_varkis")!;
 const nyamu = operators.find((operator) => operator.id === "char_4185_amoris")!;
@@ -69,6 +73,16 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByText(/表示対象は、現在対応している基地スキルを持つオペレーターです/)).toBeInTheDocument();
+  });
+
+  it("shows calculation assumptions and excluded effect notes at the page bottom", () => {
+    render(<App />);
+
+    const notesSection = screen.getByRole("heading", { name: "計算前提と未換算効果" }).closest("section")!;
+    expect(notesSection).toBeInTheDocument();
+    expect(within(notesSection).getByText(/施設レベルは上限として扱います/)).toBeInTheDocument();
+    expect(within(notesSection).getByText(/高価値オーダー確率/)).toBeInTheDocument();
+    expect(within(notesSection).getByText(/グレイディーア/)).toBeInTheDocument();
   });
 
   it("supplements missing Japanese operator names", () => {
@@ -212,6 +226,27 @@ describe("App", () => {
     expect(within(makiriCard).getAllByText(/応接室/).length).toBeGreaterThan(0);
   });
 
+  it("includes skillless operators referenced by another operator's base skill", async () => {
+    const user = userEvent.setup();
+    expect(suzuran.name.ja).toBe("スズラン");
+    expect(suzuran.skills).toHaveLength(0);
+
+    render(<App />);
+    await user.type(screen.getByPlaceholderText("名前で検索"), suzuran.id);
+
+    const suzuranCard = screen.getByText("スズラン").closest("article")!;
+    expect(within(suzuranCard).getByText(/基地スキル 0\/0/)).toBeInTheDocument();
+  });
+
+  it("marks unsupported optimization-only effects on operator cards", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.type(screen.getByPlaceholderText(/名前で検索/), bibeak.id);
+
+    const bibeakCard = screen.getByText(localizeText(bibeak.name, "ja")).closest("article")!;
+    expect(within(bibeakCard).getAllByText("最適化計算対象外").length).toBeGreaterThan(0);
+  });
+
   it("filters the owned roster with profession and rarity radio options", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -338,6 +373,124 @@ describe("App", () => {
     expect(within(tradingCard).getByText(productLabels.ja.lmd)).toBeInTheDocument();
     expect(within(factoryCard).getByText(productLabels.ja.gold)).toBeInTheDocument();
     expect(within(powerCard).queryByText(productLabels.ja.power)).not.toBeInTheDocument();
+  });
+
+  it("shows facility-level expected efficiency in active recommendation cards", () => {
+    const assignment: Assignment = {
+      facilityId: "reception-1",
+      operatorId: amiya.id,
+      skillId: "candidate",
+      score: 0.23,
+      efficiency: 0.23,
+      fatigueHours: 24,
+      recoveryHours: 8,
+      reason: "candidate"
+    };
+    const facilityPlan: FacilityPlan = {
+      facility: { id: "reception-1", type: "reception", name: "Reception", slotCount: 2, product: "clue" },
+      assignments: [assignment],
+      expectedEfficiency: 0.48,
+      score: 0.48,
+      alternatives: []
+    };
+
+    render(
+      <FacilityPlanCard
+        facilityPlan={facilityPlan}
+        assignments={facilityPlan.assignments}
+        language="ja"
+        operatorNameById={() => amiyaName}
+      />
+    );
+
+    expect(screen.getByText("+48%")).toBeInTheDocument();
+  });
+
+  it("shows facility-level expected efficiency in alternative recommendation cards", () => {
+    const assignment: Assignment = {
+      facilityId: "reception-1",
+      operatorId: amiya.id,
+      skillId: "candidate",
+      score: 0.23,
+      efficiency: 0.23,
+      fatigueHours: 24,
+      recoveryHours: 8,
+      reason: "candidate"
+    };
+    const facilityPlan: FacilityPlan = {
+      facility: { id: "reception-1", type: "reception", name: "Reception", slotCount: 2, product: "clue" },
+      assignments: [],
+      expectedEfficiency: 0,
+      alternativeExpectedEfficiency: 0.48,
+      score: 0.48,
+      alternatives: [assignment]
+    };
+
+    render(
+      <FacilityPlanCard
+        facilityPlan={facilityPlan}
+        assignments={assignmentsForFacilitySlots(facilityPlan.alternatives, facilityPlan.facility.slotCount)}
+        expectedEfficiency={facilityPlan.alternativeExpectedEfficiency}
+        language="ja"
+        operatorNameById={() => amiyaName}
+      />
+    );
+
+    expect(screen.getByText("+48%")).toBeInTheDocument();
+  });
+
+  it("keeps non-slot prerequisites from hiding alternative room occupants", () => {
+    const assignments: Assignment[] = [
+      {
+        facilityId: "trading-1",
+        operatorId: "operator-a",
+        skillId: "candidate-a",
+        score: 30,
+        efficiency: 0.3,
+        fatigueHours: 12,
+        recoveryHours: 8,
+        reason: "candidate-a"
+      },
+      {
+        facilityId: "base",
+        operatorId: "operator-prerequisite",
+        skillId: "base-skillless-prerequisite",
+        score: 0,
+        efficiency: 0,
+        fatigueHours: 12,
+        recoveryHours: 8,
+        baseSkilllessPrerequisiteFor: "operator-a",
+        doesNotConsumeFacilitySlot: true,
+        reason: "Base-wide skillless prerequisite"
+      },
+      {
+        facilityId: "trading-1",
+        operatorId: "operator-b",
+        skillId: "candidate-b",
+        score: 25,
+        efficiency: 0.25,
+        fatigueHours: 12,
+        recoveryHours: 8,
+        reason: "candidate-b"
+      },
+      {
+        facilityId: "trading-1",
+        operatorId: "operator-c",
+        skillId: "candidate-c",
+        score: 20,
+        efficiency: 0.2,
+        fatigueHours: 12,
+        recoveryHours: 8,
+        reason: "candidate-c"
+      }
+    ];
+
+    expect(assignmentsForFacilitySlots(assignments, 3).map((assignment) => assignment.operatorId)).toEqual([
+      "operator-a",
+      "operator-prerequisite",
+      "operator-b",
+      "operator-c"
+    ]);
   });
 
   it("switches layout between 243 and 153 presets from the top controls", async () => {

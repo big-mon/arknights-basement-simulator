@@ -5,15 +5,19 @@ import type { Assignment, FacilityPlan, FacilitySlot, LanguageCode } from "../ty
 export function FacilityPlanCard({
   facilityPlan,
   assignments,
+  expectedEfficiency,
   language,
   operatorNameById
 }: {
   facilityPlan: FacilityPlan;
   assignments: Assignment[];
+  expectedEfficiency?: number;
   language: LanguageCode;
   operatorNameById: (operatorId: string) => string;
 }) {
-  const expectedEfficiency = assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
+  const displayedExpectedEfficiency =
+    expectedEfficiency ??
+    (assignments === facilityPlan.assignments ? facilityPlan.expectedEfficiency : assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0));
   const text = uiText[language];
 
   return (
@@ -25,7 +29,7 @@ export function FacilityPlanCard({
             <p className="plan-card-product">{productLabels[language][facilityPlan.facility.product]}</p>
           ) : null}
         </div>
-        <strong>+{Math.round(expectedEfficiency * 100)}%</strong>
+        <strong>+{Math.round(displayedExpectedEfficiency * 100)}%</strong>
       </div>
       {assignments.length ? (
         <ul className="assignment-list">
