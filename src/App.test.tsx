@@ -6,6 +6,7 @@ import { FacilityPlanCard } from "./components/FacilityPlanCard";
 import { createDefaultState, operators } from "./data/defaults";
 import { productLabels } from "./i18n";
 import { localizeText } from "./lib/localization";
+import { maxImportJsonBytes } from "./lib/storage";
 import type { Assignment, FacilityPlan } from "./types";
 
 const amiya = operators.find((operator) => operator.id === "char_002_amiya")!;
@@ -67,6 +68,26 @@ describe("App", () => {
 
     expect(screen.getByText(`0/${operators.length}`)).toBeInTheDocument();
     expect(screen.getAllByRole("checkbox").every((checkbox) => !(checkbox as HTMLInputElement).checked)).toBe(true);
+  });
+
+  it("rejects oversized imported JSON files before reading them", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<App />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+    await user.upload(input, new File([new Uint8Array(maxImportJsonBytes + 1)], "large.json", { type: "application/json" }));
+
+    expect(screen.getByText(/128KiB/)).toBeInTheDocument();
+  });
+
+  it("links to the OSS repository from the footer", () => {
+    render(<App />);
+
+    expect(screen.getByRole("link", { name: /big-mon\/arknights-basement-simulator/ })).toHaveAttribute(
+      "href",
+      "https://github.com/big-mon/arknights-basement-simulator"
+    );
+    expect(screen.getByRole("link", { name: /@BIG_MON/ })).toHaveAttribute("href", "https://x.com/BIG_MON");
   });
 
   it("explains the roster data scope", () => {

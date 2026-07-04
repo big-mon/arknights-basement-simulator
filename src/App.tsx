@@ -2,10 +2,12 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   Archive,
+  AtSign,
   Check,
   ChevronDown,
   ChevronRight,
   Download,
+  Github,
   Languages,
   RotateCcw,
   Search,
@@ -42,7 +44,7 @@ import {
   operatorNameById,
   rarityGroupKey
 } from "./lib/operatorCatalog";
-import { exportState, importState, loadState, saveState } from "./lib/storage";
+import { exportState, importState, loadState, maxImportJsonBytes, saveState } from "./lib/storage";
 import type {
   AppState,
   BaseLayout,
@@ -217,6 +219,12 @@ export function App() {
   async function importJson(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) {
+      return;
+    }
+
+    if (file.size > maxImportJsonBytes) {
+      setNotice(`JSONファイルは${maxImportJsonBytes / 1024}KiB以下にしてください。`);
+      event.target.value = "";
       return;
     }
 
@@ -567,6 +575,17 @@ export function App() {
           ))}
         </ul>
       </section>
+
+      <footer className="app-footer">
+        <a href="https://github.com/big-mon/arknights-basement-simulator" target="_blank" rel="noreferrer">
+          <Github size={16} />
+          <span>big-mon/arknights-basement-simulator</span>
+        </a>
+        <a href="https://x.com/BIG_MON" target="_blank" rel="noreferrer">
+          <AtSign size={16} />
+          <span>@BIG_MON</span>
+        </a>
+      </footer>
     </main>
   );
 }

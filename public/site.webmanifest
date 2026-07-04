@@ -1,0 +1,19 @@
+{
+  "name": "アークナイツ基地ローテーションシミュレーター",
+  "short_name": "基地ローテ",
+  "description": "所持オペレーターと基地構成から、施設配置とローテーション案を確認できるアークナイツ向け基地シミュレーターです。",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f1ea",
+  "theme_color": "#a64028",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,7 +1,17 @@
 {
   "name": "arknights-basement",
   "version": "0.1.0",
+  "description": "Arknights base rotation simulator",
   "private": true,
+  "homepage": "https://arknights.damonge.com/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/big-mon/arknights-basement-simulator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/big-mon/arknights-basement-simulator/issues"
+  },
+  "author": "BIG_MON",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",

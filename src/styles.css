@@ -622,6 +622,32 @@ input[type="radio"] {
   line-height: 1.55;
 }
 
+.app-footer {
+  padding: 18px 4px 0;
+  color: #6d6862;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  font-size: 0.82rem;
+}
+
+.app-footer a {
+  width: fit-content;
+  max-width: 100%;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  overflow-wrap: anywhere;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.app-footer a:hover,
+.app-footer a:focus-visible {
+  color: #a64028;
+}
+
 .preference-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
