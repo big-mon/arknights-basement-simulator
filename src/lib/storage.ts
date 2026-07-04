@@ -61,7 +61,7 @@ export function importState(raw: string): AppState {
 function normalizeState(parsed: unknown, defaults: AppState, requireRecognizedShape: boolean): AppState {
   const maybeState = isObject(parsed) && "state" in parsed ? parsed.state : parsed;
 
-  if (!isObject(maybeState) || (requireRecognizedShape && !hasRecognizedStateShape(maybeState))) {
+  if (!isObject(maybeState) || (requireRecognizedShape && !hasImportStateShape(maybeState))) {
     throw new Error("インポートJSONに必要な保存データがありません。");
   }
 
@@ -168,15 +168,8 @@ function normalizeInteger(value: unknown, fallback: number, min: number, max: nu
   return value;
 }
 
-function hasRecognizedStateShape(value: Record<string, unknown>) {
-  return (
-    isObject(value.roster) ||
-    Array.isArray(value.facilities) ||
-    isObject(value.preference) ||
-    isBaseLayout(value.layout) ||
-    isRotationCount(value.rotationCount) ||
-    isLanguageCode(value.language)
-  );
+function hasImportStateShape(value: Record<string, unknown>) {
+  return isObject(value.roster) && Array.isArray(value.facilities) && isObject(value.preference);
 }
 
 function isFacilityType(value: unknown): value is FacilityType {

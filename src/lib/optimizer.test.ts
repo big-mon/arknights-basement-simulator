@@ -1810,4 +1810,9 @@ describe("optimizer", () => {
   it("rejects JSON without a recognizable app state shape", () => {
     expect(() => importState(JSON.stringify({ hello: "world" }))).toThrow();
   });
+
+  it("rejects language-only import payloads", () => {
+    expect(() => importState(JSON.stringify({ language: "en" }))).toThrow();
+    expect(() => importState(JSON.stringify({ state: { language: "en" } }))).toThrow();
+  });
 });
