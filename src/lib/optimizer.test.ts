@@ -1777,4 +1777,42 @@ describe("optimizer", () => {
     expect(restored.roster[threeStarOperator.id].elite).toBe(1);
     expect(restored.roster[lowRarityOperator.id].elite).toBe(0);
   });
+
+  it("defaults invalid imported numeric ranges and malformed nested values", () => {
+    const defaults = createDefaultState();
+    const restored = importState(
+      JSON.stringify({
+        state: {
+          roster: {
+            [amiya.id]: {
+              owned: "yes",
+              elite: 99,
+              level: 9001,
+              potential: -1,
+              moduleEnabled: "true"
+            }
+          },
+          facilities: [
+            { type: "factory", product: "invalid", slotCount: 100 },
+            { type: "factory", product: "gold", slotCount: 100 }
+          ],
+          preference: { gold: 2, battleRecord: -0.1, lmd: "heavy" }
+        }
+      })
+    );
+
+    expect(restored.preference).toEqual(defaults.preference);
+    expect(restored.roster[amiya.id]).toEqual(defaults.roster[amiya.id]);
+    expect(restored.facilities.every((facility) => typeof facility.slotCount === "number")).toBe(true);
+    expect(restored.facilities.some((facility) => facility.type === "factory" && facility.product === "gold")).toBe(true);
+  });
+
+  it("rejects JSON without a recognizable app state shape", () => {
+    expect(() => importState(JSON.stringify({ hello: "world" }))).toThrow();
+  });
+
+  it("rejects language-only import payloads", () => {
+    expect(() => importState(JSON.stringify({ language: "en" }))).toThrow();
+    expect(() => importState(JSON.stringify({ state: { language: "en" } }))).toThrow();
+  });
 });
