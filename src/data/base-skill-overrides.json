@@ -1697,15 +1697,8 @@
           {
             "index": 0,
             "patch": {
-              "efficiency": 0.45,
-              "conditions": [
-                {
-                  "type": "sameFacilityOperator",
-                  "operatorIds": [
-                    "char_103_angel"
-                  ]
-                }
-              ]
+              "efficiency": 0.2,
+              "conditions": []
             }
           }
         ]

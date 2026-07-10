@@ -4,6 +4,7 @@ import { createDefaultState, createFacilitiesForLayout, operators } from "../dat
 import { exportState, importState } from "./storage";
 import {
   attachRotationAlternatives,
+  activeBaseSkills,
   conditionsSatisfied,
   findCandidates,
   generateAssignmentPlan,
@@ -158,6 +159,10 @@ const mortis = operators.find((operator) => operator.id === "char_4183_mortis")!
 const mrNothing = operators.find((operator) => operator.id === "char_455_nothin")!;
 const weedy = operators.find((operator) => operator.id === "char_400_weedy")!;
 const vulcan = operators.find((operator) => operator.id === "char_163_hpsts")!;
+const warmy = operators.find((operator) => operator.id === "char_4081_warmy")!;
+const totter = operators.find((operator) => operator.id === "char_4062_totter")!;
+const levelLockedOperator = operators.find((operator) => operator.skills.some((skill) => skill.unlockLevel > 1))!;
+const levelLockedSkill = levelLockedOperator.skills.find((skill) => skill.unlockLevel > 1)!;
 
 function ownBaselineRoster(state: ReturnType<typeof createDefaultState>) {
   for (const operator of operators) {
@@ -234,6 +239,50 @@ function productWeightForTest(product: FacilitySlot["product"], preference: Retu
 }
 
 describe("optimizer", () => {
+  it("honors level requirements in addition to elite phase", () => {
+    const belowRequirement = activeBaseSkills(
+      levelLockedOperator,
+      levelLockedSkill.unlockPhase,
+      levelLockedSkill.unlockLevel - 1
+    );
+    const atRequirement = activeBaseSkills(
+      levelLockedOperator,
+      levelLockedSkill.unlockPhase,
+      levelLockedSkill.unlockLevel
+    );
+
+    expect(belowRequirement.map((skill) => skill.id)).not.toContain(levelLockedSkill.id);
+    expect(atRequirement.map((skill) => skill.id)).toContain(levelLockedSkill.id);
+  });
+
+  it("replaces lower skill tiers per slot and combines different active slots", () => {
+    const activeSkills = activeBaseSkills(alanna, 2, 1);
+
+    expect(activeSkills.map((skill) => skill.id)).toEqual(
+      expect.arrayContaining(["manu_token_prod_spd[010]", "manu_prod_spd_double[000]"])
+    );
+    expect(activeSkills.map((skill) => skill.id)).not.toContain("manu_token_prod_spd[000]");
+
+    const state = createDefaultState();
+    ownOperators(state, [alanna.id, warmy.id, lancet.id, justiceKnight.id]);
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const power = state.facilities.find((facility) => facility.id === "power-1")!;
+    const candidate = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: [
+        contextAssignment(factory, warmy.id),
+        contextAssignment(power, lancet.id),
+        contextAssignment(power, justiceKnight.id)
+      ],
+      roster: state.roster
+    }).find((assignment) => assignment.operatorId === alanna.id)!;
+
+    expect(candidate.skillId.split("+")).toEqual(
+      expect.arrayContaining(["manu_token_prod_spd[010]", "manu_prod_spd_double[000]"])
+    );
+    expect(candidate.efficiency).toBeCloseTo(0.35);
+  });
+
   it("uses two gold and two battle record factories for balanced 243 layout", () => {
     const state = createDefaultState();
     const factoryProducts = state.facilities.filter((facility) => facility.type === "factory").map((facility) => facility.product);
@@ -380,7 +429,7 @@ describe("optimizer", () => {
     const gladiiaCandidate = findCandidates(control, state).find((candidate) => candidate.operatorId === gladiia.id)!;
 
     expect(gladiiaCandidate.facilityId).toBe(control.id);
-    expect(gladiiaCandidate.efficiency).toBeCloseTo(0.08);
+    expect(gladiiaCandidate.efficiency).toBeCloseTo(0.05);
   });
 
   it("scales Chen's control recovery by LGD operators in the control center", () => {
@@ -395,8 +444,8 @@ describe("optimizer", () => {
 
     expect(chen.affiliations).toContain("lgd");
     expect(swire.affiliations).toContain("lgd");
-    expect(chenBase.efficiency).toBeCloseTo(0.08);
-    expect(chenWithLgd.efficiency).toBeCloseTo(0.13);
+    expect(chenBase.efficiency).toBeCloseTo(0.05);
+    expect(chenWithLgd.efficiency).toBeCloseTo(0.1);
   });
 
   it("scales Rainbow control recovery by Rainbow operators in the control center", () => {
@@ -412,8 +461,8 @@ describe("optimizer", () => {
     expect(ash.affiliations).toContain("rainbow");
     expect(blitz.affiliations).toContain("rainbow");
     expect(tachanka.affiliations).toContain("rainbow");
-    expect(ashBase.efficiency).toBeCloseTo(0.08);
-    expect(ashWithRainbowSquad.efficiency).toBeCloseTo(0.18);
+    expect(ashBase.efficiency).toBeCloseTo(0.05);
+    expect(ashWithRainbowSquad.efficiency).toBeCloseTo(0.15);
   });
 
   it("models Wis'adel's Hoederer and Ines control-center branches independently", () => {
@@ -455,9 +504,9 @@ describe("optimizer", () => {
     expect(morgan.affiliations).toContain("glasgow");
     expect(siege.affiliations).toContain("glasgow");
     expect(morganBase.skillId).toBe(morganGlasgowSkill.id);
-    expect(morganBase.efficiency).toBeCloseTo(0.23);
+    expect(morganBase.efficiency).toBeCloseTo(0.2);
     expect(morganWithSiege.skillId).toBe(morganGlasgowSkill.id);
-    expect(morganWithSiege.efficiency).toBeCloseTo(0.78);
+    expect(morganWithSiege.efficiency).toBeCloseTo(0.75);
   });
 
   it("applies Sami reception bonuses only when another Sami operator is assigned together", () => {
@@ -478,10 +527,10 @@ describe("optimizer", () => {
 
     expect(typhon.affiliations).toContain("sami");
     expect(valarqvin.affiliations).toContain("sami");
-    expect(typhonBase.efficiency).toBeCloseTo(0.13);
-    expect(typhonWithSami.efficiency).toBeCloseTo(0.18);
-    expect(valarqvinBase.efficiency).toBeCloseTo(0.13);
-    expect(valarqvinWithTyphon.efficiency).toBeCloseTo(0.28);
+    expect(typhonBase.efficiency).toBeCloseTo(0.1);
+    expect(typhonWithSami.efficiency).toBeCloseTo(0.15);
+    expect(valarqvinBase.efficiency).toBeCloseTo(0.1);
+    expect(valarqvinWithTyphon.efficiency).toBeCloseTo(0.25);
   });
 
   it("scales Rosa's control recovery by Ursus Student operators in the control center", () => {
@@ -496,8 +545,8 @@ describe("optimizer", () => {
 
     expect(rosa.affiliations).toContain("student");
     expect(zima.affiliations).toContain("student");
-    expect(rosaBase.efficiency).toBeCloseTo(0.08);
-    expect(rosaWithStudent.efficiency).toBeCloseTo(0.13);
+    expect(rosaBase.efficiency).toBeCloseTo(0.05);
+    expect(rosaWithStudent.efficiency).toBeCloseTo(0.1);
   });
 
   it("adds Lemuen's Exusiai same-trading-post bonus when evaluating candidates", () => {
@@ -510,9 +559,9 @@ describe("optimizer", () => {
       assignments: [contextAssignment(trading, exusiai.id)]
     }).find((candidate) => candidate.operatorId === lemuen.id)!;
 
-    expect(withoutExusiaiContext.efficiency).toBeCloseTo(0.23);
+    expect(withoutExusiaiContext.efficiency).toBeCloseTo(0.2);
     expect(withExusiaiContext.skillId).toBe(lemuenExusiaiSkill.id);
-    expect(withExusiaiContext.efficiency).toBeCloseTo(0.48);
+    expect(withExusiaiContext.efficiency).toBeCloseTo(0.45);
   });
 
   it("uses skillless referenced operators to satisfy named operator conditions", () => {
@@ -526,7 +575,7 @@ describe("optimizer", () => {
 
     expect(suzuran.skills).toHaveLength(0);
     expect(withoutSuzuran.skillId).not.toBe(vulpisfogliaSuzuranSkill.id);
-    expect(withOwnedSuzuran.skillId).toBe(vulpisfogliaSuzuranSkill.id);
+    expect(withOwnedSuzuran.skillId.split("+")).toContain(vulpisfogliaSuzuranSkill.id);
     expect(withOwnedSuzuran.efficiency).toBeGreaterThan(withoutSuzuran.efficiency);
   });
 
@@ -560,8 +609,8 @@ describe("optimizer", () => {
 
     expect(muelsyse.affiliations).toContain("rhine");
     expect(saria.affiliations).toContain("rhine");
-    expect(base.efficiency).toBeCloseTo(0.13);
-    expect(withRhine.efficiency).toBeCloseTo(0.16);
+    expect(base.efficiency).toBeCloseTo(0.1);
+    expect(withRhine.efficiency).toBeCloseTo(0.13);
   });
 
   it("scales Eunectes factory productivity by power plant count", () => {
@@ -570,7 +619,7 @@ describe("optimizer", () => {
     const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
     const candidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === eunectes.id)!;
 
-    expect(candidate.efficiency).toBeCloseTo(0.33);
+    expect(candidate.efficiency).toBeCloseTo(0.3);
   });
 
   it("counts Eunectes's virtual power plants for facility-count scaling", () => {
@@ -625,7 +674,7 @@ describe("optimizer", () => {
     }).find((assignment) => assignment.operatorId === snegurochka.id)!;
 
     expect(candidate.suppressesOtherFactoryEfficiency).toBe(true);
-    expect(candidate.efficiency).toBeCloseTo(0.115);
+    expect(candidate.efficiency).toBeCloseTo(0.1);
   });
 
   it("uses max facility level for reception-level scaling skills", () => {
@@ -634,7 +683,7 @@ describe("optimizer", () => {
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
     const candidate = findCandidates(trading, state).find((assignment) => assignment.operatorId === vigil.id)!;
 
-    expect(candidate.efficiency).toBeCloseTo(0.43);
+    expect(candidate.efficiency).toBeCloseTo(0.4);
   });
 
   it("counts assigned operation platforms for factory and control conditions", () => {
@@ -651,8 +700,8 @@ describe("optimizer", () => {
 
     expect(lancet.affiliations).toContain("platform");
     expect(justiceKnight.affiliations).toContain("platform");
-    expect(alannaBase.efficiency).toBeCloseTo(0.03);
-    expect(alannaWithPlatforms.efficiency).toBeCloseTo(0.23);
+    expect(alannaBase.efficiency).toBeCloseTo(0);
+    expect(alannaWithPlatforms.efficiency).toBeCloseTo(0.2);
   });
 
   it("uses modeled drone cap assumptions for Greyy the Lightningbearer's power skill", () => {
@@ -662,7 +711,7 @@ describe("optimizer", () => {
     const candidate = findCandidates(power, state).find((assignment) => assignment.operatorId === greyyAlter.id)!;
     const dawnlight = greyyAlter.skills.find((skill) => skill.id === "power_count[000]")!.effects[0];
 
-    expect(candidate.efficiency).toBeCloseTo(0.23);
+    expect(candidate.efficiency).toBeCloseTo(0.2);
     expect(
       conditionsSatisfied(dawnlight.conditions, greyyAlter, power, {
         facilities: state.facilities,
@@ -672,14 +721,39 @@ describe("optimizer", () => {
     ).toBe(true);
   });
 
-  it("uses max steady-state values for time-ramping factory skills", () => {
+  it("averages time-ramping skills across the configured rotation window", () => {
     const state = createDefaultState();
     ownOperators(state, [fang.id]);
     state.roster[fang.id].elite = 0;
     const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
-    const candidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === fang.id)!;
+    const twelveHourCandidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === fang.id)!;
+
+    const eightHourCandidate = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: [],
+      roster: state.roster,
+      shiftHours: 8
+    }).find((assignment) => assignment.operatorId === fang.id)!;
+
+    expect(twelveHourCandidate.efficiency).toBeCloseTo(0.2375);
+    expect(eightHourCandidate.efficiency).toBeCloseTo(0.23125);
+  });
+
+  it("models Totter's productivity from Morale spent during the 12-hour shift", () => {
+    const state = createDefaultState();
+    const factory = { ...state.facilities.find((facility) => facility.id === "factory-1")!, slotCount: 1 };
+    state.facilities = [factory];
+    ownOperators(state, [totter.id]);
+    state.roster[totter.id].elite = 1;
+
+    const candidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === totter.id)!;
+    const planAssignment = generateAssignmentPlan(state).facilityPlans[0].assignments.find(
+      (assignment) => assignment.operatorId === totter.id
+    )!;
 
     expect(candidate.efficiency).toBeCloseTo(0.25);
+    expect(candidate.storageLimit).toBeUndefined();
+    expect(planAssignment.efficiency).toBeCloseTo(0.25);
   });
 
   it("uses max total dormitory level for dorm-level scaling skills", () => {
@@ -688,7 +762,7 @@ describe("optimizer", () => {
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
     const candidate = findCandidates(trading, state).find((assignment) => assignment.operatorId === archetto.id)!;
 
-    expect(candidate.efficiency).toBeCloseTo(0.43);
+    expect(candidate.efficiency).toBeCloseTo(0.4);
   });
 
   it("folds max construction robot count into Minimalist's production skill", () => {
@@ -697,7 +771,7 @@ describe("optimizer", () => {
     const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
     const candidate = findCandidates(factory, state).find((assignment) => assignment.operatorId === minimalist.id)!;
 
-    expect(candidate.efficiency).toBeCloseTo(0.43);
+    expect(candidate.efficiency).toBeCloseTo(0.4);
   });
 
   it("applies Lee's control-center clue speed bonus to reception assignments", () => {
@@ -712,8 +786,8 @@ describe("optimizer", () => {
     const receptionAssignment = receptionPlan.assignments.find((assignment) => assignment.operatorId === may.id)!;
 
     expect(plan.facilityPlans.some((facilityPlan) => facilityPlan.assignments.some((assignment) => assignment.operatorId === lee.id))).toBe(true);
-    expect(receptionAssignment.efficiency).toBeCloseTo(0.23);
-    expect(receptionPlan.expectedEfficiency).toBeCloseTo(0.48);
+    expect(receptionAssignment.efficiency).toBeCloseTo(0.2);
+    expect(receptionPlan.expectedEfficiency).toBeCloseTo(0.45);
   });
 
   it("does not score control-center global boosts when no target room exists", () => {
@@ -729,6 +803,7 @@ describe("optimizer", () => {
 
   it("does not let control-center production boosts shorten facility recovery", () => {
     const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) entry.owned = false;
     const control = state.facilities.find((facility) => facility.id === "control-1")!;
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
     state.facilities = [control, trading];
@@ -740,7 +815,28 @@ describe("optimizer", () => {
 
     expect(plan.facilityPlans.some((facilityPlan) => facilityPlan.assignments.some((assignment) => assignment.operatorId === amiya.id))).toBe(true);
     expect(tradingPlan.expectedEfficiency).toBeGreaterThan(tradingAssignment.efficiency);
-    expect(tradingAssignment.recoveryHours).toBe(8);
+    expect(tradingAssignment.recoveryHours).toBeCloseTo(
+      (tradingAssignment.moraleConsumptionPerHour! * 12) / tradingAssignment.dormitoryRecoveryPerHour!
+    );
+  });
+
+  it("derives working and recovery time from control staffing and morale skills", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) entry.owned = false;
+    ownOperators(state, [amiya.id, gummy.id]);
+    const control = { ...state.facilities.find((facility) => facility.id === "control-1")!, slotCount: 1 };
+    const trading = { ...state.facilities.find((facility) => facility.id === "trading-1")!, slotCount: 1 };
+    state.facilities = [control, trading];
+
+    const plan = generateAssignmentPlan(state);
+    const gummyAssignment = plan.facilityPlans
+      .find((facilityPlan) => facilityPlan.facility.id === trading.id)!
+      .assignments.find((assignment) => assignment.operatorId === gummy.id)!;
+
+    expect(gummyAssignment.moraleConsumptionPerHour).toBeCloseTo(0.7);
+    expect(gummyAssignment.fatigueHours).toBeCloseTo(24 / 0.7);
+    expect(gummyAssignment.dormitoryRecoveryPerHour).toBeGreaterThanOrEqual(4);
+    expect(gummyAssignment.recoveryHours).toBeCloseTo(8.4 / gummyAssignment.dormitoryRecoveryPerHour!);
   });
 
   it("scales Terra Research Commission from catnip generated in the control center", () => {
@@ -779,7 +875,7 @@ describe("optimizer", () => {
     const candidate = findCandidates(trading, state).find((assignment) => assignment.operatorId === mrNothing.id)!;
 
     expect(candidate.skillId).toBe("trade_ord_spd_bd_n2[000]");
-    expect(candidate.efficiency).toBeCloseTo(0.23);
+    expect(candidate.efficiency).toBeCloseTo(0.2);
   });
 
   it("does not score high-value order probability as generic trading efficiency", () => {
@@ -912,7 +1008,7 @@ describe("optimizer", () => {
     expect(salesPromotionEffect.product).toBe("lmd");
     expect(durinLineEffect.product).toBe("lmd");
     expect(candidate.skillId).toBe("trade_ord_spd&gold[100]");
-    expect(candidate.efficiency).toBeCloseTo(0.13);
+    expect(candidate.efficiency).toBeCloseTo(0.1);
   });
 
   it("keeps Kirara's fixed trading bonus while excluding unsupported line scaling", () => {
@@ -927,7 +1023,7 @@ describe("optimizer", () => {
     expect(secondEffect.product).toBe("lmd");
     expect(firstEffect.ignoredForOptimization).toBeUndefined();
     expect(secondEffect.ignoredForOptimization).toBeUndefined();
-    expect(candidate.efficiency).toBeCloseTo(0.08);
+    expect(candidate.efficiency).toBeCloseTo(0.05);
   });
 
   it("keeps morale-cost factory capacity skills product-neutral", () => {
@@ -943,12 +1039,12 @@ describe("optimizer", () => {
     }).find((assignment) => assignment.operatorId === bubble.id)!;
 
     expect(bubbleStorageEffect.product).toBeUndefined();
-    expect(candidate.skillId).toBe("manu_prod_spd_variable3[000]");
+    expect(candidate.skillId.split("+")).toContain("manu_prod_spd_variable3[000]");
     expect(candidate.storageLimit).toBe(10);
-    expect(candidate.efficiency).toBeCloseTo(0.13);
-    expect(withVermeil.skillId).toBe("manu_prod_spd_variable3[000]");
+    expect(candidate.efficiency).toBeCloseTo(0.1);
+    expect(withVermeil.skillId.split("+")).toContain("manu_prod_spd_variable3[000]");
     expect(withVermeil.storageLimit).toBe(10);
-    expect(withVermeil.efficiency).toBeCloseTo(0.21);
+    expect(withVermeil.efficiency).toBeCloseTo(0.18);
   });
 
   it("keeps morale-only factory skills out of production candidates", () => {
@@ -981,8 +1077,8 @@ describe("optimizer", () => {
     }).find((assignment) => assignment.operatorId === vermeil.id)!;
 
     expect(base.storageLimit).toBe(8);
-    expect(base.efficiency).toBeCloseTo(0.19);
-    expect(withStoragePartner.efficiency).toBeCloseTo(0.39);
+    expect(base.efficiency).toBeCloseTo(0.16);
+    expect(withStoragePartner.efficiency).toBeCloseTo(0.36);
   });
 
   it("ignores negative storage limit modifiers for Vermeil scaling", () => {
@@ -1008,8 +1104,8 @@ describe("optimizer", () => {
       assignments: [contextAssignment(trading, silverashAlter.id, { orderLimit: 10 })]
     }).find((assignment) => assignment.operatorId === degenbrecher.id)!;
 
-    expect(base.efficiency).toBeCloseTo(0.28);
-    expect(withOrderLimit.efficiency).toBeCloseTo(0.53);
+    expect(base.efficiency).toBeCloseTo(0.25);
+    expect(withOrderLimit.efficiency).toBeCloseTo(0.75);
   });
 
   it("routes Gnosis's remote order-limit bonus to Karlan trading post partners", () => {
@@ -1059,7 +1155,7 @@ describe("optimizer", () => {
     });
     expect(gnosisAssignment.efficiency).toBe(0);
     expect(gnosisAssignment.score).toBeGreaterThan(0);
-    expect(withGnosis.efficiency - withoutGnosis.efficiency).toBeCloseTo(0.5);
+    expect(withGnosis.efficiency - withoutGnosis.efficiency).toBeCloseTo(0.75);
   });
 
   it("routes Wis'adel's named remote order-limit bonus to Hoederer", () => {
@@ -1137,23 +1233,20 @@ describe("optimizer", () => {
     ownOperators(baseState, [obliviator.id, defaultOwnedGoldFactoryOperator.id]);
     baseState.roster[defaultOwnedGoldFactoryOperator.id].elite = 0;
     const basePlan = generateAssignmentPlan(baseState);
-    const baseGoldPlan = basePlan.facilityPlans.find(
-      (facilityPlan) =>
-        facilityPlan.facility.product === "gold" &&
-        facilityPlan.assignments.some((assignment) => assignment.operatorId === defaultOwnedGoldFactoryOperator.id)
-    )!;
+    const baseGoldEfficiency = basePlan.facilityPlans
+      .filter((facilityPlan) => facilityPlan.facility.product === "gold")
+      .reduce((sum, facilityPlan) => sum + facilityPlan.expectedEfficiency, 0);
 
     const passionState = createDefaultState();
     ownOperators(passionState, [obliviator.id, mortis.id, defaultOwnedGoldFactoryOperator.id]);
     passionState.roster[defaultOwnedGoldFactoryOperator.id].elite = 0;
     const passionPlan = generateAssignmentPlan(passionState);
-    const passionGoldPlan = passionPlan.facilityPlans.find(
-      (facilityPlan) =>
-        facilityPlan.facility.product === "gold" &&
-        facilityPlan.assignments.some((assignment) => assignment.operatorId === defaultOwnedGoldFactoryOperator.id)
-    )!;
+    const passionGoldEfficiency = passionPlan.facilityPlans
+      .filter((facilityPlan) => facilityPlan.facility.product === "gold")
+      .reduce((sum, facilityPlan) => sum + facilityPlan.expectedEfficiency, 0);
 
-    expect(passionGoldPlan.expectedEfficiency - baseGoldPlan.expectedEfficiency).toBeCloseTo(0.01);
+    const goldFacilityCount = passionPlan.facilityPlans.filter((facilityPlan) => facilityPlan.facility.product === "gold").length;
+    expect(passionGoldEfficiency - baseGoldEfficiency).toBeCloseTo(0.01 * goldFacilityCount);
   });
 
   it("applies Mortis's trading boost globally without counting it as control efficiency", () => {
@@ -1485,7 +1578,7 @@ describe("optimizer", () => {
       true
     );
     expect(snegurochkaAssignment.suppressesOtherFactoryEfficiency).toBe(true);
-    expect(snegurochkaAssignment.efficiency).toBeCloseTo(0.115);
+    expect(snegurochkaAssignment.efficiency).toBeCloseTo(0.1);
     expect(factoryPlan.expectedEfficiency).toBeCloseTo(snegurochkaAssignment.efficiency);
   });
 
@@ -1563,12 +1656,12 @@ describe("optimizer", () => {
     }).find((candidate) => candidate.operatorId === hedley.id)!;
 
     expect(w.skills).toHaveLength(0);
-    expect(base.efficiency).toBeCloseTo(0.33);
-    expect(withInes.efficiency).toBeCloseTo(0.38);
-    expect(withOwnedW.efficiency).toBeCloseTo(0.38);
+    expect(base.efficiency).toBeCloseTo(0.3);
+    expect(withInes.efficiency).toBeCloseTo(0.35);
+    expect(withOwnedW.efficiency).toBeCloseTo(0.35);
     expect(withOwnedW.skilllessPrerequisiteOperatorIds).toBeUndefined();
     expect(withOwnedW.baseSkilllessPrerequisiteOperatorIds).toContain(w.id);
-    expect(withAssignedW.efficiency).toBeCloseTo(0.38);
+    expect(withAssignedW.efficiency).toBeCloseTo(0.35);
   });
 
   it("uses owned skillless Ulpianus as a base-wide prerequisite for Underflow's optional bonus", () => {
@@ -1583,10 +1676,10 @@ describe("optimizer", () => {
     }).find((assignment) => assignment.operatorId === underflow.id)!;
 
     expect(ulpianus.skills).toHaveLength(0);
-    expect(candidate.efficiency).toBeCloseTo(0.43);
+    expect(candidate.efficiency).toBeCloseTo(0.4);
     expect(candidate.skilllessPrerequisiteOperatorIds).toBeUndefined();
     expect(candidate.baseSkilllessPrerequisiteOperatorIds).toContain(ulpianus.id);
-    expect(withAssignedUlpianus.efficiency).toBeCloseTo(0.43);
+    expect(withAssignedUlpianus.efficiency).toBeCloseTo(0.4);
   });
 
   it("does not spend a trading slot on a base-wide optional skillless prerequisite", () => {
@@ -1599,7 +1692,7 @@ describe("optimizer", () => {
     const basePrerequisite = tradingPlan.assignments.find((candidate) => candidate.operatorId === ulpianus.id)!;
     const slotConsumingAssignments = tradingPlan.assignments.filter((candidate) => !candidate.doesNotConsumeFacilitySlot);
 
-    expect(assignment.efficiency).toBeCloseTo(0.43);
+    expect(assignment.efficiency).toBeCloseTo(0.4);
     expect(assignment.skilllessPrerequisiteOperatorIds).toBeUndefined();
     expect(assignment.baseSkilllessPrerequisiteOperatorIds).toContain(ulpianus.id);
     expect(basePrerequisite.baseSkilllessPrerequisiteFor).toBe(underflow.id);
@@ -1621,7 +1714,7 @@ describe("optimizer", () => {
 
     expect(lemuenAssignment.facilityId).toBe(exusiaiAssignment.facilityId);
     expect(lemuenAssignment.skillId).toBe(lemuenExusiaiSkill.id);
-    expect(lemuenAssignment.efficiency).toBeCloseTo(0.48);
+    expect(lemuenAssignment.efficiency).toBeCloseTo(0.45);
   });
 
   it("matches originium factory skills only to originium products", () => {
@@ -1702,6 +1795,23 @@ describe("optimizer", () => {
     expect(plan.rotation[1].recovery.length).toBeGreaterThan(0);
   });
 
+  it("keeps facility assignments stable when the facility list order changes", () => {
+    const state = createDefaultState();
+    ownBaselineRoster(state);
+    const reversedState = structuredClone(state);
+    reversedState.facilities.reverse();
+
+    const signature = (plan: ReturnType<typeof generateAssignmentPlan>) =>
+      plan.facilityPlans
+        .flatMap((facilityPlan) => [
+          ...facilityPlan.assignments.map((assignment) => `active:${facilityPlan.facility.id}:${assignment.operatorId}`),
+          ...facilityPlan.alternatives.map((assignment) => `alternative:${facilityPlan.facility.id}:${assignment.operatorId}`)
+        ])
+        .sort();
+
+    expect(signature(generateAssignmentPlan(reversedState))).toEqual(signature(generateAssignmentPlan(state)));
+  });
+
   it("does not reuse operators between first and second rotation assignments", () => {
     const state = createDefaultState();
     ownAllRoster(state);
@@ -1734,9 +1844,9 @@ describe("optimizer", () => {
     const lemuenAlternative = planWithAlternatives.alternatives.find((assignment) => assignment.operatorId === lemuen.id)!;
 
     expect(planWithAlternatives.alternatives.some((assignment) => assignment.operatorId === exusiai.id)).toBe(false);
-    expect(lemuenAlternative.skillId).not.toBe(lemuenExusiaiSkill.id);
-    expect(lemuenAlternative.efficiency).toBeCloseTo(0.23);
-    expect(planWithAlternatives.alternativeExpectedEfficiency).toBeCloseTo(0.23);
+    expect(lemuenAlternative.skillId).toBe(lemuenExusiaiSkill.id);
+    expect(lemuenAlternative.efficiency).toBeCloseTo(0.2);
+    expect(planWithAlternatives.alternativeExpectedEfficiency).toBeCloseTo(0.2);
   });
 
   it("excludes dormitories from production assignment plans", () => {

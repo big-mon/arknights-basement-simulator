@@ -4,7 +4,7 @@ export type ProductType = "gold" | "battleRecord" | "originium" | "lmd" | "power
 
 export type BaseLayout = "243" | "153";
 
-export type RotationCount = 2 | 3;
+export type RotationCount = 2;
 
 export type LanguageCode = "ja" | "zh" | "en";
 
@@ -26,6 +26,29 @@ export interface BaseSkillEffect {
   product?: ProductType;
   efficiency: number;
   baseEfficiency?: number;
+  timeCurve?: {
+    initialEfficiency: number;
+    efficiencyPerHour: number;
+    maxEfficiency: number;
+    startsAfterFirstHour?: boolean;
+  };
+  moraleCurve?: {
+    initialEfficiency: number;
+    efficiencyPerStep: number;
+    moralePerStep: number;
+    minEfficiency: number;
+  };
+  activation?: {
+    type: "moraleSpent";
+    threshold: number;
+  };
+  moraleEffects?: Array<{
+    type: "consumption" | "recovery" | "immunity";
+    target: "self" | "room" | "other" | "singleOther" | "dormitories" | "otherFacilities" | "conditionOperators";
+    amount: number;
+    mode?: "externalConsumptionEffects" | "selfConsumptionReduction";
+    affiliations?: string[];
+  }>;
   scaling?: {
     type:
       | "affiliation"
@@ -113,7 +136,9 @@ export type BaseSkillCondition =
 export interface BaseSkill {
   id: string;
   name: LocalizedText;
+  slot: number;
   unlockPhase: 0 | 1 | 2;
+  unlockLevel: number;
   effects: BaseSkillEffect[];
 }
 
@@ -169,6 +194,7 @@ export interface Assignment {
   orderLimit?: number;
   suppressesOtherFactoryEfficiency?: boolean;
   globalStackKey?: string;
+  globalStackKeys?: string[];
   skilllessPrerequisiteOperatorIds?: string[];
   baseSkilllessPrerequisiteOperatorIds?: string[];
   skilllessPrerequisiteFor?: string;
@@ -177,6 +203,7 @@ export interface Assignment {
   scalesWithFacilityStat?: Array<"storageLimit" | "orderLimit">;
   facilityStatScalings?: Array<{
     key: "storageLimit" | "orderLimit";
+    base: number;
     current: number;
     efficiencyPerStep: number;
     scorePerEfficiency: number;
@@ -206,6 +233,16 @@ export interface Assignment {
   }>;
   fatigueHours: number;
   recoveryHours: number;
+  moraleConsumptionPerHour?: number;
+  dormitoryRecoveryPerHour?: number;
+  shiftUptime?: number;
+  moraleEfficiencyCurves?: Array<{
+    baselineEfficiency: number;
+    initialEfficiency: number;
+    efficiencyPerStep: number;
+    moralePerStep: number;
+    minEfficiency: number;
+  }>;
   reason: string;
 }
 

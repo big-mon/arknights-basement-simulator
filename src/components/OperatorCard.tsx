@@ -17,7 +17,9 @@ export function OperatorCard({
   onUpdateRoster: (operatorId: string, patch: Partial<RosterEntry>) => void;
 }) {
   const elite = clampEliteForOperator(operator, entry.elite);
-  const unlockedSkills = operator.skills.filter((skill) => skill.unlockPhase <= elite).length;
+  const unlockedSkills = operator.skills.filter(
+    (skill) => skill.unlockPhase < elite || (skill.unlockPhase === elite && skill.unlockLevel <= entry.level)
+  ).length;
   const text = uiText[language];
   const operatorName = localizeText(operator.name, language);
   const missingSelectedLanguageName = !hasLocalizedText(operator.name, language);
@@ -68,17 +70,27 @@ export function OperatorCard({
               ))}
             </select>
           </label>
+          <label>
+            {levelLabels[language]}
+            <input
+              type="number"
+              min={1}
+              max={90}
+              value={entry.level}
+              onChange={(event) => onUpdateRoster(operator.id, { level: Math.min(90, Math.max(1, Number(event.target.value) || 1)) })}
+            />
+          </label>
         </div>
       </div>
       <ul className="base-skill-list" aria-label={text.roster.skillListLabel(operatorName)}>
         {operator.skills.map((skill) => {
-          const unlocked = skill.unlockPhase <= elite;
+          const unlocked = skill.unlockPhase < elite || (skill.unlockPhase === elite && skill.unlockLevel <= entry.level);
           const skillName = localizeText(skill.name, language);
           return (
             <li key={skill.id} className={unlocked ? "base-skill unlocked" : "base-skill locked"}>
               <div className="base-skill-heading">
                 <strong>{skillName}</strong>
-                <span>{unlocked ? text.roster.unlocked : text.roster.unlockAtElite(skill.unlockPhase)}</span>
+                <span>{unlocked ? text.roster.unlocked : unlockRequirementLabel(language, skill.unlockPhase, skill.unlockLevel)}</span>
               </div>
               {skill.effects.map((effect, index) => (
                 <p key={`${skill.id}-${index}`}>
@@ -101,6 +113,18 @@ const ignoredOptimizationLabels: Record<LanguageCode, string> = {
   zh: "不参与优化计算",
   en: "Excluded from optimization"
 };
+
+const levelLabels: Record<LanguageCode, string> = {
+  ja: "レベル",
+  zh: "等级",
+  en: "Level"
+};
+
+function unlockRequirementLabel(language: LanguageCode, phase: number, level: number) {
+  if (language === "ja") return `昇進${phase} Lv.${level}で解放`;
+  if (language === "zh") return `精英化${phase} Lv.${level}解锁`;
+  return `Unlocks at E${phase} Lv.${level}`;
+}
 
 function isInteractiveCardTarget(target: EventTarget) {
   return target instanceof Element && Boolean(target.closest("button, input, label, select, textarea, a"));

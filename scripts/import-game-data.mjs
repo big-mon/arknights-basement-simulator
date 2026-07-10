@@ -62,6 +62,11 @@ function phaseToElite(phase) {
   return Math.min(2, Math.max(0, match ? Number(match[0]) : 0));
 }
 
+function conditionLevelToNumber(level) {
+  const numericLevel = Number(level);
+  return Number.isFinite(numericLevel) ? Math.max(1, Math.trunc(numericLevel)) : 1;
+}
+
 function roomTypeToFacility(roomType) {
   switch (String(roomType ?? "").toUpperCase()) {
     case "MANUFACTURE":
@@ -96,8 +101,19 @@ function inferProductFromDescription(description, roomType) {
 function inferProduct(description, roomType) {
   const normalizedRoomType = String(roomType ?? "").toUpperCase();
   const product = inferProductFromDescription(description, roomType);
-  if (normalizedRoomType === "MANUFACTURE" && (product === "power" || product === "lmd")) {
-    return undefined;
+  if (normalizedRoomType === "MANUFACTURE") {
+    if (product === "morale") {
+      return /生产力|製造効率|productivity|production|仓库容量|保管上限|capacity limit/i.test(String(description))
+        ? undefined
+        : product;
+    }
+    return product === "gold" || product === "battleRecord" || product === "originium" ? product : undefined;
+  }
+  if (normalizedRoomType === "TRADING") {
+    if (product === "morale") {
+      return /订单上限|受注上限|order limit/i.test(String(description)) ? undefined : product;
+    }
+    return product === "lmd" ? product : undefined;
   }
   return product;
 }
@@ -108,12 +124,12 @@ function inferEfficiency(description) {
     return positivePercentages.reduce((sum, value) => sum + value, 0) / 100;
   }
   const positive = positivePercentages[0];
-  return positive ? positive / 100 : 0.05;
+  return positive ? positive / 100 : 0;
 }
 
 function inferBaseEfficiency(description) {
   const positive = positivePercentagesFromDescription(description)[0];
-  return positive ? positive / 100 : 0.05;
+  return positive ? positive / 100 : 0;
 }
 
 function positivePercentagesFromDescription(description) {
@@ -400,7 +416,9 @@ function normalize(languages, nameOverrides, baseSkillOverrides) {
     .map(([charId, character]) => {
       const buildingEntry = buildingChars[charId] ?? {};
       const rawBuffs = Array.isArray(buildingEntry.buffChar)
-        ? buildingEntry.buffChar.flatMap((group) => group.buffData ?? [])
+        ? buildingEntry.buffChar.flatMap((group, slot) =>
+            (group.buffData ?? []).map((rawBuff) => ({ ...rawBuff, slot }))
+          )
         : [];
       const skills = rawBuffs
         .map((rawBuff, index) => {
@@ -458,7 +476,9 @@ function normalize(languages, nameOverrides, baseSkillOverrides) {
           return {
             id: String(buff.buffId ?? `${charId}-base-${index}`),
             name: localizedBuffName,
+            slot: rawBuff.slot,
             unlockPhase: phaseToElite(rawBuff.cond?.phase),
+            unlockLevel: conditionLevelToNumber(rawBuff.cond?.level),
             effects
           };
         })
@@ -476,7 +496,13 @@ function normalize(languages, nameOverrides, baseSkillOverrides) {
         skills
       };
     });
-  const overriddenOperators = applyBaseSkillOverrides(normalizedOperators, baseSkillOverrides);
+  const overriddenOperators = applyBaseSkillOverrides(normalizedOperators, baseSkillOverrides).map((operator) => ({
+    ...operator,
+    skills: operator.skills.map((skill) => ({
+      ...skill,
+      effects: skill.effects.map(annotateMoraleEffects).map(markUnmodeledEffect).map(annotateTimeCurve)
+    }))
+  }));
   const referencedOperatorIds = new Set(
     overriddenOperators.flatMap((operator) =>
       operator.skills.flatMap((skill) => skill.effects.flatMap((effect) => referencedOperatorIdsFromEffect(effect)))
@@ -507,10 +533,24 @@ function applyBaseSkillOverrides(operators, overrides) {
 
       const effects = skill.effects.map((effect, index) => {
         const effectOverride = skillOverride.effects?.find((candidate) => candidate.index === index);
-        return effectOverride ? { ...effect, ...structuredClone(effectOverride.patch) } : effect;
+        if (!effectOverride) {
+          return effect;
+        }
+        const patch = structuredClone(effectOverride.patch);
+        if (
+          effect.efficiency === 0 &&
+          patch.efficiency === 0.05 &&
+          (patch.storageLimit !== undefined || patch.orderLimit !== undefined)
+        ) {
+          delete patch.efficiency;
+        }
+        return { ...effect, ...patch };
       });
 
-      return { ...skill, effects: [...effects, ...structuredClone(skillOverride.addEffects ?? [])] };
+      return {
+        ...skill,
+        effects: [...effects, ...structuredClone(skillOverride.addEffects ?? [])]
+      };
     });
     const addAffiliations = operatorOverride.addAffiliations ?? [];
     const affiliations = addAffiliations.length ? [...new Set([...(operator.affiliations ?? []), ...addAffiliations])] : operator.affiliations;
@@ -521,6 +561,189 @@ function applyBaseSkillOverrides(operators, overrides) {
       skills
     };
   });
+}
+
+function markUnmodeledEffect(effect) {
+  const hasModeledValue =
+    effect.efficiency !== 0 ||
+    (effect.baseEfficiency ?? 0) !== 0 ||
+    Boolean(effect.storageLimit) ||
+    Boolean(effect.orderLimit) ||
+    Boolean(effect.globalEffect) ||
+    Boolean(effect.resourceEffects?.length) ||
+    Boolean(effect.facilityCountBonuses?.length) ||
+    Boolean(effect.conditionalBonuses?.length) ||
+    Boolean(effect.moraleEffects?.length);
+  if (hasModeledValue || effect.ignoredForOptimization) {
+    return effect;
+  }
+  return {
+    ...effect,
+    ignoredForOptimization: true,
+    unsupportedReason: effect.unsupportedReason ?? "effectNotModeled"
+  };
+}
+
+function annotateMoraleEffects(effect) {
+  if (effect.moraleEffects?.length) {
+    return effect;
+  }
+  const description = effect.description?.en ?? "";
+  if (!/morale/i.test(description)) {
+    return effect;
+  }
+  const moraleEffects = [];
+  const add = (type, target, amount, extra = {}) => {
+    if (Number.isFinite(amount) && !moraleEffects.some((candidate) => candidate.type === type && candidate.target === target && candidate.amount === amount)) {
+      moraleEffects.push({ type, target, amount, ...extra });
+    }
+  };
+  const signed = "([+-]\\d+(?:\\.\\d+)?)";
+  for (const match of description.matchAll(new RegExp(`self Morale (?:loss|consumed)(?: per hour)?(?: is)?(?: increased by| reduced by)? ${signed}`, "gi"))) {
+    add("consumption", "self", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`Morale consumed (?:per|each) hour(?: is)?(?: increased by| reduced by)? ${signed}`, "gi"))) {
+    add("consumption", "self", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`Morale consumed per hour by ${signed}`, "gi"))) {
+    add("consumption", "self", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`Morale (?:loss|consumed) of Operators in the [^,.]+ ${signed} per hour`, "gi"))) {
+    add("consumption", "room", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`Morale consumed per hour of all Operators in the [^,.]+ ${signed}`, "gi"))) {
+    add("consumption", "room", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`(?:increases the Morale consumption of Operators assigned to the [^,.]+ by|total Morale consumed is increased by) ${signed}`, "gi"))) {
+    add("consumption", "room", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`Morale consumed when [^,.]+ is reduced by ${signed}`, "gi"))) {
+    add("consumption", "self", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`reduces the Morale consumed each hour by ${signed}`, "gi"))) {
+    add("consumption", "self", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`decreases own morale consumption by\\s*${signed}`, "gi"))) {
+    add("consumption", "self", -Math.abs(Number(match[1])));
+  }
+  for (const match of description.matchAll(new RegExp(`Morale consumed per hour of all Operators \\(excluding self\\).*?${signed}`, "gi"))) {
+    add("consumption", "other", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`self Morale recovered(?: per hour)? ${signed}`, "gi"))) {
+    add("recovery", "self", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`self Morale restored per hour ${signed}`, "gi"))) {
+    add("recovery", "self", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`restores ${signed} Morale per hour to all Operators`, "gi"))) {
+    add("recovery", "room", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`restores ${signed} Morale per hour distributed evenly to Operators`, "gi"))) {
+    add("recovery", "room", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`restores the Morale of all other Operators.*? by ${signed} per hour`, "gi"))) {
+    add("recovery", "other", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`increases own Morale restored per hour by ${signed}`, "gi"))) {
+    add("recovery", "self", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`increases (?:the )?Morale of all Operators.*? by ${signed} per hour`, "gi"))) {
+    add("recovery", "room", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`Morale recovery per hour of all Operators in [^,.]+ ${signed}`, "gi"))) {
+    add("recovery", "room", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`(?:increases|restores) (?:the )?Morale(?: recovery)? per hour of all Operators.*? by ${signed}`, "gi"))) {
+    add("recovery", "room", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`restores ${signed} Morale per hour to (?:another|one other) Operator`, "gi"))) {
+    add("recovery", "singleOther", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`restores ${signed} Morale per hour to all other Operators`, "gi"))) {
+    add("recovery", "other", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`self and [^,.]+ Morale recovered per hour ${signed}`, "gi"))) {
+    add("recovery", "self", Number(match[1]));
+    add("recovery", "conditionOperators", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`all Operators in Dormitories recover ${signed} Morale per hour`, "gi"))) {
+    add("recovery", "dormitories", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`Operators working in other (?:buildings|facilities) recover ${signed} Morale per hour`, "gi"))) {
+    add("recovery", "otherFacilities", Number(match[1]));
+  }
+  for (const match of description.matchAll(new RegExp(`working Operators in certain facilities will recover ${signed} Morale per hour`, "gi"))) {
+    add("recovery", "otherFacilities", Number(match[1]));
+  }
+  if (/ignore the effects of any Operators stationed in that Factory that would affect the Morale consumption of this Operator/i.test(description)) {
+    add("immunity", "self", 0, { mode: "externalConsumptionEffects" });
+  }
+  if (/remove any Morale reduction effects from Sui Operators assigned to the Control Center that affect themselves/i.test(description)) {
+    add("immunity", "conditionOperators", 0, {
+      mode: "selfConsumptionReduction",
+      affiliations: ["sui"]
+    });
+  }
+  return moraleEffects.length ? { ...effect, moraleEffects } : effect;
+}
+
+function annotateTimeCurve(effect) {
+  if (effect.timeCurve) {
+    return effect;
+  }
+  const description = effect.description?.en ?? "";
+  if (/Productivity \+30%\. For every 4 points of Morale difference on self, Productivity -5%/i.test(description)) {
+    return {
+      ...effect,
+      moraleCurve: {
+        initialEfficiency: 0.3,
+        efficiencyPerStep: -0.05,
+        moralePerStep: 4,
+        minEfficiency: 0
+      }
+    };
+  }
+  if (/if own Morale difference is greater than 12, Productivity \+10%, storage capacity \+6/i.test(description)) {
+    return {
+      ...effect,
+      activation: {
+        type: "moraleSpent",
+        threshold: 12
+      }
+    };
+  }
+  const firstHourMatch = description.match(
+    /(?:productivity|drone recovery rate)(?: is)? \+?(\d+(?:\.\d+)?)% in the first hour and thereafter \+?(\d+(?:\.\d+)?)% per hour, up to \+?(\d+(?:\.\d+)?)%/i
+  );
+  const thenMatch = description.match(
+    /(?:increases by|speed increases by) \+?(\d+(?:\.\d+)?)%,? then by another \+?(\d+(?:\.\d+)?)% per hour, up to (?:a )?maximum of \+?(\d+(?:\.\d+)?)%/i
+  );
+  const fromZeroMatch = description.match(
+    /productivity per hour \+?(\d+(?:\.\d+)?)%, up to \+?(\d+(?:\.\d+)?)%/i
+  );
+  const match = firstHourMatch ?? thenMatch;
+  if (match) {
+    return {
+      ...effect,
+      timeCurve: {
+        initialEfficiency: Number(match[1]) / 100,
+        efficiencyPerHour: Number(match[2]) / 100,
+        maxEfficiency: Number(match[3]) / 100,
+        startsAfterFirstHour: true
+      }
+    };
+  }
+  if (fromZeroMatch) {
+    return {
+      ...effect,
+      timeCurve: {
+        initialEfficiency: 0,
+        efficiencyPerHour: Number(fromZeroMatch[1]) / 100,
+        maxEfficiency: Number(fromZeroMatch[2]) / 100
+      }
+    };
+  }
+  return effect;
 }
 
 const languages = Object.fromEntries(
