@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { App, assignmentsForFacilitySlots } from "./App";
+import { App, assignmentsForFacilitySlots, rotationAssignmentsForFacility } from "./App";
 import { FacilityPlanCard } from "./components/FacilityPlanCard";
 import { createDefaultState, operators } from "./data/defaults";
 import { productLabels } from "./i18n";
@@ -663,6 +663,25 @@ describe("App", () => {
     expect(assignmentsForFacilitySlots(assignments, 3).map((assignment) => assignment.operatorId)).toEqual([
       "operator-a",
       "operator-prerequisite",
+      "operator-b",
+      "operator-c"
+    ]);
+
+    const facilityPlan: FacilityPlan = {
+      facility: { id: "trading-1", type: "trading", name: "Trading Post", slotCount: 3, product: "lmd" },
+      assignments,
+      expectedEfficiency: 0.75,
+      alternativeExpectedEfficiency: 0.75,
+      score: 0.75,
+      alternatives: assignments
+    };
+    expect(rotationAssignmentsForFacility(facilityPlan, 0).map((assignment) => assignment.operatorId)).toEqual([
+      "operator-a",
+      "operator-b",
+      "operator-c"
+    ]);
+    expect(rotationAssignmentsForFacility(facilityPlan, 1).map((assignment) => assignment.operatorId)).toEqual([
+      "operator-a",
       "operator-b",
       "operator-c"
     ]);

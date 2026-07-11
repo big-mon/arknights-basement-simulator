@@ -816,11 +816,11 @@ function optimizationInputKey(state: AppState) {
 }
 
 export function rotationAssignmentsForFacility(facilityPlan: FacilityPlan, rotationIndex: number): Assignment[] {
-  if (rotationIndex === 0) {
-    return facilityPlan.assignments;
-  }
-
-  return assignmentsForFacilitySlots(facilityPlan.alternatives, facilityPlan.facility.slotCount);
+  const assignments =
+    rotationIndex === 0
+      ? facilityPlan.assignments
+      : assignmentsForFacilitySlots(facilityPlan.alternatives, facilityPlan.facility.slotCount);
+  return assignments.filter((assignment) => !assignment.doesNotConsumeFacilitySlot);
 }
 
 function rotationExpectedEfficiencyForFacility(facilityPlan: FacilityPlan, rotationIndex: number) {
