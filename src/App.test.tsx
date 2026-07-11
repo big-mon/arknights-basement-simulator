@@ -324,6 +324,7 @@ describe("App", () => {
     const highestUnlockLevel = Math.max(...levelLockedOperator.skills.map((skill) => skill.unlockLevel));
 
     expect(levelSelect).toHaveValue(String(highestUnlockLevel));
+    expect(levelSelect.closest("details")).toBeInTheDocument();
 
     await user.clear(screen.getByPlaceholderText("名前で検索"));
     await user.type(screen.getByPlaceholderText("名前で検索"), amiya.id);
@@ -433,7 +434,9 @@ describe("App", () => {
     expect(lowRarityEliteSelect).toHaveValue("0");
 
     const amiyaCard = screen.getByText(amiyaName).closest("article")!;
-    expect(within(amiyaCard).getByRole("combobox", { name: "昇進" })).toHaveValue("2");
+    const amiyaEliteSelect = within(amiyaCard).getByRole("combobox", { name: "昇進" });
+    expect(amiyaEliteSelect).toHaveValue("2");
+    expect(amiyaEliteSelect.closest("details")).not.toBeInTheDocument();
   });
 
   it("preserves an explicitly saved lower elite phase", () => {
