@@ -807,6 +807,7 @@ function selectedPreferencePreset(preference: { gold: number; battleRecord: numb
 
 function optimizationInputKey(state: AppState) {
   return JSON.stringify({
+    language: state.language,
     layout: state.layout,
     rotationCount: state.rotationCount,
     roster: state.roster,

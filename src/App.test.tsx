@@ -487,7 +487,7 @@ describe("App", () => {
     expect(within(rotationSuggestions).queryByText(/貿易所 \/ 龍門幣/)).not.toBeInTheDocument();
   });
 
-  it("reuses the current plan when switching tabs until optimization inputs change", async () => {
+  it("reuses the current plan until optimization inputs or language change", async () => {
     const user = userEvent.setup();
     let workerCount = 0;
     const workerPlan: AssignmentPlan = {
@@ -528,6 +528,9 @@ describe("App", () => {
     await user.click(within(amiyaCard).getByRole("checkbox", { name: amiyaName }));
     await user.click(screen.getByRole("button", { name: /提案/ }));
     expect(workerCount).toBe(2);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "言語" }), "en");
+    expect(workerCount).toBe(3);
   });
 
   it("shows target products on trading and factory recommendation cards", async () => {

@@ -299,7 +299,7 @@ function fillVacantFacilitySlots(
 
         const fillerOperators = [...operators].sort(
           (a, b) =>
-            (skillAssignmentByOperatorId.get(b.id)?.score ?? 0) - (skillAssignmentByOperatorId.get(a.id)?.score ?? 0) ||
+            fillerSkillScore(skillAssignmentByOperatorId.get(b.id)) - fillerSkillScore(skillAssignmentByOperatorId.get(a.id)) ||
             a.id.localeCompare(b.id)
         );
 
@@ -313,7 +313,9 @@ function fillVacantFacilitySlots(
 
           const skillAssignment = skillAssignmentByOperatorId.get(operator.id);
           const assignment =
-            skillAssignment && !assignmentGlobalStackKeys(skillAssignment).some((stackKey) => globalStackKeys.has(stackKey))
+            skillAssignment &&
+            !skillAssignment.suppressesOtherFactoryEfficiency &&
+            !assignmentGlobalStackKeys(skillAssignment).some((stackKey) => globalStackKeys.has(stackKey))
               ? skillAssignment
               : baselineAssignment(operator, plan.facility, state.language, context.shiftHours);
           assignments.push(assignment);
@@ -326,6 +328,10 @@ function fillVacantFacilitySlots(
   );
 
   return facilityPlans.map((plan) => filledPlansByFacilityId.get(plan.facility.id) ?? plan);
+}
+
+function fillerSkillScore(assignment: Assignment | undefined) {
+  return assignment?.suppressesOtherFactoryEfficiency ? 0 : assignment?.score ?? 0;
 }
 
 function buildFacilityTeamOptions(candidates: Assignment[], slotCount: number) {

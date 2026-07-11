@@ -1445,6 +1445,44 @@ describe("optimizer", () => {
     expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === windflit.id)).toBe(false);
   });
 
+  it("uses suppressing operators as baseline fillers without disabling the selected factory team", () => {
+    const state = createDefaultState();
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    state.facilities = [factory, ...state.facilities.filter((facility) => facility.type === "power")];
+    const normalFactoryOperators = operators
+      .filter(
+        (operator) =>
+          operator.id !== windflit.id &&
+          operator.skills.some((skill) =>
+            skill.effects.some(
+              (effect) =>
+                skill.unlockPhase <= 2 &&
+                effect.facility === "factory" &&
+                (!effect.product || effect.product === factory.product) &&
+                !effect.conditions?.length &&
+                !effect.ignoredForOptimization &&
+                !effect.suppressesOtherFactoryEfficiency &&
+                effect.efficiency >= 0.2
+            )
+          )
+      )
+      .slice(0, factory.slotCount - 1);
+    ownOperators(state, [windflit.id, ...normalFactoryOperators.map((operator) => operator.id)]);
+
+    const plan = generateAssignmentPlan(state);
+    const factoryPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === factory.id)!;
+    const windflitAssignment = factoryPlan.assignments.find((assignment) => assignment.operatorId === windflit.id)!;
+    const normalEfficiency = factoryPlan.assignments
+      .filter((assignment) => normalFactoryOperators.some((operator) => operator.id === assignment.operatorId))
+      .reduce((sum, assignment) => sum + assignment.efficiency, 0);
+
+    expect(normalFactoryOperators).toHaveLength(factory.slotCount - 1);
+    expect(factoryPlan.assignments).toHaveLength(factory.slotCount);
+    expect(windflitAssignment.skillId).toBe("baseline");
+    expect(windflitAssignment.suppressesOtherFactoryEfficiency).toBeUndefined();
+    expect(factoryPlan.expectedEfficiency).toBeCloseTo(normalEfficiency);
+  });
+
   it("models Bena and Vulcan capacity skills as negative factory productivity", () => {
     const state = createDefaultState();
     ownOperators(state, [bena.id, vulcan.id]);
