@@ -328,7 +328,7 @@ describe("App", () => {
     expect(within(skillList).getByText(localizeText(firstSkill.name, "ja"))).toBeInTheDocument();
     expect(within(skillList).getByText(localizeText(secondSkill.name, "ja"))).toBeInTheDocument();
     expect(within(skillList).getAllByText(/制御中枢/).length).toBeGreaterThan(0);
-    expect(within(skillList).getByText("昇進2で解放")).toBeInTheDocument();
+    expect(within(skillList).getByText("昇進2 Lv.1で解放")).toBeInTheDocument();
 
     await user.selectOptions(within(amiyaCard).getByRole("combobox"), "2");
 

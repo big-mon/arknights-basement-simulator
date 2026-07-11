@@ -19,6 +19,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "validate": "pnpm test && pnpm build",
+    "audit:base-skills": "node scripts/audit-base-skills.mjs",
     "import:game-data": "node scripts/import-game-data.mjs"
   },
   "dependencies": {

@@ -20,6 +20,7 @@ type AssignmentEvaluationContext = {
   assignments: Assignment[];
   facilities: FacilitySlot[];
   roster?: AppState["roster"];
+  shiftHours?: number;
 };
 
 type GlobalBonusBucket = {
@@ -77,16 +78,11 @@ export function registeredComplexBaseSkillHandlerKeys(capability?: keyof Complex
   );
 }
 
-const fatigueHoursByFacility: Record<FacilitySlot["type"], number> = {
-  factory: 12,
-  trading: 12,
-  power: 18,
-  control: 24,
-  dormitory: 0,
-  reception: 24
-};
-
-const recoveryBaseHours = 8;
+const moraleCapacity = 24;
+const baseMoraleConsumptionPerHour = 1;
+const controlCenterReductionPerOperator = 0.05;
+const sharedRoomReductionPerAdditionalOperator = 0.05;
+const maxDormitoryRecoveryPerHour = 4;
 
 const maxFacilityLevelByType: Record<FacilitySlot["type"], number> = {
   factory: 3,
@@ -96,6 +92,42 @@ const maxFacilityLevelByType: Record<FacilitySlot["type"], number> = {
   dormitory: 5,
   reception: 3
 };
+
+function rotationShiftHours(rotationCount: AppState["rotationCount"]) {
+  return 24 / rotationCount;
+}
+
+export function averageEffectEfficiency(effect: BaseSkillEffect, shiftHours: number) {
+  if (effect.moraleCurve) {
+    return averageMoraleCurveEfficiency(effect.moraleCurve, shiftHours, 1);
+  }
+  if (!effect.timeCurve) {
+    return effect.efficiency;
+  }
+  const hours = Math.max(1, Math.trunc(shiftHours));
+  const { initialEfficiency, efficiencyPerHour, maxEfficiency, startsAfterFirstHour } = effect.timeCurve;
+  let total = 0;
+  for (let hour = 0; hour < hours; hour += 1) {
+    const increments = startsAfterFirstHour ? hour : hour + 1;
+    total += Math.min(initialEfficiency + efficiencyPerHour * increments, maxEfficiency);
+  }
+  return total / hours;
+}
+
+function averageMoraleCurveEfficiency(
+  curve: NonNullable<BaseSkillEffect["moraleCurve"]>,
+  shiftHours: number,
+  moraleConsumptionPerHour: number
+) {
+  const hours = Math.max(1, Math.trunc(shiftHours));
+  let total = 0;
+  for (let hour = 0; hour < hours; hour += 1) {
+    const moraleSpent = hour * moraleConsumptionPerHour;
+    const steps = Math.floor(moraleSpent / curve.moralePerStep);
+    total += Math.max(curve.initialEfficiency + curve.efficiencyPerStep * steps, curve.minEfficiency);
+  }
+  return total / hours;
+}
 
 export function generateAssignmentPlan(state: AppState): AssignmentPlan {
   const enabledFacilities = state.facilities.filter((facility) => facility.type !== "dormitory");
@@ -111,11 +143,10 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
   }
 
   facilityPlans = attachRotationAlternatives(state, facilityPlans);
+  facilityPlans = applyMoraleDurations(state, facilityPlans);
 
   const activeAssignments = facilityPlans.flatMap((plan) => plan.assignments);
-  const restAssignments = activeAssignments
-    .filter((assignment) => assignment.fatigueHours > 0)
-    .sort((a, b) => a.fatigueHours - b.fatigueHours);
+  const alternativeAssignments = facilityPlans.flatMap((plan) => plan.alternatives);
   const totalScore = facilityPlans.reduce((sum, plan) => sum + plan.score, 0);
   const dailyValue = facilityPlans.reduce(
     (sum, plan) => sum + plan.expectedEfficiency * productWeight(plan.facility.product, state.preference) * 24,
@@ -129,7 +160,7 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
     totalScore,
     dailyValue,
     facilityPlans,
-    rotation: buildRotationWindows(activeAssignments, restAssignments, state.rotationCount),
+    rotation: buildRotationWindows(activeAssignments, alternativeAssignments, state.rotationCount),
     warnings
   };
 }
@@ -137,37 +168,132 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
 function buildFacilityPlans(
   state: AppState,
   enabledFacilities: FacilitySlot[],
-  contextAssignments: Assignment[]
+  contextAssignments: Assignment[],
+  excludedOperatorIds: ReadonlySet<string> = new Set()
 ): FacilityPlan[] {
-  const usedOperatorIds = new Set<string>();
-  const facilityPlans: FacilityPlan[] = [];
   const context: AssignmentEvaluationContext = {
     assignments: contextAssignments,
     facilities: state.facilities,
-    roster: state.roster
+    roster: state.roster,
+    shiftHours: rotationShiftHours(state.rotationCount)
   };
-
-  for (const facility of enabledFacilities) {
+  const facilityCandidates = [...enabledFacilities]
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((facility) => {
     const globalBonus = calculateGlobalBonus(state, facility, context);
     const remoteEfficiencyBonus = calculateRemoteFacilityEfficiencyBonus(facility, context);
     const facilityBonus = globalBonus + remoteEfficiencyBonus;
-    const candidates = findCandidates(facility, state, 0, context)
-      .filter((candidate) => !usedOperatorIds.has(candidate.operatorId))
-      .sort((a, b) => b.score - a.score);
-    const assignments = selectAssignmentsForFacility(candidates, facility.slotCount);
-    assignments.forEach((assignment) => usedOperatorIds.add(assignment.operatorId));
-
-    const expectedEfficiency = effectiveFacilityEfficiency(assignments) + facilityBonus;
-    facilityPlans.push({
-      facility,
-      assignments,
-      expectedEfficiency,
-      score: effectiveFacilityScore(assignments, facility, state.preference, facilityBonus),
-      alternatives: []
+      const candidates = findCandidates(facility, state, 0, context)
+        .filter((candidate) => !excludedOperatorIds.has(candidate.operatorId))
+        .sort((a, b) => b.score - a.score);
+      return {
+        facility,
+        facilityBonus,
+        teamOptions: buildFacilityTeamOptions(candidates, facility.slotCount)
+      };
     });
+  type SearchState = {
+    usedOperatorIds: Set<string>;
+    plans: FacilityPlan[];
+    selectionScore: number;
+  };
+  let searchStates: SearchState[] = [{ usedOperatorIds: new Set(), plans: [], selectionScore: 0 }];
+  for (const candidateSet of facilityCandidates) {
+    const nextStates: SearchState[] = [];
+    for (const searchState of searchStates) {
+      for (const assignments of candidateSet.teamOptions) {
+        const operatorIds = assignments.map((assignment) => assignment.operatorId);
+        if (operatorIds.some((operatorId) => searchState.usedOperatorIds.has(operatorId))) {
+          continue;
+        }
+        const expectedEfficiency = effectiveFacilityEfficiency(assignments) + candidateSet.facilityBonus;
+        nextStates.push({
+          usedOperatorIds: new Set([...searchState.usedOperatorIds, ...operatorIds]),
+          selectionScore:
+            searchState.selectionScore +
+            facilityTeamSelectionScore(
+              assignments,
+              candidateSet.facility,
+              state.preference,
+              candidateSet.facilityBonus
+            ),
+          plans: [
+            ...searchState.plans,
+            {
+              facility: candidateSet.facility,
+              assignments,
+              expectedEfficiency,
+              score: effectiveFacilityScore(
+                assignments,
+                candidateSet.facility,
+                state.preference,
+                candidateSet.facilityBonus
+              ),
+              alternatives: []
+            }
+          ]
+        });
+      }
+    }
+    searchStates = nextStates
+      .sort((a, b) => b.selectionScore - a.selectionScore || assignmentStateSignature(a).localeCompare(assignmentStateSignature(b)))
+      .slice(0, 128);
   }
+  const bestPlans = searchStates[0]?.plans ?? [];
+  const plansByFacilityId = new Map(bestPlans.map((plan) => [plan.facility.id, plan]));
+  return enabledFacilities.map((facility) =>
+    plansByFacilityId.get(facility.id) ?? {
+      facility,
+      assignments: [],
+      expectedEfficiency: 0,
+      score: 0,
+      alternatives: []
+    }
+  );
+}
 
-  return facilityPlans;
+function buildFacilityTeamOptions(candidates: Assignment[], slotCount: number) {
+  const options: Assignment[][] = [];
+  const optionSignatures = new Set<string>();
+  const visitedExclusions = new Set<string>();
+  const exclusionQueue: string[][] = [[]];
+  while (exclusionQueue.length && options.length < 16 && visitedExclusions.size < 64) {
+    const exclusions = exclusionQueue.shift()!;
+    const exclusionKey = [...exclusions].sort().join("|");
+    if (visitedExclusions.has(exclusionKey)) {
+      continue;
+    }
+    visitedExclusions.add(exclusionKey);
+    const excludedOperatorIds = new Set(exclusions);
+    const assignments = selectAssignmentsForFacility(
+      candidates.filter((candidate) => !excludedOperatorIds.has(candidate.operatorId)),
+      slotCount
+    );
+    const signature = assignments.map((assignment) => `${assignment.operatorId}:${assignment.skillId}`).sort().join("|");
+    if (!optionSignatures.has(signature)) {
+      optionSignatures.add(signature);
+      options.push(assignments);
+    }
+    for (const assignment of assignments.filter((candidate) => assignmentConsumesFacilitySlot(candidate))) {
+      exclusionQueue.push([...exclusions, assignment.operatorId]);
+    }
+  }
+  if (!optionSignatures.has("")) {
+    options.push([]);
+  }
+  return options.sort(
+    (a, b) =>
+      b.reduce((sum, assignment) => sum + assignment.score, 0) -
+        a.reduce((sum, assignment) => sum + assignment.score, 0) ||
+      a.map((assignment) => assignment.operatorId).sort().join("|").localeCompare(b.map((assignment) => assignment.operatorId).sort().join("|"))
+  );
+}
+
+function assignmentStateSignature(state: { plans: FacilityPlan[] }) {
+  return state.plans
+    .flatMap((plan) => plan.assignments.map((assignment) => `${plan.facility.id}:${assignment.operatorId}:${assignment.skillId}`))
+    .sort()
+    .join("|");
 }
 
 export function attachRotationAlternatives(state: AppState, facilityPlans: FacilityPlan[]): FacilityPlan[] {
@@ -187,7 +313,8 @@ export function attachRotationAlternatives(state: AppState, facilityPlans: Facil
   const alternativeContext: AssignmentEvaluationContext = {
     assignments: plansWithAlternatives.flatMap((plan) => plan.alternatives),
     facilities: state.facilities,
-    roster: state.roster
+    roster: state.roster,
+    shiftHours: rotationShiftHours(state.rotationCount)
   };
 
   return plansWithAlternatives.map((plan) => {
@@ -206,28 +333,19 @@ function buildAlternativeFacilityPlans(
   firstRotationOperatorIds: Set<string>,
   contextAssignments: Assignment[]
 ) {
-  const secondRotationOperatorIds = new Set<string>();
-  const context: AssignmentEvaluationContext = {
-    assignments: contextAssignments,
-    facilities: state.facilities,
-    roster: state.roster
-  };
-
-  return facilityPlans.map((plan) => {
-    const alternatives = selectAssignmentsForFacility(
-      findCandidates(plan.facility, state, 0, context)
-        .filter((candidate) => !firstRotationOperatorIds.has(candidate.operatorId))
-        .filter((candidate) => !secondRotationOperatorIds.has(candidate.operatorId)),
-      plan.facility.slotCount
-    );
-
-    alternatives.forEach((assignment) => secondRotationOperatorIds.add(assignment.operatorId));
-
-    return {
-      ...plan,
-      alternatives
-    };
-  });
+  const alternativePlans = buildFacilityPlans(
+    state,
+    facilityPlans.map((plan) => plan.facility),
+    contextAssignments,
+    firstRotationOperatorIds
+  );
+  const alternativesByFacilityId = new Map(
+    alternativePlans.map((plan) => [plan.facility.id, plan.assignments])
+  );
+  return facilityPlans.map((plan) => ({
+    ...plan,
+    alternatives: alternativesByFacilityId.get(plan.facility.id) ?? []
+  }));
 }
 
 function assignmentSignature(facilityPlans: FacilityPlan[]) {
@@ -264,7 +382,7 @@ function selectNonSuppressingAssignments(candidates: Assignment[], slotCount: nu
     if (assignments.some((assignment) => assignment.operatorId === candidate.operatorId)) {
       continue;
     }
-    if (candidate.globalStackKey && globalStackKeys.has(candidate.globalStackKey)) {
+    if (assignmentGlobalStackKeys(candidate).some((stackKey) => globalStackKeys.has(stackKey))) {
       continue;
     }
     if (candidate.score < 0 && limitSynergyScore(candidate, assignments) + candidate.score <= 0) {
@@ -279,9 +397,7 @@ function selectNonSuppressingAssignments(candidates: Assignment[], slotCount: nu
     assignments.push(candidate);
     assignments.push(...prerequisiteAssignments);
     assignments.push(...basePrerequisiteAssignments);
-    if (candidate.globalStackKey) {
-      globalStackKeys.add(candidate.globalStackKey);
-    }
+    assignmentGlobalStackKeys(candidate).forEach((stackKey) => globalStackKeys.add(stackKey));
     if (facilitySlotOccupancy(assignments) >= slotCount) {
       break;
     }
@@ -294,7 +410,7 @@ function selectNonSuppressingAssignments(candidates: Assignment[], slotCount: nu
     if (assignments.some((assignment) => assignment.operatorId === candidate.operatorId)) {
       continue;
     }
-    if (candidate.globalStackKey && globalStackKeys.has(candidate.globalStackKey)) {
+    if (assignmentGlobalStackKeys(candidate).some((stackKey) => globalStackKeys.has(stackKey))) {
       continue;
     }
     const prerequisiteAssignments = skilllessPrerequisiteAssignments(candidate, assignments);
@@ -312,18 +428,21 @@ function selectNonSuppressingAssignments(candidates: Assignment[], slotCount: nu
       assignments.push(candidate);
     } else {
       const replacedAssignment = assignments[replacement.replaceIndex];
-      if (replacedAssignment?.globalStackKey) {
-        globalStackKeys.delete(replacedAssignment.globalStackKey);
-      }
+      assignmentGlobalStackKeys(replacedAssignment).forEach((stackKey) => globalStackKeys.delete(stackKey));
       assignments[replacement.replaceIndex] = candidate;
     }
     assignments.push(...basePrerequisiteAssignments);
-    if (candidate.globalStackKey) {
-      globalStackKeys.add(candidate.globalStackKey);
-    }
+    assignmentGlobalStackKeys(candidate).forEach((stackKey) => globalStackKeys.add(stackKey));
   }
 
   return assignments;
+}
+
+function assignmentGlobalStackKeys(assignment: Assignment | undefined) {
+  if (!assignment) {
+    return [];
+  }
+  return assignment.globalStackKeys ?? (assignment.globalStackKey ? [assignment.globalStackKey] : []);
 }
 
 function facilitySlotOccupancy(assignments: Assignment[]) {
@@ -441,42 +560,19 @@ function statScalingStepCount(value: number, scaling: NonNullable<Assignment["fa
   return scaling.max ? Math.min(scaled, scaling.max) : scaled;
 }
 
-function buildRotationWindows(activeAssignments: Assignment[], restAssignments: Assignment[], rotationCount = 2) {
-  if (rotationCount === 3) {
-    return [
-      {
-        label: "第1ローテーション",
-        hours: 8,
-        assignments: activeAssignments.filter((assignment) => assignment.fatigueHours > 0),
-        recovery: []
-      },
-      {
-        label: "第2ローテーション",
-        hours: 8,
-        assignments: restAssignments.filter((assignment) => assignment.fatigueHours >= 12),
-        recovery: restAssignments.filter((assignment) => assignment.fatigueHours <= 12)
-      },
-      {
-        label: "第3ローテーション",
-        hours: 8,
-        assignments: restAssignments.filter((assignment) => assignment.fatigueHours >= 18),
-        recovery: restAssignments
-      }
-    ];
-  }
-
+function buildRotationWindows(activeAssignments: Assignment[], alternativeAssignments: Assignment[], _rotationCount = 2) {
   return [
     {
       label: "1回目ローテーション",
       hours: 12,
       assignments: activeAssignments.filter((assignment) => assignment.fatigueHours > 0),
-      recovery: []
+      recovery: alternativeAssignments.filter((assignment) => assignment.fatigueHours > 0)
     },
     {
       label: "2回目ローテーション",
       hours: 12,
-      assignments: restAssignments.filter((assignment) => assignment.fatigueHours >= 18),
-      recovery: restAssignments.filter((assignment) => assignment.fatigueHours <= 12)
+      assignments: alternativeAssignments.filter((assignment) => assignment.fatigueHours > 0),
+      recovery: activeAssignments.filter((assignment) => assignment.fatigueHours > 0)
     }
   ];
 }
@@ -490,7 +586,8 @@ export function findCandidates(
   const evaluationContext = {
     assignments: context?.assignments ?? [],
     facilities: context?.facilities ?? state.facilities,
-    roster: context?.roster ?? state.roster
+    roster: context?.roster ?? state.roster,
+    shiftHours: context?.shiftHours ?? rotationShiftHours(state.rotationCount)
   };
 
   return operators
@@ -514,14 +611,17 @@ function bestSkillForFacility(
   language: AppState["language"],
   context?: AssignmentEvaluationContext
 ): Assignment[] {
-  const assignments: Assignment[] = [];
+  const assignmentVariants: Array<{ assignment: Assignment; slot: number }> = [];
   const elite = clampEliteForOperator(operator, rosterEntry.elite);
+  const remoteFacilityStatBonuses = activeRemoteFacilityStatBonuses(operator, elite, facility, context);
+  const remoteFacilityEfficiencyBonuses = activeRemoteFacilityEfficiencyBonuses(operator, elite, facility, context);
+  const remoteFacilityCountBonuses = activeRemoteFacilityCountBonuses(operator, elite, facility, context);
+  const commonRemoteScore =
+    remoteFacilityStatScore(remoteFacilityStatBonuses, operator.id, preference, context) +
+    remoteFacilityEfficiencyScore(remoteFacilityEfficiencyBonuses, preference, context) +
+    remoteFacilityCountScore(remoteFacilityCountBonuses, operator.id, preference, context);
 
-  for (const skill of operator.skills) {
-    if (skill.unlockPhase > elite) {
-      continue;
-    }
-
+  for (const skill of activeBaseSkills(operator, elite, rosterEntry.level)) {
     for (const effect of skill.effects) {
       if (effect.ignoredForOptimization) {
         continue;
@@ -530,26 +630,25 @@ function bestSkillForFacility(
       if (!effectMatchesFacility(effect, facility) || !effectConditionsSatisfied(effect, operator, facility, context)) {
         continue;
       }
+      if (!effectActivationPossibleDuringShift(effect, context)) {
+        continue;
+      }
 
-      const remoteFacilityStatBonuses = activeRemoteFacilityStatBonuses(operator, elite, facility, context);
-      const remoteFacilityEfficiencyBonuses = activeRemoteFacilityEfficiencyBonuses(operator, elite, facility, context);
-      const remoteFacilityCountBonuses = activeRemoteFacilityCountBonuses(operator, elite, facility, context);
       const productMultiplier = productWeight(facility.product, preference);
-      const eliteBonus = elite * 0.015;
       const complexHandler = getComplexBaseSkillHandler(operator, skill);
       const handlerInput = { operator, skill, effect, elite, facility, context };
       const scalingMultiplier = complexHandler?.scalingMultiplier?.(handlerInput) ?? effectScalingMultiplier(effect, operator, elite, facility, context);
       const conditionalBonus = effectConditionalBonus(effect, operator, facility, context);
-      const globalEffectEfficiency = (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier;
-      const rawEfficiency = (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier + conditionalBonus + eliteBonus;
+      const modeledEfficiency = averageEffectEfficiency(effect, context?.shiftHours ?? 12);
+      const globalEffectEfficiency = (effect.baseEfficiency ?? 0) + modeledEfficiency * scalingMultiplier;
+      const rawEfficiency = (effect.baseEfficiency ?? 0) + modeledEfficiency * scalingMultiplier + conditionalBonus;
       const externalGlobalEffect = isExternalGlobalEffect(effect, facility);
-      const remoteFacilityEfficiencyEffect = facility.type === "control" && remoteFacilityEfficiencyBonuses.length > 0;
-      const remoteFacilityStatEffect = facility.type === "control" && remoteFacilityStatBonuses.length > 0;
-      const remoteFacilityCountEffect = facility.type === "control" && remoteFacilityCountBonuses.length > 0;
+      const remoteFacilityEfficiencyEffect =
+        facility.type === "control" && remoteFacilityEfficiencyBonusesForEffect(operator, skill, effect, elite, facility, context).length > 0;
+      const remoteFacilityStatEffect =
+        facility.type === "control" && remoteFacilityStatBonusesForEffect(operator, skill, effect, elite, facility, context).length > 0;
+      const remoteFacilityCountEffect = facility.type === "control" && Boolean(effect.facilityCountBonuses?.length);
       const effectiveEfficiency = externalGlobalEffect || remoteFacilityEfficiencyEffect || remoteFacilityStatEffect || remoteFacilityCountEffect ? 0 : rawEfficiency;
-      const remoteStatScore = remoteFacilityStatScore(remoteFacilityStatBonuses, operator.id, preference, context);
-      const remoteEfficiencyScore = remoteFacilityEfficiencyScore(remoteFacilityEfficiencyBonuses, preference, context);
-      const remoteCountScore = remoteFacilityCountScore(remoteFacilityCountBonuses, operator.id, preference, context);
       const globalEffectScoreMultiplier = externalGlobalEffect ? globalEffectTargetScoreMultiplier(effect, preference, context) : 0;
       if (externalGlobalEffect && globalEffectScoreMultiplier === 0) {
         continue;
@@ -575,19 +674,16 @@ function bestSkillForFacility(
         const baseSkilllessPrerequisiteOperatorIds = Array.from(
           new Set([...mandatoryBaseSkilllessPrerequisiteOperatorIds, ...extraBaseSkilllessPrerequisiteOperatorIds])
         );
-        assignments.push({
+        assignmentVariants.push({
+          slot: skill.slot,
+          assignment: {
           facilityId: facility.id,
           operatorId: operator.id,
           skillId: skill.id,
           score:
-            (remoteFacilityEfficiencyEffect
-              ? 0
-              : externalGlobalEffect
-                ? globalEffectEfficiency * globalEffectScoreMultiplier
-                : variantEffectiveEfficiency * productMultiplier * facilityWeight(facility)) +
-            remoteStatScore +
-            remoteEfficiencyScore +
-            remoteCountScore,
+            externalGlobalEffect
+              ? globalEffectEfficiency * globalEffectScoreMultiplier
+              : variantEffectiveEfficiency * productMultiplier * facilityWeight(facility),
           efficiency: variantEffectiveEfficiency,
           storageLimit,
           orderLimit,
@@ -597,12 +693,20 @@ function bestSkillForFacility(
           ...(baseSkilllessPrerequisiteOperatorIds.length ? { baseSkilllessPrerequisiteOperatorIds } : {}),
           ...(statScalingKeys.length ? { scalesWithFacilityStat: statScalingKeys } : {}),
           ...(facilityStatScalings.length ? { facilityStatScalings } : {}),
-          ...(remoteFacilityStatBonuses.length ? { remoteFacilityStatBonuses } : {}),
-          ...(remoteFacilityEfficiencyBonuses.length ? { remoteFacilityEfficiencyBonuses } : {}),
-          ...(remoteFacilityCountBonuses.length ? { remoteFacilityCountBonuses } : {}),
-          fatigueHours: fatigueHoursByFacility[facility.type],
-          recoveryHours: facility.type === "dormitory" ? 0 : Math.max(4, recoveryBaseHours - globalBonus * 8),
+          ...(effect.moraleCurve
+            ? {
+                moraleEfficiencyCurves: [
+                  {
+                    baselineEfficiency: modeledEfficiency,
+                    ...effect.moraleCurve
+                  }
+                ]
+              }
+            : {}),
+          fatigueHours: moraleCapacity,
+          recoveryHours: (context?.shiftHours ?? 12) / maxDormitoryRecoveryPerHour,
           reason: `${localizeText(skill.name, language)}: ${localizeText(effect.description, language)}`
+          }
         });
       };
       pushAssignment(0, [], []);
@@ -616,19 +720,397 @@ function bestSkillForFacility(
     }
   }
 
-  const sortedAssignments = assignments.sort((a, b) => b.score - a.score);
-  const bestAssignment = sortedAssignments[0];
-  const bestAssignmentWithoutPrerequisites = sortedAssignments.find(
-    (assignment) => !assignment.skilllessPrerequisiteOperatorIds?.length && !assignment.baseSkilllessPrerequisiteOperatorIds?.length
-  );
+  const aggregate = (allowPrerequisites: boolean) => {
+    const bestBySlot = new Map<number, Assignment>();
+    for (const variant of assignmentVariants) {
+      if (
+        !allowPrerequisites &&
+        (variant.assignment.skilllessPrerequisiteOperatorIds?.length || variant.assignment.baseSkilllessPrerequisiteOperatorIds?.length)
+      ) {
+        continue;
+      }
+      const selected = bestBySlot.get(variant.slot);
+      if (!selected || variant.assignment.score > selected.score) {
+        bestBySlot.set(variant.slot, variant.assignment);
+      }
+    }
+    return aggregateOperatorAssignments(
+      [...bestBySlot.values()],
+      commonRemoteScore,
+      remoteFacilityStatBonuses,
+      remoteFacilityEfficiencyBonuses,
+      remoteFacilityCountBonuses
+    );
+  };
+  const bestAssignment = aggregate(true);
+  const bestAssignmentWithoutPrerequisites = aggregate(false);
   if (
     (bestAssignment?.skilllessPrerequisiteOperatorIds?.length || bestAssignment?.baseSkilllessPrerequisiteOperatorIds?.length) &&
     bestAssignmentWithoutPrerequisites &&
-    bestAssignmentWithoutPrerequisites !== bestAssignment
+    bestAssignmentWithoutPrerequisites.skillId !== bestAssignment.skillId
   ) {
     return [bestAssignment, bestAssignmentWithoutPrerequisites];
   }
   return bestAssignment ? [bestAssignment] : [];
+}
+
+function applyMoraleDurations(state: AppState, facilityPlans: FacilityPlan[]) {
+  const activeSourceAssignments = facilityPlans.flatMap((plan) => plan.assignments);
+  const alternativeSourceAssignments = facilityPlans.flatMap((plan) => plan.alternatives);
+  const createContext = (assignments: Assignment[]): AssignmentEvaluationContext => ({
+    assignments,
+    facilities: state.facilities,
+    roster: state.roster,
+    shiftHours: rotationShiftHours(state.rotationCount)
+  });
+  const activeContext = createContext(activeSourceAssignments);
+  const alternativeContext = createContext(alternativeSourceAssignments);
+  const activeAssignments = activeSourceAssignments.map((assignment) =>
+    applyMoraleDurationToAssignment(assignment, state, activeContext, alternativeContext)
+  );
+  const alternativeAssignments = alternativeSourceAssignments.map((assignment) =>
+    applyMoraleDurationToAssignment(assignment, state, alternativeContext, activeContext)
+  );
+  const activeByIdentity = new Map(activeAssignments.map((assignment) => [assignmentIdentity(assignment), assignment]));
+  const alternativeByIdentity = new Map(alternativeAssignments.map((assignment) => [assignmentIdentity(assignment), assignment]));
+  const durationPlans = facilityPlans.map((plan) => ({
+    ...plan,
+    assignments: plan.assignments.map((assignment) => activeByIdentity.get(assignmentIdentity(assignment)) ?? assignment),
+    alternatives: plan.alternatives.map((assignment) => alternativeByIdentity.get(assignmentIdentity(assignment)) ?? assignment)
+  }));
+  const finalActiveContext = createContext(durationPlans.flatMap((plan) => plan.assignments));
+  const finalAlternativeContext = createContext(durationPlans.flatMap((plan) => plan.alternatives));
+
+  return durationPlans.map((plan) => {
+    const activeBonus =
+      calculateGlobalBonus(state, plan.facility, finalActiveContext) +
+      calculateRemoteFacilityEfficiencyBonus(plan.facility, finalActiveContext);
+    const alternativeBonus =
+      calculateGlobalBonus(state, plan.facility, finalAlternativeContext) +
+      calculateRemoteFacilityEfficiencyBonus(plan.facility, finalAlternativeContext);
+    return {
+      ...plan,
+      expectedEfficiency: effectiveFacilityEfficiency(plan.assignments) + activeBonus,
+      score: effectiveFacilityScore(plan.assignments, plan.facility, state.preference, activeBonus),
+      alternativeExpectedEfficiency: effectiveFacilityEfficiency(plan.alternatives) + alternativeBonus
+    };
+  });
+}
+
+function assignmentIdentity(assignment: Assignment) {
+  return `${assignment.facilityId}:${assignment.operatorId}:${assignment.skillId}`;
+}
+
+function applyMoraleDurationToAssignment(
+  assignment: Assignment,
+  state: AppState,
+  context: AssignmentEvaluationContext,
+  recoveryWorkingContext: AssignmentEvaluationContext
+) {
+  const facility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
+  if (!facility || assignment.doesNotConsumeFacilitySlot) {
+    return assignment;
+  }
+  const workingAssignments = context.assignments.filter((candidate) =>
+    context.facilities.some((candidateFacility) => candidateFacility.id === candidate.facilityId)
+  );
+  const controlCount = workingAssignments.filter((candidate) => {
+    return context.facilities.find((candidateFacility) => candidateFacility.id === candidate.facilityId)?.type === "control";
+  }).length;
+  const roomCount = workingAssignments.filter((candidate) => candidate.facilityId === facility.id).length;
+  const targetOperator = operators.find((candidate) => candidate.id === assignment.operatorId);
+  const activeImmunities = workingAssignments.flatMap((sourceAssignment) => {
+    const sourceFacility = context.facilities.find((candidate) => candidate.id === sourceAssignment.facilityId);
+    const sourceOperator = operators.find((candidate) => candidate.id === sourceAssignment.operatorId);
+    const rosterEntry = sourceOperator ? state.roster[sourceOperator.id] : undefined;
+    if (!sourceFacility || !sourceOperator || !rosterEntry || sourceFacility.id !== facility.id) {
+      return [];
+    }
+    return activeMoraleEffects(sourceOperator, rosterEntry, sourceFacility, context)
+      .filter((entry) => entry.moraleEffect.type === "immunity")
+      .map((entry) => ({ sourceOperatorId: sourceOperator.id, moraleEffect: entry.moraleEffect }));
+  });
+  const ignoresExternalConsumptionEffects = activeImmunities.some(
+    ({ sourceOperatorId, moraleEffect }) =>
+      sourceOperatorId === assignment.operatorId && moraleEffect.mode === "externalConsumptionEffects"
+  );
+  const losesSelfConsumptionReduction = activeImmunities.some(
+    ({ moraleEffect }) =>
+      moraleEffect.mode === "selfConsumptionReduction" &&
+      moraleEffect.affiliations?.some((affiliation) => targetOperator?.affiliations?.includes(affiliation))
+  );
+  let consumptionPerHour =
+    baseMoraleConsumptionPerHour -
+    controlCount * controlCenterReductionPerOperator -
+    (facility.type === "control" ? 0 : Math.max(roomCount - 1, 0) * sharedRoomReductionPerAdditionalOperator);
+
+  for (const sourceAssignment of workingAssignments) {
+    const sourceFacility = context.facilities.find((candidate) => candidate.id === sourceAssignment.facilityId);
+    const sourceOperator = operators.find((candidate) => candidate.id === sourceAssignment.operatorId);
+    const rosterEntry = sourceOperator ? state.roster[sourceOperator.id] : undefined;
+    if (!sourceFacility || !sourceOperator || !rosterEntry) {
+      continue;
+    }
+    const sameRoom = sourceFacility.id === facility.id;
+    const sourceIsTarget = sourceOperator.id === assignment.operatorId;
+    for (const entry of activeMoraleEffects(sourceOperator, rosterEntry, sourceFacility, context)) {
+      if (entry.moraleEffect.type === "immunity") {
+        continue;
+      }
+      const applies =
+        (entry.moraleEffect.target === "self" && sourceIsTarget) ||
+        (entry.moraleEffect.target === "room" && sameRoom) ||
+        (entry.moraleEffect.target === "other" && sameRoom && !sourceIsTarget) ||
+        (entry.moraleEffect.target === "conditionOperators" &&
+          sameRoom &&
+          entry.effect.conditions?.some(
+            (condition) => "operatorIds" in condition && condition.operatorIds.includes(assignment.operatorId)
+          )) ||
+        (entry.moraleEffect.target === "otherFacilities" && sourceFacility.type === "control" && facility.type !== "control");
+      if (!applies) {
+        continue;
+      }
+      const multiplier = effectScalingMultiplier(
+        entry.effect,
+        sourceOperator,
+        clampEliteForOperator(sourceOperator, rosterEntry.elite),
+        sourceFacility,
+        context
+      );
+      const amount = entry.moraleEffect.amount * multiplier;
+      if (
+        entry.moraleEffect.type === "consumption" &&
+        ((ignoresExternalConsumptionEffects && !sourceIsTarget) ||
+          (losesSelfConsumptionReduction && sourceIsTarget && amount < 0))
+      ) {
+        continue;
+      }
+      consumptionPerHour += entry.moraleEffect.type === "consumption" ? amount : -amount;
+    }
+  }
+
+  consumptionPerHour = Math.max(consumptionPerHour, 0);
+  const shiftHours = context.shiftHours ?? 12;
+  const moraleSpent = Math.min(consumptionPerHour * shiftHours, moraleCapacity);
+  const dormitoryRecoveryPerHour = bestDormitoryRecoveryPerHour(
+    assignment.operatorId,
+    state,
+    recoveryWorkingContext
+  );
+  const moraleAdjustedEfficiency =
+    assignment.efficiency +
+    (assignment.moraleEfficiencyCurves ?? []).reduce(
+      (sum, curve) =>
+        sum +
+        averageMoraleCurveEfficiency(curve, shiftHours, consumptionPerHour) -
+        curve.baselineEfficiency,
+      0
+    );
+  return {
+    ...assignment,
+    efficiency: moraleAdjustedEfficiency,
+    moraleConsumptionPerHour: consumptionPerHour,
+    dormitoryRecoveryPerHour,
+    shiftUptime: consumptionPerHour === 0 ? 1 : Math.min(moraleCapacity / consumptionPerHour / shiftHours, 1),
+    fatigueHours: consumptionPerHour === 0 ? Number.POSITIVE_INFINITY : moraleCapacity / consumptionPerHour,
+    recoveryHours: moraleSpent / dormitoryRecoveryPerHour
+  };
+}
+
+function bestDormitoryRecoveryPerHour(
+  targetOperatorId: string,
+  state: AppState,
+  workingContext: AssignmentEvaluationContext
+) {
+  const workingOperatorIds = new Set(workingContext.assignments.map((assignment) => assignment.operatorId));
+  const dormitory =
+    state.facilities.find((facility) => facility.type === "dormitory") ??
+    ({ id: "dormitory-recovery", type: "dormitory", name: "Dormitory", slotCount: 5, product: "morale" } satisfies FacilitySlot);
+  const targetOperator = operators.find((operator) => operator.id === targetOperatorId);
+  const targetRosterEntry = targetOperator ? state.roster[targetOperatorId] : undefined;
+  let selfRecovery = 0;
+  let strongestRoomRecovery = 0;
+  let strongestSingleRecovery = 0;
+
+  for (const operator of operators) {
+    const rosterEntry = state.roster[operator.id];
+    if (!rosterEntry?.owned || (workingOperatorIds.has(operator.id) && operator.id !== targetOperatorId)) {
+      continue;
+    }
+    const dormAssignments: Assignment[] = [
+      ...workingContext.assignments,
+      {
+        facilityId: dormitory.id,
+        operatorId: operator.id,
+        skillId: "dormitory-manager",
+        score: 0,
+        efficiency: 0,
+        fatigueHours: 0,
+        recoveryHours: 0,
+        reason: "Dormitory manager"
+      },
+      ...(operator.id === targetOperatorId
+        ? []
+        : [
+            {
+              facilityId: dormitory.id,
+              operatorId: targetOperatorId,
+              skillId: "dormitory-target",
+              score: 0,
+              efficiency: 0,
+              fatigueHours: 0,
+              recoveryHours: 0,
+              reason: "Dormitory target"
+            } satisfies Assignment
+          ])
+    ];
+    const dormContext: AssignmentEvaluationContext = {
+      ...workingContext,
+      assignments: dormAssignments,
+      facilities: state.facilities.some((facility) => facility.id === dormitory.id)
+        ? state.facilities
+        : [...state.facilities, dormitory]
+    };
+    for (const entry of activeMoraleEffects(operator, rosterEntry, dormitory, dormContext)) {
+      const multiplier = effectScalingMultiplier(
+        entry.effect,
+        operator,
+        clampEliteForOperator(operator, rosterEntry.elite),
+        dormitory,
+        dormContext
+      );
+      const amount = entry.moraleEffect.amount * multiplier;
+      if (entry.moraleEffect.type !== "recovery") {
+        continue;
+      }
+      if (operator.id === targetOperatorId && entry.moraleEffect.target === "self") {
+        selfRecovery = Math.max(selfRecovery, amount);
+      }
+      if (entry.moraleEffect.target === "room") {
+        strongestRoomRecovery = Math.max(strongestRoomRecovery, amount);
+      }
+      if (
+        operator.id !== targetOperatorId &&
+        (entry.moraleEffect.target === "other" || entry.moraleEffect.target === "singleOther")
+      ) {
+        strongestSingleRecovery = Math.max(strongestSingleRecovery, amount);
+      }
+    }
+  }
+
+  let crossDormitoryRecovery = 0;
+  for (const sourceAssignment of workingContext.assignments) {
+    const sourceFacility = state.facilities.find((facility) => facility.id === sourceAssignment.facilityId);
+    const sourceOperator = operators.find((operator) => operator.id === sourceAssignment.operatorId);
+    const rosterEntry = sourceOperator ? state.roster[sourceOperator.id] : undefined;
+    if (!sourceFacility || !sourceOperator || !rosterEntry) {
+      continue;
+    }
+    for (const entry of activeMoraleEffects(sourceOperator, rosterEntry, sourceFacility, workingContext)) {
+      if (entry.moraleEffect.type === "recovery" && entry.moraleEffect.target === "dormitories") {
+        crossDormitoryRecovery = Math.max(crossDormitoryRecovery, entry.moraleEffect.amount);
+      }
+    }
+  }
+
+  if (!targetOperator || !targetRosterEntry) {
+    return maxDormitoryRecoveryPerHour;
+  }
+  return maxDormitoryRecoveryPerHour + selfRecovery + strongestRoomRecovery + strongestSingleRecovery + crossDormitoryRecovery;
+}
+
+function activeMoraleEffects(
+  operator: Operator,
+  rosterEntry: RosterEntry,
+  facility: FacilitySlot,
+  context: AssignmentEvaluationContext
+) {
+  const elite = clampEliteForOperator(operator, rosterEntry.elite);
+  const seen = new Set<string>();
+  return activeBaseSkills(operator, elite, rosterEntry.level).flatMap((skill) =>
+    skill.effects.flatMap((effect) => {
+      if (effect.facility !== facility.type || !effectConditionsSatisfied(effect, operator, facility, context)) {
+        return [];
+      }
+      return (effect.moraleEffects ?? []).flatMap((moraleEffect) => {
+        const key = `${skill.id}:${moraleEffect.type}:${moraleEffect.target}:${moraleEffect.amount}`;
+        if (seen.has(key)) {
+          return [];
+        }
+        seen.add(key);
+        return [{ effect, moraleEffect }];
+      });
+    })
+  );
+}
+
+function aggregateOperatorAssignments(
+  assignments: Assignment[],
+  commonRemoteScore: number,
+  remoteFacilityStatBonuses: NonNullable<Assignment["remoteFacilityStatBonuses"]>,
+  remoteFacilityEfficiencyBonuses: NonNullable<Assignment["remoteFacilityEfficiencyBonuses"]>,
+  remoteFacilityCountBonuses: NonNullable<Assignment["remoteFacilityCountBonuses"]>
+): Assignment | undefined {
+  if (!assignments.length) {
+    return undefined;
+  }
+  const first = assignments[0];
+  const globalStackKeys = Array.from(new Set(assignments.flatMap((assignment) => assignmentGlobalStackKeys(assignment))));
+  const skilllessPrerequisiteOperatorIds = Array.from(
+    new Set(assignments.flatMap((assignment) => assignment.skilllessPrerequisiteOperatorIds ?? []))
+  );
+  const baseSkilllessPrerequisiteOperatorIds = Array.from(
+    new Set(assignments.flatMap((assignment) => assignment.baseSkilllessPrerequisiteOperatorIds ?? []))
+  );
+  const scalesWithFacilityStat = Array.from(
+    new Set(assignments.flatMap((assignment) => assignment.scalesWithFacilityStat ?? []))
+  );
+
+  return {
+    ...first,
+    skillId: assignments.map((assignment) => assignment.skillId).join("+"),
+    score: assignments.reduce((sum, assignment) => sum + assignment.score, commonRemoteScore),
+    efficiency: assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0),
+    storageLimit: first.storageLimit,
+    orderLimit: first.orderLimit,
+    suppressesOtherFactoryEfficiency: assignments.some((assignment) => assignment.suppressesOtherFactoryEfficiency) || undefined,
+    globalStackKey: globalStackKeys[0],
+    globalStackKeys: globalStackKeys.length ? globalStackKeys : undefined,
+    skilllessPrerequisiteOperatorIds: skilllessPrerequisiteOperatorIds.length ? skilllessPrerequisiteOperatorIds : undefined,
+    baseSkilllessPrerequisiteOperatorIds: baseSkilllessPrerequisiteOperatorIds.length ? baseSkilllessPrerequisiteOperatorIds : undefined,
+    scalesWithFacilityStat: scalesWithFacilityStat.length ? scalesWithFacilityStat : undefined,
+    facilityStatScalings: assignments.flatMap((assignment) => assignment.facilityStatScalings ?? []),
+    moraleEfficiencyCurves: assignments.flatMap((assignment) => assignment.moraleEfficiencyCurves ?? []),
+    remoteFacilityStatBonuses: remoteFacilityStatBonuses.length ? remoteFacilityStatBonuses : undefined,
+    remoteFacilityEfficiencyBonuses: remoteFacilityEfficiencyBonuses.length ? remoteFacilityEfficiencyBonuses : undefined,
+    remoteFacilityCountBonuses: remoteFacilityCountBonuses.length ? remoteFacilityCountBonuses : undefined,
+    reason: assignments.map((assignment) => assignment.reason).join(" / ")
+  };
+}
+
+export function activeBaseSkills(operator: Operator, elite: number, level: number): BaseSkill[] {
+  const clampedElite = clampEliteForOperator(operator, elite);
+  const normalizedLevel = Number.isFinite(level) ? Math.max(1, Math.trunc(level)) : 1;
+  const activeBySlot = new Map<number, BaseSkill>();
+
+  for (const skill of operator.skills) {
+    const phaseUnlocked = skill.unlockPhase < clampedElite;
+    const levelUnlocked = skill.unlockPhase === clampedElite && skill.unlockLevel <= normalizedLevel;
+    if (!phaseUnlocked && !levelUnlocked) {
+      continue;
+    }
+
+    const selected = activeBySlot.get(skill.slot);
+    if (
+      !selected ||
+      skill.unlockPhase > selected.unlockPhase ||
+      (skill.unlockPhase === selected.unlockPhase && skill.unlockLevel > selected.unlockLevel)
+    ) {
+      activeBySlot.set(skill.slot, skill);
+    }
+  }
+
+  return [...activeBySlot.values()].sort((a, b) => a.slot - b.slot);
 }
 
 function activeFacilityLimit(
@@ -638,11 +1120,15 @@ function activeFacilityLimit(
   context: AssignmentEvaluationContext | undefined,
   key: "storageLimit" | "orderLimit"
 ) {
-  const activeLimits = operator.skills
-    .filter((skill) => skill.unlockPhase <= elite)
+  const activeLimits = activeBaseSkills(operator, elite, context?.roster?.[operator.id]?.level ?? 1)
     .flatMap((skill) => skill.effects)
     .filter((effect) => !effect.ignoredForOptimization)
-    .filter((effect) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
+    .filter(
+      (effect) =>
+        effectMatchesFacility(effect, facility) &&
+        effectConditionsSatisfied(effect, operator, facility, context) &&
+        effectActivationPossibleDuringShift(effect, context)
+    )
     .map((effect) => effect[key])
     .filter((value): value is number => typeof value === "number");
 
@@ -663,14 +1149,26 @@ function netActiveFacilityLimit(activeLimits: number[]) {
   return positiveLimit + negativeLimit;
 }
 
+function effectActivationPossibleDuringShift(
+  effect: BaseSkillEffect,
+  context: AssignmentEvaluationContext | undefined
+) {
+  if (!effect.activation) {
+    return true;
+  }
+  if (effect.activation.type === "moraleSpent") {
+    return (context?.shiftHours ?? 12) > effect.activation.threshold;
+  }
+  return true;
+}
+
 function activeRemoteFacilityStatBonuses(
   operator: Operator,
   elite: number,
   facility: FacilitySlot,
   context: AssignmentEvaluationContext | undefined
 ) {
-  const bonuses = operator.skills
-    .filter((skill) => skill.unlockPhase <= elite)
+  const bonuses = activeBaseSkills(operator, elite, context?.roster?.[operator.id]?.level ?? 1)
     .flatMap((skill) => skill.effects.map((effect) => ({ skill, effect })))
     .filter(({ effect }) => !effect.ignoredForOptimization)
     .filter(({ effect }) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
@@ -709,8 +1207,7 @@ function activeRemoteFacilityEfficiencyBonuses(
   facility: FacilitySlot,
   context: AssignmentEvaluationContext | undefined
 ) {
-  return operator.skills
-    .filter((skill) => skill.unlockPhase <= elite)
+  return activeBaseSkills(operator, elite, context?.roster?.[operator.id]?.level ?? 1)
     .flatMap((skill) => skill.effects.map((effect) => ({ skill, effect })))
     .filter(({ effect }) => !effect.ignoredForOptimization)
     .filter(({ effect }) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
@@ -723,8 +1220,7 @@ function activeRemoteFacilityCountBonuses(
   facility: FacilitySlot,
   context: AssignmentEvaluationContext | undefined
 ) {
-  return operator.skills
-    .filter((skill) => skill.unlockPhase <= elite)
+  return activeBaseSkills(operator, elite, context?.roster?.[operator.id]?.level ?? 1)
     .flatMap((skill) => skill.effects)
     .filter((effect) => !effect.ignoredForOptimization)
     .filter((effect) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
@@ -734,11 +1230,39 @@ function activeRemoteFacilityCountBonuses(
 function effectiveFacilityEfficiency(assignments: Assignment[]) {
   const suppressingAssignments = assignments.filter((assignment) => assignment.suppressesOtherFactoryEfficiency);
   const countedAssignments = suppressingAssignments.length ? suppressingAssignments : assignments;
-  return countedAssignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
+  return countedAssignments.reduce((sum, assignment) => {
+    const teamScalingAdjustment = (assignment.facilityStatScalings ?? []).reduce((scalingSum, scaling) => {
+      const otherLimit = countedAssignments
+        .filter((other) => other !== assignment)
+        .reduce(
+          (limitSum, other) =>
+            limitSum +
+            Math.max(scaling.key === "storageLimit" ? other.storageLimit ?? 0 : other.orderLimit ?? 0, 0) *
+              (other.shiftUptime ?? 1),
+          0
+        );
+      const desiredSteps = statScalingStepCount(scaling.base + otherLimit, scaling);
+      const currentSteps = statScalingStepCount(scaling.current, scaling);
+      return scalingSum + (desiredSteps - currentSteps) * scaling.efficiencyPerStep;
+    }, 0);
+    return sum + (assignment.efficiency + teamScalingAdjustment) * (assignment.shiftUptime ?? 1);
+  }, 0);
 }
 
 function effectiveFacilityScore(assignments: Assignment[], facility: FacilitySlot, preference: OptimizationPreference, globalBonus = 0) {
   return (effectiveFacilityEfficiency(assignments) + globalBonus) * productWeight(facility.product, preference) * facilityWeight(facility);
+}
+
+function facilityTeamSelectionScore(
+  assignments: Assignment[],
+  facility: FacilitySlot,
+  preference: OptimizationPreference,
+  globalBonus = 0
+) {
+  if (facility.type === "factory" || facility.type === "trading" || facility.type === "power") {
+    return effectiveFacilityScore(assignments, facility, preference, globalBonus);
+  }
+  return assignments.reduce((sum, assignment) => sum + assignment.score, 0);
 }
 
 function effectScalingMultiplier(
@@ -818,16 +1342,7 @@ function facilityAssignmentStat(
   context: AssignmentEvaluationContext | undefined,
   key: "storageLimit" | "orderLimit"
 ) {
-  const assignedTotal =
-    context?.assignments
-      .filter((assignment) => {
-        if (!effect.scaling || assignment.operatorId === operator.id) {
-          return false;
-        }
-        const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
-        return scalingMatchesFacility(effect.scaling, facility, assignment, assignedFacility);
-      })
-      .reduce((sum, assignment) => sum + Math.max(assignment[key] ?? 0, 0), 0) ?? 0;
+  const assignedTotal = assignedFacilityStat(effect, operator, facility, context, key);
   const remoteTotal =
     context?.assignments.reduce((sum, assignment) => {
       return (
@@ -840,6 +1355,26 @@ function facilityAssignmentStat(
     }, 0) ?? 0;
   const selfTotal = effect.scaling?.includeSelf ? Math.max(activeFacilityLimit(operator, elite, facility, context, key) ?? 0, 0) : 0;
   return assignedTotal + remoteTotal + selfTotal;
+}
+
+function assignedFacilityStat(
+  effect: BaseSkillEffect,
+  operator: Operator,
+  facility: FacilitySlot,
+  context: AssignmentEvaluationContext | undefined,
+  key: "storageLimit" | "orderLimit"
+) {
+  return (
+    context?.assignments
+      .filter((assignment) => {
+        if (!effect.scaling || assignment.operatorId === operator.id) {
+          return false;
+        }
+        const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
+        return scalingMatchesFacility(effect.scaling, facility, assignment, assignedFacility);
+      })
+      .reduce((sum, assignment) => sum + Math.max(assignment[key] ?? 0, 0), 0) ?? 0
+  );
 }
 
 function remoteFacilityStatBonusAmount(
@@ -869,7 +1404,7 @@ function calculateRemoteFacilityEfficiencyBonus(facility: FacilitySlot, context:
     return (
       sum +
       (assignment.remoteFacilityEfficiencyBonuses ?? []).reduce(
-        (innerSum, bonus) => innerSum + remoteFacilityEfficiencyBonusAmount(bonus, facility, context),
+        (innerSum, bonus) => innerSum + remoteFacilityEfficiencyBonusAmount(bonus, facility, context) * (assignment.shiftUptime ?? 1),
         0
       )
     );
@@ -1053,8 +1588,11 @@ function resourceAmount(resource: string, context?: AssignmentEvaluationContext,
 }
 
 function resourceAmountFromOperator(resource: string, operator: Operator, facility: FacilitySlot, context: AssignmentEvaluationContext) {
-  const effects = operator.skills
-    .filter((skill: BaseSkill) => skill.unlockPhase <= clampEliteForOperator(operator, context.roster?.[operator.id]?.elite ?? 0))
+  const effects = activeBaseSkills(
+    operator,
+    context.roster?.[operator.id]?.elite ?? 0,
+    context.roster?.[operator.id]?.level ?? 1
+  )
     .flatMap((skill) => skill.effects)
     .filter((effect) => effectMatchesFacility(effect, facility) && effect.resourceEffects?.some((resourceEffect) => resourceEffect.resource === resource))
     .filter((effect) => effectConditionsSatisfied(effect, operator, facility, context));
@@ -1323,15 +1861,19 @@ function calculateGlobalBonus(state: AppState, facility: FacilitySlot, context: 
     }
 
     const elite = clampEliteForOperator(operator, rosterEntry.elite);
-    const activeEffects = operator.skills
-      .filter((skill: BaseSkill) => skill.unlockPhase <= elite)
+    const activeEffects = activeBaseSkills(operator, elite, rosterEntry.level)
       .flatMap((skill) => skill.effects)
       .filter((effect) => effect.globalEffect && globalEffectMatchesFacility(effect, facility))
       .filter((effect) => effectConditionsSatisfied(effect, operator, assignedFacility, context));
 
     for (const effect of activeEffects) {
       const scalingMultiplier = effectScalingMultiplier(effect, operator, elite, assignedFacility, context);
-      buckets.push({ stackKey: effect.globalEffect?.stackKey, value: (effect.baseEfficiency ?? 0) + effect.efficiency * scalingMultiplier });
+      buckets.push({
+        stackKey: effect.globalEffect?.stackKey,
+        value:
+          ((effect.baseEfficiency ?? 0) + averageEffectEfficiency(effect, context.shiftHours ?? 12) * scalingMultiplier) *
+          (assignment.shiftUptime ?? 1)
+      });
     }
   }
 
@@ -1381,10 +1923,12 @@ function facilityStatScalingsForEffect(
   context?: AssignmentEvaluationContext
 ): NonNullable<Assignment["facilityStatScalings"]> {
   if (effect.scaling?.type === "facilityStorageLimit") {
+    const current = facilityAssignmentStat(effect, operator, elite, facility, context, "storageLimit");
     return [
       {
         key: "storageLimit",
-        current: facilityAssignmentStat(effect, operator, elite, facility, context, "storageLimit"),
+        base: current - assignedFacilityStat(effect, operator, facility, context, "storageLimit"),
+        current,
         efficiencyPerStep: effect.efficiency,
         scorePerEfficiency: productWeight(facility.product, preference) * facilityWeight(facility),
         max: effect.scaling.max
@@ -1392,10 +1936,12 @@ function facilityStatScalingsForEffect(
     ];
   }
   if (effect.scaling?.type === "facilityOrderLimit") {
+    const current = facilityAssignmentStat(effect, operator, elite, facility, context, "orderLimit");
     return [
       {
         key: "orderLimit",
-        current: facilityAssignmentStat(effect, operator, elite, facility, context, "orderLimit"),
+        base: current - assignedFacilityStat(effect, operator, facility, context, "orderLimit"),
+        current,
         efficiencyPerStep: effect.efficiency,
         scorePerEfficiency: productWeight(facility.product, preference) * facilityWeight(facility),
         per: effect.scaling.per,
@@ -1583,8 +2129,7 @@ function remoteFacilityStatScore(
           if (addedLimit <= 0) {
             return facilityBest;
           }
-          const bestEffectScore = operator.skills
-            .filter((skill) => skill.unlockPhase <= elite)
+          const bestEffectScore = activeBaseSkills(operator, elite, rosterEntry.level)
             .flatMap((skill) => skill.effects)
             .filter((effect) => !effect.ignoredForOptimization)
             .filter((effect) => effectMatchesFacility(effect, facility))
@@ -1648,8 +2193,7 @@ function remoteFacilityCountScore(
       const bestAssignmentScore = context.facilities
         .filter((facility) => facility.type !== "dormitory")
         .reduce((facilityBest, facility) => {
-          const bestEffectScore = operator.skills
-            .filter((skill) => skill.unlockPhase <= elite)
+          const bestEffectScore = activeBaseSkills(operator, elite, rosterEntry.level)
             .flatMap((skill) => skill.effects)
             .filter((effect) => !effect.ignoredForOptimization)
             .filter((effect) => effectMatchesFacility(effect, facility))
