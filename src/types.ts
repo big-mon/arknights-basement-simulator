@@ -88,6 +88,7 @@ export interface BaseSkillEffect {
   storageLimit?: number;
   orderLimit?: number;
   ignoredForOptimization?: boolean;
+  hiddenFromUi?: boolean;
   unsupportedReason?: string;
   conditionalBonuses?: Array<{
     efficiency: number;

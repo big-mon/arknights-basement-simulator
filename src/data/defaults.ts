@@ -1,5 +1,6 @@
 import type { AppState, BaseLayout, FacilitySlot, OptimizationPreference, Operator, ProductType, Roster, RotationCount } from "../types";
 import operatorsData from "./operators.json";
+import { defaultLevelForOperator } from "../lib/operatorLevel";
 import { defaultLanguage } from "../i18n";
 
 export const operators = operatorsData as Operator[];
@@ -100,7 +101,7 @@ export function createDefaultRoster(): Roster {
       {
         owned: false,
         elite: 0,
-        level: 1,
+        level: defaultLevelForOperator(operator),
         potential: 1,
         moduleEnabled: false
       }
