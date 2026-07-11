@@ -304,7 +304,8 @@ export function App() {
   }
 
   return (
-    <main className="app-shell">
+    <>
+      <main className="app-shell">
       <header className="topbar">
         <div>
           <p className="eyebrow">ARKNIGHTS BASEMENT</p>
@@ -661,18 +662,21 @@ export function App() {
         </ul>
       </section>
 
+      </main>
       <footer className="app-footer">
-        <p className="app-footer-notice">{fanMadeNotices[language]}</p>
-        <a href="https://github.com/big-mon/arknights-basement-simulator" target="_blank" rel="noreferrer">
-          <Github size={16} />
-          <span>big-mon/arknights-basement-simulator</span>
-        </a>
-        <a href="https://x.com/BIG_MON" target="_blank" rel="noreferrer">
-          <AtSign size={16} />
-          <span>@BIG_MON</span>
-        </a>
+        <div className="app-footer-content">
+          <p className="app-footer-notice">{fanMadeNotices[language]}</p>
+          <a href="https://github.com/big-mon/arknights-basement-simulator" target="_blank" rel="noreferrer">
+            <Github size={16} />
+            <span>big-mon/arknights-basement-simulator</span>
+          </a>
+          <a href="https://x.com/BIG_MON" target="_blank" rel="noreferrer">
+            <AtSign size={16} />
+            <span>@BIG_MON</span>
+          </a>
+        </div>
       </footer>
-    </main>
+    </>
   );
 }
 

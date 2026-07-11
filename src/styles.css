@@ -32,7 +32,7 @@ button {
 .app-shell {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 28px 0 48px;
+  padding: 28px 0 0;
 }
 
 .topbar,
@@ -786,8 +786,16 @@ input[type="radio"] {
 }
 
 .app-footer {
-  padding: 18px 4px 0;
+  padding: 18px 0 48px;
+  border-top: 1px solid #d8cdbf;
+  background: #e8dfd3;
   color: #6d6862;
+}
+
+.app-footer-content {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 0 4px;
   display: flex;
   flex-wrap: wrap;
   gap: 10px 18px;
@@ -1134,6 +1142,10 @@ input[type="radio"] {
   .app-shell {
     width: min(100% - 20px, 1180px);
     padding-top: 18px;
+  }
+
+  .app-footer-content {
+    width: min(100% - 20px, 1180px);
   }
 
   .summary-strip,
