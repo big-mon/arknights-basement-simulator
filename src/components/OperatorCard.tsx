@@ -66,6 +66,19 @@ export const OperatorCard = memo(function OperatorCard({
                   <CircleHelp size={16} />
                 </span>
               ) : null}
+              <label className="operator-elite-control">
+                {text.roster.elite}
+                <select
+                  value={elite}
+                  onChange={(event) => onUpdateRoster(operator.id, { elite: Number(event.target.value) as 0 | 1 | 2 })}
+                >
+                  {eliteOptionsForOperator(operator).map((eliteOption) => (
+                    <option key={eliteOption} value={eliteOption}>
+                      {eliteOption}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
             <p>{`★${operator.rarity} / ${professionLabels[language][operator.profession]}`}</p>
           </div>
@@ -73,21 +86,8 @@ export const OperatorCard = memo(function OperatorCard({
       </div>
       <details className="operator-details">
         <summary>{operatorCardLabels[language].details}</summary>
-        <div className="operator-controls">
-          <label>
-            {text.roster.elite}
-            <select
-              value={elite}
-              onChange={(event) => onUpdateRoster(operator.id, { elite: Number(event.target.value) as 0 | 1 | 2 })}
-            >
-              {eliteOptionsForOperator(operator).map((eliteOption) => (
-                <option key={eliteOption} value={eliteOption}>
-                  {eliteOption}
-                </option>
-              ))}
-            </select>
-          </label>
-          {levelOptions.length ? (
+        {levelOptions.length ? (
+          <div className="operator-controls">
             <label>
               {levelLabels[language]}
               <select
@@ -97,12 +97,12 @@ export const OperatorCard = memo(function OperatorCard({
                 {levelOptions.map((levelOption) => (
                   <option key={levelOption} value={levelOption}>
                     {levelOption}
-                  </option>
-                ))}
-              </select>
+                </option>
+              ))}
+            </select>
             </label>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
         <ul className="base-skill-list" aria-label={text.roster.skillListLabel(operatorName)}>
         {operator.skills.map((skill) => {
           const unlocked = skill.unlockPhase < elite || (skill.unlockPhase === elite && skill.unlockLevel <= entry.level);

@@ -615,6 +615,7 @@ input[type="number"] {
   align-items: center;
   gap: 6px;
   max-width: 100%;
+  flex-wrap: wrap;
 }
 
 .operator-card-top {
@@ -642,6 +643,21 @@ input[type="number"] {
 
 .checkbox-line.compact {
   font-size: 0.84rem;
+}
+
+.operator-elite-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #65605b;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.operator-elite-control select {
+  height: 32px;
+  padding-inline: 8px 24px;
+  font-size: 0.82rem;
 }
 
 .localization-warning {
