@@ -3643,6 +3643,13 @@
                     "char_4182_oblvns"
                   ]
                 }
+              ],
+              "moraleEffects": [
+                {
+                  "type": "consumption",
+                  "target": "conditionOperators",
+                  "amount": 0.05
+                }
               ]
             }
           }

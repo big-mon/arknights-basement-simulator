@@ -20,7 +20,9 @@
     "test:watch": "vitest",
     "validate": "pnpm test && pnpm build",
     "audit:base-skills": "node scripts/audit-base-skills.mjs",
-    "import:game-data": "node scripts/import-game-data.mjs"
+    "audit:localization": "node scripts/audit-localization.mjs",
+    "import:game-data": "node scripts/import-game-data.mjs",
+    "import:wiki-localization": "node scripts/import-wiki-localization.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.1.1",

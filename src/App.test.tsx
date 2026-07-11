@@ -39,8 +39,10 @@ const xiangPerfumer = operators.find((operator) => operator.id === "char_1022_fl
 const wang = operators.find((operator) => operator.id === "char_2027_wang")!;
 const wisadel = operators.find((operator) => operator.id === "char_1035_wisdel")!;
 const levelLockedOperator = operators.find((operator) => operator.skills.some((skill) => skill.unlockLevel > 1))!;
-const missingEnglishNameOperator = operators.find((operator) => !operator.name.en)!;
-const missingEnglishFallbackName = localizeText(missingEnglishNameOperator.name, "en");
+const missingEnglishSkillOperator = operators.find((operator) =>
+  operator.skills.some((skill) => !skill.name.en || skill.effects.some((effect) => !effect.description.en))
+)!;
+const missingEnglishSkillOperatorName = localizeText(missingEnglishSkillOperator.name, "en");
 
 function operatorNameJa(operator: (typeof operators)[number]) {
   return localizeText(operator.name, "ja");
@@ -121,6 +123,7 @@ describe("App", () => {
 
   it("supplements missing Japanese operator names", () => {
     expect(operators.filter((operator) => !operator.name.ja)).toHaveLength(0);
+    expect(operators.filter((operator) => !operator.name.en)).toHaveLength(0);
     expect(makiri.name.ja).toBe("マツキリ");
     expect(haruka.name.ja).toBe("ハルカ");
     expect(mantra.name.ja).toBe("マントラ");
@@ -129,6 +132,7 @@ describe("App", () => {
     expect(snegurochka.name.ja).toBe("スネグーラチカ");
     expect(rhodesCovert.name.ja).toBe("ロドスアイランド隠密隊");
     expect(varkalis.name.ja).toBe("ヴァルカリス");
+    expect(varkalis.name.en).toBe("Varkáris");
     expect(nyamu.name.ja).toBe("祐天寺にゃむ");
     expect(zinogreCatapult.name.ja).toBe("ジンオウSカタパルト");
     expect(cairn.name.ja).toBe("ケルン");
@@ -140,21 +144,22 @@ describe("App", () => {
     expect(akkord.name.ja).toBe("アコルト");
     expect(taraxacum.name.ja).toBe("タラクサクム");
     expect(radian.name.ja).toBe("レイディアン");
+    expect(radian.name.en).toBe("Raidian");
     expect(xiangPerfumer.name.ja).toBe("萃香パフューマー");
     expect(wang.name.ja).toBe("ウァン");
   });
 
-  it("marks missing selected-language names without excluding operators", async () => {
+  it("marks unverified selected-language skill text without excluding operators", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.selectOptions(screen.getByRole("combobox", { name: /言語/ }), "en");
-    await user.type(screen.getByPlaceholderText("Search by name"), missingEnglishNameOperator.id);
+    await user.type(screen.getByPlaceholderText("Search by name"), missingEnglishSkillOperator.id);
 
-    const operatorCard = screen.getByText(missingEnglishFallbackName).closest("article")!;
-    const checkbox = within(operatorCard).getByRole("checkbox", { name: missingEnglishFallbackName }) as HTMLInputElement;
+    const operatorCard = screen.getByText(missingEnglishSkillOperatorName).closest("article")!;
+    const checkbox = within(operatorCard).getByRole("checkbox", { name: missingEnglishSkillOperatorName }) as HTMLInputElement;
 
-    expect(within(operatorCard).getByLabelText("Name missing for selected language")).toBeInTheDocument();
+    expect(within(operatorCard).getAllByLabelText(/Base-skill translation is unverified/).length).toBeGreaterThan(0);
 
     await user.click(checkbox);
 

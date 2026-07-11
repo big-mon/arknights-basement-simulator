@@ -111,6 +111,7 @@ const moraleDescriptionsWithoutModel = effects
       !effect.moraleEffects?.length &&
       !effect.moraleCurve &&
       !effect.activation &&
+      !effect.globalEffect &&
       !effect.resourceEffects?.length
   )
   .map(({ operator, skill }) => `${operator.id}:${skill.id}`);
