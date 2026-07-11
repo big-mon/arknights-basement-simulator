@@ -37,6 +37,8 @@ const taraxacum = operators.find((operator) => operator.id === "char_4222_taraxa
 const radian = operators.find((operator) => operator.id === "char_4195_radian")!;
 const xiangPerfumer = operators.find((operator) => operator.id === "char_1022_flwr2")!;
 const wang = operators.find((operator) => operator.id === "char_2027_wang")!;
+const wisadel = operators.find((operator) => operator.id === "char_1035_wisdel")!;
+const levelLockedOperator = operators.find((operator) => operator.skills.some((skill) => skill.unlockLevel > 1))!;
 const missingEnglishNameOperator = operators.find((operator) => !operator.name.en)!;
 const missingEnglishFallbackName = localizeText(missingEnglishNameOperator.name, "en");
 
@@ -88,6 +90,17 @@ describe("App", () => {
       "https://github.com/big-mon/arknights-basement-simulator"
     );
     expect(screen.getByRole("link", { name: /@BIG_MON/ })).toHaveAttribute("href", "https://x.com/BIG_MON");
+    expect(screen.getByText(/非公式のファンメイドツール/)).toBeInTheDocument();
+    expect(screen.getByText(/公式から削除要請/)).toBeInTheDocument();
+  });
+
+  it("shows locally hosted operator face icons", () => {
+    render(<App />);
+
+    expect(screen.getByRole("img", { name: `${amiyaName} icon` })).toHaveAttribute(
+      "src",
+      "/operator-avatars/char_002_amiya.png"
+    );
   });
 
   it("explains the roster data scope", () => {
@@ -256,7 +269,25 @@ describe("App", () => {
     await user.type(screen.getByPlaceholderText("名前で検索"), suzuran.id);
 
     const suzuranCard = screen.getByText("スズラン").closest("article")!;
-    expect(within(suzuranCard).getByText(/基地スキル 0\/0/)).toBeInTheDocument();
+    expect(suzuranCard).toBeInTheDocument();
+    expect(within(suzuranCard).queryByText(/基地スキル/)).not.toBeInTheDocument();
+  });
+
+  it("only shows level choices when a base skill has a level requirement and defaults to the higher level", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(screen.getByPlaceholderText("名前で検索"), levelLockedOperator.id);
+    const levelLockedCard = screen.getByText(operatorNameJa(levelLockedOperator)).closest("article")!;
+    const levelSelect = within(levelLockedCard).getByRole("combobox", { name: "レベル" });
+    const highestUnlockLevel = Math.max(...levelLockedOperator.skills.map((skill) => skill.unlockLevel));
+
+    expect(levelSelect).toHaveValue(String(highestUnlockLevel));
+
+    await user.clear(screen.getByPlaceholderText("名前で検索"));
+    await user.type(screen.getByPlaceholderText("名前で検索"), amiya.id);
+    const amiyaCard = screen.getByText(amiyaName).closest("article")!;
+    expect(within(amiyaCard).queryByRole("combobox", { name: "レベル" })).not.toBeInTheDocument();
   });
 
   it("marks unsupported optimization-only effects on operator cards", async () => {
@@ -266,6 +297,17 @@ describe("App", () => {
 
     const bibeakCard = screen.getByText(localizeText(bibeak.name, "ja")).closest("article")!;
     expect(within(bibeakCard).getAllByText("最適化計算対象外").length).toBeGreaterThan(0);
+  });
+
+  it("hides calculation-only split effects from operator skill descriptions", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(screen.getByPlaceholderText("名前で検索"), wisadel.id);
+    const wisadelCard = screen.getByText(operatorNameJa(wisadel)).closest("article")!;
+
+    expect(within(wisadelCard).getAllByText(/イネスが応接室に配置されているとき/)).toHaveLength(2);
+    expect(within(wisadelCard).queryByText(/if Ines is assigned to the Reception Room/)).not.toBeInTheDocument();
   });
 
   it("filters the owned roster with profession and rarity radio options", async () => {

@@ -3,6 +3,7 @@ import { CircleHelp } from "lucide-react";
 import { facilityLabels, productLabels, professionLabels, uiText } from "../i18n";
 import { clampEliteForOperator, eliteOptionsForOperator } from "../lib/elite";
 import { hasLocalizedText, localizeText } from "../lib/localization";
+import { effectiveLevelForOperator, levelOptionsForOperator } from "../lib/operatorLevel";
 import type { LanguageCode, Operator, RosterEntry } from "../types";
 
 export function OperatorCard({
@@ -17,9 +18,8 @@ export function OperatorCard({
   onUpdateRoster: (operatorId: string, patch: Partial<RosterEntry>) => void;
 }) {
   const elite = clampEliteForOperator(operator, entry.elite);
-  const unlockedSkills = operator.skills.filter(
-    (skill) => skill.unlockPhase < elite || (skill.unlockPhase === elite && skill.unlockLevel <= entry.level)
-  ).length;
+  const levelOptions = levelOptionsForOperator(operator);
+  const effectiveLevel = effectiveLevelForOperator(operator, entry.level);
   const text = uiText[language];
   const operatorName = localizeText(operator.name, language);
   const missingSelectedLanguageName = !hasLocalizedText(operator.name, language);
@@ -36,25 +36,39 @@ export function OperatorCard({
   return (
     <article className={entry.owned ? "operator-card owned" : "operator-card"} onClick={toggleOwnedFromCard}>
       <div className="operator-card-top">
-        <div className="operator-card-main">
-          <div className="operator-name-line">
-            <label className="checkbox-line">
-              <input
-                type="checkbox"
-                checked={entry.owned}
-                onChange={(event) => onUpdateRoster(operator.id, { owned: event.target.checked })}
-              />
-              <span>{operatorName}</span>
-            </label>
-            {missingSelectedLanguageName ? (
-              <span className="localization-warning" role="img" aria-label={text.roster.missingLocalizedName} title={text.roster.missingLocalizedName}>
-                <CircleHelp size={16} />
-              </span>
-            ) : null}
+        <div className="operator-identity">
+          <img
+            className="operator-avatar"
+            src={`/operator-avatars/${operator.id}.png`}
+            alt={`${operatorName} icon`}
+            loading="lazy"
+            onError={(event) => {
+              event.currentTarget.hidden = true;
+            }}
+          />
+          <div className="operator-card-main">
+            <div className="operator-name-line">
+              <label className="checkbox-line">
+                <input
+                  type="checkbox"
+                  checked={entry.owned}
+                  onChange={(event) => onUpdateRoster(operator.id, { owned: event.target.checked })}
+                />
+                <span>{operatorName}</span>
+              </label>
+              {missingSelectedLanguageName ? (
+                <span
+                  className="localization-warning"
+                  role="img"
+                  aria-label={text.roster.missingLocalizedName}
+                  title={text.roster.missingLocalizedName}
+                >
+                  <CircleHelp size={16} />
+                </span>
+              ) : null}
+            </div>
+            <p>{`★${operator.rarity} / ${professionLabels[language][operator.profession]}`}</p>
           </div>
-          <p>
-            {`★${operator.rarity} / ${professionLabels[language][operator.profession]} / ${text.roster.baseSkill} ${unlockedSkills}/${operator.skills.length}`}
-          </p>
         </div>
         <div className="operator-controls">
           <label>
@@ -70,16 +84,21 @@ export function OperatorCard({
               ))}
             </select>
           </label>
-          <label>
-            {levelLabels[language]}
-            <input
-              type="number"
-              min={1}
-              max={90}
-              value={entry.level}
-              onChange={(event) => onUpdateRoster(operator.id, { level: Math.min(90, Math.max(1, Number(event.target.value) || 1)) })}
-            />
-          </label>
+          {levelOptions.length ? (
+            <label>
+              {levelLabels[language]}
+              <select
+                value={effectiveLevel}
+                onChange={(event) => onUpdateRoster(operator.id, { level: Number(event.target.value) })}
+              >
+                {levelOptions.map((levelOption) => (
+                  <option key={levelOption} value={levelOption}>
+                    {levelOption}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
         </div>
       </div>
       <ul className="base-skill-list" aria-label={text.roster.skillListLabel(operatorName)}>
@@ -92,14 +111,16 @@ export function OperatorCard({
                 <strong>{skillName}</strong>
                 <span>{unlocked ? text.roster.unlocked : unlockRequirementLabel(language, skill.unlockPhase, skill.unlockLevel)}</span>
               </div>
-              {skill.effects.map((effect, index) => (
-                <p key={`${skill.id}-${index}`}>
-                  {facilityLabels[language][effect.facility]}
-                  {effect.product ? ` / ${productLabels[language][effect.product]}` : ""}:{" "}
-                  {localizeText(effect.description, language)}
-                  {effect.ignoredForOptimization ? <span className="optimization-note">{ignoredOptimizationLabel}</span> : null}
-                </p>
-              ))}
+              {skill.effects
+                .filter((effect) => !effect.hiddenFromUi)
+                .map((effect, index) => (
+                  <p key={`${skill.id}-${index}`}>
+                    {facilityLabels[language][effect.facility]}
+                    {effect.product ? ` / ${productLabels[language][effect.product]}` : ""}:{" "}
+                    {localizeText(effect.description, language)}
+                    {effect.ignoredForOptimization ? <span className="optimization-note">{ignoredOptimizationLabel}</span> : null}
+                  </p>
+                ))}
             </li>
           );
         })}

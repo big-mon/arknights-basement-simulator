@@ -445,6 +445,7 @@ input[type="number"] {
 .operator-card {
   min-height: 132px;
   align-items: stretch;
+  align-content: start;
   display: grid;
   gap: 14px;
   padding: 14px;
@@ -463,6 +464,22 @@ input[type="number"] {
   min-width: 0;
 }
 
+.operator-identity {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.operator-avatar {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  border-radius: 7px;
+  background: #eee8df;
+  object-fit: cover;
+}
+
 .operator-name-line {
   display: inline-flex;
   align-items: center;
@@ -471,9 +488,9 @@ input[type="number"] {
 }
 
 .operator-card-top {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 14px;
 }
 
@@ -525,7 +542,7 @@ input[type="radio"] {
 
 .operator-controls {
   align-items: flex-end;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 }
 
@@ -641,6 +658,12 @@ input[type="radio"] {
   overflow-wrap: anywhere;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
+}
+
+.app-footer-notice {
+  flex-basis: 100%;
+  margin: 0;
+  line-height: 1.55;
 }
 
 .app-footer a:hover,
@@ -947,8 +970,7 @@ input[type="radio"] {
   }
 
   .operator-card-top {
-    align-items: flex-start;
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .operator-controls {

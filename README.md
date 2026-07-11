@@ -19,6 +19,8 @@
 
 このアプリはファンメイドの非公式ツールです。ゲーム本体、Hypergryph、Yostar、各地域の運営会社とは関係ありません。
 
+掲載しているオペレーター画像を含むゲームコンテンツの権利は、Hypergryphおよび各権利者に帰属します。公式または権利者から削除・修正等の要請をいただいた場合は、速やかに対応します。ご連絡は [@BIG_MON](https://x.com/BIG_MON) までお願いいたします。
+
 最適化ロジックはブラウザ内で動くMVPレベルのモデルです。すべての基地スキル、特殊な条件、ゲーム内の細かな制約を完全に再現しているわけではありません。計算対象外の効果はアプリ内の注記に表示されます。
 
 ## Tech Stack
@@ -58,6 +60,9 @@ pnpm import:game-data
 
 - CN game data: `Kengxxiao/ArknightsGameData`
 - Yostar game data: `Kengxxiao/ArknightsGameData_YoStar`
+- Operator face icons: [`yuanyan3060/ArknightsGameResource`](https://github.com/yuanyan3060/ArknightsGameResource) (`avatar/`)
+
+オペレーターの顔アイコンはゲームクライアント由来の素材です。画像の著作権はArknights / Hypergryphおよび各権利者に帰属します。
 
 日本語名は地域差や実装時期の都合で未確定・未翻訳の場合があります。手動で確認した名称は `src/data/operator-name-overrides.json` に追加し、生成済みデータがチェックインされている場合は `src/data/operators.json` も更新してください。
 

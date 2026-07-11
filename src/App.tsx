@@ -576,6 +576,7 @@ export function App() {
       </section>
 
       <footer className="app-footer">
+        <p className="app-footer-notice">{fanMadeNotices[language]}</p>
         <a href="https://github.com/big-mon/arknights-basement-simulator" target="_blank" rel="noreferrer">
           <Github size={16} />
           <span>big-mon/arknights-basement-simulator</span>
@@ -588,6 +589,12 @@ export function App() {
     </main>
   );
 }
+
+const fanMadeNotices: Record<LanguageCode, string> = {
+  ja: "本サイトは非公式のファンメイドツールです。掲載画像等の権利は各権利者に帰属し、公式から削除要請をいただいた場合は速やかに対応します。ご連絡は下記のXアカウントへお願いいたします。",
+  zh: "本网站是非官方粉丝制作工具。所用图片等内容的权利归各权利人所有；如收到官方删除要求，我们将及时处理。请通过下方的 X 账号联系我们。",
+  en: "This is an unofficial fan-made tool. Rights to the images and other game content belong to their respective owners, and we will promptly comply with official removal requests. Please contact us through the X account below."
+};
 
 function formatCount(owned: number, total: number, language: LanguageCode) {
   const suffix = uiText[language].roster.countSuffix;

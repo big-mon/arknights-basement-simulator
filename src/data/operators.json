@@ -18197,13 +18197,14 @@
               {
                 "type": "facilityOperator",
                 "facility": "reception",
-                "operatorIds": [
-                  "char_4087_ines"
-                ]
-              }
-            ],
-            "description": {
-              "en": "When this Operator is assigned to the Control Center, if Ines is assigned to the Reception Room, clue collection speed +5%."
+                          "operatorIds": [
+                            "char_4087_ines"
+                          ]
+                        }
+                      ],
+                      "hiddenFromUi": true,
+                      "description": {
+                        "en": "When this Operator is assigned to the Control Center, if Ines is assigned to the Reception Room, clue collection speed +5%."
             }
           }
         ]
@@ -18256,13 +18257,14 @@
               {
                 "type": "facilityOperator",
                 "facility": "reception",
-                "operatorIds": [
-                  "char_4087_ines"
-                ]
-              }
-            ],
-            "description": {
-              "en": "When this Operator is assigned to the Control Center, if Ines is assigned to the Reception Room, clue collection speed +5%."
+                          "operatorIds": [
+                            "char_4087_ines"
+                          ]
+                        }
+                      ],
+                      "hiddenFromUi": true,
+                      "description": {
+                        "en": "When this Operator is assigned to the Control Center, if Ines is assigned to the Reception Room, clue collection speed +5%."
             }
           }
         ]
