@@ -1,108 +1,142 @@
 {
   "char_4186_tmoris": {
-    "ja": "八幡海鈴"
+    "ja": "八幡海鈴",
+    "en": "Yahata Umiri"
   },
   "char_4166_varkis": {
-    "ja": "ヴァルカリス"
+    "ja": "ヴァルカリス",
+    "en": "Varkáris"
   },
   "char_4037_demetr": {
-    "ja": "ベッローネ"
+    "ja": "ベッローネ",
+    "en": "Bellone"
   },
   "char_1050_chen3": {
-    "ja": "赤刃明霄チェン"
+    "ja": "赤刃明霄チェン",
+    "en": "Ch'en the Dawnstreak"
   },
   "char_4195_radian": {
-    "ja": "レイディアン"
+    "ja": "レイディアン",
+    "en": "Raidian"
   },
   "char_4208_wintim": {
-    "ja": "スネグーラチカ"
+    "ja": "スネグーラチカ",
+    "en": "Snegurochka"
   },
   "char_4182_oblvns": {
-    "ja": "豊川祥子"
+    "ja": "豊川祥子",
+    "en": "Togawa Sakiko"
   },
   "char_4222_taraxa": {
-    "ja": "タラクサクム"
+    "ja": "タラクサクム",
+    "en": "Taraxacum"
   },
   "char_4031_liesel": {
-    "ja": "リプレーザ"
+    "ja": "リプレーザ",
+    "en": "Ripresa"
   },
   "char_4203_kichi": {
-    "ja": "キチセイ"
+    "ja": "キチセイ",
+    "en": "Kichisei"
   },
   "char_4228_closur": {
-    "ja": "クロージャ"
+    "ja": "クロージャ",
+    "en": "Closure"
   },
   "char_1049_catap2": {
-    "ja": "ジンオウSカタパルト"
+    "ja": "ジンオウSカタパルト",
+    "en": "Zinogre S Catapult"
   },
   "char_4225_tanya": {
-    "ja": "クラックボーン"
+    "ja": "クラックボーン",
+    "en": "Crackborne"
   },
   "char_1045_svash2": {
-    "ja": "凛御シルバーアッシュ"
+    "ja": "凛御シルバーアッシュ",
+    "en": "SilverAsh the Reignfrost"
   },
   "char_4215_buddy": {
-    "ja": "ロドスアイランド隠密隊"
+    "ja": "ロドスアイランド隠密隊",
+    "en": "Rhodes Island Recon"
   },
   "char_4212_nasti": {
-    "ja": "ナスティ"
+    "ja": "ナスティ",
+    "en": "Nasti"
   },
   "char_1051_headb2": {
-    "ja": "怒潮ズィマー"
+    "ja": "怒潮ズィマー",
+    "en": "Zima the Raging Tide"
   },
   "char_4183_mortis": {
-    "ja": "若葉睦"
+    "ja": "若葉睦",
+    "en": "Wakaba Mutsumi"
   },
   "char_4184_dolris": {
-    "ja": "三角初華"
+    "ja": "三角初華",
+    "en": "Misumi Uika"
   },
   "char_1043_leizi2": {
-    "ja": "司霆レイズ"
+    "ja": "司霆レイズ",
+    "en": "Leizi the Thunderbringer"
   },
   "char_4199_makiri": {
-    "ja": "マツキリ"
+    "ja": "マツキリ",
+    "en": "Matsukiri"
   },
   "char_1047_halo2": {
-    "ja": "溯光アステジーニ"
+    "ja": "溯光アステジーニ",
+    "en": "Astgenne the Lightchaser"
   },
   "char_4213_skybx": {
-    "ja": "スカイボックス"
+    "ja": "スカイボックス",
+    "en": "Skybox"
   },
   "char_2027_wang": {
-    "ja": "ウァン"
+    "ja": "ウァン",
+    "en": "Wang"
   },
   "char_4226_veen": {
-    "ja": "ヴィイ"
+    "ja": "ヴィイ",
+    "en": "Viy"
   },
   "char_4214_cairn": {
-    "ja": "ケルン"
+    "ja": "ケルン",
+    "en": "Cairn"
   },
   "char_4051_akkord": {
-    "ja": "アコルト"
+    "ja": "アコルト",
+    "en": "Akkord"
   },
   "char_1022_flwr2": {
-    "ja": "萃香パフューマー"
+    "ja": "萃香パフューマー",
+    "en": "Perfumer the Distilled"
   },
   "char_4211_snhunt": {
-    "ja": "スノーハンター"
+    "ja": "スノーハンター",
+    "en": "Snow Hunter"
   },
   "char_1048_orchd2": {
-    "ja": "焔狐竜オーキッド"
+    "ja": "焔狐竜オーキッド",
+    "en": "Violet Mizutsune Orchid"
   },
   "char_4202_haruka": {
-    "ja": "ハルカ"
+    "ja": "ハルカ",
+    "en": "Haruka"
   },
   "char_4185_amoris": {
-    "ja": "祐天寺にゃむ"
+    "ja": "祐天寺にゃむ",
+    "en": "Yūtenji Nyamu"
   },
   "char_1044_hsgma2": {
-    "ja": "斬業ホシグマ"
+    "ja": "斬業ホシグマ",
+    "en": "Hoshiguma the Breacher"
   },
   "char_4204_mantra": {
     "ja": "マントラ",
     "en": "Mantra"
   },
   "char_4227_gallus": {
-    "ja": "GALLUS²"
+    "ja": "GALLUS²",
+    "en": "Gallus²"
   }
 }

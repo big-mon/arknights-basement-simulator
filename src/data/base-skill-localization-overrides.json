@@ -1,0 +1,398 @@
+{
+  "char_4186_tmoris": {
+    "skills": {
+      "control_hire_spd&bd[000]": {
+        "name": {
+          "en": "Reliable Companion"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, Passion +10; HR contacting speed +10% (Only the strongest effect of this type takes place)"
+        }
+      },
+      "control_tra_limit&spd2[000]": {
+        "name": {
+          "en": "Famiglia Approval"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, all Siracusa Operators assigned to Trading Posts gain order acquisition efficiency +5%"
+        }
+      }
+    }
+  },
+  "char_4166_varkis": {
+    "skills": {
+      "control_meeting&mp_cost[000]": {
+        "name": {
+          "en": "Pride of a Hero α"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, clue collection speed +4% for each Minos Operator in the Base (excluding Assistants and Activity Room users, caps at +20%, strongest effect of the same type applies); when assigned together with Sargon Operators, self Morale loss per hour +0.02"
+        }
+      },
+      "control_meeting&mp_cost[100]": {
+        "name": {
+          "en": "Pride of a Hero β"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, clue collection speed +5% for each Minos Operator in the Base (excluding Assistants and Activity Room users, caps at +25%, strongest effect of the same type applies); when assigned together with Sargon Operators, self Morale loss per hour +0.02"
+        }
+      }
+    }
+  },
+  "char_4195_radian": {
+    "skills": {
+      "control_mp_cost[013]": {
+        "name": {
+          "en": "Drip-Fed Care"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, increases Morale of all Operators in the Control Center by +0.05 per hour."
+        }
+      },
+      "control_dorm_rec_tag[001]": {
+        "name": {
+          "en": "Quiet Affection"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, all Elite Operators in Dormitories recover +0.1 Morale per hour (strongest effect of the same type applies)"
+        }
+      }
+    }
+  },
+  "char_4208_wintim": {
+    "skills": {
+      "manu_prod_spd&manu[000]": {
+        "name": {
+          "en": "Scientific Restructuring"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Factory, the productivity contributed by all other Operators in that Factory becomes 0 (excluding productivity granted based on facility count), but every Operator in that Factory increases that Factory's Capacity limit by +5"
+        }
+      },
+      "manu_prod_spd&manu[100]": {
+        "name": {
+          "en": "Workflow Optimization"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Factory, the productivity contributed by all other Operators in that Factory becomes 0 (excluding productivity granted based on facility count), but every Operator in that Factory increases that Factory's Productivity by +10% and Capacity limit by +5"
+        }
+      }
+    }
+  },
+  "char_4182_oblvns": {
+    "skills": {
+      "control_prod_bd_spd[000]": {
+        "name": {
+          "en": "Plentiful Work Experience"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, the productivity of Precious Metals of all Factories +0.5%, with an additional +0.5% for every 20 Passion"
+        }
+      },
+      "control_prod_bd_spd[010]": {
+        "name": {
+          "en": "Plentiful Work Experience"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, the productivity of Precious Metals of all Factories +1%, with an additional +1% for every 20 Passion"
+        }
+      },
+      "control_mp_cost&bd3[000]": {
+        "name": {
+          "en": "Indomitable Lady"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, self Morale loss per hour +0.05 when Passion is 40 or higher"
+        }
+      }
+    }
+  },
+  "char_4203_kichi": {
+    "skills": {
+      "trade_ord_spd&share[001]": {
+        "name": {
+          "en": "Hard-Working Manager α"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Trading Post, other Operators working in the Trading Post have +10% order acquisition efficiency"
+        }
+      },
+      "trade_ord_spd&share[002]": {
+        "name": {
+          "en": "Hard-Working Manager β"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Trading Post, other Operators working in the Trading Post have +20% order acquisition efficiency"
+        }
+      }
+    }
+  },
+  "char_1045_svash2": {
+    "skills": {
+      "control_tra_limit&spd3[000]": {
+        "name": {
+          "en": "Land of Business"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, all Trading Posts with 3 Kjerag Operators assigned gain order acquisition efficiency +10%"
+        }
+      }
+    }
+  },
+  "char_4212_nasti": {
+    "skills": {
+      "manu_formula_spd&cost_bd[100]": {
+        "name": {
+          "en": "Costly Construction"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Factory, for each Rhine Lab Operator in the Base (excluding Assistants and Activity Room users, caps at 5), Precious Metal productivity +3%"
+        }
+      }
+    }
+  },
+  "char_4183_mortis": {
+    "skills": {
+      "control_mp_bd&trade[000]": {
+        "name": {
+          "en": "Monster of Acting"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, Passion +20; for every 8 Passion, self Morale consumed per hour +0.01 and all Trading Posts' order efficiency +1% (Only the strongest effect of this type takes place)"
+        }
+      },
+      "control_mp_cost_reset[000]": {
+        "name": {
+          "en": "Halves of a Whole"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center with Sakiko Togawa, ignores the self Morale loss effect from her own base skill"
+        }
+      }
+    }
+  },
+  "char_4184_dolris": {
+    "skills": {
+      "control_dorm_bd[000]": {
+        "name": {
+          "en": "Idol's Aura"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, for every Operator in the Dormitories, Passion +1."
+        }
+      },
+      "control_dorm_rec2[000]": {
+        "name": {
+          "en": "Resonant Bond"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, all Operators in Dormitories recover +0.05 Morale per hour (Only the strongest effect of this type takes place); when assigned to the Control Center with Sakiko Togawa, Morale consumed per hour by Sakiko Togawa +0.1"
+        }
+      }
+    }
+  },
+  "char_1043_leizi2": {
+    "skills": {
+      "power_rec_spd[007]": {
+        "name": {
+          "en": "Lei Fa Specialist"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Power Plant, increases the drone recovery rate by +10%"
+        }
+      }
+    }
+  },
+  "char_4199_makiri": {
+    "skills": {
+      "meet_spd_notOwned[002]": {
+        "name": {
+          "en": "The Art of Deduction"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Reception Room, increases the likelihood of obtaining clues that are not on the Clue Board."
+        }
+      }
+    }
+  },
+  "char_1047_halo2": {
+    "skills": {
+      "manu_skill_limit[000]": {
+        "name": {
+          "en": "Explorer's Backpack"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Factory, gain +5 Storage Capacity for each Rhine Tech-type skill in that Factory"
+        }
+      }
+    }
+  },
+  "char_4214_cairn": {
+    "skills": {
+      "dorm_rec_all&lv[000]": {
+        "name": {
+          "en": "Bedtime Stories"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory (Only the strongest effect of this type takes place)"
+        }
+      },
+      "dorm_rec_all&lv[100]": {
+        "name": {
+          "en": "Bucket List"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory, and every level of that Dormitory increases restoration by another +0.02 (Only the strongest stacked effect of this type takes place)"
+        }
+      },
+      "meet_spd&exchange[001]": {
+        "name": {
+          "en": "Special Methods Consultant"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Reception Room, if in Clue Exchange, increases Clue search speed by 30%"
+        }
+      }
+    }
+  },
+  "char_4051_akkord": {
+    "skills": {
+      "power_rec_spd[008]": {
+        "name": {
+          "en": "Surging Tunes"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Power Plant, increases the drone recovery rate by +10%"
+        }
+      },
+      "power_rec_spd[009]": {
+        "name": {
+          "en": "Surging Tunes"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Power Plant, increases the drone recovery rate by +15%"
+        }
+      },
+      "dorm_rec_oneself2[001]": {
+        "name": {
+          "en": "Fugue Amalgamation"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Dormitory, increases own Morale restored per hour by +0.7; If there are other Operators in that Dormitory, further increases own Morale restored per hour by +0.05 for each additional Operator."
+        }
+      }
+    }
+  },
+  "char_1022_flwr2": {
+    "skills": {
+      "dorm_rec_all[029]": {
+        "name": {
+          "en": "Gentle Spirit"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory (Only the strongest effect of this type takes place)"
+        }
+      },
+      "dorm_rec_all&tired[100]": {
+        "name": {
+          "en": "Pure Breath"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Dormitory, restores an additional +0.1 Morale to Operators assigned to that Dormitory whose Morale is below 20 (Strongest effect of the same type applies)"
+        }
+      }
+    }
+  },
+  "char_4211_snhunt": {
+    "skills": {
+      "manu_prod_spd&limit&cost[101]": {
+        "name": {
+          "en": "Piety"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Factory, Productivity +20% and Morale consumed per hour +0.25"
+        }
+      },
+      "manu_prod_spd&limit&cost[110]": {
+        "name": {
+          "en": "Taking Responsibility"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Factory, Productivity +30% and Morale consumed per hour +0.25"
+        }
+      }
+    }
+  },
+  "char_4202_haruka": {
+    "skills": {
+      "dorm_rec_all[028]": {
+        "name": {
+          "en": "Celebrity Effect"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory (Only the strongest effect of this type takes place)"
+        }
+      }
+    }
+  },
+  "char_4185_amoris": {
+    "skills": {
+      "control_meeting_spd&bd[000]": {
+        "name": {
+          "en": "Diligent Worker"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, Passion +10; clue collection speed +5% (Only the strongest effect of this type takes place)"
+        }
+      },
+      "control_mp&meet_spd[000]": {
+        "name": {
+          "en": "Exitus Acta Probat"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center with Sakiko Togawa, Morale consumed per hour by Sakiko Togawa +0.05 and clue collection speed +5% (Only the strongest effect of this type takes place)"
+        }
+      }
+    }
+  },
+  "char_1044_hsgma2": {
+    "skills": {
+      "control_train_spd[012]": {
+        "name": {
+          "en": "Downtown Connections"
+        },
+        "description": {
+          "en": "When this Operator is assigned to the Control Center, if an Operator is conducting Skill Specialization in the Training Room, that Operator's Specialization training speed +5% (Only the strongest effect of this type takes place)."
+        }
+      },
+      "control_token_prod_spd3[000]": {
+        "name": {
+          "en": "Camaraderie"
+        },
+        "description": {
+          "en": "When this Operator is assigned together with other L.G.D. Operators to the Control Center, all Factories' productivity +3% (Only the strongest effect of this type takes place)"
+        }
+      }
+    }
+  },
+  "char_4204_mantra": {
+    "skills": {
+      "trade_ord_spd&tag[000]": {
+        "name": {
+          "en": "Order Distribution α"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +20%"
+        }
+      },
+      "trade_ord_spd&tag[010]": {
+        "name": {
+          "en": "Elite Squad"
+        },
+        "description": {
+          "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +25%; for every facility in the Base with an Elite Operator assigned (excluding Assistants and Activity Rooms), order acquisition efficiency +2% (max 10 facilities)"
+        }
+      }
+    }
+  }
+}
