@@ -86,10 +86,21 @@ export function OperatorCard({
         {operator.skills.map((skill) => {
           const unlocked = skill.unlockPhase < elite || (skill.unlockPhase === elite && skill.unlockLevel <= entry.level);
           const skillName = localizeText(skill.name, language);
+          const missingSkillName = !hasLocalizedText(skill.name, language);
           return (
             <li key={skill.id} className={unlocked ? "base-skill unlocked" : "base-skill locked"}>
               <div className="base-skill-heading">
                 <strong>{skillName}</strong>
+                {missingSkillName ? (
+                  <span
+                    className="localization-warning"
+                    role="img"
+                    aria-label={text.roster.missingLocalizedSkill}
+                    title={text.roster.missingLocalizedSkill}
+                  >
+                    <CircleHelp size={14} />
+                  </span>
+                ) : null}
                 <span>{unlocked ? text.roster.unlocked : unlockRequirementLabel(language, skill.unlockPhase, skill.unlockLevel)}</span>
               </div>
               {skill.effects.map((effect, index) => (
@@ -97,6 +108,16 @@ export function OperatorCard({
                   {facilityLabels[language][effect.facility]}
                   {effect.product ? ` / ${productLabels[language][effect.product]}` : ""}:{" "}
                   {localizeText(effect.description, language)}
+                  {!hasLocalizedText(effect.description, language) ? (
+                    <span
+                      className="localization-warning"
+                      role="img"
+                      aria-label={text.roster.missingLocalizedSkill}
+                      title={text.roster.missingLocalizedSkill}
+                    >
+                      <CircleHelp size={14} />
+                    </span>
+                  ) : null}
                   {effect.ignoredForOptimization ? <span className="optimization-note">{ignoredOptimizationLabel}</span> : null}
                 </p>
               ))}

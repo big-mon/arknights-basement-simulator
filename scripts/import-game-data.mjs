@@ -5,6 +5,7 @@ const root = process.cwd();
 const outputPath = path.join(root, "src", "data", "operators.json");
 const nameOverridesPath = path.join(root, "src", "data", "operator-name-overrides.json");
 const baseSkillOverridesPath = path.join(root, "src", "data", "base-skill-overrides.json");
+const baseSkillLocalizationOverridesPath = path.join(root, "src", "data", "base-skill-localization-overrides.json");
 const sources = {
   zh: {
     characters:
@@ -189,13 +190,30 @@ async function loadBaseSkillOverrides() {
   }
 }
 
+async function loadBaseSkillLocalizationOverrides() {
+  try {
+    return JSON.parse(await readFile(baseSkillLocalizationOverridesPath, "utf8"));
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      return {};
+    }
+    throw error;
+  }
+}
+
 function applyNameOverrides(name, overrides) {
   if (!overrides) {
     return name;
   }
 
   return Object.fromEntries(
-    Object.entries({ ...overrides, ...name }).filter(([, value]) => typeof value === "string" && value.trim())
+    Object.entries({ ...name, ...overrides }).filter(([, value]) => typeof value === "string" && value.trim())
+  );
+}
+
+function applyLocalizedOverrides(text, overrides) {
+  return Object.fromEntries(
+    Object.entries({ ...text, ...overrides }).filter(([, value]) => typeof value === "string" && value.trim())
   );
 }
 
@@ -404,7 +422,7 @@ function referencedOperatorIdsFromEffect(effect) {
   return conditions.flatMap((condition) => ("operatorIds" in condition ? condition.operatorIds : []));
 }
 
-function normalize(languages, nameOverrides, baseSkillOverrides) {
+function normalize(languages, nameOverrides, baseSkillOverrides, baseSkillLocalizationOverrides) {
   const characters = languages.zh.characters;
   const building = languages.zh.building;
   const buildingChars = building.chars ?? {};
@@ -439,15 +457,21 @@ function normalize(languages, nameOverrides, baseSkillOverrides) {
             (dataset) => dataset.building.buffs?.[rawBuff.buffId]?.description,
             description
           );
-          const conditions = inferConditions(localizedBuffDescription, nameIndex, charId);
-          const scaling = inferScaling(localizedBuffDescription);
+          const localizationOverride = baseSkillLocalizationOverrides[charId]?.skills?.[rawBuff.buffId];
+          const overriddenBuffName = applyLocalizedOverrides(localizedBuffName, localizationOverride?.name);
+          const overriddenBuffDescription = applyLocalizedOverrides(
+            localizedBuffDescription,
+            localizationOverride?.description
+          );
+          const conditions = inferConditions(overriddenBuffDescription, nameIndex, charId);
+          const scaling = inferScaling(overriddenBuffDescription);
           const efficiency = inferEfficiency(description);
           const baseEfficiency = inferBaseEfficiency(description);
           const effectBase = {
             facility,
             product: inferProduct(description, buff.roomType),
             tags: [facility, buff.skillIcon, buff.buffIcon].filter(Boolean),
-            description: localizedBuffDescription
+            description: overriddenBuffDescription
           };
           const effects =
             conditions.length && baseEfficiency < efficiency
@@ -475,7 +499,7 @@ function normalize(languages, nameOverrides, baseSkillOverrides) {
 
           return {
             id: String(buff.buffId ?? `${charId}-base-${index}`),
-            name: localizedBuffName,
+            name: overriddenBuffName,
             slot: rawBuff.slot,
             unlockPhase: phaseToElite(rawBuff.cond?.phase),
             unlockLevel: conditionLevelToNumber(rawBuff.cond?.level),
@@ -757,7 +781,12 @@ const languages = Object.fromEntries(
     ])
   )
 );
-const operators = normalize(languages, await loadNameOverrides(), await loadBaseSkillOverrides());
+const operators = normalize(
+  languages,
+  await loadNameOverrides(),
+  await loadBaseSkillOverrides(),
+  await loadBaseSkillLocalizationOverrides()
+);
 
 await mkdir(path.dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(operators, null, 2)}\n`, "utf8");

@@ -48,6 +48,7 @@ export const uiText = {
       unlocked: "解放済み",
       unlockAtElite: (phase: number) => `昇進${phase}で解放`,
       missingLocalizedName: "選択中の言語名未収録",
+      missingLocalizedSkill: "選択中の言語の基地スキル訳は未確認です。別言語の原文を表示しています。",
       skillListLabel: (name: string) => `${name}の基地スキル`
     },
     plan: {
@@ -112,6 +113,7 @@ export const uiText = {
       unlocked: "已解锁",
       unlockAtElite: (phase: number) => `精英化${phase}解锁`,
       missingLocalizedName: "当前语言名称未收录",
+      missingLocalizedSkill: "当前语言的基建技能译文尚未确认，正在显示其他语言原文。",
       skillListLabel: (name: string) => `${name}的基建技能`
     },
     plan: {
@@ -176,6 +178,7 @@ export const uiText = {
       unlocked: "Unlocked",
       unlockAtElite: (phase: number) => `Unlocks at E${phase}`,
       missingLocalizedName: "Name missing for selected language",
+      missingLocalizedSkill: "Base-skill translation is unverified in the selected language; source text is shown instead.",
       skillListLabel: (name: string) => `${name} base skills`
     },
     plan: {
