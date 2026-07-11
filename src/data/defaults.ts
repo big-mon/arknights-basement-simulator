@@ -1,6 +1,7 @@
 import type { AppState, BaseLayout, FacilitySlot, OptimizationPreference, Operator, ProductType, Roster, RotationCount } from "../types";
 import operatorsData from "./operators.json";
 import { defaultLevelForOperator } from "../lib/operatorLevel";
+import { maxEliteForRarity } from "../lib/elite";
 import { defaultLanguage } from "../i18n";
 
 export const operators = operatorsData as Operator[];
@@ -98,15 +99,19 @@ export function createDefaultRoster(): Roster {
   return Object.fromEntries(
     operators.map((operator) => [
       operator.id,
-      {
-        owned: false,
-        elite: 0,
-        level: defaultLevelForOperator(operator),
-        potential: 1,
-        moduleEnabled: false
-      }
+      createDefaultRosterEntry(operator)
     ])
   );
+}
+
+export function createDefaultRosterEntry(operator: Operator) {
+  return {
+    owned: false,
+    elite: maxEliteForRarity(operator.rarity),
+    level: defaultLevelForOperator(operator),
+    potential: 1,
+    moduleEnabled: false
+  } satisfies Roster[string];
 }
 
 export function createDefaultState(): AppState {

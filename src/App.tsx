@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   Activity,
   Archive,
@@ -20,6 +20,7 @@ import { OperatorCard } from "./components/OperatorCard";
 import { Stat } from "./components/Stat";
 import {
   createDefaultState,
+  createDefaultRosterEntry,
   createFacilitiesForLayout,
   defaultLayout,
   isBaseLayout,
@@ -47,6 +48,7 @@ import {
 import { exportState, importState, loadState, maxImportJsonBytes, saveState } from "./lib/storage";
 import type {
   AppState,
+  AssignmentPlan,
   BaseLayout,
   FacilityPlan,
   Assignment,
@@ -63,6 +65,24 @@ const tabs: Array<{ id: TabId; icon: typeof Users }> = [
   { id: "roster", icon: Users },
   { id: "plan", icon: Activity }
 ];
+
+const calculationStatus: Record<LanguageCode, { title: string; description: string; elapsed: (seconds: number) => string }> = {
+  ja: {
+    title: "配置を計算しています",
+    description: "最適な組み合わせを探索しています。しばらくお待ちください。",
+    elapsed: (seconds) => `${seconds}秒経過`
+  },
+  zh: {
+    title: "正在计算设施配置",
+    description: "正在搜索最佳组合，请稍候。",
+    elapsed: (seconds) => `已计算 ${seconds} 秒`
+  },
+  en: {
+    title: "Calculating assignments",
+    description: "Searching for the best combinations. Please wait.",
+    elapsed: (seconds) => `${seconds} second${seconds === 1 ? "" : "s"} elapsed`
+  }
+};
 
 const preferencePresets = [
   {
@@ -124,16 +144,40 @@ export function App() {
   const [query, setQuery] = useState("");
   const [professionFilter, setProfessionFilter] = useState("all");
   const [rarityFilter, setRarityFilter] = useState<RarityFilter>("all");
+  const [ownedOnly, setOwnedOnly] = useState(false);
   const [collapsedProfessions, setCollapsedProfessions] = useState<Set<string>>(() => new Set());
   const [collapsedRarityGroups, setCollapsedRarityGroups] = useState<Set<string>>(() => new Set());
   const [notice, setNotice] = useState("");
+  const [plan, setPlan] = useState<AssignmentPlan>();
+  const [isCalculatingPlan, setIsCalculatingPlan] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     saveState(state);
   }, [state]);
 
-  const plan = useMemo(() => generateAssignmentPlan(state), [state]);
+  useEffect(() => {
+    if (activeTab !== "plan") return;
+
+    setPlan(undefined);
+    setIsCalculatingPlan(true);
+
+    if (typeof Worker === "undefined") {
+      setPlan(generateAssignmentPlan(state));
+      setIsCalculatingPlan(false);
+      return;
+    }
+
+    const worker = new Worker(new URL("./workers/optimizer.worker.ts", import.meta.url), { type: "module" });
+    worker.onmessage = (event: MessageEvent<AssignmentPlan>) => {
+      setPlan(event.data);
+      setIsCalculatingPlan(false);
+      worker.terminate();
+    };
+    worker.postMessage(state);
+
+    return () => worker.terminate();
+  }, [activeTab, state]);
   const selectedLayout = isBaseLayout(state.layout) ? state.layout : defaultLayout;
   const ownedCount = Object.values(state.roster).filter((entry) => entry.owned).length;
   const language = state.language;
@@ -141,10 +185,13 @@ export function App() {
   const notes = calculationNotes[language];
   const professions = getProfessions(operators);
   const rarities = getRarities(operators);
-  const filteredOperators = filterOperators(operators, query, professionFilter, rarityFilter);
+  const matchingOperators = filterOperators(operators, query, professionFilter, rarityFilter);
+  const filteredOperators = ownedOnly
+    ? matchingOperators.filter((operator) => state.roster[operator.id]?.owned)
+    : matchingOperators;
   const groupedOperators = groupOperatorsByProfessionAndRarity(filteredOperators, state.roster, language);
 
-  function updateRoster(operatorId: string, patch: Partial<RosterEntry>) {
+  const updateRoster = useCallback((operatorId: string, patch: Partial<RosterEntry>) => {
     const operator = operators.find((candidate) => candidate.id === operatorId);
     const normalizedPatch =
       operator && "elite" in patch ? { ...patch, elite: clampEliteForOperator(operator, patch.elite) } : patch;
@@ -154,12 +201,31 @@ export function App() {
       roster: {
         ...current.roster,
         [operatorId]: {
-          ...defaultRosterEntry(),
+          ...(operator ? createDefaultRosterEntry(operator) : defaultRosterEntry()),
           ...current.roster[operatorId],
           ...normalizedPatch
         }
       }
     }));
+  }, []);
+
+  function updateVisibleOwnership(owned: boolean) {
+    setState((current) => {
+      const roster = { ...current.roster };
+      for (const operator of filteredOperators) {
+        roster[operator.id] = {
+          ...createDefaultRosterEntry(operator),
+          ...roster[operator.id],
+          owned
+        };
+      }
+      return { ...current, roster };
+    });
+  }
+
+  function showPlan() {
+    setActiveTab("plan");
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
   }
 
   function updateLanguage(language: LanguageCode) {
@@ -412,6 +478,24 @@ export function App() {
                 ))}
               </div>
             </fieldset>
+
+            <div className="roster-filter-actions">
+              <label className={ownedOnly ? "filter-chip active" : "filter-chip"}>
+                <input type="checkbox" checked={ownedOnly} onChange={(event) => setOwnedOnly(event.target.checked)} />
+                <span>{rosterActionLabels[language].ownedOnly}</span>
+              </label>
+              <span className="filter-result-count">{rosterActionLabels[language].visibleCount(filteredOperators.length)}</span>
+              <button type="button" className="secondary-button" onClick={() => updateVisibleOwnership(true)}>
+                {rosterActionLabels[language].selectVisible}
+              </button>
+              <button type="button" className="secondary-button" onClick={() => updateVisibleOwnership(false)}>
+                {rosterActionLabels[language].clearVisible}
+              </button>
+              <button type="button" className="plan-cta" disabled={ownedCount === 0} onClick={showPlan}>
+                <Activity size={18} />
+                <span>{rosterActionLabels[language].showPlan(ownedCount)}</span>
+              </button>
+            </div>
           </div>
 
           <div className="operator-sections">
@@ -469,7 +553,7 @@ export function App() {
                                   <OperatorCard
                                     key={operator.id}
                                     operator={operator}
-                                    entry={state.roster[operator.id] ?? defaultRosterEntry()}
+                                    entry={state.roster[operator.id] ?? createDefaultRosterEntry(operator)}
                                     language={language}
                                     onUpdateRoster={updateRoster}
                                   />
@@ -487,7 +571,9 @@ export function App() {
         </section>
       ) : null}
 
-      {activeTab === "plan" ? (
+      {activeTab === "plan" && isCalculatingPlan ? <PlanCalculationStatus language={language} /> : null}
+
+      {activeTab === "plan" && plan && !isCalculatingPlan ? (
         <section className="panel" aria-labelledby="plan-title">
           <div className="section-heading">
             <div>
@@ -543,11 +629,11 @@ export function App() {
 
           <div className="rotation-sections" aria-label={text.plan.rotationSuggestions}>
             {plan.rotation.map((window, rotationIndex) => (
-              <section key={window.label} className="rotation-section" aria-labelledby={`rotation-${rotationIndex + 1}`}>
-                <div className="rotation-section-heading">
+              <details key={window.label} className="rotation-section" open={rotationIndex === 0}>
+                <summary className="rotation-section-heading">
                   <h3 id={`rotation-${rotationIndex + 1}`}>{text.plan.rotationLabel(rotationIndex, state.rotationCount)}</h3>
-                  <span>{window.hours}h</span>
-                </div>
+                  <span>{window.hours}h · {rotationIndex === 0 ? planResultLabels[language].primary : planResultLabels[language].secondary}</span>
+                </summary>
                 <div className="plan-grid">
                   {plan.facilityPlans.map((facilityPlan) => (
                     <FacilityPlanCard
@@ -560,7 +646,7 @@ export function App() {
                     />
                   ))}
                 </div>
-              </section>
+              </details>
             ))}
           </div>
         </section>
@@ -589,6 +675,69 @@ export function App() {
     </main>
   );
 }
+
+function PlanCalculationStatus({ language }: { language: LanguageCode }) {
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setElapsedSeconds((seconds) => seconds + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const status = calculationStatus[language];
+
+  return (
+    <section className="panel calculation-panel" role="status" aria-busy="true">
+      <span className="calculation-spinner" aria-hidden="true" />
+      <div>
+        <h2>{status.title}</h2>
+        <p>{status.description}</p>
+        <p className="calculation-elapsed" aria-hidden="true">
+          {status.elapsed(elapsedSeconds)}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+const rosterActionLabels: Record<
+  LanguageCode,
+  {
+    ownedOnly: string;
+    selectVisible: string;
+    clearVisible: string;
+    visibleCount: (count: number) => string;
+    showPlan: (count: number) => string;
+  }
+> = {
+  ja: {
+    ownedOnly: "選択済みのみ",
+    selectVisible: "表示中をすべて選択",
+    clearVisible: "表示中をすべて解除",
+    visibleCount: (count) => `${count}人表示`,
+    showPlan: (count) => `選択した${count}人で配置を計算`
+  },
+  zh: {
+    ownedOnly: "仅显示已选择",
+    selectVisible: "全选当前显示",
+    clearVisible: "取消当前显示",
+    visibleCount: (count) => `显示 ${count} 人`,
+    showPlan: (count) => `使用已选择的 ${count} 人计算配置`
+  },
+  en: {
+    ownedOnly: "Selected only",
+    selectVisible: "Select all shown",
+    clearVisible: "Clear all shown",
+    visibleCount: (count) => `${count} shown`,
+    showPlan: (count) => `Calculate with ${count} selected`
+  }
+};
+
+const planResultLabels: Record<LanguageCode, { primary: string; secondary: string }> = {
+  ja: { primary: "最初に確認", secondary: "クリックして展開" },
+  zh: { primary: "优先查看", secondary: "点击展开" },
+  en: { primary: "Primary", secondary: "Click to expand" }
+};
 
 const fanMadeNotices: Record<LanguageCode, string> = {
   ja: "本サイトは非公式のファンメイドツールです。掲載画像等の権利は各権利者に帰属し、公式から削除要請をいただいた場合は速やかに対応します。ご連絡は下記のXアカウントへお願いいたします。",

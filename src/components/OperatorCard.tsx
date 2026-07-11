@@ -1,4 +1,4 @@
-import type { MouseEvent } from "react";
+import { memo, type MouseEvent } from "react";
 import { CircleHelp } from "lucide-react";
 import { facilityLabels, productLabels, professionLabels, uiText } from "../i18n";
 import { clampEliteForOperator, eliteOptionsForOperator } from "../lib/elite";
@@ -6,7 +6,7 @@ import { hasLocalizedText, localizeText } from "../lib/localization";
 import { effectiveLevelForOperator, levelOptionsForOperator } from "../lib/operatorLevel";
 import type { LanguageCode, Operator, RosterEntry } from "../types";
 
-export function OperatorCard({
+export const OperatorCard = memo(function OperatorCard({
   operator,
   entry,
   language,
@@ -70,6 +70,9 @@ export function OperatorCard({
             <p>{`★${operator.rarity} / ${professionLabels[language][operator.profession]}`}</p>
           </div>
         </div>
+      </div>
+      <details className="operator-details">
+        <summary>{operatorCardLabels[language].details}</summary>
         <div className="operator-controls">
           <label>
             {text.roster.elite}
@@ -100,8 +103,7 @@ export function OperatorCard({
             </label>
           ) : null}
         </div>
-      </div>
-      <ul className="base-skill-list" aria-label={text.roster.skillListLabel(operatorName)}>
+        <ul className="base-skill-list" aria-label={text.roster.skillListLabel(operatorName)}>
         {operator.skills.map((skill) => {
           const unlocked = skill.unlockPhase < elite || (skill.unlockPhase === elite && skill.unlockLevel <= entry.level);
           const skillName = localizeText(skill.name, language);
@@ -145,10 +147,11 @@ export function OperatorCard({
             </li>
           );
         })}
-      </ul>
+        </ul>
+      </details>
     </article>
   );
-}
+});
 
 const ignoredOptimizationLabels: Record<LanguageCode, string> = {
   ja: "最適化計算対象外",
@@ -162,6 +165,12 @@ const levelLabels: Record<LanguageCode, string> = {
   en: "Level"
 };
 
+const operatorCardLabels: Record<LanguageCode, { details: string }> = {
+  ja: { details: "育成状況・詳細" },
+  zh: { details: "培养状态与基建技能" },
+  en: { details: "Progress and base skills" }
+};
+
 function unlockRequirementLabel(language: LanguageCode, phase: number, level: number) {
   if (language === "ja") return `昇進${phase} Lv.${level}で解放`;
   if (language === "zh") return `精英化${phase} Lv.${level}解锁`;
@@ -169,5 +178,5 @@ function unlockRequirementLabel(language: LanguageCode, phase: number, level: nu
 }
 
 function isInteractiveCardTarget(target: EventTarget) {
-  return target instanceof Element && Boolean(target.closest("button, input, label, select, textarea, a"));
+  return target instanceof Element && Boolean(target.closest("button, input, label, select, textarea, a, summary"));
 }
