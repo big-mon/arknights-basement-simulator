@@ -67,6 +67,42 @@ describe("App", () => {
     expect(within(screen.getByText(amiyaName).closest("article")!).getByRole("checkbox", { name: amiyaName })).toBeChecked();
   });
 
+  it("keeps operator details compact until explicitly expanded", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const amiyaCard = screen.getByText(amiyaName).closest("article")!;
+    const details = within(amiyaCard).getByText("育成状況・詳細").closest("details")!;
+
+    expect(details).not.toHaveAttribute("open");
+    await user.click(within(amiyaCard).getByText("育成状況・詳細"));
+    expect(details).toHaveAttribute("open");
+  });
+
+  it("selects and clears all operators currently shown by the filters", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(screen.getByPlaceholderText("名前で検索"), amiyaName);
+    await user.click(screen.getByRole("button", { name: "表示中をすべて選択" }));
+    expect(within(screen.getByText(amiyaName).closest("article")!).getByRole("checkbox", { name: amiyaName })).toBeChecked();
+    expect(screen.getByRole("button", { name: "選択した1人で配置を計算" })).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "表示中をすべて解除" }));
+    expect(within(screen.getByText(amiyaName).closest("article")!).getByRole("checkbox", { name: amiyaName })).not.toBeChecked();
+  });
+
+  it("can limit the roster to selected operators", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const amiyaCheckbox = within(screen.getByText(amiyaName).closest("article")!).getByRole("checkbox", { name: amiyaName });
+
+    await user.click(amiyaCheckbox);
+    await user.click(screen.getByRole("checkbox", { name: "選択済みのみ" }));
+
+    expect(screen.getByText(amiyaName)).toBeInTheDocument();
+    expect(screen.queryByText(operatorNameJa(threeStarOperator))).not.toBeInTheDocument();
+  });
+
   it("starts with no owned operators selected", () => {
     render(<App />);
 

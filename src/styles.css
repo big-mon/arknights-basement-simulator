@@ -44,6 +44,25 @@ button {
   align-items: center;
 }
 
+.operator-details {
+  width: 100%;
+  margin-top: 10px;
+  border-top: 1px solid #e8e1d7;
+}
+
+.operator-details summary {
+  padding-top: 10px;
+  color: #6b625a;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.operator-details[open] summary {
+  margin-bottom: 12px;
+  color: #8b3d28;
+}
+
 .topbar {
   justify-content: space-between;
   gap: 20px;
@@ -139,6 +158,13 @@ h4 {
 
 .summary-strip {
   margin: 28px 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgb(245 241 234 / 96%);
+  backdrop-filter: blur(8px);
   display: grid;
   grid-template-columns: minmax(160px, 0.72fr) minmax(310px, 1.45fr) minmax(220px, 1fr);
   align-items: stretch;
@@ -259,6 +285,48 @@ h4 {
   background: #fffdf9;
 }
 
+.calculation-panel {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  text-align: left;
+}
+
+.calculation-panel h2,
+.calculation-panel p {
+  margin: 0;
+}
+
+.calculation-panel p {
+  margin-top: 6px;
+  color: #65605b;
+}
+
+.calculation-panel .calculation-elapsed {
+  margin-top: 12px;
+  color: #8b572f;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.calculation-spinner {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border: 3px solid #ded8cf;
+  border-top-color: #d0723b;
+  border-radius: 50%;
+  animation: calculation-spin 0.75s linear infinite;
+}
+
+@keyframes calculation-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .section-heading {
   justify-content: space-between;
   gap: 16px;
@@ -299,6 +367,68 @@ h4 {
   margin: 16px 0 22px;
   display: grid;
   gap: 12px;
+}
+
+.roster-filter-panel {
+  position: sticky;
+  top: 104px;
+  z-index: 10;
+  padding: 12px;
+  border: 1px solid #ded5c7;
+  border-radius: 10px;
+  background: rgb(255 253 249 / 97%);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 20px rgb(62 51 38 / 8%);
+}
+
+.roster-filter-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #ded5c7;
+}
+
+.filter-result-count {
+  margin-right: auto;
+  color: #6b625a;
+  font-size: 0.84rem;
+}
+
+.secondary-button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #cfc5b8;
+  border-radius: 7px;
+  background: #fff;
+  color: #3d3935;
+  font-weight: 700;
+}
+
+.secondary-button:hover {
+  border-color: #b94c2d;
+}
+
+.plan-cta {
+  min-height: 48px;
+  margin-left: 4px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: #a64028;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 8px 24px rgb(91 43 29 / 28%);
+}
+
+.plan-cta:disabled {
+  background: #aaa29a;
+  box-shadow: none;
+  cursor: not-allowed;
 }
 
 .filter-group {
@@ -790,6 +920,32 @@ input[type="radio"] {
   gap: 12px;
 }
 
+.rotation-section > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.rotation-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.rotation-section > summary::before {
+  content: "›";
+  margin-right: 8px;
+  color: #a64028;
+  font-size: 1.35rem;
+  line-height: 1;
+  transition: transform 160ms ease;
+}
+
+.rotation-section[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.rotation-section:not([open]) .rotation-section-heading {
+  margin-bottom: 0;
+}
+
 .rotation-section-heading {
   display: flex;
   align-items: baseline;
@@ -932,6 +1088,13 @@ input[type="radio"] {
 }
 
 @media (max-width: 900px) {
+  .summary-strip {
+    position: static;
+  }
+
+  .roster-filter-panel {
+    position: static;
+  }
   .summary-strip,
   .operator-grid,
   .plan-metrics,
@@ -963,6 +1126,53 @@ input[type="radio"] {
   .preference-grid,
   .plan-grid {
     grid-template-columns: 1fr;
+  }
+
+  .summary-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  .summary-strip > .stat {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .summary-strip > .layout-summary-control {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .summary-strip > .summary-control:last-child {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .summary-strip .stat,
+  .summary-strip .summary-control {
+    min-height: 68px;
+    padding: 12px;
+  }
+
+  .rotation-selector.compact .rotation-option:disabled {
+    display: none;
+  }
+
+  .roster-filter-panel {
+    margin-inline: -8px;
+    padding: 10px;
+  }
+
+  .roster-filter-actions .secondary-button {
+    flex: 1 1 140px;
+  }
+
+  .plan-cta {
+    width: 100%;
+    justify-content: center;
+    bottom: 10px;
   }
 
   .panel {
