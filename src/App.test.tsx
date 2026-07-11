@@ -1,13 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App, assignmentsForFacilitySlots } from "./App";
 import { FacilityPlanCard } from "./components/FacilityPlanCard";
 import { createDefaultState, operators } from "./data/defaults";
 import { productLabels } from "./i18n";
 import { localizeText } from "./lib/localization";
 import { maxImportJsonBytes } from "./lib/storage";
-import type { Assignment, FacilityPlan } from "./types";
+import type { Assignment, AssignmentPlan, FacilityPlan } from "./types";
 
 const amiya = operators.find((operator) => operator.id === "char_002_amiya")!;
 const amiyaName = localizeText(amiya.name, "ja");
@@ -51,6 +51,10 @@ function operatorNameJa(operator: (typeof operators)[number]) {
 describe("App", () => {
   beforeEach(() => {
     window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("sets roster ownership and keeps it after remount", async () => {
@@ -483,6 +487,49 @@ describe("App", () => {
     expect(within(rotationSuggestions).queryByText(/貿易所 \/ 龍門幣/)).not.toBeInTheDocument();
   });
 
+  it("reuses the current plan when switching tabs until optimization inputs change", async () => {
+    const user = userEvent.setup();
+    let workerCount = 0;
+    const workerPlan: AssignmentPlan = {
+      generatedAt: "2026-07-12T00:00:00.000Z",
+      totalScore: 0,
+      dailyValue: 0,
+      facilityPlans: [],
+      rotation: [],
+      warnings: []
+    };
+
+    class MockWorker {
+      onmessage: ((event: MessageEvent<AssignmentPlan>) => void) | null = null;
+
+      constructor() {
+        workerCount += 1;
+      }
+
+      postMessage() {
+        this.onmessage?.({ data: workerPlan } as MessageEvent<AssignmentPlan>);
+      }
+
+      terminate() {}
+    }
+
+    vi.stubGlobal("Worker", MockWorker);
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /提案/ }));
+    expect(workerCount).toBe(1);
+
+    await user.click(screen.getByRole("button", { name: /所有/ }));
+    await user.click(screen.getByRole("button", { name: /提案/ }));
+    expect(workerCount).toBe(1);
+
+    await user.click(screen.getByRole("button", { name: /所有/ }));
+    const amiyaCard = screen.getByText(amiyaName).closest("article")!;
+    await user.click(within(amiyaCard).getByRole("checkbox", { name: amiyaName }));
+    await user.click(screen.getByRole("button", { name: /提案/ }));
+    expect(workerCount).toBe(2);
+  });
+
   it("shows target products on trading and factory recommendation cards", async () => {
     const user = userEvent.setup();
     const { container } = render(<App />);
@@ -528,6 +575,10 @@ describe("App", () => {
     );
 
     expect(screen.getByText("+48%")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: `${amiyaName} icon` })).toHaveAttribute(
+      "src",
+      `/operator-avatars/${amiya.id}.png`
+    );
   });
 
   it("shows facility-level expected efficiency in alternative recommendation cards", () => {

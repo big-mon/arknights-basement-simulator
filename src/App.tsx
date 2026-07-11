@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   Archive,
@@ -151,6 +151,8 @@ export function App() {
   const [plan, setPlan] = useState<AssignmentPlan>();
   const [isCalculatingPlan, setIsCalculatingPlan] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const calculatedPlanInputKeyRef = useRef<string | undefined>(undefined);
+  const planInputKey = useMemo(() => optimizationInputKey(state), [state]);
 
   useEffect(() => {
     saveState(state);
@@ -158,26 +160,36 @@ export function App() {
 
   useEffect(() => {
     if (activeTab !== "plan") return;
+    if (plan && calculatedPlanInputKeyRef.current === planInputKey) return;
 
     setPlan(undefined);
     setIsCalculatingPlan(true);
 
     if (typeof Worker === "undefined") {
-      setPlan(generateAssignmentPlan(state));
+      const nextPlan = generateAssignmentPlan(state);
+      calculatedPlanInputKeyRef.current = planInputKey;
+      setPlan(nextPlan);
       setIsCalculatingPlan(false);
       return;
     }
 
     const worker = new Worker(new URL("./workers/optimizer.worker.ts", import.meta.url), { type: "module" });
+    let cancelled = false;
     worker.onmessage = (event: MessageEvent<AssignmentPlan>) => {
+      if (cancelled) return;
+
+      calculatedPlanInputKeyRef.current = planInputKey;
       setPlan(event.data);
       setIsCalculatingPlan(false);
       worker.terminate();
     };
     worker.postMessage(state);
 
-    return () => worker.terminate();
-  }, [activeTab, state]);
+    return () => {
+      cancelled = true;
+      worker.terminate();
+    };
+  }, [activeTab, planInputKey]);
   const selectedLayout = isBaseLayout(state.layout) ? state.layout : defaultLayout;
   const ownedCount = Object.values(state.roster).filter((entry) => entry.owned).length;
   const language = state.language;
@@ -791,6 +803,16 @@ function selectedPreferencePreset(preference: { gold: number; battleRecord: numb
     return "lmd";
   }
   return "balanced";
+}
+
+function optimizationInputKey(state: AppState) {
+  return JSON.stringify({
+    layout: state.layout,
+    rotationCount: state.rotationCount,
+    roster: state.roster,
+    facilities: state.facilities,
+    preference: state.preference
+  });
 }
 
 export function rotationAssignmentsForFacility(facilityPlan: FacilityPlan, rotationIndex: number): Assignment[] {

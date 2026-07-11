@@ -83,6 +83,11 @@ const baseMoraleConsumptionPerHour = 1;
 const controlCenterReductionPerOperator = 0.05;
 const sharedRoomReductionPerAdditionalOperator = 0.05;
 const maxDormitoryRecoveryPerHour = 4;
+const baselineAssignmentReasons: Record<AppState["language"], string> = {
+  ja: "適用可能な基地スキルなし（基準効率）",
+  zh: "无可用基建技能（基础效率）",
+  en: "No applicable base skill (baseline efficiency)"
+};
 
 const maxFacilityLevelByType: Record<FacilitySlot["type"], number> = {
   factory: 3,
@@ -189,6 +194,7 @@ function buildFacilityPlans(
       return {
         facility,
         facilityBonus,
+        candidates,
         teamOptions: buildFacilityTeamOptions(candidates, facility.slotCount)
       };
     });
@@ -241,7 +247,7 @@ function buildFacilityPlans(
   }
   const bestPlans = searchStates[0]?.plans ?? [];
   const plansByFacilityId = new Map(bestPlans.map((plan) => [plan.facility.id, plan]));
-  return enabledFacilities.map((facility) =>
+  const plans = enabledFacilities.map((facility) =>
     plansByFacilityId.get(facility.id) ?? {
       facility,
       assignments: [],
@@ -250,6 +256,76 @@ function buildFacilityPlans(
       alternatives: []
     }
   );
+  return fillVacantFacilitySlots(
+    state,
+    plans,
+    context,
+    excludedOperatorIds,
+    new Map(facilityCandidates.map(({ facility, candidates }) => [facility.id, candidates]))
+  );
+}
+
+function fillVacantFacilitySlots(
+  state: AppState,
+  facilityPlans: FacilityPlan[],
+  context: AssignmentEvaluationContext,
+  excludedOperatorIds: ReadonlySet<string>,
+  candidatesByFacilityId: ReadonlyMap<string, Assignment[]>
+) {
+  const usedOperatorIds = new Set([
+    ...excludedOperatorIds,
+    ...facilityPlans.flatMap((plan) => plan.assignments.map((assignment) => assignment.operatorId))
+  ]);
+
+  const filledPlansByFacilityId = new Map(
+    [...facilityPlans]
+      .sort((a, b) => a.facility.id.localeCompare(b.facility.id))
+      .map((plan) => {
+        const assignments = [...plan.assignments];
+        if (facilitySlotOccupancy(assignments) >= plan.facility.slotCount) {
+          return [plan.facility.id, plan] as const;
+        }
+        const globalStackKeys = new Set(assignments.flatMap((assignment) => assignmentGlobalStackKeys(assignment)));
+
+        const skillAssignmentByOperatorId = new Map(
+          (candidatesByFacilityId.get(plan.facility.id) ?? [])
+            .filter(
+              (assignment) =>
+                !assignment.skilllessPrerequisiteOperatorIds?.length &&
+                !assignment.baseSkilllessPrerequisiteOperatorIds?.length
+            )
+            .map((assignment) => [assignment.operatorId, assignment])
+        );
+
+        const fillerOperators = [...operators].sort(
+          (a, b) =>
+            (skillAssignmentByOperatorId.get(b.id)?.score ?? 0) - (skillAssignmentByOperatorId.get(a.id)?.score ?? 0) ||
+            a.id.localeCompare(b.id)
+        );
+
+        for (const operator of fillerOperators) {
+          if (facilitySlotOccupancy(assignments) >= plan.facility.slotCount) {
+            break;
+          }
+          if (!state.roster[operator.id]?.owned || usedOperatorIds.has(operator.id)) {
+            continue;
+          }
+
+          const skillAssignment = skillAssignmentByOperatorId.get(operator.id);
+          const assignment =
+            skillAssignment && !assignmentGlobalStackKeys(skillAssignment).some((stackKey) => globalStackKeys.has(stackKey))
+              ? skillAssignment
+              : baselineAssignment(operator, plan.facility, state.language, context.shiftHours);
+          assignments.push(assignment);
+          assignmentGlobalStackKeys(assignment).forEach((stackKey) => globalStackKeys.add(stackKey));
+          usedOperatorIds.add(operator.id);
+        }
+
+        return [plan.facility.id, { ...plan, assignments }] as const;
+      })
+  );
+
+  return facilityPlans.map((plan) => filledPlansByFacilityId.get(plan.facility.id) ?? plan);
 }
 
 function buildFacilityTeamOptions(candidates: Assignment[], slotCount: number) {
@@ -600,6 +676,24 @@ export function findCandidates(
       return bestSkillForFacility(operator, rosterEntry, facility, state.preference, globalBonus, state.language, evaluationContext);
     })
     .sort((a, b) => b.score - a.score);
+}
+
+function baselineAssignment(
+  operator: Operator,
+  facility: FacilitySlot,
+  language: AppState["language"],
+  shiftHours = 12
+): Assignment {
+  return {
+    facilityId: facility.id,
+    operatorId: operator.id,
+    skillId: "baseline",
+    score: 0,
+    efficiency: 0,
+    fatigueHours: moraleCapacity,
+    recoveryHours: shiftHours / maxDormitoryRecoveryPerHour,
+    reason: baselineAssignmentReasons[language]
+  };
 }
 
 function bestSkillForFacility(
@@ -2286,54 +2380,17 @@ function facilityTypeWeight(facilityType: FacilitySlot["type"]): number {
   return 35;
 }
 
-function buildWarnings(state: AppState, enabledFacilities: FacilitySlot[], facilityPlans: FacilityPlan[]): string[] {
+function buildWarnings(_state: AppState, _enabledFacilities: FacilitySlot[], facilityPlans: FacilityPlan[]): string[] {
   const warnings: string[] = [];
-  const context: AssignmentEvaluationContext = {
-    assignments: facilityPlans.flatMap((plan) => plan.assignments),
-    facilities: state.facilities,
-    roster: state.roster,
-    shiftHours: rotationShiftHours(state.rotationCount)
-  };
+  const hasVacancy = facilityPlans.some(
+    (plan) =>
+      facilitySlotOccupancy(plan.assignments) < plan.facility.slotCount ||
+      facilitySlotOccupancy(plan.alternatives) < plan.facility.slotCount
+  );
 
-  if (!candidateOperatorsCanCoverSlots(state, enabledFacilities, context)) {
+  if (hasVacancy) {
     warnings.push("一部施設でスロット数に対して候補オペレーターが不足しています。所有設定か昇進段階を見直してください。");
   }
 
   return warnings;
-}
-
-function candidateOperatorsCanCoverSlots(
-  state: AppState,
-  facilities: FacilitySlot[],
-  context: AssignmentEvaluationContext
-) {
-  const candidateOperatorIdsBySlot = facilities.flatMap((facility) => {
-    const candidateOperatorIds = [
-      ...new Set(
-        findCandidates(facility, state, 0, context).flatMap((candidate) => [
-          candidate.operatorId,
-          ...(candidate.skilllessPrerequisiteOperatorIds ?? [])
-        ])
-      )
-    ];
-    return Array.from({ length: facility.slotCount }, () => candidateOperatorIds);
-  });
-  const matchedSlotByOperatorId = new Map<string, number>();
-
-  function matchSlot(slotIndex: number, visitedOperatorIds: Set<string>): boolean {
-    for (const operatorId of candidateOperatorIdsBySlot[slotIndex]) {
-      if (visitedOperatorIds.has(operatorId)) {
-        continue;
-      }
-      visitedOperatorIds.add(operatorId);
-      const previousSlotIndex = matchedSlotByOperatorId.get(operatorId);
-      if (previousSlotIndex === undefined || matchSlot(previousSlotIndex, visitedOperatorIds)) {
-        matchedSlotByOperatorId.set(operatorId, slotIndex);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  return candidateOperatorIdsBySlot.every((_, slotIndex) => matchSlot(slotIndex, new Set()));
 }

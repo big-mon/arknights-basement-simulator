@@ -594,7 +594,7 @@ describe("optimizer", () => {
     expect(receptionPlan.assignments.some((assignment) => assignment.operatorId === vulpisfoglia.id)).toBe(true);
     expect(suzuranAssignment.skillId).toBe("skillless-prerequisite");
     expect(suzuranAssignment.skilllessPrerequisiteFor).toBe(vulpisfoglia.id);
-    expect(plan.warnings).toEqual([]);
+    expect(plan.warnings).toHaveLength(1);
   });
 
   it("scales Muelsyse's power bonus by other Rhine operators assigned in the base", () => {
@@ -1460,7 +1460,7 @@ describe("optimizer", () => {
     expect(vulcanCandidate.storageLimit).toBe(16);
   });
 
-  it("does not fill factory slots with standalone negative productivity candidates", () => {
+  it("uses standalone negative productivity operators rather than leaving a factory vacant", () => {
     const state = createDefaultState();
     ownOperators(state, [bena.id, vulcan.id]);
     const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
@@ -1468,11 +1468,11 @@ describe("optimizer", () => {
     const plan = generateAssignmentPlan(state);
     const factoryPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === factory.id)!;
 
-    expect(factoryPlan.assignments).toEqual([]);
-    expect(factoryPlan.expectedEfficiency).toBe(0);
+    expect(factoryPlan.assignments.map((assignment) => assignment.operatorId)).toEqual(expect.arrayContaining([bena.id, vulcan.id]));
+    expect(factoryPlan.expectedEfficiency).toBeCloseTo(-0.25);
   });
 
-  it("does not add negative capacity partners unless their limit synergy is net positive", () => {
+  it("uses a negative capacity operator only as a fallback when a factory slot would otherwise be vacant", () => {
     const state = createDefaultState();
     ownOperators(state, [bubble.id, bena.id]);
     state.roster[bena.id].elite = 0;
@@ -1482,7 +1482,8 @@ describe("optimizer", () => {
     const factoryPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === factory.id)!;
 
     expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === bubble.id)).toBe(true);
-    expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === bena.id)).toBe(false);
+    expect(factoryPlan.assignments.some((assignment) => assignment.operatorId === bena.id)).toBe(true);
+    expect(factoryPlan.assignments).toHaveLength(2);
   });
 
   it("can replace a normal factory worker with a positive capacity partner when the room gains output", () => {
@@ -1527,6 +1528,30 @@ describe("optimizer", () => {
     const factoryPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === factory.id)!;
 
     expect(factoryPlan.assignments.length).toBeLessThanOrEqual(factory.slotCount);
+  });
+
+  it("fills both rotations with baseline operators when no applicable facility skills exist", () => {
+    const state = createDefaultState();
+    state.facilities = state.facilities
+      .filter((facility) => facility.type === "factory")
+      .slice(0, 2)
+      .map((facility) => ({ ...facility, slotCount: 1 }));
+    const baselineOperators = operators
+      .filter((operator) => !operator.skills.some((skill) => skill.effects.some((effect) => effect.facility === "factory")))
+      .slice(0, 4);
+    ownOperators(state, baselineOperators.map((operator) => operator.id));
+
+    const plan = generateAssignmentPlan(state);
+
+    expect(baselineOperators).toHaveLength(4);
+    expect(plan.facilityPlans.every((facilityPlan) => facilityPlan.assignments.length === facilityPlan.facility.slotCount)).toBe(true);
+    expect(plan.facilityPlans.every((facilityPlan) => facilityPlan.alternatives.length === facilityPlan.facility.slotCount)).toBe(true);
+    expect(
+      plan.facilityPlans
+        .flatMap((facilityPlan) => [...facilityPlan.assignments, ...facilityPlan.alternatives])
+        .every((assignment) => assignment.skillId === "baseline" && assignment.efficiency === 0)
+    ).toBe(true);
+    expect(plan.warnings).toEqual([]);
   });
 
   it("does not report a candidate shortage when owned operators can cover every facility slot", () => {
