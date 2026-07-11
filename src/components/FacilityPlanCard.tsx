@@ -36,6 +36,15 @@ export function FacilityPlanCard({
           {assignments.map((assignment) => (
             <li key={`${assignment.facilityId}-${assignment.operatorId}`}>
               <Check size={16} />
+              <img
+                className="assignment-avatar"
+                src={`/operator-avatars/${assignment.operatorId}.png`}
+                alt={`${operatorNameById(assignment.operatorId)} icon`}
+                loading="lazy"
+                onError={(event) => {
+                  event.currentTarget.hidden = true;
+                }}
+              />
               <span>
                 {operatorNameById(assignment.operatorId)}
                 <small>{assignment.reason}</small>
