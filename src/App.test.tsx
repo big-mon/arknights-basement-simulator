@@ -411,6 +411,7 @@ describe("App", () => {
     expect(within(skillList).getByText(localizeText(firstSkill.name, "ja"))).toBeInTheDocument();
     expect(within(skillList).getByText(localizeText(secondSkill.name, "ja"))).toBeInTheDocument();
     expect(within(skillList).getAllByText(/制御中枢/).length).toBeGreaterThan(0);
+    await user.selectOptions(within(amiyaCard).getByRole("combobox"), "0");
     expect(within(skillList).getByText("昇進2 Lv.1で解放")).toBeInTheDocument();
 
     await user.selectOptions(within(amiyaCard).getByRole("combobox"), "2");
@@ -424,10 +425,26 @@ describe("App", () => {
     const threeStarCard = screen.getByText(operatorNameJa(threeStarOperator)).closest("article")!;
     const threeStarEliteSelect = within(threeStarCard).getByRole("combobox") as HTMLSelectElement;
     expect(Array.from(threeStarEliteSelect.options).map((option) => option.value)).toEqual(["0", "1"]);
+    expect(threeStarEliteSelect).toHaveValue("1");
 
     const lowRarityCard = screen.getByText(operatorNameJa(lowRarityOperator)).closest("article")!;
     const lowRarityEliteSelect = within(lowRarityCard).getByRole("combobox") as HTMLSelectElement;
     expect(Array.from(lowRarityEliteSelect.options).map((option) => option.value)).toEqual(["0"]);
+    expect(lowRarityEliteSelect).toHaveValue("0");
+
+    const amiyaCard = screen.getByText(amiyaName).closest("article")!;
+    expect(within(amiyaCard).getByRole("combobox", { name: "昇進" })).toHaveValue("2");
+  });
+
+  it("preserves an explicitly saved lower elite phase", () => {
+    const savedState = createDefaultState();
+    savedState.roster[amiya.id] = { ...savedState.roster[amiya.id], owned: true, elite: 0, level: 1 };
+    window.localStorage.setItem("arknights-basement-state-v1", JSON.stringify(savedState));
+
+    render(<App />);
+
+    const amiyaCard = screen.getByText(amiyaName).closest("article")!;
+    expect(within(amiyaCard).getByRole("combobox", { name: "昇進" })).toHaveValue("0");
   });
 
   it("shows assignment suggestions after switching to recommendation tab", async () => {

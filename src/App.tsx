@@ -20,6 +20,7 @@ import { OperatorCard } from "./components/OperatorCard";
 import { Stat } from "./components/Stat";
 import {
   createDefaultState,
+  createDefaultRosterEntry,
   createFacilitiesForLayout,
   defaultLayout,
   isBaseLayout,
@@ -200,7 +201,7 @@ export function App() {
       roster: {
         ...current.roster,
         [operatorId]: {
-          ...defaultRosterEntry(),
+          ...(operator ? createDefaultRosterEntry(operator) : defaultRosterEntry()),
           ...current.roster[operatorId],
           ...normalizedPatch
         }
@@ -213,7 +214,7 @@ export function App() {
       const roster = { ...current.roster };
       for (const operator of filteredOperators) {
         roster[operator.id] = {
-          ...defaultRosterEntry(),
+          ...createDefaultRosterEntry(operator),
           ...roster[operator.id],
           owned
         };
@@ -552,7 +553,7 @@ export function App() {
                                   <OperatorCard
                                     key={operator.id}
                                     operator={operator}
-                                    entry={state.roster[operator.id] ?? defaultRosterEntry()}
+                                    entry={state.roster[operator.id] ?? createDefaultRosterEntry(operator)}
                                     language={language}
                                     onUpdateRoster={updateRoster}
                                   />

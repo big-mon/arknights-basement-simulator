@@ -7,6 +7,7 @@ import type {
   FacilitySlot,
   FacilityType,
   LanguageCode,
+  Operator,
   OptimizationPreference,
   ProductType,
   Roster,
@@ -91,7 +92,7 @@ function normalizeRoster(roster: unknown): Roster {
         operator.id,
         {
           owned: typeof entry?.["owned"] === "boolean" ? entry["owned"] : defaultEntry.owned,
-          elite: clampEliteForOperator(operator, entry?.["elite"]),
+          elite: normalizeElite(operator, entry?.["elite"], defaultEntry.elite),
           level: normalizeInteger(entry?.["level"], defaultEntry.level, 1, 90),
           potential: normalizeInteger(entry?.["potential"], defaultEntry.potential, 1, 6),
           moduleEnabled: typeof entry?.["moduleEnabled"] === "boolean" ? entry["moduleEnabled"] : defaultEntry.moduleEnabled
@@ -99,6 +100,11 @@ function normalizeRoster(roster: unknown): Roster {
       ];
     })
   );
+}
+
+function normalizeElite(operator: Operator, value: unknown, fallback: RosterEntry["elite"]): RosterEntry["elite"] {
+  const numericValue = typeof value === "number" ? value : Number(value);
+  return clampEliteForOperator(operator, numericValue === 0 || numericValue === 1 || numericValue === 2 ? numericValue : fallback);
 }
 
 function inferLayout(facilities?: FacilitySlot[]): BaseLayout | undefined {
