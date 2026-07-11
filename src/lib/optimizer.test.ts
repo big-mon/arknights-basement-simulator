@@ -1528,6 +1528,29 @@ describe("optimizer", () => {
     expect(factoryPlan.assignments.length).toBeLessThanOrEqual(factory.slotCount);
   });
 
+  it("does not report a candidate shortage when owned operators can cover every facility slot", () => {
+    const state = createDefaultState();
+    ownOperators(
+      state,
+      operators.slice(0, 150).map((operator) => operator.id)
+    );
+
+    const plan = generateAssignmentPlan(state);
+
+    expect(plan.warnings).toEqual([]);
+  });
+
+  it("reports a candidate shortage when owned operators cannot cover a facility's slots", () => {
+    const state = createDefaultState();
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    state.facilities = [factory];
+    ownOperators(state, [defaultOwnedGoldFactoryOperator.id]);
+
+    const plan = generateAssignmentPlan(state);
+
+    expect(plan.warnings).toHaveLength(1);
+  });
+
   it("can replace a normal factory worker with a negative capacity partner when the room gains output", () => {
     const state = createDefaultState();
     const factory = state.facilities.find((facility) => facility.id === "factory-1")!;

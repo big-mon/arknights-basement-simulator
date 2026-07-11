@@ -153,7 +153,7 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
     0
   );
 
-  const warnings = buildWarnings(enabledFacilities, facilityPlans);
+  const warnings = buildWarnings(state, enabledFacilities, facilityPlans);
 
   return {
     generatedAt: new Date().toISOString(),
@@ -2286,13 +2286,49 @@ function facilityTypeWeight(facilityType: FacilitySlot["type"]): number {
   return 35;
 }
 
-function buildWarnings(enabledFacilities: FacilitySlot[], facilityPlans: FacilityPlan[]): string[] {
+function buildWarnings(state: AppState, enabledFacilities: FacilitySlot[], facilityPlans: FacilityPlan[]): string[] {
   const warnings: string[] = [];
-  const shortPlans = facilityPlans.filter((plan) => facilitySlotOccupancy(plan.assignments) < plan.facility.slotCount);
+  const context: AssignmentEvaluationContext = {
+    assignments: facilityPlans.flatMap((plan) => plan.assignments),
+    facilities: state.facilities,
+    roster: state.roster,
+    shiftHours: rotationShiftHours(state.rotationCount)
+  };
 
-  if (shortPlans.length > 0) {
+  if (!candidateOperatorsCanCoverSlots(state, enabledFacilities, context)) {
     warnings.push("一部施設でスロット数に対して候補オペレーターが不足しています。所有設定か昇進段階を見直してください。");
   }
 
   return warnings;
+}
+
+function candidateOperatorsCanCoverSlots(
+  state: AppState,
+  facilities: FacilitySlot[],
+  context: AssignmentEvaluationContext
+) {
+  const candidateOperatorIdsBySlot = facilities.flatMap((facility) => {
+    const candidateOperatorIds = [
+      ...new Set(findCandidates(facility, state, 0, context).map((candidate) => candidate.operatorId))
+    ];
+    return Array.from({ length: facility.slotCount }, () => candidateOperatorIds);
+  });
+  const matchedSlotByOperatorId = new Map<string, number>();
+
+  function matchSlot(slotIndex: number, visitedOperatorIds: Set<string>): boolean {
+    for (const operatorId of candidateOperatorIdsBySlot[slotIndex]) {
+      if (visitedOperatorIds.has(operatorId)) {
+        continue;
+      }
+      visitedOperatorIds.add(operatorId);
+      const matchedSlot = matchedSlotByOperatorId.get(operatorId);
+      if (matchedSlot === undefined || matchSlot(matchedSlot, visitedOperatorIds)) {
+        matchedSlotByOperatorId.set(operatorId, slotIndex);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  return candidateOperatorIdsBySlot.every((_, slotIndex) => matchSlot(slotIndex, new Set()));
 }
