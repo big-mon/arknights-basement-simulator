@@ -2309,7 +2309,12 @@ function candidateOperatorsCanCoverSlots(
 ) {
   const candidateOperatorIdsBySlot = facilities.flatMap((facility) => {
     const candidateOperatorIds = [
-      ...new Set(findCandidates(facility, state, 0, context).map((candidate) => candidate.operatorId))
+      ...new Set(
+        findCandidates(facility, state, 0, context).flatMap((candidate) => [
+          candidate.operatorId,
+          ...(candidate.skilllessPrerequisiteOperatorIds ?? [])
+        ])
+      )
     ];
     return Array.from({ length: facility.slotCount }, () => candidateOperatorIds);
   });
@@ -2321,8 +2326,8 @@ function candidateOperatorsCanCoverSlots(
         continue;
       }
       visitedOperatorIds.add(operatorId);
-      const matchedSlot = matchedSlotByOperatorId.get(operatorId);
-      if (matchedSlot === undefined || matchSlot(matchedSlot, visitedOperatorIds)) {
+      const previousSlotIndex = matchedSlotByOperatorId.get(operatorId);
+      if (previousSlotIndex === undefined || matchSlot(previousSlotIndex, visitedOperatorIds)) {
         matchedSlotByOperatorId.set(operatorId, slotIndex);
         return true;
       }

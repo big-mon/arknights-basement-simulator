@@ -594,6 +594,7 @@ describe("optimizer", () => {
     expect(receptionPlan.assignments.some((assignment) => assignment.operatorId === vulpisfoglia.id)).toBe(true);
     expect(suzuranAssignment.skillId).toBe("skillless-prerequisite");
     expect(suzuranAssignment.skilllessPrerequisiteFor).toBe(vulpisfoglia.id);
+    expect(plan.warnings).toEqual([]);
   });
 
   it("scales Muelsyse's power bonus by other Rhine operators assigned in the base", () => {
