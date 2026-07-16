@@ -112,7 +112,7 @@ const calculationNotes: Record<LanguageCode, { title: string; items: string[] }>
       "施設レベルは上限として扱います。貿易所・製造所・発電所・応接室・訓練室はLv3、制御中枢と宿舎はLv5、宿舎合計レベルは20です。",
       "時間経過・体力消費で変動する基地スキルは、現在の12時間ローテーション内の平均効率として計算します。",
       "ドローン上限、建設ロボット、注文上限、保管上限などの基地状態由来の値は、現行モデルで扱える上限相当の値に固定しています。",
-      "高価値オーダー確率、違約オーダー、事務連絡、訓練室効果、手がかり傾向など期待値換算していない効果は、最適化計算対象外として表示します。",
+      "勤務時間で変動する高価値オーダー確率、事務連絡、訓練室効果、手がかり傾向など期待値換算していない効果は、最適化計算対象外として表示します。",
       "グレイディーアなどの特殊加算制限や体力状態による分岐は、基本効果と明示できる資源効果のみを扱い、専用比較ルールが必要な部分は完全再現していません。"
     ]
   },
@@ -122,7 +122,7 @@ const calculationNotes: Record<LanguageCode, { title: string; items: string[] }>
       "设施等级按上限处理：贸易站、制造站、发电站、会客室、训练室为3级，控制中枢和宿舍为5级，宿舍总等级为20。",
       "随工作时间或心情消耗变化的基建技能，按当前12小时轮班内的平均效率计算。",
       "无人机上限、建造机器人、订单上限、仓库上限等基地状态值固定为当前模型可处理的上限值。",
-      "高价值订单概率、违约订单、办公室联络、训练室效果、线索倾向等尚未换算为期望收益的效果，会显示为不参与优化计算。",
+      "随工作时间变化的高价值订单概率、办公室联络、训练室效果、线索倾向等尚未换算为期望收益的效果，会显示为不参与优化计算。",
       "歌蕾蒂娅等特殊加成限制和心情状态分支，只处理基础效果与可明确建模的资源效果；需要专用比较规则的部分尚未完全复现。"
     ]
   },
@@ -132,7 +132,7 @@ const calculationNotes: Record<LanguageCode, { title: string; items: string[] }>
       "Facility levels are treated as capped: Trading Posts, Factories, Power Plants, Reception Room, and Training Room are level 3; Control Center and Dormitories are level 5; total Dormitory level is 20.",
       "Base skills that vary with elapsed time or Morale spent are averaged across the current 12-hour rotation window.",
       "Base-state values such as drone cap, construction robots, order limit, and storage limit use the capped values currently supported by the model.",
-      "Effects not converted to expected value, such as high-value order chance, defaulted orders, HR office contact speed, training effects, and clue bias, are shown as excluded from optimization.",
+      "Effects not converted to expected value, such as time-varying high-value order chance, HR office contact speed, training effects, and clue bias, are shown as excluded from optimization.",
       "Special stacking limits and morale-state branches, such as Gladiia's Abyssal Hunter interactions, only apply their base effects and explicitly modeled resource effects for now."
     ]
   }

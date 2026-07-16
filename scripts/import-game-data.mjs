@@ -624,6 +624,7 @@ function markUnmodeledEffect(effect) {
     Boolean(effect.globalEffect) ||
     Boolean(effect.resourceEffects?.length) ||
     Boolean(effect.facilityCountBonuses?.length) ||
+    Boolean(effect.tradingOrderEffects?.length) ||
     Boolean(effect.conditionalBonuses?.length) ||
     Boolean(effect.moraleEffects?.length);
   if (hasModeledValue || effect.ignoredForOptimization) {

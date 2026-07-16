@@ -212,7 +212,7 @@ function buildFacilityPlans(
         if (operatorIds.some((operatorId) => searchState.usedOperatorIds.has(operatorId))) {
           continue;
         }
-        const expectedEfficiency = effectiveFacilityEfficiency(assignments) + candidateSet.facilityBonus;
+        const expectedEfficiency = effectiveFacilityEfficiency(assignments, candidateSet.facilityBonus);
         nextStates.push({
           usedOperatorIds: new Set([...searchState.usedOperatorIds, ...operatorIds]),
           selectionScore:
@@ -404,7 +404,7 @@ export function attachRotationAlternatives(state: AppState, facilityPlans: Facil
     const remoteEfficiencyBonus = calculateRemoteFacilityEfficiencyBonus(plan.facility, alternativeContext);
     return {
       ...plan,
-      alternativeExpectedEfficiency: effectiveFacilityEfficiency(plan.alternatives) + globalBonus + remoteEfficiencyBonus
+      alternativeExpectedEfficiency: effectiveFacilityEfficiency(plan.alternatives, globalBonus + remoteEfficiencyBonus)
     };
   });
 }
@@ -768,6 +768,10 @@ function bestSkillForFacility(
         const variantRawEfficiency = rawEfficiency + extraConditionalBonus;
         const variantEffectiveEfficiency =
           externalGlobalEffect || remoteFacilityEfficiencyEffect || remoteFacilityStatEffect || remoteFacilityCountEffect ? 0 : variantRawEfficiency;
+        const scoredEfficiency =
+          facility.type === "trading"
+            ? tradingOrderAdjustedEfficiency(variantEffectiveEfficiency, effect.tradingOrderEffects ?? [])
+            : variantEffectiveEfficiency;
         const skilllessPrerequisiteOperatorIds = Array.from(
           new Set([...mandatorySkilllessPrerequisiteOperatorIds, ...extraSkilllessPrerequisiteOperatorIds])
         );
@@ -783,10 +787,11 @@ function bestSkillForFacility(
           score:
             externalGlobalEffect
               ? globalEffectEfficiency * globalEffectScoreMultiplier
-              : variantEffectiveEfficiency * productMultiplier * facilityWeight(facility),
+              : scoredEfficiency * productMultiplier * facilityWeight(facility),
           efficiency: variantEffectiveEfficiency,
           storageLimit,
           orderLimit,
+          ...(effect.tradingOrderEffects?.length ? { tradingOrderEffects: effect.tradingOrderEffects } : {}),
           ...(effect.suppressesOtherFactoryEfficiency ? { suppressesOtherFactoryEfficiency: true } : {}),
           ...(effect.globalEffect?.stackKey ? { globalStackKey: globalEffectStackIdentity(effect) } : {}),
           ...(skilllessPrerequisiteOperatorIds.length ? { skilllessPrerequisiteOperatorIds } : {}),
@@ -890,9 +895,9 @@ function applyMoraleDurations(state: AppState, facilityPlans: FacilityPlan[]) {
       calculateRemoteFacilityEfficiencyBonus(plan.facility, finalAlternativeContext);
     return {
       ...plan,
-      expectedEfficiency: effectiveFacilityEfficiency(plan.assignments) + activeBonus,
+      expectedEfficiency: effectiveFacilityEfficiency(plan.assignments, activeBonus),
       score: effectiveFacilityScore(plan.assignments, plan.facility, state.preference, activeBonus),
-      alternativeExpectedEfficiency: effectiveFacilityEfficiency(plan.alternatives) + alternativeBonus
+      alternativeExpectedEfficiency: effectiveFacilityEfficiency(plan.alternatives, alternativeBonus)
     };
   });
 }
@@ -1173,6 +1178,7 @@ function aggregateOperatorAssignments(
     efficiency: assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0),
     storageLimit: first.storageLimit,
     orderLimit: first.orderLimit,
+    tradingOrderEffects: assignments.flatMap((assignment) => assignment.tradingOrderEffects ?? []),
     suppressesOtherFactoryEfficiency: assignments.some((assignment) => assignment.suppressesOtherFactoryEfficiency) || undefined,
     globalStackKey: globalStackKeys[0],
     globalStackKeys: globalStackKeys.length ? globalStackKeys : undefined,
@@ -1327,10 +1333,10 @@ function activeRemoteFacilityCountBonuses(
     .flatMap((effect) => effect.facilityCountBonuses ?? []);
 }
 
-function effectiveFacilityEfficiency(assignments: Assignment[]) {
+function effectiveFacilityEfficiency(assignments: Assignment[], globalBonus = 0) {
   const suppressingAssignments = assignments.filter((assignment) => assignment.suppressesOtherFactoryEfficiency);
   const countedAssignments = suppressingAssignments.length ? suppressingAssignments : assignments;
-  return countedAssignments.reduce((sum, assignment) => {
+  const baseEfficiency = countedAssignments.reduce((sum, assignment) => {
     const teamScalingAdjustment = (assignment.facilityStatScalings ?? []).reduce((scalingSum, scaling) => {
       const otherLimit = countedAssignments
         .filter((other) => other !== assignment)
@@ -1346,11 +1352,49 @@ function effectiveFacilityEfficiency(assignments: Assignment[]) {
       return scalingSum + (desiredSteps - currentSteps) * scaling.efficiencyPerStep;
     }, 0);
     return sum + (assignment.efficiency + teamScalingAdjustment) * (assignment.shiftUptime ?? 1);
-  }, 0);
+  }, globalBonus);
+  return tradingOrderAdjustedEfficiency(
+    baseEfficiency,
+    countedAssignments.flatMap((assignment) => assignment.tradingOrderEffects ?? [])
+  );
 }
 
 function effectiveFacilityScore(assignments: Assignment[], facility: FacilitySlot, preference: OptimizationPreference, globalBonus = 0) {
-  return (effectiveFacilityEfficiency(assignments) + globalBonus) * productWeight(facility.product, preference) * facilityWeight(facility);
+  return effectiveFacilityEfficiency(assignments, globalBonus) * productWeight(facility.product, preference) * facilityWeight(facility);
+}
+
+const normalGoldOrderDistribution = [
+  { gold: 2, probability: 0.3 },
+  { gold: 3, probability: 0.5 },
+  { gold: 4, probability: 0.2 }
+] as const;
+
+function tradingOrderAdjustedEfficiency(
+  orderAcquisitionEfficiency: number,
+  effects: NonNullable<BaseSkillEffect["tradingOrderEffects"]>
+) {
+  if (!effects.length) {
+    return orderAcquisitionEfficiency;
+  }
+
+  const hasDefaultedOrderRule = effects.some((effect) => effect.type === "defaultedOrderRule");
+  const defaultedOrderExtraGold = effects
+    .filter((effect) => effect.type === "defaultedOrderExtraGold")
+    .reduce((maximum, effect) => Math.max(maximum, effect.amount), 0);
+  const highValueOrderExtraLmd = effects
+    .filter((effect) => effect.type === "highValueOrderExtraLmd")
+    .reduce((maximum, effect) => Math.max(maximum, effect.amount), 0);
+  const baselineGold = normalGoldOrderDistribution.reduce(
+    (sum, order) => sum + order.gold * order.probability,
+    0
+  );
+  const expectedGoldEquivalent = normalGoldOrderDistribution.reduce((sum, order) => {
+    const breachBonus = hasDefaultedOrderRule && order.gold < 4 ? defaultedOrderExtraGold : 0;
+    const highValueBonus = order.gold === 4 ? highValueOrderExtraLmd / 500 : 0;
+    return sum + (order.gold + breachBonus + highValueBonus) * order.probability;
+  }, 0);
+  const orderValueMultiplier = expectedGoldEquivalent / baselineGold;
+  return (1 + orderAcquisitionEfficiency) * orderValueMultiplier - 1;
 }
 
 function facilityTeamSelectionScore(
@@ -1668,6 +1712,11 @@ function resourceAmount(resource: string, context?: AssignmentEvaluationContext,
     return 0;
   }
 
+  const baseResource =
+    resource === "goldProductionLine"
+      ? context.facilities.filter((facility) => facility.type === "factory" && facility.product === "gold").length
+      : 0;
+
   const assignedResource = context.assignments.reduce((sum, assignment) => {
     if (candidateOperator && assignment.operatorId === candidateOperator.id) {
       return sum;
@@ -1678,16 +1727,24 @@ function resourceAmount(resource: string, context?: AssignmentEvaluationContext,
       return sum;
     }
 
-    return sum + resourceAmountFromOperator(resource, operator, facility, context);
+    return sum + resourceAmountFromOperator(resource, operator, facility, context, candidateFacility);
   }, 0);
 
   const candidateResource =
-    candidateOperator && candidateFacility ? resourceAmountFromOperator(resource, candidateOperator, candidateFacility, context) : 0;
+    candidateOperator && candidateFacility
+      ? resourceAmountFromOperator(resource, candidateOperator, candidateFacility, context, candidateFacility)
+      : 0;
 
-  return assignedResource + candidateResource;
+  return baseResource + assignedResource + candidateResource;
 }
 
-function resourceAmountFromOperator(resource: string, operator: Operator, facility: FacilitySlot, context: AssignmentEvaluationContext) {
+function resourceAmountFromOperator(
+  resource: string,
+  operator: Operator,
+  facility: FacilitySlot,
+  context: AssignmentEvaluationContext,
+  targetFacility?: FacilitySlot
+) {
   const effects = activeBaseSkills(
     operator,
     context.roster?.[operator.id]?.elite ?? 0,
@@ -1702,6 +1759,10 @@ function resourceAmountFromOperator(resource: string, operator: Operator, facili
       effectSum +
       (effect.resourceEffects ?? [])
         .filter((resourceEffect) => resourceEffect.resource === resource)
+        .filter(
+          (resourceEffect) =>
+            resourceEffect.scaling?.scope !== "sameFacility" || !targetFacility || facility.id === targetFacility.id
+        )
         .reduce(
           (resourceSum, resourceEffect) => resourceSum + resourceEffect.amount * resourceEffectMultiplier(resourceEffect, operator, facility, context),
           0
@@ -1727,6 +1788,19 @@ function resourceEffectMultiplier(
       (facility) => !resourceEffect.scaling?.facility || facility.type === resourceEffect.scaling.facility
     ).length;
     return resourceEffect.scaling.max ? Math.min(count, resourceEffect.scaling.max) : count;
+  }
+  if (resourceEffect.scaling.type === "facilityLevel") {
+    const level = maxFacilityLevelByType[resourceEffect.scaling.facility ?? facility.type];
+    return resourceEffect.scaling.max ? Math.min(level, resourceEffect.scaling.max) : level;
+  }
+  if (resourceEffect.scaling.type === "facilityProductCount") {
+    const count = context.facilities.filter(
+      (facility) =>
+        (!resourceEffect.scaling?.facility || facility.type === resourceEffect.scaling.facility) &&
+        (!resourceEffect.scaling?.product || facility.product === resourceEffect.scaling.product)
+    ).length;
+    const scaled = resourceEffect.scaling.per ? Math.floor(count / resourceEffect.scaling.per) : count;
+    return resourceEffect.scaling.max ? Math.min(scaled, resourceEffect.scaling.max) : scaled;
   }
   if (resourceEffect.scaling.type === "affiliation") {
     const assignedMatches = context.assignments.filter((assignment) => {

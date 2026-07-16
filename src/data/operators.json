@@ -724,8 +724,17 @@
               "en": "When this Operator is assigned to a Dormitory, every 1 levels of Dreamland is converted into 1 points of Perception Information"
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "resourceEffects": [
+              {
+                "resource": "perceptionInfo",
+                "amount": 1,
+                "scaling": {
+                  "type": "facilityLevel",
+                  "facility": "dormitory",
+                  "max": 5
+                }
+              }
+            ]
           }
         ]
       }
@@ -2733,8 +2742,17 @@
               "en": "When this Operator is assigned to a Dormitory, convert every 1 Measure to 1 Perception Information"
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "resourceEffects": [
+              {
+                "resource": "perceptionInfo",
+                "amount": 1,
+                "scaling": {
+                  "type": "facilityLevel",
+                  "facility": "dormitory",
+                  "max": 5
+                }
+              }
+            ]
           }
         ]
       }
@@ -3581,9 +3599,12 @@
               "ja": "貿易所配置時、次に受注する金属オーダーの納品数が4を下回るならば、違約オーダーと見なす",
               "en": "When this Operator is assigned to a Trading Post, if the amount of Pure Gold traded is less than 4, it will be considered a Defaulted trade"
             },
-            "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "goldOrderValueExpectation"
+            "efficiency": 0,
+            "tradingOrderEffects": [
+              {
+                "type": "defaultedOrderRule"
+              }
+            ]
           }
         ]
       },
@@ -3610,9 +3631,13 @@
               "ja": "貿易所配置時、次に受注する金属オーダーが違約オーダーならば、純金の納品数が+1追加される",
               "en": "When this Operator is assigned to a Trading Post, if a Pure Gold trade is a Defaulted trade, Pure Gold traded +1"
             },
-            "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "goldOrderValueExpectation"
+            "efficiency": 0,
+            "tradingOrderEffects": [
+              {
+                "type": "defaultedOrderExtraGold",
+                "amount": 1
+              }
+            ]
           }
         ]
       },
@@ -3639,9 +3664,13 @@
               "ja": "貿易所配置時、次に受注する金属オーダーが違約オーダーならば、純金の納品数が+2追加される",
               "en": "When this Operator is assigned to a Trading Post, if a Pure Gold trade is a Defaulted trade, Pure Gold traded +2"
             },
-            "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "goldOrderValueExpectation"
+            "efficiency": 0,
+            "tradingOrderEffects": [
+              {
+                "type": "defaultedOrderExtraGold",
+                "amount": 2
+              }
+            ]
           }
         ]
       }
@@ -7549,10 +7578,10 @@
               "en": "When this operator is assigned to a Trading Post, for every 1 Pure Gold Production Line, , Trading Post order acquisition efficiency +5%"
             },
             "efficiency": 0.05,
+            "baseEfficiency": 0,
             "scaling": {
-              "type": "facilityProductCount",
-              "facility": "factory",
-              "product": "gold"
+              "type": "resource",
+              "resource": "goldProductionLine"
             }
           }
         ]
@@ -7581,7 +7610,7 @@
               "ja": "貿易所配置時、基地内（補佐と活動室利用者を除く）に配置中のドゥリン族オペレーター1人につき（最大4人）、配置貿易所の純金生産ラインの数1+",
               "en": "When this Operator is assigned to a Trading post, for every 1 Durin Operator in the base (excluding Assistants and Activity Room users, caps at 4), Trading Post gains another 1 Pure Gold Production Line"
             },
-            "efficiency": 0.05,
+            "efficiency": 0,
             "conditions": [
               {
                 "type": "facilityAffiliation",
@@ -7591,14 +7620,20 @@
                 "min": 1
               }
             ],
-            "scaling": {
-              "type": "affiliation",
-              "affiliations": [
-                "durin"
-              ],
-              "scope": "base",
-              "max": 4
-            }
+            "resourceEffects": [
+              {
+                "resource": "goldProductionLine",
+                "amount": 1,
+                "scaling": {
+                  "type": "affiliation",
+                  "affiliations": [
+                    "durin"
+                  ],
+                  "scope": "base",
+                  "max": 4
+                }
+              }
+            ]
           }
         ]
       }
@@ -9641,8 +9676,13 @@
               "ja": "制御中枢配置時、制御中枢内全員の体力が1時間ごとに+0.05回復"
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "moraleEffects": [
+              {
+                "type": "recovery",
+                "target": "room",
+                "amount": 0.05
+              }
+            ]
           }
         ]
       },
@@ -11017,8 +11057,13 @@
               "ja": "宿舎休養時、自身の1時間ごとの体力回復量+0.55"
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "moraleEffects": [
+              {
+                "type": "recovery",
+                "target": "self",
+                "amount": 0.55
+              }
+            ]
           }
         ]
       },
@@ -11986,9 +12031,13 @@
               "ja": "貿易所配置時、次に受注する金属オーダーの納品数が3を上回るならば（違約オーダーは金属オーダーと見なされない）、当該オーダーの報酬金額が+250追加され、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, if the amount of Pure Gold traded is higher than 3 (Defaulted trades do not count), increase the LMD gained by +250, and Morale consumed per hour is reduced by -0.25"
             },
-            "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "goldOrderValueExpectation",
+            "efficiency": 0,
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderExtraLmd",
+                "amount": 250
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",
@@ -12022,9 +12071,13 @@
               "ja": "貿易所配置時、次に受注する金属オーダーの納品数が3を上回るならば（違約オーダーは金属オーダーと見なされない）、当該オーダーの報酬金額が+500追加され、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, if the amount of Pure Gold traded is higher than 3 (Defaulted trades do not count), increase the LMD gained by +500, and Morale consumed per hour is reduced by -0.25"
             },
-            "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "goldOrderValueExpectation",
+            "efficiency": 0,
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderExtraLmd",
+                "amount": 500
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",
@@ -14665,7 +14718,19 @@
             },
             "efficiency": 0,
             "baseEfficiency": 0.05,
-            "unsupportedReason": "goldProductionLineCountNotModeled"
+            "resourceEffects": [
+              {
+                "resource": "goldProductionLine",
+                "amount": 2,
+                "scaling": {
+                  "type": "facilityProductCount",
+                  "facility": "factory",
+                  "product": "gold",
+                  "per": 4,
+                  "scope": "sameFacility"
+                }
+              }
+            ]
           }
         ]
       },
@@ -14695,7 +14760,19 @@
             },
             "efficiency": 0,
             "baseEfficiency": 0.05,
-            "unsupportedReason": "goldProductionLineCountNotModeled"
+            "resourceEffects": [
+              {
+                "resource": "goldProductionLine",
+                "amount": 2,
+                "scaling": {
+                  "type": "facilityProductCount",
+                  "facility": "factory",
+                  "product": "gold",
+                  "per": 2,
+                  "scope": "sameFacility"
+                }
+              }
+            ]
           }
         ]
       }
@@ -15572,8 +15649,17 @@
               "en": "When this Operator is assigned to a Dormitory, provide 1 Monster Meal for every level of the current Dormitory"
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "resourceEffects": [
+              {
+                "resource": "magicFood",
+                "amount": 1,
+                "scaling": {
+                  "type": "facilityLevel",
+                  "facility": "dormitory",
+                  "max": 5
+                }
+              }
+            ]
           }
         ]
       }
@@ -17925,7 +18011,13 @@
               "ja": "貿易所配置時、受注効率+5%、純金生産ラインの数4につき、追加で受注効率+15%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +5%; Furthermore, increase order acquisition efficiency by an additional +15% for every 4 Pure Gold Production Line"
             },
-            "efficiency": 0.2
+            "efficiency": 0.15,
+            "baseEfficiency": 0.05,
+            "scaling": {
+              "type": "resource",
+              "resource": "goldProductionLine",
+              "per": 4
+            }
           }
         ]
       },
@@ -17953,7 +18045,13 @@
               "ja": "貿易所配置時、受注効率+5%、純金生産ラインの数2につき、追加で受注効率+15%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +5%; Furthermore, increase order acquisition efficiency by an additional +15% for every 2 Pure Gold Production Line"
             },
-            "efficiency": 0.2
+            "efficiency": 0.15,
+            "baseEfficiency": 0.05,
+            "scaling": {
+              "type": "resource",
+              "resource": "goldProductionLine",
+              "per": 2
+            }
           }
         ]
       }

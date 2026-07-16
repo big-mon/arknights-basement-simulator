@@ -28,7 +28,8 @@ const zeroValueEffects = effects.filter(({ effect }) => {
     effect.moraleCurve ||
     effect.activation ||
     effect.resourceEffects?.length ||
-    effect.facilityCountBonuses?.length
+    effect.facilityCountBonuses?.length ||
+    effect.tradingOrderEffects?.length
   );
 });
 const sameFacilityActiveSlots = operators.flatMap((operator) => {
