@@ -182,11 +182,26 @@ describe("App", () => {
     expect(veen.name.ja).toBe("ヴィイ");
     expect(reprise.name.ja).toBe("リプレーザ");
     expect(akkord.name.ja).toBe("アコルト");
-    expect(taraxacum.name.ja).toBe("タラクサクム");
+    expect(taraxacum.name.ja).toBe("タラクサカム");
     expect(radian.name.ja).toBe("レイディアン");
     expect(radian.name.en).toBe("Raidian");
     expect(xiangPerfumer.name.ja).toBe("萃香パフューマー");
     expect(wang.name.ja).toBe("ウァン");
+  });
+
+  it("includes Japanese names and descriptions for every visible base skill", () => {
+    const missingJapanese = operators.flatMap((operator) =>
+      operator.skills.flatMap((skill) => [
+        ...(!skill.name.ja ? [`${operator.id}:${skill.id}:name`] : []),
+        ...skill.effects
+          .filter((effect) => !effect.hiddenFromUi && !effect.description.ja)
+          .map(() => `${operator.id}:${skill.id}:description`)
+      ])
+    );
+
+    expect(missingJapanese).toEqual([]);
+    expect(taraxacum.skills[1].name.ja).toBe("「孺子教うべし！」");
+    expect(taraxacum.skills[1].effects[0].description.ja).toContain("受注効率+4%");
   });
 
   it("marks unverified selected-language skill text without excluding operators", async () => {

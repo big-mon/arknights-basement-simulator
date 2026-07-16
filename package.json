@@ -22,7 +22,8 @@
     "audit:base-skills": "node scripts/audit-base-skills.mjs",
     "audit:localization": "node scripts/audit-localization.mjs",
     "import:game-data": "node scripts/import-game-data.mjs",
-    "import:wiki-localization": "node scripts/import-wiki-localization.mjs"
+    "import:wiki-localization": "node scripts/import-wiki-localization.mjs",
+    "import:wikiru-ja-localization": "node scripts/import-wikiru-japanese-localization.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.1.1",
