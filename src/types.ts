@@ -2,6 +2,8 @@ export type FacilityType = "factory" | "trading" | "power" | "control" | "dormit
 
 export type ProductType = "gold" | "battleRecord" | "originium" | "lmd" | "power" | "morale" | "clue";
 
+export type BaseSkillFamily = "rhineTech" | "pinusSylvestris" | "standardization";
+
 export type BaseLayout = "243" | "153";
 
 export type RotationCount = 2;
@@ -48,7 +50,16 @@ export interface BaseSkillEffect {
     amount: number;
     mode?: "externalConsumptionEffects" | "selfConsumptionReduction";
     affiliations?: string[];
+    targetAffiliations?: string[];
+    targetOperatorIds?: string[];
+    targetMoraleAtMost?: number;
+    requiresDormitoryOperatorIds?: string[];
+    stacksWithBase?: boolean;
   }>;
+  moraleExchange?: {
+    target: "previous";
+    requiresFullMorale: true;
+  };
   scaling?: {
     type:
       | "affiliation"
@@ -58,12 +69,15 @@ export interface BaseSkillEffect {
       | "facilityLevel"
       | "fixed"
       | "resource"
+      | "dormitoryOccupancy"
+      | "skillFamily"
       | "facilityStorageLimit"
       | "facilityOrderLimit";
     affiliations?: string[];
     facility?: FacilityType;
     product?: ProductType;
     resource?: string;
+    family?: BaseSkillFamily;
     count?: number;
     per?: number;
     includeSelf?: boolean;
@@ -81,12 +95,23 @@ export interface BaseSkillEffect {
     amount: number;
     scaling?: NonNullable<BaseSkillEffect["scaling"]>;
   }>;
+  skillFamilyConversions?: Array<{
+    from: BaseSkillFamily[];
+    to: BaseSkillFamily;
+    scope: "sameFacility";
+  }>;
   facilityCountBonuses?: Array<{
     facility: FacilityType;
     amount: number;
   }>;
   storageLimit?: number;
   orderLimit?: number;
+  orderState?: {
+    mode: "averageEmptySlots" | "averageStoredOrders";
+    collectionIntervalHours: number;
+    reduceOrderLimitPerOtherEfficiency?: number;
+    minimumOrderLimit?: number;
+  };
   tradingOrderEffects?: Array<
     | {
         type: "defaultedOrderRule";
@@ -98,6 +123,19 @@ export interface BaseSkillEffect {
     | {
         type: "highValueOrderExtraLmd";
         amount: number;
+      }
+    | {
+        type: "highValueOrderProbability";
+        level: "slight" | "increased";
+        warmupHours: number;
+      }
+    | {
+        type: "fixedSpecialOrder";
+        kind: "pepe" | "closure";
+        gold: number;
+        lmd: number;
+        hours: number;
+        affectedByEfficiency: boolean;
       }
   >;
   ignoredForOptimization?: boolean;
@@ -153,6 +191,7 @@ export interface BaseSkill {
   slot: number;
   unlockPhase: 0 | 1 | 2;
   unlockLevel: number;
+  families?: BaseSkillFamily[];
   effects: BaseSkillEffect[];
 }
 
@@ -248,6 +287,7 @@ export interface Assignment {
   }>;
   fatigueHours: number;
   recoveryHours: number;
+  moraleExchangeApplied?: boolean;
   moraleConsumptionPerHour?: number;
   dormitoryRecoveryPerHour?: number;
   shiftUptime?: number;

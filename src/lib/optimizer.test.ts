@@ -5,10 +5,12 @@ import { exportState, importState } from "./storage";
 import {
   attachRotationAlternatives,
   activeBaseSkills,
+  bestDormitoryRecoveryPerHour,
   conditionsSatisfied,
   findCandidates,
   generateAssignmentPlan,
-  registeredComplexBaseSkillHandlerKeys
+  registeredComplexBaseSkillHandlerKeys,
+  tradingOrderAdjustedEfficiency
 } from "./optimizer";
 import type { Assignment, FacilityPlan, FacilitySlot } from "../types";
 
@@ -121,6 +123,7 @@ const iana = operators.find((operator) => operator.id === "char_4124_iana")!;
 const bibeak = operators.find((operator) => operator.id === "char_252_bibeak")!;
 const proviso = operators.find((operator) => operator.id === "char_4032_provs")!;
 const tequila = operators.find((operator) => operator.id === "char_486_takila")!;
+const jaye = operators.find((operator) => operator.id === "char_272_strong")!;
 const ambriel = operators.find((operator) => operator.id === "char_302_glaze")!;
 const ascalon = operators.find((operator) => operator.id === "char_4132_ascln")!;
 const saileach = operators.find((operator) => operator.id === "char_479_sleach")!;
@@ -170,7 +173,20 @@ const czerny = operators.find((operator) => operator.id === "char_4047_pianst")!
 const senshi = operators.find((operator) => operator.id === "char_4143_sensi")!;
 const marcille = operators.find((operator) => operator.id === "char_4141_marcil")!;
 const rosmontis = operators.find((operator) => operator.id === "char_391_rosmon")!;
+const ebenholz = operators.find((operator) => operator.id === "char_4046_ebnhlz")!;
+const virtuosa = operators.find((operator) => operator.id === "char_245_cello")!;
+const dusk = operators.find((operator) => operator.id === "char_2015_dusk")!;
+const highmore = operators.find((operator) => operator.id === "char_4066_highmo")!;
+const astgenneLightchaser = operators.find((operator) => operator.id === "char_1047_halo2")!;
+const dorothy = operators.find((operator) => operator.id === "char_4048_doroth")!;
+const mizuki = operators.find((operator) => operator.id === "char_437_mizuki")!;
+const ptilopsis = operators.find((operator) => operator.id === "char_128_plosis")!;
+const ashlock = operators.find((operator) => operator.id === "char_431_ashlok")!;
+const rhodesIslandRecon = operators.find((operator) => operator.id === "char_4215_buddy")!;
+const perfumerDistilled = operators.find((operator) => operator.id === "char_1022_flwr2")!;
+const fiammetta = operators.find((operator) => operator.id === "char_300_phenxi")!;
 const closure = operators.find((operator) => operator.id === "char_4228_closur")!;
+const pepe = operators.find((operator) => operator.id === "char_4058_pepe")!;
 const crackborne = operators.find((operator) => operator.id === "char_4225_tanya")!;
 const levelLockedOperator = operators.find((operator) => operator.skills.some((skill) => skill.unlockLevel > 1))!;
 const levelLockedSkill = levelLockedOperator.skills.find((skill) => skill.unlockLevel > 1)!;
@@ -906,8 +922,42 @@ describe("optimizer", () => {
       assignments: [contextAssignment(dormitory, senshi.id)]
     }).find((assignment) => assignment.operatorId === marcille.id)!;
 
-    expect(withIris.efficiency - baseRosmontis.efficiency).toBeCloseTo(0.05);
+    expect(withIris.efficiency - baseRosmontis.efficiency).toBeCloseTo(0.06);
     expect(withSenshi.efficiency - baseMarcille.efficiency).toBeCloseTo(0.05);
+  });
+
+  it("separates Chain of Thought from Soundless Resonance using actual dormitory occupancy", () => {
+    const state = createDefaultState();
+    ownOperators(state, [rosmontis.id, ebenholz.id, virtuosa.id, dusk.id, fang.id]);
+    const dormitory = state.facilities.find((facility) => facility.id === "dormitory-1")!;
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const commonAssignments = [contextAssignment(control, dusk.id)];
+    const withOrdinaryOccupant = [...commonAssignments, contextAssignment(dormitory, fang.id)];
+    const withVirtuosa = [...commonAssignments, contextAssignment(dormitory, virtuosa.id)];
+
+    const rosmontisOrdinary = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: withOrdinaryOccupant
+    }).find((assignment) => assignment.operatorId === rosmontis.id)!;
+    const rosmontisVirtuosa = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: withVirtuosa
+    }).find((assignment) => assignment.operatorId === rosmontis.id)!;
+    const ebenholzOrdinary = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: withOrdinaryOccupant
+    }).find((assignment) => assignment.operatorId === ebenholz.id)!;
+    const ebenholzVirtuosa = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: withVirtuosa
+    }).find((assignment) => assignment.operatorId === ebenholz.id)!;
+
+    expect(rosmontisOrdinary.efficiency).toBeCloseTo(0.11);
+    expect(rosmontisVirtuosa.efficiency).toBeCloseTo(rosmontisOrdinary.efficiency);
+    expect(ebenholzOrdinary.efficiency).toBeCloseTo(0.05);
+    expect(ebenholzVirtuosa.efficiency).toBeCloseTo(0.06);
   });
 
   it("uses owned dormitory resource producers in generated production plans", () => {
@@ -926,9 +976,130 @@ describe("optimizer", () => {
       (assignment) => assignment.operatorId === marcille.id
     )!;
 
-    expect(rosmontisAssignment.efficiency).toBeCloseTo(0.1);
+    expect(rosmontisAssignment.efficiency).toBeCloseTo(0.13);
     expect(marcilleAssignment.efficiency).toBeCloseTo(0.35);
     expect(plan.facilityPlans.every((facilityPlan) => facilityPlan.facility.type !== "dormitory")).toBe(true);
+  });
+
+  it("counts active Rhine Tech skills for Astgenne and Dorothy", () => {
+    const state = createDefaultState();
+    ownOperators(state, [astgenneLightchaser.id, dorothy.id, ptilopsis.id, ashlock.id]);
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const withRhineTech = { facilities: state.facilities, assignments: [contextAssignment(factory, ptilopsis.id)] };
+    const withPinus = { facilities: state.facilities, assignments: [contextAssignment(factory, ashlock.id)] };
+    const baseAstgenne = findCandidates(factory, state).find((assignment) => assignment.operatorId === astgenneLightchaser.id)!;
+    const rhineAstgenne = findCandidates(factory, state, 0, withRhineTech).find(
+      (assignment) => assignment.operatorId === astgenneLightchaser.id
+    )!;
+    const pinusAstgenne = findCandidates(factory, state, 0, withPinus).find(
+      (assignment) => assignment.operatorId === astgenneLightchaser.id
+    )!;
+    const baseDorothy = findCandidates(factory, state).find((assignment) => assignment.operatorId === dorothy.id)!;
+    const rhineDorothy = findCandidates(factory, state, 0, withRhineTech).find(
+      (assignment) => assignment.operatorId === dorothy.id
+    )!;
+
+    expect(baseAstgenne.storageLimit).toBe(5);
+    expect(rhineAstgenne.storageLimit).toBe(10);
+    expect(pinusAstgenne.storageLimit).toBe(5);
+    expect(baseDorothy.efficiency).toBeCloseTo(0.3);
+    expect(rhineDorothy.efficiency).toBeCloseTo(0.35);
+  });
+
+  it("lets Highmore convert Rhine Tech and Pinus skills into Standardization", () => {
+    const state = createDefaultState();
+    ownOperators(state, [mizuki.id, highmore.id, ptilopsis.id, ashlock.id]);
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const withoutHighmore = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(factory, ptilopsis.id)]
+    }).find((assignment) => assignment.operatorId === mizuki.id)!;
+    const withRhineConversion = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(factory, ptilopsis.id), contextAssignment(factory, highmore.id)]
+    }).find((assignment) => assignment.operatorId === mizuki.id)!;
+    const withPinusConversion = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(factory, ashlock.id), contextAssignment(factory, highmore.id)]
+    }).find((assignment) => assignment.operatorId === mizuki.id)!;
+
+    expect(withoutHighmore.efficiency).toBeCloseTo(0.3);
+    expect(withRhineConversion.efficiency).toBeCloseTo(0.4);
+    expect(withPinusConversion.efficiency).toBeCloseTo(0.4);
+    expect(highmore.skills[0].effects[0].unsupportedReason).toBeUndefined();
+  });
+
+  it("applies dormitory recovery target affiliation and operator conditions", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) entry.owned = false;
+    ownOperators(state, [rhodesIslandRecon.id, terraResearchCommission.id, morgan.id, siege.id]);
+    const context = {
+      facilities: state.facilities,
+      assignments: [],
+      roster: state.roster,
+      shiftHours: 12
+    };
+
+    const monsterHunterRecovery = bestDormitoryRecoveryPerHour(terraResearchCommission.id, state, context, 12);
+    state.roster[rhodesIslandRecon.id].owned = false;
+    const glasgowRecovery = bestDormitoryRecoveryPerHour(siege.id, state, context, 12);
+    state.roster[morgan.id].owned = false;
+    const baselineMonsterHunter = bestDormitoryRecoveryPerHour(terraResearchCommission.id, state, context, 12);
+    const baselineGlasgow = bestDormitoryRecoveryPerHour(siege.id, state, context, 12);
+
+    expect(monsterHunterRecovery - baselineMonsterHunter).toBeCloseTo(1);
+    expect(glasgowRecovery - baselineGlasgow).toBeCloseTo(0.3);
+  });
+
+  it("applies Perfumer's extra recovery only at 20 morale or below", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) entry.owned = false;
+    ownOperators(state, [perfumerDistilled.id, fang.id]);
+    const context = {
+      facilities: state.facilities,
+      assignments: [],
+      roster: state.roster,
+      shiftHours: 12
+    };
+
+    expect(bestDormitoryRecoveryPerHour(fang.id, state, context, 20)).toBeCloseTo(4.25);
+    expect(bestDormitoryRecoveryPerHour(fang.id, state, context, 21)).toBeCloseTo(4.15);
+  });
+
+  it("uses one full-morale Fiammetta swap per recovery shift", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) entry.owned = false;
+    const factory = { ...state.facilities.find((facility) => facility.id === "factory-1")!, slotCount: 2 };
+    state.facilities = [factory];
+    const workers = operators
+      .filter(
+        (operator) =>
+          operator.id !== fiammetta.id &&
+          operator.skills.some((skill) =>
+            skill.effects.some(
+              (effect) =>
+                effect.facility === "factory" &&
+                (!effect.product || effect.product === factory.product) &&
+                !effect.ignoredForOptimization &&
+                effect.efficiency > 0
+            )
+          )
+      )
+      .slice(0, 8);
+    ownOperators(state, [fiammetta.id, ...workers.map((operator) => operator.id)]);
+
+    const plan = generateAssignmentPlan(state);
+    const activeAssignments = plan.facilityPlans[0].assignments;
+
+    expect(workers).toHaveLength(8);
+    expect(
+      activeAssignments.filter((assignment) => assignment.moraleExchangeApplied),
+      JSON.stringify({
+        active: activeAssignments.map((assignment) => assignment.operatorId),
+        alternatives: plan.facilityPlans[0].alternatives.map((assignment) => assignment.operatorId)
+      })
+    ).toHaveLength(1);
+    expect(activeAssignments.find((assignment) => assignment.moraleExchangeApplied)?.recoveryHours).toBe(0);
   });
 
   it("retains morale-only effects that lack English source text", () => {
@@ -943,12 +1114,58 @@ describe("optimizer", () => {
     ]);
   });
 
-  it("does not score high-value order probability as generic trading efficiency", () => {
+  it("models high-value order probability over a 12-hour shift", () => {
     const state = createDefaultState();
     ownOperators(state, [bibeak.id]);
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const candidate = findCandidates(trading, state).find((assignment) => assignment.operatorId === bibeak.id)!;
 
-    expect(findCandidates(trading, state).some((assignment) => assignment.operatorId === bibeak.id)).toBe(false);
+    expect(candidate.score).toBeGreaterThan(candidate.efficiency);
+    expect(candidate.tradingOrderEffects).toEqual([
+      { type: "highValueOrderProbability", level: "increased", warmupHours: 5 }
+    ]);
+    expect(candidate.reason).toContain("線形");
+  });
+
+  it("uses the beta curve for mixed probability effects and stacks two alpha effects", () => {
+    const alpha = { type: "highValueOrderProbability", level: "slight", warmupHours: 3 } as const;
+    const beta = { type: "highValueOrderProbability", level: "increased", warmupHours: 5 } as const;
+    const alphaValue = tradingOrderAdjustedEfficiency(0, [alpha]);
+    const doubleAlphaValue = tradingOrderAdjustedEfficiency(0, [alpha, alpha]);
+    const betaValue = tradingOrderAdjustedEfficiency(0, [beta]);
+
+    expect(alphaValue).toBeGreaterThan(0);
+    expect(doubleAlphaValue).toBeGreaterThan(alphaValue);
+    expect(betaValue).toBeGreaterThan(doubleAlphaValue);
+    expect(tradingOrderAdjustedEfficiency(0, [alpha, beta])).toBeCloseTo(betaValue);
+  });
+
+  it("combines Tequila's natural high-value bonus with probability effects", () => {
+    const beta = { type: "highValueOrderProbability", level: "increased", warmupHours: 5 } as const;
+    const tequilaBonus = { type: "highValueOrderExtraLmd", amount: 250 } as const;
+
+    expect(tradingOrderAdjustedEfficiency(0, [beta, tequilaBonus])).toBeGreaterThan(
+      tradingOrderAdjustedEfficiency(0, [beta])
+    );
+  });
+
+  it("models Pepe and Closure fixed special orders with their speed rules", () => {
+    const pepeEffect = pepe.skills.find((skill) => skill.id === "trade_ord_pepe[000]")!.effects[0];
+    const closureEffect = closure.skills.find((skill) => skill.id === "trade_ord_closure[000]")!.effects[0];
+    const conflictingRules = [
+      { type: "defaultedOrderRule" } as const,
+      { type: "highValueOrderExtraLmd", amount: 250 } as const
+    ];
+
+    expect(tradingOrderAdjustedEfficiency(1, pepeEffect.tradingOrderEffects!)).toBeCloseTo(
+      tradingOrderAdjustedEfficiency(0, pepeEffect.tradingOrderEffects!)
+    );
+    expect(tradingOrderAdjustedEfficiency(0.1, closureEffect.tradingOrderEffects!)).toBeGreaterThan(
+      tradingOrderAdjustedEfficiency(0, closureEffect.tradingOrderEffects!)
+    );
+    expect(tradingOrderAdjustedEfficiency(0, [...pepeEffect.tradingOrderEffects!, ...conflictingRules])).toBeCloseTo(
+      tradingOrderAdjustedEfficiency(0, pepeEffect.tradingOrderEffects!)
+    );
   });
 
   it("scores Proviso's defaulted orders from the normal gold-order distribution", () => {
@@ -1241,6 +1458,84 @@ describe("optimizer", () => {
 
     expect(base.efficiency).toBeCloseTo(0.25);
     expect(withOrderLimit.efficiency).toBeCloseTo(0.75);
+  });
+
+  it("models unpromoted Jaye from average empty order slots", () => {
+    const state = createDefaultState();
+    ownOperators(state, [jaye.id, silverashAlter.id]);
+    state.roster[jaye.id].elite = 0;
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const base = findCandidates(trading, state).find((assignment) => assignment.operatorId === jaye.id)!;
+    const withOrderLimitPartner = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(trading, silverashAlter.id, { efficiency: 0.2, orderLimit: 10 })]
+    }).find((assignment) => assignment.operatorId === jaye.id)!;
+    const effect = jaye.skills.find((skill) => skill.id === "trade_ord_limit_diff[000]")!.effects[0];
+
+    expect(effect.unsupportedReason).toBeUndefined();
+    expect(effect.ignoredForOptimization).toBeUndefined();
+    expect(effect.orderState).toEqual({ mode: "averageEmptySlots", collectionIntervalHours: 4 });
+    expect(base.efficiency).toBeGreaterThan(0.3);
+    expect(withOrderLimitPartner.efficiency).toBeGreaterThan(base.efficiency + 0.35);
+    expect(base.reason).toContain("4時間ごとに注文を回収");
+  });
+
+  it("models promoted Jaye's limit reduction and average stored orders separately", () => {
+    const state = createDefaultState();
+    ownOperators(state, [jaye.id, defaultOwnedTradingOperator.id]);
+    state.roster[jaye.id].elite = 1;
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const candidate = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(trading, defaultOwnedTradingOperator.id, { efficiency: 0.35 })]
+    }).find((assignment) => assignment.operatorId === jaye.id)!;
+    const effect = jaye.skills.find((skill) => skill.id === "trade_ord_limit_count[000]")!.effects[0];
+
+    expect(effect.unsupportedReason).toBeUndefined();
+    expect(effect.ignoredForOptimization).toBeUndefined();
+    expect(effect.orderState?.mode).toBe("averageStoredOrders");
+    expect(candidate.orderLimit).toBe(-3);
+    expect(candidate.efficiency).toBeCloseTo(0.28);
+  });
+
+  it("includes Gnosis's Karlan order-limit and efficiency modifiers in promoted Jaye's model", () => {
+    const state = createDefaultState();
+    const karlanPartners = operators
+      .filter(
+        (operator) =>
+          operator.id !== gnosis.id &&
+          operator.affiliations?.includes("karlan") &&
+          operator.skills.some((skill) => skill.effects.some((effect) => effect.facility === "trading"))
+      )
+      .slice(0, 2);
+    ownOperators(state, [jaye.id, gnosis.id, ...karlanPartners.map((operator) => operator.id)]);
+    state.roster[jaye.id].elite = 1;
+    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const control = state.facilities.find((facility) => facility.id === "control-1")!;
+    const partnerAssignments = karlanPartners.map((operator) =>
+      contextAssignment(trading, operator.id, { efficiency: 0.2, orderLimit: 4 })
+    );
+    const gnosisAssignment = findCandidates(control, state, 0, {
+      facilities: state.facilities,
+      assignments: partnerAssignments
+    }).find((assignment) => assignment.operatorId === gnosis.id)!;
+    const withoutGnosis = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: partnerAssignments
+    }).find((assignment) => assignment.operatorId === jaye.id)!;
+    const withGnosis = findCandidates(trading, state, 0, {
+      facilities: state.facilities,
+      assignments: [...partnerAssignments, gnosisAssignment]
+    }).find((assignment) => assignment.operatorId === jaye.id)!;
+
+    expect(karlanPartners).toHaveLength(2);
+    expect(gnosisAssignment.remoteFacilityStatBonuses).toContainEqual(
+      expect.objectContaining({ key: "orderLimit", amount: 6, affiliations: ["karlan"] })
+    );
+    expect(withoutGnosis.orderLimit).toBe(-4);
+    expect(withGnosis.orderLimit).toBe(-1);
+    expect(withoutGnosis.efficiency).toBeCloseTo(0.56);
+    expect(withGnosis.efficiency).toBeCloseTo(1.16);
   });
 
   it("routes Gnosis's remote order-limit bonus to Karlan trading post partners", () => {

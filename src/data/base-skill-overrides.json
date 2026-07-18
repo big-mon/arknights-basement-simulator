@@ -199,8 +199,9 @@
             "index": 0,
             "patch": {
               "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "highValueOrderProbability"
+              "tradingOrderEffects": [
+                { "type": "highValueOrderProbability", "level": "slight", "warmupHours": 3 }
+              ]
             }
           }
         ]
@@ -211,8 +212,9 @@
             "index": 0,
             "patch": {
               "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "highValueOrderProbability"
+              "tradingOrderEffects": [
+                { "type": "highValueOrderProbability", "level": "increased", "warmupHours": 5 }
+              ]
             }
           }
         ]
@@ -268,8 +270,9 @@
             "index": 0,
             "patch": {
               "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "highValueOrderProbability"
+              "tradingOrderEffects": [
+                { "type": "highValueOrderProbability", "level": "slight", "warmupHours": 3 }
+              ]
             }
           }
         ]
@@ -643,8 +646,9 @@
             "index": 0,
             "patch": {
               "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "highValueOrderProbability"
+              "tradingOrderEffects": [
+                { "type": "highValueOrderProbability", "level": "slight", "warmupHours": 3 }
+              ]
             }
           }
         ]
@@ -918,12 +922,21 @@
               "efficiency": 0,
               "resourceEffects": [
                 {
-                  "resource": "perceptionInfo",
-                  "amount": 20
+                  "resource": "soundlessResonance",
+                  "amount": 1,
+                  "scaling": {
+                    "type": "dormitoryOccupancy"
+                  }
+                },
+                {
+                  "resource": "soundlessResonance",
+                  "amount": 1,
+                  "scaling": {
+                    "type": "resource",
+                    "resource": "perceptionInfo"
+                  }
                 }
-              ],
-              "ignoredForOptimization": true,
-              "unsupportedReason": "dormOccupancyResourceGeneratorFoldedIntoConsumer"
+              ]
             }
           }
         ]
@@ -937,7 +950,7 @@
               "baseEfficiency": 0,
               "scaling": {
                 "type": "resource",
-                "resource": "perceptionInfo",
+                "resource": "soundlessResonance",
                 "per": 4
               }
             }
@@ -953,7 +966,7 @@
               "baseEfficiency": 0,
               "scaling": {
                 "type": "resource",
-                "resource": "perceptionInfo",
+                "resource": "soundlessResonance",
                 "per": 2
               }
             }
@@ -1328,8 +1341,10 @@
             "index": 0,
             "patch": {
               "efficiency": 0.04,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "currentOrderStateNotModeled"
+              "orderState": {
+                "mode": "averageEmptySlots",
+                "collectionIntervalHours": 4
+              }
             }
           }
         ]
@@ -1339,10 +1354,13 @@
           {
             "index": 0,
             "patch": {
-              "efficiency": 0.1,
-              "orderLimit": -1,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "currentOrderAndSpecialStackNotModeled"
+              "efficiency": 0.04,
+              "orderState": {
+                "mode": "averageStoredOrders",
+                "collectionIntervalHours": 4,
+                "reduceOrderLimitPerOtherEfficiency": 0.1,
+                "minimumOrderLimit": 1
+              }
             }
           }
         ]
@@ -1448,8 +1466,9 @@
             "index": 0,
             "patch": {
               "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "highValueOrderProbability"
+              "tradingOrderEffects": [
+                { "type": "highValueOrderProbability", "level": "slight", "warmupHours": 3 }
+              ]
             }
           }
         ]
@@ -1460,8 +1479,9 @@
             "index": 0,
             "patch": {
               "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "highValueOrderProbability"
+              "tradingOrderEffects": [
+                { "type": "highValueOrderProbability", "level": "increased", "warmupHours": 5 }
+              ]
             }
           }
         ]
@@ -1968,6 +1988,30 @@
   },
   "char_4215_buddy": {
     "skills": {
+      "dorm_rec_single&tag[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "moraleEffects": [
+                {
+                  "type": "recovery",
+                  "target": "singleOther",
+                  "amount": 0.55
+                },
+                {
+                  "type": "recovery",
+                  "target": "singleOther",
+                  "amount": 0.45,
+                  "targetOperatorIds": ["char_4077_palico", "char_1048_orchd2"],
+                  "stacksWithBase": true
+                }
+              ]
+            }
+          }
+        ]
+      },
       "meet_spd_notOwned_P[000]": {
         "effects": [
           {
@@ -2056,12 +2100,21 @@
               "efficiency": 0,
               "resourceEffects": [
                 {
-                  "resource": "perceptionInfo",
-                  "amount": 20
+                  "resource": "thoughtChain",
+                  "amount": 1,
+                  "scaling": {
+                    "type": "dormitoryOccupancy"
+                  }
+                },
+                {
+                  "resource": "thoughtChain",
+                  "amount": 1,
+                  "scaling": {
+                    "type": "resource",
+                    "resource": "perceptionInfo"
+                  }
                 }
-              ],
-              "ignoredForOptimization": true,
-              "unsupportedReason": "dormOccupancyResourceGeneratorFoldedIntoConsumer"
+              ]
             }
           }
         ]
@@ -2075,7 +2128,7 @@
               "baseEfficiency": 0,
               "scaling": {
                 "type": "resource",
-                "resource": "perceptionInfo",
+                "resource": "thoughtChain",
                 "per": 2
               }
             }
@@ -2091,7 +2144,7 @@
               "baseEfficiency": 0,
               "scaling": {
                 "type": "resource",
-                "resource": "perceptionInfo",
+                "resource": "thoughtChain",
                 "per": 1
               }
             }
@@ -2138,8 +2191,9 @@
             "index": 0,
             "patch": {
               "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "highValueOrderProbability"
+              "tradingOrderEffects": [
+                { "type": "highValueOrderProbability", "level": "slight", "warmupHours": 3 }
+              ]
             }
           }
         ]
@@ -2150,8 +2204,9 @@
             "index": 0,
             "patch": {
               "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "highValueOrderProbability"
+              "tradingOrderEffects": [
+                { "type": "highValueOrderProbability", "level": "increased", "warmupHours": 5 }
+              ]
             }
           }
         ]
@@ -2160,6 +2215,25 @@
   },
   "char_154_morgan": {
     "skills": {
+      "dorm_rec_toone[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "moraleEffects": [
+                {
+                  "type": "recovery",
+                  "target": "singleOther",
+                  "amount": 0.3,
+                  "targetAffiliations": ["glasgow"],
+                  "requiresDormitoryOperatorIds": ["char_112_siege"]
+                }
+              ]
+            }
+          }
+        ]
+      },
       "trade_ord_spd_par[000]": {
         "effects": [
           {
@@ -2465,6 +2539,26 @@
             "patch": {
               "efficiency": 0.05,
               "orderLimit": 3
+            }
+          }
+        ]
+      },
+      "trade_ord_pepe[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "tradingOrderEffects": [
+                {
+                  "type": "fixedSpecialOrder",
+                  "kind": "pepe",
+                  "gold": 0,
+                  "lmd": 1000,
+                  "hours": 4.5,
+                  "affectedByEfficiency": false
+                }
+              ]
             }
           }
         ]
@@ -3310,8 +3404,9 @@
             "index": 0,
             "patch": {
               "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "highValueOrderProbability"
+              "tradingOrderEffects": [
+                { "type": "highValueOrderProbability", "level": "slight", "warmupHours": 3 }
+              ]
             }
           }
         ]
@@ -3844,8 +3939,9 @@
             "index": 0,
             "patch": {
               "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "highValueOrderProbability"
+              "tradingOrderEffects": [
+                { "type": "highValueOrderProbability", "level": "slight", "warmupHours": 3 }
+              ]
             }
           }
         ]
@@ -3856,8 +3952,9 @@
             "index": 0,
             "patch": {
               "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "highValueOrderProbability"
+              "tradingOrderEffects": [
+                { "type": "highValueOrderProbability", "level": "increased", "warmupHours": 5 }
+              ]
             }
           }
         ]
@@ -4195,6 +4292,167 @@
       }
     }
   },
+  "char_1022_flwr2": {
+    "skills": {
+      "dorm_rec_all&tired[100]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "moraleEffects": [
+                {
+                  "type": "recovery",
+                  "target": "room",
+                  "amount": 0.1,
+                  "targetMoraleAtMost": 20,
+                  "stacksWithBase": true
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_300_phenxi": {
+    "skills": {
+      "dorm_exchangeAp[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "moraleExchange": {
+                "target": "previous",
+                "requiresFullMorale": true
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4066_highmo": {
+    "skills": {
+      "manu_skill_change[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "skillFamilyConversions": [
+                {
+                  "from": ["rhineTech", "pinusSylvestris"],
+                  "to": "standardization",
+                  "scope": "sameFacility"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "manu_prod_spd[010]": {
+        "patch": { "families": ["standardization"] }
+      }
+    }
+  },
+  "char_1047_halo2": {
+    "skills": {
+      "manu_skill_limit[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "storageLimit": 5,
+              "scaling": {
+                "type": "skillFamily",
+                "family": "rhineTech",
+                "includeSelf": true,
+                "scope": "sameFacility"
+              }
+            }
+          }
+        ]
+      },
+      "manu_prod_spd[011]": {
+        "patch": { "families": ["rhineTech"] }
+      }
+    }
+  },
+  "char_4048_doroth": {
+    "skills": {
+      "manu_skill_spd1[010]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "skillFamily",
+                "family": "rhineTech",
+                "includeSelf": true,
+                "scope": "sameFacility"
+              }
+            }
+          }
+        ]
+      },
+      "manu_prod_spd[011]": {
+        "patch": { "families": ["rhineTech"] }
+      }
+    }
+  },
+  "char_437_mizuki": {
+    "skills": {
+      "manu_skill_spd1[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "skillFamily",
+                "family": "standardization",
+                "includeSelf": true,
+                "scope": "sameFacility"
+              }
+            }
+          }
+        ]
+      },
+      "manu_prod_spd[010]": {
+        "patch": { "families": ["standardization"] }
+      }
+    }
+  },
+  "char_245_cello": {
+    "skills": {
+      "dorm_bd_num[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "resourceEffects": [
+                {
+                  "resource": "soundlessResonance",
+                  "amount": 1,
+                  "scaling": {
+                    "type": "dormitoryOccupancy",
+                    "scope": "sameFacility"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
   "char_376_therex": {
     "addAffiliations": [
       "platform"
@@ -4288,6 +4546,26 @@
                   "type": "recovery",
                   "target": "room",
                   "amount": 0.05
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "trade_ord_closure[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.1,
+              "tradingOrderEffects": [
+                {
+                  "type": "fixedSpecialOrder",
+                  "kind": "closure",
+                  "gold": 2,
+                  "lmd": 1200,
+                  "hours": 2.4,
+                  "affectedByEfficiency": true
                 }
               ]
             }

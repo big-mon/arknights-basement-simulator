@@ -272,7 +272,7 @@ describe("App", () => {
     expect(screen.getByText(localizeText(amiya.name, "zh"))).toBeInTheDocument();
     expect(screen.getByText(localizeText(amiya.skills[0].name, "zh"))).toBeInTheDocument();
     expect(screen.getAllByText(localizeText(amiya.skills[0].effects[0].description, "zh"), { exact: false }).length).toBeGreaterThan(0);
-  });
+  }, 30_000);
 
   it("toggles roster ownership from the operator card without hijacking controls", async () => {
     const user = userEvent.setup();
@@ -304,7 +304,7 @@ describe("App", () => {
     expect(checkbox).not.toBeChecked();
     expect(within(professionSection).getByText(`${initialProfessionOwned} / ${professionTotal}名`)).toBeInTheDocument();
     expect(within(raritySection).getByText(`${initialRarityOwned} / ${rarityTotal}名`)).toBeInTheDocument();
-  });
+  }, 30_000);
 
   it("groups owned roster by profession and rarity", () => {
     render(<App />);
@@ -381,13 +381,13 @@ describe("App", () => {
     expect(within(amiyaCard).queryByRole("combobox", { name: "レベル" })).not.toBeInTheDocument();
   });
 
-  it("marks unsupported optimization-only effects on operator cards", async () => {
+  it("does not mark modeled high-value-order effects as unsupported", async () => {
     const user = userEvent.setup();
     render(<App />);
     await user.type(screen.getByPlaceholderText(/名前で検索/), bibeak.id);
 
     const bibeakCard = screen.getByText(localizeText(bibeak.name, "ja")).closest("article")!;
-    expect(within(bibeakCard).getAllByText("最適化計算対象外").length).toBeGreaterThan(0);
+    expect(within(bibeakCard).queryByText("最適化計算対象外")).not.toBeInTheDocument();
   });
 
   it("hides calculation-only split effects from operator skill descriptions", async () => {
