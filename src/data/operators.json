@@ -19542,7 +19542,7 @@
             "description": {
               "zh": "进驻会客室时，处于线索交流时线索搜集速度提升30%",
               "en": "When this Operator is assigned to the Reception Room, if in Clue Exchange, increases Clue search speed by 30%",
-              "ja": "事務室配置時、情報共有中の手がかり捜索速度+30%"
+              "ja": "応接室配置時、情報共有中の手がかり捜索速度+30%"
             },
             "efficiency": 0.3
           }

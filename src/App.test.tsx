@@ -227,6 +227,11 @@ describe("App", () => {
     const orchidGenerated = rhodesCovert.skills.find((skill) => skill.id === "meet_spd_notOwned_P[000]")!;
     expect(orchidFallback.description.ja).toContain("焔狐竜オーキッドが制御中枢に配置");
     expect(orchidGenerated.effects[0].description.ja).toContain("焔狐竜オーキッドが制御中枢に配置");
+
+    const cairnFallback = baseSkillLocalizationFallbacks.char_4214_cairn.skills["meet_spd&exchange[001]"];
+    const cairnGenerated = cairn.skills.find((skill) => skill.id === "meet_spd&exchange[001]")!;
+    expect(cairnFallback.description.ja).toContain("応接室配置時");
+    expect(cairnGenerated.effects[0].description.ja).toContain("応接室配置時");
   });
 
   it("marks unverified selected-language skill text without excluding operators", async () => {
