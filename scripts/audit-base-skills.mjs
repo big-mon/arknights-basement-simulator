@@ -23,13 +23,16 @@ const zeroValueEffects = effects.filter(({ effect }) => {
   return !(
     effect.storageLimit ||
     effect.orderLimit ||
+    effect.orderState ||
     effect.globalEffect ||
     effect.moraleEffects?.length ||
     effect.moraleCurve ||
     effect.activation ||
     effect.resourceEffects?.length ||
+    effect.skillFamilyConversions?.length ||
     effect.facilityCountBonuses?.length ||
-    effect.tradingOrderEffects?.length
+    effect.tradingOrderEffects?.length ||
+    effect.moraleExchange
   );
 });
 const sameFacilityActiveSlots = operators.flatMap((operator) => {
@@ -112,6 +115,7 @@ const moraleDescriptionsWithoutModel = effects
       !effect.moraleEffects?.length &&
       !effect.moraleCurve &&
       !effect.activation &&
+      !effect.moraleExchange &&
       !effect.globalEffect &&
       !effect.resourceEffects?.length
   )

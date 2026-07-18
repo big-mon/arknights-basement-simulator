@@ -358,10 +358,10 @@
         "slot": 1,
         "unlockPhase": 2,
         "unlockLevel": 1,
-        "effects": [
-          {
-            "facility": "dormitory",
-            "product": "morale",
+          "effects": [
+            {
+              "facility": "dormitory",
+              "product": "morale",
             "tags": [
               "dormitory",
               "bskill_dorm_all2",
@@ -1261,11 +1261,11 @@
               "ja": "応接室配置時、自身だけが仕事中であると、連続で16を超える体力を消費した後、次で必ずロドスの手がかりを入手できる",
               "en": "When this Operator is assigned to the Reception Room, if only this Operator is working in the Reception Room, for every 16 consecutive Morale spent, a Rhodes Island Pharmaceuticals clue is guaranteed next."
             },
-            "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
-          }
-        ]
+          "efficiency": 0,
+          "ignoredForOptimization": true,
+          "unsupportedReason": "effectNotModeled"
+            }
+          ]
       }
     ]
   },
@@ -1523,8 +1523,13 @@
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased slightly (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
             },
             "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "highValueOrderProbability",
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderProbability",
+                "level": "slight",
+                "warmupHours": 3
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",
@@ -1559,8 +1564,13 @@
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
             },
             "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "highValueOrderProbability",
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderProbability",
+                "level": "increased",
+                "warmupHours": 5
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",
@@ -2088,8 +2098,13 @@
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased slightly (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
             },
             "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "highValueOrderProbability",
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderProbability",
+                "level": "slight",
+                "warmupHours": 3
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",
@@ -4425,8 +4440,13 @@
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased slightly (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
             },
             "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "highValueOrderProbability",
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderProbability",
+                "level": "slight",
+                "warmupHours": 3
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",
@@ -4659,7 +4679,14 @@
               "ja": "製造所配置時、配置製造所のラインテク系スキルの発動数1につき、製造効率+5%",
               "en": "When this Operator is assigned to a Factory, gain +5% productivity for each Rhine Tech-type skill in this Factory"
             },
-            "efficiency": 0.05
+            "efficiency": 0.05,
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "skillFamily",
+              "family": "rhineTech",
+              "includeSelf": true,
+              "scope": "sameFacility"
+            }
           }
         ]
       },
@@ -4673,6 +4700,9 @@
         "slot": 1,
         "unlockPhase": 2,
         "unlockLevel": 1,
+        "families": [
+          "rhineTech"
+        ],
         "effects": [
           {
             "facility": "factory",
@@ -4984,8 +5014,10 @@
               "en": "When this Operator is assigned to a Dormitory, if this unit has Full Morale, swaps Morale with the previous Operator assigned to that Dormitory."
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "moraleExchange": {
+              "target": "previous",
+              "requiresFullMorale": true
+            }
           }
         ]
       }
@@ -6183,7 +6215,7 @@
     "profession": "前衛",
     "skills": [
       {
-        "id": "manu_skill_change[000]",
+      "id": "manu_skill_change[000]",
         "name": {
           "zh": "意识兼容",
           "ja": "意識統一",
@@ -6205,14 +6237,22 @@
               "ja": "製造所配置時、配属オペレーター全員のラインテク系、レッドパイン系スキルがすべて標準化系スキルと見なされる",
               "en": "When this Operator is assigned to a Factory, all Rhine Lab and Pinus Sylvestris skills in the Factory are considered Standardization skills"
             },
-            "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+          "efficiency": 0,
+          "skillFamilyConversions": [
+            {
+              "from": [
+                "rhineTech",
+                "pinusSylvestris"
+              ],
+              "to": "standardization",
+              "scope": "sameFacility"
+            }
+          ]
           }
         ]
       },
       {
-        "id": "manu_prod_spd[010]",
+      "id": "manu_prod_spd[010]",
         "name": {
           "zh": "标准化·β",
           "ja": "標準化β",
@@ -6220,8 +6260,11 @@
         },
         "slot": 1,
         "unlockPhase": 2,
-        "unlockLevel": 1,
-        "effects": [
+      "unlockLevel": 1,
+      "families": [
+        "standardization"
+      ],
+      "effects": [
           {
             "facility": "factory",
             "tags": [
@@ -6961,12 +7004,21 @@
             "efficiency": 0,
             "resourceEffects": [
               {
-                "resource": "perceptionInfo",
-                "amount": 20
+                "resource": "soundlessResonance",
+                "amount": 1,
+                "scaling": {
+                  "type": "dormitoryOccupancy"
+                }
+              },
+              {
+                "resource": "soundlessResonance",
+                "amount": 1,
+                "scaling": {
+                  "type": "resource",
+                  "resource": "perceptionInfo"
+                }
               }
-            ],
-            "ignoredForOptimization": true,
-            "unsupportedReason": "dormOccupancyResourceGeneratorFoldedIntoConsumer"
+            ]
           }
         ]
       },
@@ -6998,7 +7050,7 @@
             "baseEfficiency": 0,
             "scaling": {
               "type": "resource",
-              "resource": "perceptionInfo",
+              "resource": "soundlessResonance",
               "per": 4
             }
           }
@@ -7032,7 +7084,7 @@
             "baseEfficiency": 0,
             "scaling": {
               "type": "resource",
-              "resource": "perceptionInfo",
+              "resource": "soundlessResonance",
               "per": 2
             }
           }
@@ -8876,8 +8928,10 @@
               "en": "When this Operator is assigned to a Trading Post, increases order acquisition efficiency by +4% for every difference of 1 order(s) between the current number of orders and the maximum number of orders"
             },
             "efficiency": 0.04,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "currentOrderStateNotModeled"
+            "orderState": {
+              "mode": "averageEmptySlots",
+              "collectionIntervalHours": 4
+            }
           }
         ]
       },
@@ -8905,10 +8959,13 @@
               "ja": "貿易所配置時、自身以外の配属オペレーターの受注効率が10%につき、注文上限-1（上限数最低1）。オーダー数が1につき、受注効率+4%（一部のスキルに対して特殊加算制限がある）",
               "en": "When this Operator is assigned to a Trading Post, reduces the order limit by -1 for every 10% order acquisition efficiency provided by all other Operators stationed at that Trading Post (to a minimum of 1); Furthermore, increases order acquisition efficiency by +4% for every 1 order(s) (Special Interaction Rules apply with certain skills)"
             },
-            "efficiency": 0.1,
-            "orderLimit": -1,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "currentOrderAndSpecialStackNotModeled"
+            "efficiency": 0.04,
+            "orderState": {
+              "mode": "averageStoredOrders",
+              "collectionIntervalHours": 4,
+              "reduceOrderLimitPerOtherEfficiency": 0.1,
+              "minimumOrderLimit": 1
+            }
           }
         ]
       }
@@ -9460,8 +9517,13 @@
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased slightly (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
             },
             "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "highValueOrderProbability",
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderProbability",
+                "level": "slight",
+                "warmupHours": 3
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",
@@ -9496,8 +9558,13 @@
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
             },
             "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "highValueOrderProbability",
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderProbability",
+                "level": "increased",
+                "warmupHours": 5
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",
@@ -9708,7 +9775,17 @@
               "zh": "进驻贸易站时，订单获取效率+10%，固定获取可露希尔特别订单（不视作违约订单）",
               "ja": "貿易所配置時、受注効率+10%、クロージャの特別オーダー（と見なされない）を必ず受注する"
             },
-            "efficiency": 0.1
+            "efficiency": 0.1,
+            "tradingOrderEffects": [
+              {
+                "type": "fixedSpecialOrder",
+                "kind": "closure",
+                "gold": 2,
+                "lmd": 1200,
+                "hours": 2.4,
+                "affectedByEfficiency": true
+              }
+            ]
           }
         ]
       }
@@ -12215,8 +12292,23 @@
               "ja": "配置宿舎内、自分以外のオペレーター1人の1時間ごとの体力回復量+0.55（同種の効果は高いほうのみ適用） 対象がアイルーと愉快な仲間たちまたは泡影国ハンター小隊の場合、追加で体力回復量+0.45"
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "moraleEffects": [
+              {
+                "type": "recovery",
+                "target": "singleOther",
+                "amount": 0.55
+              },
+              {
+                "type": "recovery",
+                "target": "singleOther",
+                "amount": 0.45,
+                "targetOperatorIds": [
+                  "char_4077_palico",
+                  "char_1048_orchd2"
+                ],
+                "stacksWithBase": true
+              }
+            ]
           }
         ]
       },
@@ -12654,12 +12746,21 @@
             "efficiency": 0,
             "resourceEffects": [
               {
-                "resource": "perceptionInfo",
-                "amount": 20
+                "resource": "thoughtChain",
+                "amount": 1,
+                "scaling": {
+                  "type": "dormitoryOccupancy"
+                }
+              },
+              {
+                "resource": "thoughtChain",
+                "amount": 1,
+                "scaling": {
+                  "type": "resource",
+                  "resource": "perceptionInfo"
+                }
               }
-            ],
-            "ignoredForOptimization": true,
-            "unsupportedReason": "dormOccupancyResourceGeneratorFoldedIntoConsumer"
+            ]
           }
         ]
       },
@@ -12690,7 +12791,7 @@
             "baseEfficiency": 0,
             "scaling": {
               "type": "resource",
-              "resource": "perceptionInfo",
+              "resource": "thoughtChain",
               "per": 2
             }
           }
@@ -12723,7 +12824,7 @@
             "baseEfficiency": 0,
             "scaling": {
               "type": "resource",
-              "resource": "perceptionInfo",
+              "resource": "thoughtChain",
               "per": 1
             }
           }
@@ -13008,8 +13109,13 @@
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased slightly (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
             },
             "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "highValueOrderProbability",
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderProbability",
+                "level": "slight",
+                "warmupHours": 3
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",
@@ -13044,8 +13150,13 @@
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
             },
             "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "highValueOrderProbability",
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderProbability",
+                "level": "increased",
+                "warmupHours": 5
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",
@@ -13097,8 +13208,19 @@
               "en": "When this Operator is assigned to a Dormitory, Siege increases Glasgow Gang Operator recovery in the building by an additional +0.3"
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "moraleEffects": [
+              {
+                "type": "recovery",
+                "target": "singleOther",
+                "amount": 0.3,
+                "targetAffiliations": [
+                  "glasgow"
+                ],
+                "requiresDormitoryOperatorIds": [
+                  "char_112_siege"
+                ]
+              }
+            ]
           }
         ]
       },
@@ -14507,8 +14629,16 @@
               "en": "When this Operator is assigned to a Trading Post, Special Exclusive Orders will be obtained at a fixed rate (not considered as Defaulted trades). These orders are unaffected by any order acquisition efficiency modifiers"
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "tradingOrderEffects": [
+              {
+                "type": "fixedSpecialOrder",
+                "kind": "pepe",
+                "gold": 0,
+                "lmd": 1000,
+                "hours": 4.5,
+                "affectedByEfficiency": false
+              }
+            ]
           }
         ]
       }
@@ -17034,7 +17164,14 @@
               "ja": "製造所配置時、配置製造所の標準化系スキルの発動数1につき、製造効率+5%",
               "en": "When this Operator is assigned to a Factory, provides an additional +5% productivity for every Standardization Skill in the same Factory"
             },
-            "efficiency": 0.05
+            "efficiency": 0.05,
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "skillFamily",
+              "family": "standardization",
+              "includeSelf": true,
+              "scope": "sameFacility"
+            }
           }
         ]
       },
@@ -17048,6 +17185,9 @@
         "slot": 1,
         "unlockPhase": 2,
         "unlockLevel": 1,
+        "families": [
+          "standardization"
+        ],
         "effects": [
           {
             "facility": "factory",
@@ -17441,7 +17581,7 @@
     "profession": "補助",
     "skills": [
       {
-        "id": "dorm_bd_num[000]",
+      "id": "dorm_bd_num[000]",
         "name": {
           "zh": "无声共鸣",
           "ja": "声なき協奏",
@@ -17464,9 +17604,17 @@
               "ja": "配置宿舎内、オペレーター1名につき、静かなる共鳴+1",
               "en": "When this Operator is assigned to a Dormitory, for every 1 Operators in that Dormitory, Soundless Resonance +1"
             },
-            "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+          "efficiency": 0,
+          "resourceEffects": [
+            {
+              "resource": "soundlessResonance",
+              "amount": 1,
+              "scaling": {
+                "type": "dormitoryOccupancy",
+                "scope": "sameFacility"
+              }
+            }
+          ]
           }
         ]
       },
@@ -17522,7 +17670,7 @@
     "profession": "補助",
     "skills": [
       {
-        "id": "manu_skill_limit[000]",
+      "id": "manu_skill_limit[000]",
         "name": {
           "zh": "勘探背包",
           "en": "Explorer's Backpack",
@@ -17544,14 +17692,19 @@
               "en": "When this Operator is assigned to a Factory, gain +5 Storage Capacity for each Rhine Tech-type skill in that Factory",
               "ja": "製造所配置時、製造所内のラインテク系スキルの発動数1につき、保管上限+5"
             },
-            "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+          "efficiency": 0,
+          "storageLimit": 5,
+          "scaling": {
+            "type": "skillFamily",
+            "family": "rhineTech",
+            "includeSelf": true,
+            "scope": "sameFacility"
+          }
           }
         ]
       },
       {
-        "id": "manu_prod_spd[011]",
+      "id": "manu_prod_spd[011]",
         "name": {
           "zh": "莱茵科技·β",
           "ja": "ラインテクβ",
@@ -17559,8 +17712,11 @@
         },
         "slot": 1,
         "unlockPhase": 2,
-        "unlockLevel": 1,
-        "effects": [
+      "unlockLevel": 1,
+      "families": [
+        "rhineTech"
+      ],
+      "effects": [
           {
             "facility": "factory",
             "tags": [
@@ -19023,8 +19179,13 @@
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased slightly (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
             },
             "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "highValueOrderProbability",
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderProbability",
+                "level": "slight",
+                "warmupHours": 3
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",
@@ -19892,8 +20053,15 @@
               "ja": "配置宿舎内、体力20以下のオペレーターの1時間ごとの体力回復量が追加で+0.1（同種の効果は高いほうのみ適用）"
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "moraleEffects": [
+              {
+                "type": "recovery",
+                "target": "room",
+                "amount": 0.1,
+                "targetMoraleAtMost": 20,
+                "stacksWithBase": true
+              }
+            ]
           }
         ]
       }
@@ -23299,8 +23467,13 @@
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased slightly (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
             },
             "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "highValueOrderProbability",
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderProbability",
+                "level": "slight",
+                "warmupHours": 3
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",
@@ -23335,8 +23508,13 @@
               "en": "When this Operator is assigned to a Trading Post, the chance of getting higher-yield Precious Metal orders is increased (rate is influenced by length of work time), and Morale consumed per hour is reduced by -0.25"
             },
             "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "highValueOrderProbability",
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderProbability",
+                "level": "increased",
+                "warmupHours": 5
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",

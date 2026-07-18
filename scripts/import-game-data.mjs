@@ -440,6 +440,14 @@ function referencedOperatorIdsFromEffect(effect) {
   return conditions.flatMap((condition) => ("operatorIds" in condition ? condition.operatorIds : []));
 }
 
+function inferBaseSkillFamilies(name) {
+  const names = Object.values(name ?? {}).join(" ");
+  if (/Rhine Tech|ラインテク|莱茵科技/i.test(names)) return ["rhineTech"];
+  if (/Pinus Sylvestris|レッドパイン|红松骑士团/i.test(names)) return ["pinusSylvestris"];
+  if (/Standardization|標準化|标准化/i.test(names)) return ["standardization"];
+  return [];
+}
+
 function normalize(
   languages,
   nameOverrides,
@@ -528,6 +536,9 @@ function normalize(
           return {
             id: String(buff.buffId ?? `${charId}-base-${index}`),
             name: overriddenBuffName,
+            ...(inferBaseSkillFamilies(overriddenBuffName).length
+              ? { families: inferBaseSkillFamilies(overriddenBuffName) }
+              : {}),
             slot: rawBuff.slot,
             unlockPhase: phaseToElite(rawBuff.cond?.phase),
             unlockLevel: conditionLevelToNumber(rawBuff.cond?.level),
@@ -601,6 +612,7 @@ function applyBaseSkillOverrides(operators, overrides) {
 
       return {
         ...skill,
+        ...structuredClone(skillOverride.patch ?? {}),
         effects: [...effects, ...structuredClone(skillOverride.addEffects ?? [])]
       };
     });
@@ -621,12 +633,15 @@ function markUnmodeledEffect(effect) {
     (effect.baseEfficiency ?? 0) !== 0 ||
     Boolean(effect.storageLimit) ||
     Boolean(effect.orderLimit) ||
+    Boolean(effect.orderState) ||
     Boolean(effect.globalEffect) ||
     Boolean(effect.resourceEffects?.length) ||
+    Boolean(effect.skillFamilyConversions?.length) ||
     Boolean(effect.facilityCountBonuses?.length) ||
     Boolean(effect.tradingOrderEffects?.length) ||
     Boolean(effect.conditionalBonuses?.length) ||
-    Boolean(effect.moraleEffects?.length);
+    Boolean(effect.moraleEffects?.length) ||
+    Boolean(effect.moraleExchange);
   if (hasModeledValue || effect.ignoredForOptimization) {
     return effect;
   }
