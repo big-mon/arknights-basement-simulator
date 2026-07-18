@@ -5090,7 +5090,7 @@
         "name": {
           "zh": "丰富工作经验",
           "en": "Plentiful Work Experience",
-          "ja": "逞しいお嬢様"
+          "ja": "豊富な職務経験"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -5107,7 +5107,7 @@
             "description": {
               "zh": "进驻控制中枢时，所有生产贵金属类配方的制造站生产力+0.5%，每有20点热情值，所有生产贵金属类配方的制造站生产力+0.5%",
               "en": "When this Operator is assigned to the Control Center, the productivity of Precious Metals of all Factories +0.5%, with an additional +0.5% for every 20 Passion",
-              "ja": "制御中枢配置時、パッションが40以上の場合、1時間ごとの体力消費量+0.05"
+              "ja": "制御中枢配置時、金属を製造する製造所の製造効率+0.5%、パッション20につき、製造効率が追加で+0.5%"
             },
             "efficiency": 0.005,
             "baseEfficiency": 0.005,
@@ -5146,7 +5146,7 @@
             "description": {
               "zh": "进驻控制中枢时，所有生产贵金属类配方的制造站生产力+1%，每有20点热情值，所有生产贵金属类配方的制造站生产力+1%",
               "en": "When this Operator is assigned to the Control Center, the productivity of Precious Metals of all Factories +1%, with an additional +1% for every 20 Passion",
-              "ja": "制御中枢配置時、金属を製造する製造所の製造効率+0.5%、パッション20につき、製造効率が追加で+0.5%"
+              "ja": "制御中枢配置時、金属を製造する製造所の製造効率+1%、パッション20につき、製造効率が追加で+1%"
             },
             "efficiency": 0.01,
             "baseEfficiency": 0.01,
@@ -5168,7 +5168,7 @@
         "name": {
           "zh": "生活的重压",
           "en": "Indomitable Lady",
-          "ja": "豊富な職務経験"
+          "ja": "逞しいお嬢様"
         },
         "slot": 1,
         "unlockPhase": 0,
@@ -5185,7 +5185,7 @@
             "description": {
               "zh": "进驻控制中枢时，热情值处于40点及以上时，自身心情每小时消耗+0.05",
               "en": "When this Operator is assigned to the Control Center, self Morale loss per hour +0.05 when Passion is 40 or higher",
-              "ja": "制御中枢配置時、金属を製造する製造所の製造効率+1%、パッション20につき、製造効率が追加で+1%"
+              "ja": "制御中枢配置時、パッションが40以上の場合、1時間ごとの体力消費量+0.05"
             },
             "efficiency": 0.05,
             "ignoredForOptimization": true,
@@ -12240,7 +12240,7 @@
             ],
             "description": {
               "zh": "进驻会客室时，更容易获得线索板上尚未拥有的线索，若焰狐龙梓兰进驻控制中枢，则线索搜集速度提升10%",
-              "ja": "応接室配置時、ボード上未入手の手がかりを入手しやすい。焔狐竜オーキッドが宿舎に配置されている場合、手がかり捜索速度+10%"
+              "ja": "応接室配置時、ボード上未入手の手がかりを入手しやすい。焔狐竜オーキッドが制御中枢に配置されている場合、手がかり捜索速度+10%"
             },
             "efficiency": 0.1,
             "conditions": [

@@ -121,6 +121,7 @@ const iana = operators.find((operator) => operator.id === "char_4124_iana")!;
 const bibeak = operators.find((operator) => operator.id === "char_252_bibeak")!;
 const proviso = operators.find((operator) => operator.id === "char_4032_provs")!;
 const tequila = operators.find((operator) => operator.id === "char_486_takila")!;
+const ambriel = operators.find((operator) => operator.id === "char_302_glaze")!;
 const ascalon = operators.find((operator) => operator.id === "char_4132_ascln")!;
 const saileach = operators.find((operator) => operator.id === "char_479_sleach")!;
 const kaltsit = operators.find((operator) => operator.id === "char_003_kalts")!;
@@ -930,13 +931,17 @@ describe("optimizer", () => {
 
   it("scores Proviso's defaulted orders from the normal gold-order distribution", () => {
     const state = createDefaultState();
-    ownOperators(state, [proviso.id]);
+    ownOperators(state, [proviso.id, ambriel.id]);
     const trading = { ...state.facilities.find((facility) => facility.id === "trading-1")!, slotCount: 1 };
     state.facilities = [trading];
 
+    const candidates = findCandidates(trading, state);
+    const provisoCandidate = candidates.find((assignment) => assignment.operatorId === proviso.id)!;
+    const ambrielCandidate = candidates.find((assignment) => assignment.operatorId === ambriel.id)!;
     const plan = generateAssignmentPlan(state);
     const tradingPlan = plan.facilityPlans[0];
 
+    expect(provisoCandidate.score).toBeGreaterThan(ambrielCandidate.score);
     expect(tradingPlan.assignments.map((assignment) => assignment.operatorId)).toContain(proviso.id);
     expect(tradingPlan.expectedEfficiency).toBeCloseTo(4.5 / 2.9 - 1);
   });
@@ -1115,6 +1120,23 @@ describe("optimizer", () => {
     expect(samePostTuye.efficiency).toBeCloseTo(0.35);
     expect(otherPostPozemka.efficiency).toBeCloseTo(0.1);
     expect(otherPostTuye.efficiency).toBeCloseTo(0.2);
+  });
+
+  it("reevaluates tentative trading teams before selecting Kirara line synergies", () => {
+    const state = createDefaultState();
+    ownOperators(state, [kirara.id, pozemka.id, tuye.id]);
+    state.facilities = state.facilities
+      .filter((facility) => facility.id !== "trading-2")
+      .map((facility) => (facility.id === "trading-1" ? { ...facility, slotCount: 2 } : facility));
+
+    const plan = generateAssignmentPlan(state);
+    const tradingPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === "trading-1")!;
+
+    expect(tradingPlan.assignments.map((assignment) => assignment.operatorId)).toEqual(
+      expect.arrayContaining([kirara.id, tuye.id])
+    );
+    expect(tradingPlan.assignments.map((assignment) => assignment.operatorId)).not.toContain(pozemka.id);
+    expect(tradingPlan.expectedEfficiency).toBeCloseTo(0.4);
   });
 
   it("keeps morale-cost factory capacity skills product-neutral", () => {

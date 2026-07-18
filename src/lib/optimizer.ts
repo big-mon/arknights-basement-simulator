@@ -191,11 +191,21 @@ function buildFacilityPlans(
       const candidates = findCandidates(facility, state, 0, context)
         .filter((candidate) => !excludedOperatorIds.has(candidate.operatorId))
         .sort((a, b) => b.score - a.score);
+      const teamOptions = buildFacilityTeamOptions(candidates, facility.slotCount)
+        .map((assignments) => reevaluateFacilityTeam(assignments, facility, state, context))
+        .sort(
+          (a, b) =>
+            facilityTeamSelectionScore(b, facility, state.preference, facilityBonus) -
+              facilityTeamSelectionScore(a, facility, state.preference, facilityBonus) ||
+            a.map((assignment) => assignment.operatorId).sort().join("|").localeCompare(
+              b.map((assignment) => assignment.operatorId).sort().join("|")
+            )
+        );
       return {
         facility,
         facilityBonus,
         candidates,
-        teamOptions: buildFacilityTeamOptions(candidates, facility.slotCount)
+        teamOptions
       };
     });
   type SearchState = {
@@ -369,6 +379,50 @@ function buildFacilityTeamOptions(candidates: Assignment[], slotCount: number) {
         a.reduce((sum, assignment) => sum + assignment.score, 0) ||
       a.map((assignment) => assignment.operatorId).sort().join("|").localeCompare(b.map((assignment) => assignment.operatorId).sort().join("|"))
   );
+}
+
+function reevaluateFacilityTeam(
+  assignments: Assignment[],
+  facility: FacilitySlot,
+  state: AppState,
+  context: AssignmentEvaluationContext
+) {
+  if (!assignments.length) {
+    return assignments;
+  }
+
+  const tentativeContext: AssignmentEvaluationContext = {
+    ...context,
+    assignments: [
+      ...context.assignments.filter((assignment) => assignment.facilityId !== facility.id),
+      ...assignments
+    ]
+  };
+
+  return assignments.map((assignment) => {
+    if (
+      assignment.skillId === "baseline" ||
+      assignment.skillId === "skillless-prerequisite" ||
+      assignment.skillId === "base-skillless-prerequisite"
+    ) {
+      return assignment;
+    }
+    const operator = operators.find((candidate) => candidate.id === assignment.operatorId);
+    const rosterEntry = state.roster[assignment.operatorId];
+    if (!operator || !rosterEntry) {
+      return assignment;
+    }
+    const reevaluated = bestSkillForFacility(
+      operator,
+      rosterEntry,
+      facility,
+      state.preference,
+      0,
+      state.language,
+      tentativeContext
+    );
+    return reevaluated.find((candidate) => candidate.skillId === assignment.skillId) ?? reevaluated[0] ?? assignment;
+  });
 }
 
 function assignmentStateSignature(state: { plans: FacilityPlan[] }) {
@@ -844,7 +898,8 @@ function bestSkillForFacility(
       commonRemoteScore,
       remoteFacilityStatBonuses,
       remoteFacilityEfficiencyBonuses,
-      remoteFacilityCountBonuses
+      remoteFacilityCountBonuses,
+      productWeight(facility.product, preference) * facilityWeight(facility)
     );
   };
   const bestAssignment = aggregate(true);
@@ -1154,7 +1209,8 @@ function aggregateOperatorAssignments(
   commonRemoteScore: number,
   remoteFacilityStatBonuses: NonNullable<Assignment["remoteFacilityStatBonuses"]>,
   remoteFacilityEfficiencyBonuses: NonNullable<Assignment["remoteFacilityEfficiencyBonuses"]>,
-  remoteFacilityCountBonuses: NonNullable<Assignment["remoteFacilityCountBonuses"]>
+  remoteFacilityCountBonuses: NonNullable<Assignment["remoteFacilityCountBonuses"]>,
+  localScoreMultiplier: number
 ): Assignment | undefined {
   if (!assignments.length) {
     return undefined;
@@ -1170,15 +1226,26 @@ function aggregateOperatorAssignments(
   const scalesWithFacilityStat = Array.from(
     new Set(assignments.flatMap((assignment) => assignment.scalesWithFacilityStat ?? []))
   );
+  const aggregateEfficiency = assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
+  const tradingOrderEffects = assignments.flatMap((assignment) => assignment.tradingOrderEffects ?? []);
+  const isolatedTradingScore = assignments.reduce(
+    (sum, assignment) =>
+      sum + tradingOrderAdjustedEfficiency(assignment.efficiency, assignment.tradingOrderEffects ?? []) * localScoreMultiplier,
+    0
+  );
+  const aggregateTradingScore = tradingOrderAdjustedEfficiency(aggregateEfficiency, tradingOrderEffects) * localScoreMultiplier;
 
   return {
     ...first,
     skillId: assignments.map((assignment) => assignment.skillId).join("+"),
-    score: assignments.reduce((sum, assignment) => sum + assignment.score, commonRemoteScore),
-    efficiency: assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0),
+    score:
+      assignments.reduce((sum, assignment) => sum + assignment.score, commonRemoteScore) +
+      aggregateTradingScore -
+      isolatedTradingScore,
+    efficiency: aggregateEfficiency,
     storageLimit: first.storageLimit,
     orderLimit: first.orderLimit,
-    tradingOrderEffects: assignments.flatMap((assignment) => assignment.tradingOrderEffects ?? []),
+    tradingOrderEffects,
     suppressesOtherFactoryEfficiency: assignments.some((assignment) => assignment.suppressesOtherFactoryEfficiency) || undefined,
     globalStackKey: globalStackKeys[0],
     globalStackKeys: globalStackKeys.length ? globalStackKeys : undefined,
