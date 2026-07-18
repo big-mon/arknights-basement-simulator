@@ -87,6 +87,19 @@ export interface BaseSkillEffect {
   }>;
   storageLimit?: number;
   orderLimit?: number;
+  tradingOrderEffects?: Array<
+    | {
+        type: "defaultedOrderRule";
+      }
+    | {
+        type: "defaultedOrderExtraGold";
+        amount: number;
+      }
+    | {
+        type: "highValueOrderExtraLmd";
+        amount: number;
+      }
+  >;
   ignoredForOptimization?: boolean;
   hiddenFromUi?: boolean;
   unsupportedReason?: string;
@@ -193,6 +206,7 @@ export interface Assignment {
   efficiency: number;
   storageLimit?: number;
   orderLimit?: number;
+  tradingOrderEffects?: NonNullable<BaseSkillEffect["tradingOrderEffects"]>;
   suppressesOtherFactoryEfficiency?: boolean;
   globalStackKey?: string;
   globalStackKeys?: string[];

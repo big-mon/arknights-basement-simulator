@@ -724,8 +724,17 @@
               "en": "When this Operator is assigned to a Dormitory, every 1 levels of Dreamland is converted into 1 points of Perception Information"
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "resourceEffects": [
+              {
+                "resource": "perceptionInfo",
+                "amount": 1,
+                "scaling": {
+                  "type": "facilityLevel",
+                  "facility": "dormitory",
+                  "max": 5
+                }
+              }
+            ]
           }
         ]
       }
@@ -1277,7 +1286,8 @@
         "id": "control_hire_spd&bd[000]",
         "name": {
           "zh": "可靠伙伴",
-          "en": "Reliable Companion"
+          "en": "Reliable Companion",
+          "ja": "頼れる仲間"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -1292,7 +1302,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，热情值+10；人脉资源的联络速度+10%（同种效果取最高）",
-              "en": "When this Operator is assigned to the Control Center, Passion +10; HR contacting speed +10% (Only the strongest effect of this type takes place)"
+              "en": "When this Operator is assigned to the Control Center, Passion +10; HR contacting speed +10% (Only the strongest effect of this type takes place)",
+              "ja": "制御中枢配置時、パッション+10。事務連絡速度+10%（同種の効果は高いほうのみ適用）"
             },
             "efficiency": 0.1,
             "resourceEffects": [
@@ -1308,7 +1319,8 @@
         "id": "control_tra_limit&spd2[000]",
         "name": {
           "zh": "家族认可",
-          "en": "Famiglia Approval"
+          "en": "Famiglia Approval",
+          "ja": "ファミリーの許し"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -1324,7 +1336,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，每个进驻在贸易站的叙拉古干员，订单获取效率+5%",
-              "en": "When this Operator is assigned to the Control Center, all Siracusa Operators assigned to Trading Posts gain order acquisition efficiency +5%"
+              "en": "When this Operator is assigned to the Control Center, all Siracusa Operators assigned to Trading Posts gain order acquisition efficiency +5%",
+              "ja": "制御中枢配置時、貿易所に配置中のシラクーザオペレーター1人につき、受注効率+5%"
             },
             "efficiency": 0.05
           }
@@ -1577,7 +1590,8 @@
         "id": "control_meeting&mp_cost[000]",
         "name": {
           "zh": "英雄的骄傲·α",
-          "en": "Pride of a Hero α"
+          "en": "Pride of a Hero α",
+          "ja": "英雄の誇りα"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -1593,7 +1607,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，基建内（不包含副手及活动室使用者）每有1名米诺斯干员，会客室线索搜集速度+4%（最多+20%，同种效果取最高）；当与萨尔贡干员进驻控制中枢一起工作时，自身心情每小时消耗+0.02",
-              "en": "When this Operator is assigned to the Control Center, clue collection speed +4% for each Minos Operator in the Base (excluding Assistants and Activity Room users, caps at +20%, strongest effect of the same type applies); when assigned together with Sargon Operators, self Morale loss per hour +0.02"
+              "en": "When this Operator is assigned to the Control Center, clue collection speed +4% for each Minos Operator in the Base (excluding Assistants and Activity Room users, caps at +20%, strongest effect of the same type applies); when assigned together with Sargon Operators, self Morale loss per hour +0.02",
+              "ja": "制御中枢配置時、基地に配置された（補佐と活動室利用者を除く）ミノスオペレーター1人につき、応接室の手がかり捜索速度+4%（最大+20%、同種の効果は高いほうのみ適用）。 サルゴンオペレーターと共に制御中枢に配置時、自身の1時間ごとの体力消費量+0.02"
             },
             "efficiency": 0.04,
             "moraleEffects": [
@@ -1610,7 +1625,8 @@
         "id": "control_meeting&mp_cost[100]",
         "name": {
           "zh": "英雄的骄傲·β",
-          "en": "Pride of a Hero β"
+          "en": "Pride of a Hero β",
+          "ja": "英雄の誇りβ"
         },
         "slot": 0,
         "unlockPhase": 1,
@@ -1626,7 +1642,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，基建内（不包含副手及活动室使用者）每有1名米诺斯干员，会客室线索搜集速度+5%（最多+25%，同种效果取最高）；当与萨尔贡干员进驻控制中枢一起工作时，自身心情每小时消耗+0.02",
-              "en": "When this Operator is assigned to the Control Center, clue collection speed +5% for each Minos Operator in the Base (excluding Assistants and Activity Room users, caps at +25%, strongest effect of the same type applies); when assigned together with Sargon Operators, self Morale loss per hour +0.02"
+              "en": "When this Operator is assigned to the Control Center, clue collection speed +5% for each Minos Operator in the Base (excluding Assistants and Activity Room users, caps at +25%, strongest effect of the same type applies); when assigned together with Sargon Operators, self Morale loss per hour +0.02",
+              "ja": "制御中枢配置時、基地に配置された（補佐と活動室利用者を除く）ミノスオペレーター1人につき、応接室の手がかり捜索速度+5%（最大+25%、同種の効果は高いほうのみ適用）。 サルゴンオペレーターと共に制御中枢に配置時、自身の1時間ごとの体力消費量+0.02"
             },
             "efficiency": 0.05,
             "moraleEffects": [
@@ -1921,7 +1938,8 @@
       {
         "id": "trade_ord_spd_ext[020]",
         "name": {
-          "zh": "家族经营·α"
+          "zh": "家族经营·α",
+          "ja": "家族経営α"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -1936,7 +1954,8 @@
               "trading"
             ],
             "description": {
-              "zh": "进驻贸易站时，订单获取效率+25%；当伺夜在基建内时（不包含副手及活动室使用者），订单获取效率额外+5%"
+              "zh": "进驻贸易站时，订单获取效率+25%；当伺夜在基建内时（不包含副手及活动室使用者），订单获取效率额外+5%",
+              "ja": "貿易所配置時、受注効率+25%、ヴィジェルが基地内に配置されているとき（補佐と活動室利用者である場合を除く）、追加で受注効率+5%"
             },
             "efficiency": 0.3
           }
@@ -1945,7 +1964,8 @@
       {
         "id": "trade_ord_spd_ext[021]",
         "name": {
-          "zh": "家族经营·β"
+          "zh": "家族经营·β",
+          "ja": "家族経営β"
         },
         "slot": 0,
         "unlockPhase": 2,
@@ -1960,7 +1980,8 @@
               "trading"
             ],
             "description": {
-              "zh": "进驻贸易站时，订单获取效率+30%；当伺夜在基建内时（不包含副手及活动室使用者），订单获取效率额外+10%"
+              "zh": "进驻贸易站时，订单获取效率+30%；当伺夜在基建内时（不包含副手及活动室使用者），订单获取效率额外+10%",
+              "ja": "貿易所配置時、受注効率+30%、ヴィジェルが基地内に配置されているとき（補佐と活動室利用者である場合を除く）、追加で受注効率+10%"
             },
             "efficiency": 0.4
           }
@@ -1969,7 +1990,8 @@
       {
         "id": "trade_ord_limit&cost_P[020]",
         "name": {
-          "zh": "未偿还的债务"
+          "zh": "未偿还的债务",
+          "ja": "未返済の借金"
         },
         "slot": 1,
         "unlockPhase": 0,
@@ -1984,7 +2006,8 @@
               "trading"
             ],
             "description": {
-              "zh": "当与伺夜在同一个贸易站时，心情每小时消耗-0.1，订单上限+2"
+              "zh": "当与伺夜在同一个贸易站时，心情每小时消耗-0.1，订单上限+2",
+              "ja": "ヴィジェルと共に貿易所に配置時、1時間ごとの体力消費量-0.1、注文上限+2"
             },
             "efficiency": 0,
             "orderLimit": 2
@@ -2719,8 +2742,17 @@
               "en": "When this Operator is assigned to a Dormitory, convert every 1 Measure to 1 Perception Information"
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "resourceEffects": [
+              {
+                "resource": "perceptionInfo",
+                "amount": 1,
+                "scaling": {
+                  "type": "facilityLevel",
+                  "facility": "dormitory",
+                  "max": 5
+                }
+              }
+            ]
           }
         ]
       }
@@ -3115,7 +3147,8 @@
       {
         "id": "meet_spd_notOwned[003]",
         "name": {
-          "zh": "萍踪浪迹"
+          "zh": "萍踪浪迹",
+          "ja": "浮雲漂泊"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -3130,7 +3163,8 @@
               "meeting"
             ],
             "description": {
-              "zh": "进驻会客室时，更容易获得线索板上尚未拥有的线索"
+              "zh": "进驻会客室时，更容易获得线索板上尚未拥有的线索",
+              "ja": "応接室配置時、ボード上未入手の手がかりを入手しやすい"
             },
             "efficiency": 0,
             "ignoredForOptimization": true,
@@ -3141,7 +3175,8 @@
       {
         "id": "meet_spd_bd[002]",
         "name": {
-          "zh": "扶危行侠"
+          "zh": "扶危行侠",
+          "ja": "扶危義侠"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -3156,7 +3191,8 @@
               "meeting"
             ],
             "description": {
-              "zh": "进驻会客室时，线索搜集速度提升20%，同时每10点人间烟火额外提升1%"
+              "zh": "进驻会客室时，线索搜集速度提升20%，同时每10点人间烟火额外提升1%",
+              "ja": "応接室配置時、手がかり捜索速度+20%、俗世之憂が10につき、追加で捜索速度+1%"
             },
             "efficiency": 0.21
           }
@@ -3563,9 +3599,12 @@
               "ja": "貿易所配置時、次に受注する金属オーダーの納品数が4を下回るならば、違約オーダーと見なす",
               "en": "When this Operator is assigned to a Trading Post, if the amount of Pure Gold traded is less than 4, it will be considered a Defaulted trade"
             },
-            "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "goldOrderValueExpectation"
+            "efficiency": 0,
+            "tradingOrderEffects": [
+              {
+                "type": "defaultedOrderRule"
+              }
+            ]
           }
         ]
       },
@@ -3592,9 +3631,13 @@
               "ja": "貿易所配置時、次に受注する金属オーダーが違約オーダーならば、純金の納品数が+1追加される",
               "en": "When this Operator is assigned to a Trading Post, if a Pure Gold trade is a Defaulted trade, Pure Gold traded +1"
             },
-            "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "goldOrderValueExpectation"
+            "efficiency": 0,
+            "tradingOrderEffects": [
+              {
+                "type": "defaultedOrderExtraGold",
+                "amount": 1
+              }
+            ]
           }
         ]
       },
@@ -3621,9 +3664,13 @@
               "ja": "貿易所配置時、次に受注する金属オーダーが違約オーダーならば、純金の納品数が+2追加される",
               "en": "When this Operator is assigned to a Trading Post, if a Pure Gold trade is a Defaulted trade, Pure Gold traded +2"
             },
-            "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "goldOrderValueExpectation"
+            "efficiency": 0,
+            "tradingOrderEffects": [
+              {
+                "type": "defaultedOrderExtraGold",
+                "amount": 2
+              }
+            ]
           }
         ]
       }
@@ -3932,7 +3979,8 @@
         "id": "control_mp_cost[013]",
         "name": {
           "zh": "点滴关照",
-          "en": "Drip-Fed Care"
+          "en": "Drip-Fed Care",
+          "ja": "細やかな気配り"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -3948,7 +3996,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，控制中枢内所有干员的心情每小时恢复+0.05",
-              "en": "When this Operator is assigned to the Control Center, increases Morale of all Operators in the Control Center by +0.05 per hour."
+              "en": "When this Operator is assigned to the Control Center, increases Morale of all Operators in the Control Center by +0.05 per hour.",
+              "ja": "制御中枢配置時、制御中枢内全員の体力が1時間ごとに+0.05回復"
             },
             "efficiency": 0,
             "moraleEffects": [
@@ -3965,7 +4014,8 @@
         "id": "control_dorm_rec_tag[001]",
         "name": {
           "zh": "无言的慈爱",
-          "en": "Quiet Affection"
+          "en": "Quiet Affection",
+          "ja": "無言の慈愛"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -3981,7 +4031,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，所有宿舍内精英干员的心情每小时恢复+0.1（同种效果取最高）",
-              "en": "When this Operator is assigned to the Control Center, all Elite Operators in Dormitories recover +0.1 Morale per hour (strongest effect of the same type applies)"
+              "en": "When this Operator is assigned to the Control Center, all Elite Operators in Dormitories recover +0.1 Morale per hour (strongest effect of the same type applies)",
+              "ja": "制御中枢配置時、全ての宿舎内のエリートオペレーターの体力が1時間ごとに+0.1回復 (同種の効果は高いほうのみ適用)"
             },
             "efficiency": 0.05,
             "globalEffect": {
@@ -4053,7 +4104,8 @@
         "id": "manu_prod_spd&manu[000]",
         "name": {
           "zh": "科学改造",
-          "en": "Scientific Restructuring"
+          "en": "Scientific Restructuring",
+          "ja": "科学的改造"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -4068,7 +4120,8 @@
             ],
             "description": {
               "zh": "进驻制造站时，当前制造站内其他干员提供的生产力全部归零（不包含根据设施数量提供加成的生产力），每个当前制造站内干员为当前制造站仓库容量上限+5",
-              "en": "When this Operator is assigned to a Factory, the productivity contributed by all other Operators in that Factory becomes 0 (excluding productivity granted based on facility count), but every Operator in that Factory increases that Factory's Capacity limit by +5"
+              "en": "When this Operator is assigned to a Factory, the productivity contributed by all other Operators in that Factory becomes 0 (excluding productivity granted based on facility count), but every Operator in that Factory increases that Factory's Capacity limit by +5",
+              "ja": "製造所配置時、自身以外の配属オペレーター全員の製造効率を0にする（施設の数量による製造効率上昇に影響なし）。 製造所に配置中のオペレーター1名につき、配置製造所の保管上限+5"
             },
             "efficiency": 0,
             "storageLimit": 5,
@@ -4080,7 +4133,8 @@
         "id": "manu_prod_spd&manu[100]",
         "name": {
           "zh": "流程优化",
-          "en": "Workflow Optimization"
+          "en": "Workflow Optimization",
+          "ja": "工程最適化"
         },
         "slot": 0,
         "unlockPhase": 1,
@@ -4095,7 +4149,8 @@
             ],
             "description": {
               "zh": "进驻制造站时，当前制造站内其他干员提供的生产力全部归零（不包含根据设施数量提供加成的生产力），每个当前制造站内干员为当前制造站+10%生产力，仓库容量上限+5",
-              "en": "When this Operator is assigned to a Factory, the productivity contributed by all other Operators in that Factory becomes 0 (excluding productivity granted based on facility count), but every Operator in that Factory increases that Factory's Productivity by +10% and Capacity limit by +5"
+              "en": "When this Operator is assigned to a Factory, the productivity contributed by all other Operators in that Factory becomes 0 (excluding productivity granted based on facility count), but every Operator in that Factory increases that Factory's Productivity by +10% and Capacity limit by +5",
+              "ja": "製造所配置時、自身以外の配属オペレーター全員の製造効率を0にする（施設の数量による製造効率上昇に影響なし）。 製造所に配置中のオペレーター1名につき、配置製造所の製造効率+10%、保管上限+5"
             },
             "efficiency": 0.1,
             "scaling": {
@@ -5034,7 +5089,8 @@
         "id": "control_prod_bd_spd[000]",
         "name": {
           "zh": "丰富工作经验",
-          "en": "Plentiful Work Experience"
+          "en": "Plentiful Work Experience",
+          "ja": "豊富な職務経験"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -5050,7 +5106,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，所有生产贵金属类配方的制造站生产力+0.5%，每有20点热情值，所有生产贵金属类配方的制造站生产力+0.5%",
-              "en": "When this Operator is assigned to the Control Center, the productivity of Precious Metals of all Factories +0.5%, with an additional +0.5% for every 20 Passion"
+              "en": "When this Operator is assigned to the Control Center, the productivity of Precious Metals of all Factories +0.5%, with an additional +0.5% for every 20 Passion",
+              "ja": "制御中枢配置時、金属を製造する製造所の製造効率+0.5%、パッション20につき、製造効率が追加で+0.5%"
             },
             "efficiency": 0.005,
             "baseEfficiency": 0.005,
@@ -5071,7 +5128,8 @@
         "id": "control_prod_bd_spd[010]",
         "name": {
           "zh": "丰富工作经验",
-          "en": "Plentiful Work Experience"
+          "en": "Plentiful Work Experience",
+          "ja": "豊富な職務経験"
         },
         "slot": 0,
         "unlockPhase": 2,
@@ -5087,7 +5145,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，所有生产贵金属类配方的制造站生产力+1%，每有20点热情值，所有生产贵金属类配方的制造站生产力+1%",
-              "en": "When this Operator is assigned to the Control Center, the productivity of Precious Metals of all Factories +1%, with an additional +1% for every 20 Passion"
+              "en": "When this Operator is assigned to the Control Center, the productivity of Precious Metals of all Factories +1%, with an additional +1% for every 20 Passion",
+              "ja": "制御中枢配置時、金属を製造する製造所の製造効率+1%、パッション20につき、製造効率が追加で+1%"
             },
             "efficiency": 0.01,
             "baseEfficiency": 0.01,
@@ -5108,7 +5167,8 @@
         "id": "control_mp_cost&bd3[000]",
         "name": {
           "zh": "生活的重压",
-          "en": "Indomitable Lady"
+          "en": "Indomitable Lady",
+          "ja": "逞しいお嬢様"
         },
         "slot": 1,
         "unlockPhase": 0,
@@ -5124,7 +5184,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，热情值处于40点及以上时，自身心情每小时消耗+0.05",
-              "en": "When this Operator is assigned to the Control Center, self Morale loss per hour +0.05 when Passion is 40 or higher"
+              "en": "When this Operator is assigned to the Control Center, self Morale loss per hour +0.05 when Passion is 40 or higher",
+              "ja": "制御中枢配置時、パッションが40以上の場合、1時間ごとの体力消費量+0.05"
             },
             "efficiency": 0.05,
             "ignoredForOptimization": true,
@@ -5271,7 +5332,7 @@
     "id": "char_4222_taraxa",
     "name": {
       "zh": "风絮",
-      "ja": "タラクサクム",
+      "ja": "タラクサカム",
       "en": "Taraxacum"
     },
     "affiliations": [
@@ -5311,7 +5372,8 @@
       {
         "id": "trade_ord_spd&tag[020]",
         "name": {
-          "zh": "“孺子可教！”"
+          "zh": "“孺子可教！”",
+          "ja": "「孺子教うべし！」"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -5326,7 +5388,8 @@
               "trading"
             ],
             "description": {
-              "zh": "进驻贸易站时，基建内（不包含副手及活动室）每有一间进驻岁干员的设施，订单获取效率+4%（最多5间）"
+              "zh": "进驻贸易站时，基建内（不包含副手及活动室）每有一间进驻岁干员的设施，订单获取效率+4%（最多5间）",
+              "ja": "貿易所配置時、基地内（補佐と活動室を除く）の歳所属オペレーターが配置されている施設1室ごとに、受注効率+4%（最大5室まで）"
             },
             "efficiency": 0.04
           }
@@ -5473,7 +5536,8 @@
       {
         "id": "meet_spd&cost_condChar[020]",
         "name": {
-          "zh": "专业经理·α"
+          "zh": "专业经理·α",
+          "ja": "プロのマネージャーα"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -5488,7 +5552,8 @@
               "meeting"
             ],
             "description": {
-              "zh": "进驻会客室时，如果会客室内只有自身处于工作状态时，线索搜集速度提升15%，心情每小时消耗+1"
+              "zh": "进驻会客室时，如果会客室内只有自身处于工作状态时，线索搜集速度提升15%，心情每小时消耗+1",
+              "ja": "応接室配置時、自身だけが仕事中であると、手がかり捜索速度+15%、1時間ごとの体力消費量+1.0"
             },
             "efficiency": 0.15
           }
@@ -5497,7 +5562,8 @@
       {
         "id": "meet_spd&cost_condChar[021]",
         "name": {
-          "zh": "专业经理·β"
+          "zh": "专业经理·β",
+          "ja": "プロのマネージャーβ"
         },
         "slot": 0,
         "unlockPhase": 2,
@@ -5512,7 +5578,8 @@
               "meeting"
             ],
             "description": {
-              "zh": "进驻会客室时，如果会客室内只有自身处于工作状态时，线索搜集速度提升35%，心情每小时消耗+1"
+              "zh": "进驻会客室时，如果会客室内只有自身处于工作状态时，线索搜集速度提升35%，心情每小时消耗+1",
+              "ja": "応接室配置時、自身だけが仕事中であると、手がかり捜索速度+35%、1時間ごとの体力消費量+1.0"
             },
             "efficiency": 0.35
           }
@@ -7511,10 +7578,10 @@
               "en": "When this operator is assigned to a Trading Post, for every 1 Pure Gold Production Line, , Trading Post order acquisition efficiency +5%"
             },
             "efficiency": 0.05,
+            "baseEfficiency": 0,
             "scaling": {
-              "type": "facilityProductCount",
-              "facility": "factory",
-              "product": "gold"
+              "type": "resource",
+              "resource": "goldProductionLine"
             }
           }
         ]
@@ -7543,7 +7610,7 @@
               "ja": "貿易所配置時、基地内（補佐と活動室利用者を除く）に配置中のドゥリン族オペレーター1人につき（最大4人）、配置貿易所の純金生産ラインの数1+",
               "en": "When this Operator is assigned to a Trading post, for every 1 Durin Operator in the base (excluding Assistants and Activity Room users, caps at 4), Trading Post gains another 1 Pure Gold Production Line"
             },
-            "efficiency": 0.05,
+            "efficiency": 0,
             "conditions": [
               {
                 "type": "facilityAffiliation",
@@ -7553,14 +7620,20 @@
                 "min": 1
               }
             ],
-            "scaling": {
-              "type": "affiliation",
-              "affiliations": [
-                "durin"
-              ],
-              "scope": "base",
-              "max": 4
-            }
+            "resourceEffects": [
+              {
+                "resource": "goldProductionLine",
+                "amount": 1,
+                "scaling": {
+                  "type": "affiliation",
+                  "affiliations": [
+                    "durin"
+                  ],
+                  "scope": "base",
+                  "max": 4
+                }
+              }
+            ]
           }
         ]
       }
@@ -8354,7 +8427,8 @@
         "id": "trade_ord_spd&share[001]",
         "name": {
           "zh": "勤俭经营·α",
-          "en": "Hard-Working Manager α"
+          "en": "Hard-Working Manager α",
+          "ja": "倹約経営α"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -8370,7 +8444,8 @@
             ],
             "description": {
               "zh": "进驻贸易站时，贸易站内除自身以外每名处于工作状态的干员+10%订单获取效率",
-              "en": "When this Operator is assigned to a Trading Post, other Operators working in the Trading Post have +10% order acquisition efficiency"
+              "en": "When this Operator is assigned to a Trading Post, other Operators working in the Trading Post have +10% order acquisition efficiency",
+              "ja": "貿易所配置時、自身を除く仕事に配属されているオペレーター1人につき、受注効率+10%"
             },
             "efficiency": 0.1
           }
@@ -8380,7 +8455,8 @@
         "id": "trade_ord_spd&share[002]",
         "name": {
           "zh": "勤俭经营·β",
-          "en": "Hard-Working Manager β"
+          "en": "Hard-Working Manager β",
+          "ja": "倹約経営β"
         },
         "slot": 0,
         "unlockPhase": 2,
@@ -8396,7 +8472,8 @@
             ],
             "description": {
               "zh": "进驻贸易站时，贸易站内除自身以外每名处于工作状态的干员+20%订单获取效率",
-              "en": "When this Operator is assigned to a Trading Post, other Operators working in the Trading Post have +20% order acquisition efficiency"
+              "en": "When this Operator is assigned to a Trading Post, other Operators working in the Trading Post have +20% order acquisition efficiency",
+              "ja": "貿易所配置時、自身を除く仕事に配属されているオペレーター1人につき、受注効率+20%"
             },
             "efficiency": 0.2
           }
@@ -9579,7 +9656,8 @@
       {
         "id": "control_mp_cost[014]",
         "name": {
-          "zh": "总工程师"
+          "zh": "总工程师",
+          "ja": "チーフエンジニア"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -9594,18 +9672,25 @@
               "control"
             ],
             "description": {
-              "zh": "进驻控制中枢时，控制中枢内所有干员的心情每小时恢复+0.05"
+              "zh": "进驻控制中枢时，控制中枢内所有干员的心情每小时恢复+0.05",
+              "ja": "制御中枢配置時、制御中枢内全員の体力が1時間ごとに+0.05回復"
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "moraleEffects": [
+              {
+                "type": "recovery",
+                "target": "room",
+                "amount": 0.05
+              }
+            ]
           }
         ]
       },
       {
         "id": "trade_ord_closure[000]",
         "name": {
-          "zh": "特别订单"
+          "zh": "特别订单",
+          "ja": "特別注文"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -9620,7 +9705,8 @@
               "trading"
             ],
             "description": {
-              "zh": "进驻贸易站时，订单获取效率+10%，固定获取可露希尔特别订单（不视作违约订单）"
+              "zh": "进驻贸易站时，订单获取效率+10%，固定获取可露希尔特别订单（不视作违约订单）",
+              "ja": "貿易所配置時、受注効率+10%、クロージャの特別オーダー（と見なされない）を必ず受注する"
             },
             "efficiency": 0.1
           }
@@ -10570,7 +10656,8 @@
       {
         "id": "trade_ord_spd[022]",
         "name": {
-          "zh": "气氛组"
+          "zh": "气氛组",
+          "ja": "盛り上げ役"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -10585,7 +10672,8 @@
               "trading"
             ],
             "description": {
-              "zh": "进驻贸易站时，订单获取效率+35%"
+              "zh": "进驻贸易站时，订单获取效率+35%",
+              "ja": "貿易所配置時、受注効率+35%"
             },
             "efficiency": 0.35
           }
@@ -10949,7 +11037,8 @@
       {
         "id": "dorm_rec_oneself[040]",
         "name": {
-          "zh": "难得休憩"
+          "zh": "难得休憩",
+          "ja": "久しぶりの休息"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -10964,18 +11053,25 @@
               "dormitory"
             ],
             "description": {
-              "zh": "进驻宿舍时，自身心情每小时恢复+0.55"
+              "zh": "进驻宿舍时，自身心情每小时恢复+0.55",
+              "ja": "宿舎休養時、自身の1時間ごとの体力回復量+0.55"
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "moraleEffects": [
+              {
+                "type": "recovery",
+                "target": "self",
+                "amount": 0.55
+              }
+            ]
           }
         ]
       },
       {
         "id": "manu_formula_spd&limit&cost[100]",
         "name": {
-          "zh": "“连轴转”"
+          "zh": "“连轴转”",
+          "ja": "フル稼働"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -10990,7 +11086,8 @@
               "manufacture"
             ],
             "description": {
-              "zh": "进驻制造站时，作战记录类配方的生产力+35%，心情每小时消耗+0.25"
+              "zh": "进驻制造站时，作战记录类配方的生产力+35%，心情每小时消耗+0.25",
+              "ja": "製造所配置時、作戦記録製造の製造効率+35%、1時間ごとの体力消費量+0.25"
             },
             "efficiency": 0.35
           }
@@ -11415,7 +11512,8 @@
         "id": "control_tra_limit&spd3[000]",
         "name": {
           "zh": "商业版图",
-          "en": "Land of Business"
+          "en": "Land of Business",
+          "ja": "事業ドメイン"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -11431,7 +11529,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，每个存在3名谢拉格干员的贸易站，订单获取效率+10%",
-              "en": "When this Operator is assigned to the Control Center, all Trading Posts with 3 Kjerag Operators assigned gain order acquisition efficiency +10%"
+              "en": "When this Operator is assigned to the Control Center, all Trading Posts with 3 Kjerag Operators assigned gain order acquisition efficiency +10%",
+              "ja": "制御中枢配置時、イェラグ所属オペレーターが3人配置されている貿易所の受注効率+10%"
             },
             "efficiency": 0.1,
             "scaling": {
@@ -11932,9 +12031,13 @@
               "ja": "貿易所配置時、次に受注する金属オーダーの納品数が3を上回るならば（違約オーダーは金属オーダーと見なされない）、当該オーダーの報酬金額が+250追加され、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, if the amount of Pure Gold traded is higher than 3 (Defaulted trades do not count), increase the LMD gained by +250, and Morale consumed per hour is reduced by -0.25"
             },
-            "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "goldOrderValueExpectation",
+            "efficiency": 0,
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderExtraLmd",
+                "amount": 250
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",
@@ -11968,9 +12071,13 @@
               "ja": "貿易所配置時、次に受注する金属オーダーの納品数が3を上回るならば（違約オーダーは金属オーダーと見なされない）、当該オーダーの報酬金額が+500追加され、1時間ごとの体力消費量-0.25",
               "en": "When this Operator is assigned to a Trading Post, if the amount of Pure Gold traded is higher than 3 (Defaulted trades do not count), increase the LMD gained by +500, and Morale consumed per hour is reduced by -0.25"
             },
-            "efficiency": 0.05,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "goldOrderValueExpectation",
+            "efficiency": 0,
+            "tradingOrderEffects": [
+              {
+                "type": "highValueOrderExtraLmd",
+                "amount": 500
+              }
+            ],
             "moraleEffects": [
               {
                 "type": "consumption",
@@ -12088,7 +12195,8 @@
       {
         "id": "dorm_rec_single&tag[000]",
         "name": {
-          "zh": "狩猎好帮手"
+          "zh": "狩猎好帮手",
+          "ja": "狩りの頼れる助っ人"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -12103,7 +12211,8 @@
               "dormitory"
             ],
             "description": {
-              "zh": "进驻宿舍时，使该宿舍内除自身以外心情未满的某个干员每小时恢复+0.55（同种效果取最高），如果目标是怪物猎人小队成员和泡影国狩猎小队，则恢复效果额外+0.45"
+              "zh": "进驻宿舍时，使该宿舍内除自身以外心情未满的某个干员每小时恢复+0.55（同种效果取最高），如果目标是怪物猎人小队成员和泡影国狩猎小队，则恢复效果额外+0.45",
+              "ja": "配置宿舎内、自分以外のオペレーター1人の1時間ごとの体力回復量+0.55（同種の効果は高いほうのみ適用） 対象がアイルーと愉快な仲間たちまたは泡影国ハンター小隊の場合、追加で体力回復量+0.45"
             },
             "efficiency": 0,
             "ignoredForOptimization": true,
@@ -12114,7 +12223,8 @@
       {
         "id": "meet_spd_notOwned_P[000]",
         "name": {
-          "zh": "隐秘专家"
+          "zh": "隐秘专家",
+          "ja": "隠密のプロ"
         },
         "slot": 1,
         "unlockPhase": 0,
@@ -12129,7 +12239,8 @@
               "meeting"
             ],
             "description": {
-              "zh": "进驻会客室时，更容易获得线索板上尚未拥有的线索，若焰狐龙梓兰进驻控制中枢，则线索搜集速度提升10%"
+              "zh": "进驻会客室时，更容易获得线索板上尚未拥有的线索，若焰狐龙梓兰进驻控制中枢，则线索搜集速度提升10%",
+              "ja": "応接室配置時、ボード上未入手の手がかりを入手しやすい。焔狐竜オーキッドが制御中枢に配置されている場合、手がかり捜索速度+10%"
             },
             "efficiency": 0.1,
             "conditions": [
@@ -13725,7 +13836,8 @@
         "id": "manu_formula_spd&cost_bd[100]",
         "name": {
           "zh": "造价高昂",
-          "en": "Costly Construction"
+          "en": "Costly Construction",
+          "ja": "コスト度外視"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -13741,7 +13853,8 @@
             ],
             "description": {
               "zh": "进驻制造站时，基建内（不包含副手及活动室使用者）每有1名莱茵生命干员（最多5名），贵金属类配方的生产力+3%",
-              "en": "When this Operator is assigned to a Factory, for each Rhine Lab Operator in the Base (excluding Assistants and Activity Room users, caps at 5), Precious Metal productivity +3%"
+              "en": "When this Operator is assigned to a Factory, for each Rhine Lab Operator in the Base (excluding Assistants and Activity Room users, caps at 5), Precious Metal productivity +3%",
+              "ja": "製造所配置時、基地に配置された（補佐と活動室利用者を除く）ライン生命オペレーター1人につき（最大5人まで）、金属製造の製造効率+3%"
             },
             "efficiency": 0.03,
             "baseEfficiency": 0,
@@ -13971,7 +14084,8 @@
       {
         "id": "manu_formula_spd&bd[000]",
         "name": {
-          "zh": "战阵领袖"
+          "zh": "战阵领袖",
+          "ja": "戦陣のリーダー"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -13986,7 +14100,8 @@
               "manufacture"
             ],
             "description": {
-              "zh": "进驻制造站时，作战记录类配方的生产力+30%"
+              "zh": "进驻制造站时，作战记录类配方的生产力+30%",
+              "ja": "製造所配置時、作戦記録製造の製造効率+30%"
             },
             "efficiency": 0,
             "baseEfficiency": 0.3
@@ -13996,7 +14111,8 @@
       {
         "id": "manu_formula_spd&bd[001]",
         "name": {
-          "zh": "情同手足"
+          "zh": "情同手足",
+          "ja": "兄弟同然"
         },
         "slot": 0,
         "unlockPhase": 2,
@@ -14011,7 +14127,8 @@
               "manufacture"
             ],
             "description": {
-              "zh": "进驻制造站时，作战记录类配方的生产力+30%，当与乌萨斯学生自治团干员在同一个制造站时，作战记录类配方的生产力额外+10%"
+              "zh": "进驻制造站时，作战记录类配方的生产力+30%，当与乌萨斯学生自治团干员在同一个制造站时，作战记录类配方的生产力额外+10%",
+              "ja": "製造所配置時、作戦記録製造の製造効率+30% ウルサス学生自治団オペレーターと同じ製造所に配置時、追加で作戦記録製造の製造効率+10%"
             },
             "efficiency": 0.3,
             "conditionalBonuses": [
@@ -14034,7 +14151,8 @@
       {
         "id": "control_meeting_bd[000]",
         "name": {
-          "zh": "“是，团长！”"
+          "zh": "“是，团长！”",
+          "ja": "「はい、団長！」"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -14049,7 +14167,8 @@
               "control"
             ],
             "description": {
-              "zh": "进驻控制中枢时，自身心情每小时消耗+0.5，每个进驻在会客室的乌萨斯学生自治团干员，线索搜集速度+10%"
+              "zh": "进驻控制中枢时，自身心情每小时消耗+0.5，每个进驻在会客室的乌萨斯学生自治团干员，线索搜集速度+10%",
+              "ja": "制御中枢配置時、自身の1時間ごとの体力消費量+0.5、応接室のウルサス学生自治団オペレーターの手がかり捜索速度+10%"
             },
             "efficiency": 0.1,
             "scaling": {
@@ -14599,7 +14718,19 @@
             },
             "efficiency": 0,
             "baseEfficiency": 0.05,
-            "unsupportedReason": "goldProductionLineCountNotModeled"
+            "resourceEffects": [
+              {
+                "resource": "goldProductionLine",
+                "amount": 2,
+                "scaling": {
+                  "type": "facilityProductCount",
+                  "facility": "factory",
+                  "product": "gold",
+                  "per": 4,
+                  "scope": "sameFacility"
+                }
+              }
+            ]
           }
         ]
       },
@@ -14629,7 +14760,19 @@
             },
             "efficiency": 0,
             "baseEfficiency": 0.05,
-            "unsupportedReason": "goldProductionLineCountNotModeled"
+            "resourceEffects": [
+              {
+                "resource": "goldProductionLine",
+                "amount": 2,
+                "scaling": {
+                  "type": "facilityProductCount",
+                  "facility": "factory",
+                  "product": "gold",
+                  "per": 2,
+                  "scope": "sameFacility"
+                }
+              }
+            ]
           }
         ]
       }
@@ -15076,7 +15219,8 @@
         "id": "control_mp_bd&trade[000]",
         "name": {
           "zh": "演技的怪物",
-          "en": "Monster of Acting"
+          "en": "Monster of Acting",
+          "ja": "演技力のバケモノ"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -15092,7 +15236,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，热情值+20；每有8点热情值，自身心情每小时消耗+0.01，所有贸易站订单效率+1%（同种效果取最高）",
-              "en": "When this Operator is assigned to the Control Center, Passion +20; for every 8 Passion, self Morale consumed per hour +0.01 and all Trading Posts' order efficiency +1% (Only the strongest effect of this type takes place)"
+              "en": "When this Operator is assigned to the Control Center, Passion +20; for every 8 Passion, self Morale consumed per hour +0.01 and all Trading Posts' order efficiency +1% (Only the strongest effect of this type takes place)",
+              "ja": "制御中枢配置時、パッション+20。パッション8につき、1時間ごとの体力消費量+0.01、全貿易所の受注効率+1%（同種の効果は高いほうのみ適用）"
             },
             "efficiency": 0.01,
             "globalEffect": {
@@ -15120,7 +15265,8 @@
         "id": "control_mp_cost_reset[000]",
         "name": {
           "zh": "互为半身",
-          "en": "Halves of a Whole"
+          "en": "Halves of a Whole",
+          "ja": "互いの半身"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -15136,7 +15282,8 @@
             ],
             "description": {
               "zh": "当与丰川祥子一起进驻控制中枢时，消除自身心情消耗的影响",
-              "en": "When this Operator is assigned to the Control Center with Sakiko Togawa, ignores the self Morale loss effect from her own base skill"
+              "en": "When this Operator is assigned to the Control Center with Sakiko Togawa, ignores the self Morale loss effect from her own base skill",
+              "ja": "豊川祥子と共に制御中枢に配置時、自身の基地スキルによる体力消費量増加を打ち消す"
             },
             "efficiency": 0,
             "ignoredForOptimization": true,
@@ -15235,7 +15382,8 @@
         "id": "control_dorm_bd[000]",
         "name": {
           "zh": "偶像光环",
-          "en": "Idol's Aura"
+          "en": "Idol's Aura",
+          "ja": "アイドルのオーラ"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -15251,7 +15399,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，宿舍内每有1名干员，热情值+1",
-              "en": "When this Operator is assigned to the Control Center, for every Operator in the Dormitories, Passion +1."
+              "en": "When this Operator is assigned to the Control Center, for every Operator in the Dormitories, Passion +1.",
+              "ja": "制御中枢配置時、宿舎にいるオペレーター1人につきパッション+1"
             },
             "efficiency": 0.05,
             "resourceEffects": [
@@ -15267,7 +15416,8 @@
         "id": "control_dorm_rec2[000]",
         "name": {
           "zh": "羁绊相生",
-          "en": "Resonant Bond"
+          "en": "Resonant Bond",
+          "ja": "共鳴する絆"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -15283,7 +15433,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，所有宿舍内所有干员的心情每小时恢复+0.05（同种效果取最高）；当与丰川祥子一起进驻控制中枢时，丰川祥子的心情每小时恢复+0.1",
-              "en": "When this Operator is assigned to the Control Center, all Operators in Dormitories recover +0.05 Morale per hour (Only the strongest effect of this type takes place); when assigned to the Control Center with Sakiko Togawa, Morale consumed per hour by Sakiko Togawa +0.1"
+              "en": "When this Operator is assigned to the Control Center, all Operators in Dormitories recover +0.05 Morale per hour (Only the strongest effect of this type takes place); when assigned to the Control Center with Sakiko Togawa, Morale consumed per hour by Sakiko Togawa +0.1",
+              "ja": "制御中枢配置時、全ての宿舎内のオペレーターの1時間ごとの体力回復量+0.05（同種の効果は高いほうのみ適用）、豊川祥子と共に制御中枢に配置時、豊川祥子の体力が1時間ごとに+0.1回復"
             },
             "efficiency": 0.05,
             "globalEffect": {
@@ -15498,8 +15649,17 @@
               "en": "When this Operator is assigned to a Dormitory, provide 1 Monster Meal for every level of the current Dormitory"
             },
             "efficiency": 0,
-            "ignoredForOptimization": true,
-            "unsupportedReason": "effectNotModeled"
+            "resourceEffects": [
+              {
+                "resource": "magicFood",
+                "amount": 1,
+                "scaling": {
+                  "type": "facilityLevel",
+                  "facility": "dormitory",
+                  "max": 5
+                }
+              }
+            ]
           }
         ]
       }
@@ -16924,7 +17084,8 @@
         "id": "power_rec_spd[007]",
         "name": {
           "zh": "雷法专精",
-          "en": "Lei Fa Specialist"
+          "en": "Lei Fa Specialist",
+          "ja": "雷法の達人"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -16940,7 +17101,8 @@
             ],
             "description": {
               "zh": "进驻发电站时，无人机充能速度+10%",
-              "en": "When this Operator is assigned to a Power Plant, increases the drone recovery rate by +10%"
+              "en": "When this Operator is assigned to a Power Plant, increases the drone recovery rate by +10%",
+              "ja": "発電所配置時、ドローンの回復速度+10%"
             },
             "efficiency": 0.1
           }
@@ -17187,7 +17349,8 @@
         "id": "meet_spd_notOwned[002]",
         "name": {
           "zh": "见微知著",
-          "en": "The Art of Deduction"
+          "en": "The Art of Deduction",
+          "ja": "情報屋"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -17203,7 +17366,8 @@
             ],
             "description": {
               "zh": "进驻会客室时，更容易获得线索板上尚未拥有的线索",
-              "en": "When this Operator is assigned to the Reception Room, increases the likelihood of obtaining clues that are not on the Clue Board."
+              "en": "When this Operator is assigned to the Reception Room, increases the likelihood of obtaining clues that are not on the Clue Board.",
+              "ja": "応接室配置時、ボード上未入手の手がかりを入手しやすい"
             },
             "efficiency": 0,
             "ignoredForOptimization": true,
@@ -17361,7 +17525,8 @@
         "id": "manu_skill_limit[000]",
         "name": {
           "zh": "勘探背包",
-          "en": "Explorer's Backpack"
+          "en": "Explorer's Backpack",
+          "ja": "探査用リュック"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -17376,7 +17541,8 @@
             ],
             "description": {
               "zh": "进驻制造站时，当前制造站内每个莱茵科技类技能为自身+5的仓库上限容量",
-              "en": "When this Operator is assigned to a Factory, gain +5 Storage Capacity for each Rhine Tech-type skill in that Factory"
+              "en": "When this Operator is assigned to a Factory, gain +5 Storage Capacity for each Rhine Tech-type skill in that Factory",
+              "ja": "製造所配置時、製造所内のラインテク系スキルの発動数1につき、保管上限+5"
             },
             "efficiency": 0,
             "ignoredForOptimization": true,
@@ -17783,7 +17949,8 @@
       {
         "id": "power_rec_spd[024]",
         "name": {
-          "zh": "合法窃电"
+          "zh": "合法窃电",
+          "ja": "合法的な盗電"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -17798,7 +17965,8 @@
               "power"
             ],
             "description": {
-              "zh": "进驻发电站时，无人机充能速度+20%"
+              "zh": "进驻发电站时，无人机充能速度+20%",
+              "ja": "発電所配置時、ドローンの回復速度+20%"
             },
             "efficiency": 0.2
           }
@@ -17843,7 +18011,13 @@
               "ja": "貿易所配置時、受注効率+5%、純金生産ラインの数4につき、追加で受注効率+15%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +5%; Furthermore, increase order acquisition efficiency by an additional +15% for every 4 Pure Gold Production Line"
             },
-            "efficiency": 0.2
+            "efficiency": 0.15,
+            "baseEfficiency": 0.05,
+            "scaling": {
+              "type": "resource",
+              "resource": "goldProductionLine",
+              "per": 4
+            }
           }
         ]
       },
@@ -17871,7 +18045,13 @@
               "ja": "貿易所配置時、受注効率+5%、純金生産ラインの数2につき、追加で受注効率+15%",
               "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +5%; Furthermore, increase order acquisition efficiency by an additional +15% for every 2 Pure Gold Production Line"
             },
-            "efficiency": 0.2
+            "efficiency": 0.15,
+            "baseEfficiency": 0.05,
+            "scaling": {
+              "type": "resource",
+              "resource": "goldProductionLine",
+              "per": 2
+            }
           }
         ]
       }
@@ -17980,7 +18160,8 @@
       {
         "id": "control_prod_tra_spd[000]",
         "name": {
-          "zh": "权变"
+          "zh": "权变",
+          "ja": "権変"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -17995,7 +18176,8 @@
               "control"
             ],
             "description": {
-              "zh": "进驻控制中枢时，若外势大于等于实地，所有贸易站订单效率+7%；若实地大于外势，所有制造站生产力+2%（同种效果取最高）"
+              "zh": "进驻控制中枢时，若外势大于等于实地，所有贸易站订单效率+7%；若实地大于外势，所有制造站生产力+2%（同种效果取最高）",
+              "ja": "制御中枢配置時、外勢が実地以上である場合、全貿易所の受注効率が+7%。実地が外勢を上回る場合、全製造所の製造効率が+2%（同種の効果は高いほうのみ適用）"
             },
             "efficiency": 0.07
           }
@@ -18305,14 +18487,14 @@
               {
                 "type": "facilityOperator",
                 "facility": "reception",
-                          "operatorIds": [
-                            "char_4087_ines"
-                          ]
-                        }
-                      ],
-                      "hiddenFromUi": true,
-                      "description": {
-                        "en": "When this Operator is assigned to the Control Center, if Ines is assigned to the Reception Room, clue collection speed +5%."
+                "operatorIds": [
+                  "char_4087_ines"
+                ]
+              }
+            ],
+            "hiddenFromUi": true,
+            "description": {
+              "en": "When this Operator is assigned to the Control Center, if Ines is assigned to the Reception Room, clue collection speed +5%."
             }
           }
         ]
@@ -18365,14 +18547,14 @@
               {
                 "type": "facilityOperator",
                 "facility": "reception",
-                          "operatorIds": [
-                            "char_4087_ines"
-                          ]
-                        }
-                      ],
-                      "hiddenFromUi": true,
-                      "description": {
-                        "en": "When this Operator is assigned to the Control Center, if Ines is assigned to the Reception Room, clue collection speed +5%."
+                "operatorIds": [
+                  "char_4087_ines"
+                ]
+              }
+            ],
+            "hiddenFromUi": true,
+            "description": {
+              "en": "When this Operator is assigned to the Control Center, if Ines is assigned to the Reception Room, clue collection speed +5%."
             }
           }
         ]
@@ -18430,7 +18612,8 @@
       {
         "id": "manu_prod_spd_train&lv[000]",
         "name": {
-          "zh": "手艺人"
+          "zh": "手艺人",
+          "ja": "職人"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -18444,7 +18627,8 @@
               "manufacture"
             ],
             "description": {
-              "zh": "进驻制造站时，训练室每级为当前制造站+10%生产力，最多30%"
+              "zh": "进驻制造站时，训练室每级为当前制造站+10%生产力，最多30%",
+              "ja": "製造所配置時、訓練所のレベルが1につき、製造効率+10%、最大30%まで"
             },
             "efficiency": 0.1,
             "scaling": {
@@ -19270,7 +19454,8 @@
         "id": "dorm_rec_all&lv[000]",
         "name": {
           "zh": "睡前必听故事",
-          "en": "Bedtime Stories"
+          "en": "Bedtime Stories",
+          "ja": "スリープストーリー"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -19286,7 +19471,8 @@
             ],
             "description": {
               "zh": "进驻宿舍时，该宿舍内所有干员的心情每小时恢复+0.15（同种效果取最高）",
-              "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory (Only the strongest effect of this type takes place)"
+              "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory (Only the strongest effect of this type takes place)",
+              "ja": "配置宿舎内、全員の1時間ごとの体力回復量+0.15 （同種の効果は高いほうのみ適用）"
             },
             "efficiency": 0,
             "moraleEffects": [
@@ -19303,7 +19489,8 @@
         "id": "dorm_rec_all&lv[100]",
         "name": {
           "zh": "死前必做清单",
-          "en": "Bucket List"
+          "en": "Bucket List",
+          "ja": "バケットリスト"
         },
         "slot": 0,
         "unlockPhase": 2,
@@ -19319,7 +19506,8 @@
             ],
             "description": {
               "zh": "进驻宿舍时，该宿舍内所有干员的心情每小时恢复+0.15，同时当前宿舍每级为恢复效果额外+0.02（叠加后的最终值同种效果取最高）",
-              "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory, and every level of that Dormitory increases restoration by another +0.02 (Only the strongest stacked effect of this type takes place)"
+              "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory, and every level of that Dormitory increases restoration by another +0.02 (Only the strongest stacked effect of this type takes place)",
+              "ja": "配置宿舎内、全員の1時間ごとの体力回復量+0.15、宿舎のレベル1につき、更に+0.02 （重複後の最終値を基に、同種の効果は高いほうのみ適用）"
             },
             "efficiency": 0,
             "moraleEffects": [
@@ -19336,7 +19524,8 @@
         "id": "meet_spd&exchange[001]",
         "name": {
           "zh": "特殊渠道顾问",
-          "en": "Special Methods Consultant"
+          "en": "Special Methods Consultant",
+          "ja": "裏ルートの案内人"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -19352,7 +19541,8 @@
             ],
             "description": {
               "zh": "进驻会客室时，处于线索交流时线索搜集速度提升30%",
-              "en": "When this Operator is assigned to the Reception Room, if in Clue Exchange, increases Clue search speed by 30%"
+              "en": "When this Operator is assigned to the Reception Room, if in Clue Exchange, increases Clue search speed by 30%",
+              "ja": "応接室配置時、情報共有中の手がかり捜索速度+30%"
             },
             "efficiency": 0.3
           }
@@ -19535,7 +19725,8 @@
         "id": "power_rec_spd[008]",
         "name": {
           "zh": "澎湃紊流",
-          "en": "Surging Tunes"
+          "en": "Surging Tunes",
+          "ja": "はやる乱奏"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -19551,7 +19742,8 @@
             ],
             "description": {
               "zh": "进驻发电站时，无人机充能速度+10%",
-              "en": "When this Operator is assigned to a Power Plant, increases the drone recovery rate by +10%"
+              "en": "When this Operator is assigned to a Power Plant, increases the drone recovery rate by +10%",
+              "ja": "発電所配置時、ドローンの回復速度+10%"
             },
             "efficiency": 0.1
           }
@@ -19561,7 +19753,8 @@
         "id": "power_rec_spd[009]",
         "name": {
           "zh": "澎湃紊流",
-          "en": "Surging Tunes"
+          "en": "Surging Tunes",
+          "ja": "はやる乱奏"
         },
         "slot": 0,
         "unlockPhase": 1,
@@ -19577,7 +19770,8 @@
             ],
             "description": {
               "zh": "进驻发电站时，无人机充能速度+15%",
-              "en": "When this Operator is assigned to a Power Plant, increases the drone recovery rate by +15%"
+              "en": "When this Operator is assigned to a Power Plant, increases the drone recovery rate by +15%",
+              "ja": "発電所配置時、ドローンの回復速度+15%"
             },
             "efficiency": 0.15
           }
@@ -19587,7 +19781,8 @@
         "id": "dorm_rec_oneself2[001]",
         "name": {
           "zh": "赋格融汇",
-          "en": "Fugue Amalgamation"
+          "en": "Fugue Amalgamation",
+          "ja": "とけあう追奏"
         },
         "slot": 1,
         "unlockPhase": 1,
@@ -19603,7 +19798,8 @@
             ],
             "description": {
               "zh": "进驻宿舍时，自身心情每小时恢复+0.7；如果该宿舍内有其他干员，则每人额外为自身心情每小时恢复+0.05",
-              "en": "When this Operator is assigned to a Dormitory, increases own Morale restored per hour by +0.7; If there are other Operators in that Dormitory, further increases own Morale restored per hour by +0.05 for each additional Operator."
+              "en": "When this Operator is assigned to a Dormitory, increases own Morale restored per hour by +0.7; If there are other Operators in that Dormitory, further increases own Morale restored per hour by +0.05 for each additional Operator.",
+              "ja": "宿舎休養時、自身の1時間ごとの体力回復量+0.7。 配置宿舎内、他のオペレーター1人につき、自身の1時間ごとの体力回復量が追加で+0.05"
             },
             "efficiency": 0,
             "moraleEffects": [
@@ -19640,7 +19836,8 @@
         "id": "dorm_rec_all[029]",
         "name": {
           "zh": "沉静心灵",
-          "en": "Gentle Spirit"
+          "en": "Gentle Spirit",
+          "ja": "精神鎮静"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -19656,7 +19853,8 @@
             ],
             "description": {
               "zh": "进驻宿舍时，该宿舍内所有干员的心情每小时恢复+0.15（同种效果取最高）",
-              "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory (Only the strongest effect of this type takes place)"
+              "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory (Only the strongest effect of this type takes place)",
+              "ja": "配置宿舎内、全員の1時間ごとの体力回復量+0.15 (同種の効果は高いほうのみ適用)"
             },
             "efficiency": 0,
             "moraleEffects": [
@@ -19673,7 +19871,8 @@
         "id": "dorm_rec_all&tired[100]",
         "name": {
           "zh": "净化呼吸",
-          "en": "Pure Breath"
+          "en": "Pure Breath",
+          "ja": "呼吸浄化"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -19689,7 +19888,8 @@
             ],
             "description": {
               "zh": "进驻宿舍时，该宿舍内心情20以下的干员恢复效果额外+0.1（同种效果取最高）",
-              "en": "When this Operator is assigned to a Dormitory, restores an additional +0.1 Morale to Operators assigned to that Dormitory whose Morale is below 20 (Strongest effect of the same type applies)"
+              "en": "When this Operator is assigned to a Dormitory, restores an additional +0.1 Morale to Operators assigned to that Dormitory whose Morale is below 20 (Strongest effect of the same type applies)",
+              "ja": "配置宿舎内、体力20以下のオペレーターの1時間ごとの体力回復量が追加で+0.1（同種の効果は高いほうのみ適用）"
             },
             "efficiency": 0,
             "ignoredForOptimization": true,
@@ -20225,7 +20425,8 @@
         "id": "manu_prod_spd&limit&cost[101]",
         "name": {
           "zh": "虔信",
-          "en": "Piety"
+          "en": "Piety",
+          "ja": "敬虔なる民"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -20240,7 +20441,8 @@
             ],
             "description": {
               "zh": "进驻制造站时，生产力+20%，心情每小时消耗+0.25",
-              "en": "When this Operator is assigned to a Factory, Productivity +20% and Morale consumed per hour +0.25"
+              "en": "When this Operator is assigned to a Factory, Productivity +20% and Morale consumed per hour +0.25",
+              "ja": "製造所配置時、製造効率+20%、1時間ごとの体力消費量+0.25"
             },
             "efficiency": 0.2,
             "moraleEffects": [
@@ -20257,7 +20459,8 @@
         "id": "manu_prod_spd&limit&cost[110]",
         "name": {
           "zh": "独当一面",
-          "en": "Taking Responsibility"
+          "en": "Taking Responsibility",
+          "ja": "一人前"
         },
         "slot": 0,
         "unlockPhase": 2,
@@ -20272,7 +20475,8 @@
             ],
             "description": {
               "zh": "进驻制造站时，生产力+30%，心情每小时消耗+0.25",
-              "en": "When this Operator is assigned to a Factory, Productivity +30% and Morale consumed per hour +0.25"
+              "en": "When this Operator is assigned to a Factory, Productivity +30% and Morale consumed per hour +0.25",
+              "ja": "製造所配置時、製造効率+30%、1時間ごとの体力消費量+0.25"
             },
             "efficiency": 0.3,
             "moraleEffects": [
@@ -20804,7 +21008,8 @@
       {
         "id": "control_hire_spd_all[000]",
         "name": {
-          "zh": "办公室年度人物"
+          "zh": "办公室年度人物",
+          "ja": "オフィス年間MVP"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -20818,7 +21023,8 @@
               "control"
             ],
             "description": {
-              "zh": "进驻控制中枢时，人力办公室联络速度+10%（同种效果取最高）"
+              "zh": "进驻控制中枢时，人力办公室联络速度+10%（同种效果取最高）",
+              "ja": "制御中枢配置時、事務連絡速度+10%増加 (同種の効果は高いほうのみ適用)"
             },
             "efficiency": 0.1,
             "ignoredForOptimization": true,
@@ -20829,7 +21035,8 @@
       {
         "id": "trade_ord_spd&limit_tag[000]",
         "name": {
-          "zh": "队长的自觉"
+          "zh": "队长的自觉",
+          "ja": "隊長の心得"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -20844,7 +21051,8 @@
               "trading"
             ],
             "description": {
-              "zh": "进驻贸易站时，订单上限+3，且每有一个泡影国狩猎小队干员进驻贸易站，订单获取效率+20%"
+              "zh": "进驻贸易站时，订单上限+3，且每有一个泡影国狩猎小队干员进驻贸易站，订单获取效率+20%",
+              "ja": "貿易所配置時、注文上限+3 同じ貿易所に配置されている泡影国ハンター小隊所属オペレーター1人につき、配置貿易所の受注効率+20%"
             },
             "efficiency": 0.2,
             "orderLimit": 3
@@ -20954,7 +21162,8 @@
               "control"
             ],
             "description": {
-              "en": "When this Operator is assigned to the Control Center, each Pinus Sylvestris Operator assigned to Factories have +10% productivity towards Battle Records and -10% productivity towards Precious Metals"
+              "en": "When this Operator is assigned to the Control Center, each Pinus Sylvestris Operator assigned to Factories have +10% productivity towards Battle Records and -10% productivity towards Precious Metals",
+              "ja": "制御中枢配置時、製造所に配置されたレッドパイン騎士団オペレーター1人につき、作戦記録製造の製造効率+10%、金属製造の製造効率-10%"
             },
             "efficiency": -0.1,
             "conditions": [
@@ -21129,7 +21338,8 @@
         "id": "dorm_rec_all[028]",
         "name": {
           "zh": "明星效应",
-          "en": "Celebrity Effect"
+          "en": "Celebrity Effect",
+          "ja": "スターの影響力"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -21145,7 +21355,8 @@
             ],
             "description": {
               "zh": "进驻宿舍时，该宿舍内所有干员的心情每小时恢复+0.15（同种效果取最高）",
-              "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory (Only the strongest effect of this type takes place)"
+              "en": "When this Operator is assigned to a Dormitory, restores +0.15 Morale per hour to all Operators assigned to that Dormitory (Only the strongest effect of this type takes place)",
+              "ja": "配置宿舎内、全員の1時間ごとの体力回復量+0.15 （同種の効果は高いほうのみ適用）"
             },
             "efficiency": 0,
             "moraleEffects": [
@@ -22346,7 +22557,8 @@
         "id": "control_meeting_spd&bd[000]",
         "name": {
           "zh": "勤学苦练",
-          "en": "Diligent Worker"
+          "en": "Diligent Worker",
+          "ja": "努力家"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -22361,7 +22573,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，热情值+10；会客室线索搜集速度提升+5%（同种效果取最高）",
-              "en": "When this Operator is assigned to the Control Center, Passion +10; clue collection speed +5% (Only the strongest effect of this type takes place)"
+              "en": "When this Operator is assigned to the Control Center, Passion +10; clue collection speed +5% (Only the strongest effect of this type takes place)",
+              "ja": "制御中枢配置時、パッション+10。応接室の手がかり捜索速度+5%（同種の効果は高いほうのみ適用）"
             },
             "efficiency": 0.05,
             "resourceEffects": [
@@ -22377,7 +22590,8 @@
         "id": "control_mp&meet_spd[000]",
         "name": {
           "zh": "成效优先",
-          "en": "Exitus Acta Probat"
+          "en": "Exitus Acta Probat",
+          "ja": "結果主義"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -22393,7 +22607,8 @@
             ],
             "description": {
               "zh": "当与丰川祥子一起进驻控制中枢时，丰川祥子心情每小时消耗+0.05，会客室线索搜集速度额外提升+5%（同种效果取最高）",
-              "en": "When this Operator is assigned to the Control Center with Sakiko Togawa, Morale consumed per hour by Sakiko Togawa +0.05 and clue collection speed +5% (Only the strongest effect of this type takes place)"
+              "en": "When this Operator is assigned to the Control Center with Sakiko Togawa, Morale consumed per hour by Sakiko Togawa +0.05 and clue collection speed +5% (Only the strongest effect of this type takes place)",
+              "ja": "豊川祥子と共に制御中枢に配置時、豊川祥子の1時間ごとの体力消費量+0.05。応接室の手がかり捜索速度+5%（同種の効果は高いほうのみ適用）"
             },
             "efficiency": 0.05,
             "conditions": [
@@ -22886,7 +23101,8 @@
         "id": "control_train_spd[012]",
         "name": {
           "zh": "下城人脉",
-          "en": "Downtown Connections"
+          "en": "Downtown Connections",
+          "ja": "下町の人脈"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -22901,7 +23117,8 @@
             ],
             "description": {
               "zh": "进驻控制中枢时，如训练室有干员在进行技能专精，则该干员的专精技能训练速度+5%（同种效果取最高）",
-              "en": "When this Operator is assigned to the Control Center, if an Operator is conducting Skill Specialization in the Training Room, that Operator's Specialization training speed +5% (Only the strongest effect of this type takes place)."
+              "en": "When this Operator is assigned to the Control Center, if an Operator is conducting Skill Specialization in the Training Room, that Operator's Specialization training speed +5% (Only the strongest effect of this type takes place).",
+              "ja": "制御中枢配置時、訓練室で訓練を行っているオペレーターがいる場合、当該オペレーターの訓練速度+5%（同種の効果は高いほうのみ適用）"
             },
             "efficiency": 0.05,
             "ignoredForOptimization": true,
@@ -22913,7 +23130,8 @@
         "id": "control_token_prod_spd3[000]",
         "name": {
           "zh": "共事情谊",
-          "en": "Camaraderie"
+          "en": "Camaraderie",
+          "ja": "同僚との絆"
         },
         "slot": 1,
         "unlockPhase": 2,
@@ -22928,7 +23146,8 @@
             ],
             "description": {
               "zh": "当与龙门近卫局干员进驻控制中枢一起工作时，所有制造站生产力+3%（同种效果取最高）",
-              "en": "When this Operator is assigned together with other L.G.D. Operators to the Control Center, all Factories' productivity +3% (Only the strongest effect of this type takes place)"
+              "en": "When this Operator is assigned together with other L.G.D. Operators to the Control Center, all Factories' productivity +3% (Only the strongest effect of this type takes place)",
+              "ja": "龍門近衛局所属オペレーターと共に制御中枢に配置時、全製造所の製造効率+3%（同種の効果は高いほうのみ適用）"
             },
             "efficiency": 0.03
           }
@@ -23192,7 +23411,8 @@
         "id": "trade_ord_spd&tag[000]",
         "name": {
           "zh": "订单分发·α",
-          "en": "Order Distribution α"
+          "en": "Order Distribution α",
+          "ja": "注文分配α"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -23208,7 +23428,8 @@
             ],
             "description": {
               "zh": "进驻贸易站时，订单获取效率+20%",
-              "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +20%"
+              "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +20%",
+              "ja": "貿易所配置時、受注効率+20%"
             },
             "efficiency": 0.2
           }
@@ -23218,7 +23439,8 @@
         "id": "trade_ord_spd&tag[010]",
         "name": {
           "zh": "精英小队",
-          "en": "Elite Squad"
+          "en": "Elite Squad",
+          "ja": "E.O.小隊"
         },
         "slot": 0,
         "unlockPhase": 2,
@@ -23234,7 +23456,8 @@
             ],
             "description": {
               "zh": "进驻贸易站时，订单获取效率+25%，基建内（不包含副手及活动室）每有一间进驻精英干员的设施，订单获取效率额外+2%（最多10间）",
-              "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +25%; for every facility in the Base with an Elite Operator assigned (excluding Assistants and Activity Rooms), order acquisition efficiency +2% (max 10 facilities)"
+              "en": "When this Operator is assigned to a Trading Post, order acquisition efficiency +25%; for every facility in the Base with an Elite Operator assigned (excluding Assistants and Activity Rooms), order acquisition efficiency +2% (max 10 facilities)",
+              "ja": "貿易所配置時、受注効率+25%。 エリートオペレーターが配置されている施設1室（補佐と活動室利用者である場合を除く）ごとに、追加で受注効率+2%（最大10室まで）"
             },
             "efficiency": 0.27
           }
@@ -24006,7 +24229,8 @@
       {
         "id": "power_rec_spd[0010]",
         "name": {
-          "zh": "鸡电工程"
+          "zh": "鸡电工程",
+          "ja": "チキン電気工学"
         },
         "slot": 0,
         "unlockPhase": 0,
@@ -24021,7 +24245,8 @@
               "power"
             ],
             "description": {
-              "zh": "进驻发电站时，无人机充能速度+10%"
+              "zh": "进驻发电站时，无人机充能速度+10%",
+              "ja": "発電所配置時、ドローンの回復速度+10%"
             },
             "efficiency": 0.1
           }
@@ -24030,7 +24255,8 @@
       {
         "id": "power_rec_spd_ext&tag[000]",
         "name": {
-          "zh": "鸡励机制"
+          "zh": "鸡励机制",
+          "ja": "チキン奨励制度"
         },
         "slot": 1,
         "unlockPhase": 0,
@@ -24045,7 +24271,8 @@
               "power"
             ],
             "description": {
-              "zh": "进驻发电站时，如果其他作业平台进驻在发电站，则无人机充能速度+5%"
+              "zh": "进驻发电站时，如果其他作业平台进驻在发电站，则无人机充能速度+5%",
+              "ja": "発電所配置時、他の作業用プラットフォームが発電所に配置されている場合、ドローンの回復速度+5%"
             },
             "efficiency": 0.05
           }

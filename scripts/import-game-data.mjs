@@ -6,6 +6,7 @@ const outputPath = path.join(root, "src", "data", "operators.json");
 const nameOverridesPath = path.join(root, "src", "data", "operator-name-overrides.json");
 const baseSkillOverridesPath = path.join(root, "src", "data", "base-skill-overrides.json");
 const baseSkillLocalizationOverridesPath = path.join(root, "src", "data", "base-skill-localization-overrides.json");
+const baseSkillLocalizationFallbacksPath = path.join(root, "src", "data", "base-skill-localization-fallbacks.json");
 const sources = {
   zh: {
     characters:
@@ -201,6 +202,17 @@ async function loadBaseSkillLocalizationOverrides() {
   }
 }
 
+async function loadBaseSkillLocalizationFallbacks() {
+  try {
+    return JSON.parse(await readFile(baseSkillLocalizationFallbacksPath, "utf8"));
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      return {};
+    }
+    throw error;
+  }
+}
+
 function applyNameOverrides(name, overrides) {
   if (!overrides) {
     return name;
@@ -214,6 +226,12 @@ function applyNameOverrides(name, overrides) {
 function applyLocalizedOverrides(text, overrides) {
   return Object.fromEntries(
     Object.entries({ ...text, ...overrides }).filter(([, value]) => typeof value === "string" && value.trim())
+  );
+}
+
+function applyLocalizedFallbacks(text, fallbacks) {
+  return Object.fromEntries(
+    Object.entries({ ...fallbacks, ...text }).filter(([, value]) => typeof value === "string" && value.trim())
   );
 }
 
@@ -422,7 +440,13 @@ function referencedOperatorIdsFromEffect(effect) {
   return conditions.flatMap((condition) => ("operatorIds" in condition ? condition.operatorIds : []));
 }
 
-function normalize(languages, nameOverrides, baseSkillOverrides, baseSkillLocalizationOverrides) {
+function normalize(
+  languages,
+  nameOverrides,
+  baseSkillOverrides,
+  baseSkillLocalizationOverrides,
+  baseSkillLocalizationFallbacks
+) {
   const characters = languages.zh.characters;
   const building = languages.zh.building;
   const buildingChars = building.chars ?? {};
@@ -458,9 +482,13 @@ function normalize(languages, nameOverrides, baseSkillOverrides, baseSkillLocali
             description
           );
           const localizationOverride = baseSkillLocalizationOverrides[charId]?.skills?.[rawBuff.buffId];
-          const overriddenBuffName = applyLocalizedOverrides(localizedBuffName, localizationOverride?.name);
+          const localizationFallback = baseSkillLocalizationFallbacks[charId]?.skills?.[rawBuff.buffId];
+          const overriddenBuffName = applyLocalizedOverrides(
+            applyLocalizedFallbacks(localizedBuffName, localizationFallback?.name),
+            localizationOverride?.name
+          );
           const overriddenBuffDescription = applyLocalizedOverrides(
-            localizedBuffDescription,
+            applyLocalizedFallbacks(localizedBuffDescription, localizationFallback?.description),
             localizationOverride?.description
           );
           const conditions = inferConditions(overriddenBuffDescription, nameIndex, charId);
@@ -596,6 +624,7 @@ function markUnmodeledEffect(effect) {
     Boolean(effect.globalEffect) ||
     Boolean(effect.resourceEffects?.length) ||
     Boolean(effect.facilityCountBonuses?.length) ||
+    Boolean(effect.tradingOrderEffects?.length) ||
     Boolean(effect.conditionalBonuses?.length) ||
     Boolean(effect.moraleEffects?.length);
   if (hasModeledValue || effect.ignoredForOptimization) {
@@ -785,7 +814,8 @@ const operators = normalize(
   languages,
   await loadNameOverrides(),
   await loadBaseSkillOverrides(),
-  await loadBaseSkillLocalizationOverrides()
+  await loadBaseSkillLocalizationOverrides(),
+  await loadBaseSkillLocalizationFallbacks()
 );
 
 await mkdir(path.dirname(outputPath), { recursive: true });

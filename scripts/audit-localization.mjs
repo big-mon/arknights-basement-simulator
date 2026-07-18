@@ -16,6 +16,7 @@ for (const operator of operators) {
         issues.push({ type: "skillName", language, operatorId: operator.id, skillId: skill.id });
       }
       for (const effect of skill.effects) {
+        if (effect.hiddenFromUi) continue;
         if (!effect.description[language]?.trim()) {
           issues.push({ type: "skillDescription", language, operatorId: operator.id, skillId: skill.id });
           break;

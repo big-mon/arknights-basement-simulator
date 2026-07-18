@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App, assignmentsForFacilitySlots, rotationAssignmentsForFacility } from "./App";
 import { FacilityPlanCard } from "./components/FacilityPlanCard";
+import baseSkillLocalizationFallbacks from "./data/base-skill-localization-fallbacks.json";
 import { createDefaultState, operators } from "./data/defaults";
 import { productLabels } from "./i18n";
 import { localizeText } from "./lib/localization";
@@ -23,6 +24,7 @@ const snegurochka = operators.find((operator) => operator.id === "char_4208_wint
 const suzuran = operators.find((operator) => operator.id === "char_358_lisa")!;
 const bibeak = operators.find((operator) => operator.id === "char_252_bibeak")!;
 const rhodesCovert = operators.find((operator) => operator.id === "char_4215_buddy")!;
+const sakiko = operators.find((operator) => operator.id === "char_4182_oblvns")!;
 const varkalis = operators.find((operator) => operator.id === "char_4166_varkis")!;
 const nyamu = operators.find((operator) => operator.id === "char_4185_amoris")!;
 const zinogreCatapult = operators.find((operator) => operator.id === "char_1049_catap2")!;
@@ -182,11 +184,54 @@ describe("App", () => {
     expect(veen.name.ja).toBe("ヴィイ");
     expect(reprise.name.ja).toBe("リプレーザ");
     expect(akkord.name.ja).toBe("アコルト");
-    expect(taraxacum.name.ja).toBe("タラクサクム");
+    expect(taraxacum.name.ja).toBe("タラクサカム");
     expect(radian.name.ja).toBe("レイディアン");
     expect(radian.name.en).toBe("Raidian");
     expect(xiangPerfumer.name.ja).toBe("萃香パフューマー");
     expect(wang.name.ja).toBe("ウァン");
+  });
+
+  it("includes Japanese names and descriptions for every visible base skill", () => {
+    const missingJapanese = operators.flatMap((operator) =>
+      operator.skills.flatMap((skill) => [
+        ...(!skill.name.ja ? [`${operator.id}:${skill.id}:name`] : []),
+        ...skill.effects
+          .filter((effect) => !effect.hiddenFromUi && !effect.description.ja)
+          .map(() => `${operator.id}:${skill.id}:description`)
+      ])
+    );
+
+    expect(missingJapanese).toEqual([]);
+    expect(taraxacum.skills[1].name.ja).toBe("「孺子教うべし！」");
+    expect(taraxacum.skills[1].effects[0].description.ja).toContain("受注効率+4%");
+  });
+
+  it("keeps reviewed Japanese skill fallbacks aligned with their generated effects", () => {
+    const sakikoFallbacks = baseSkillLocalizationFallbacks.char_4182_oblvns.skills;
+    const expectedSakiko = {
+      "control_prod_bd_spd[000]": ["豊富な職務経験", "製造効率+0.5%"],
+      "control_prod_bd_spd[010]": ["豊富な職務経験", "製造効率+1%"],
+      "control_mp_cost&bd3[000]": ["逞しいお嬢様", "体力消費量+0.05"]
+    } as const;
+
+    for (const [skillId, [name, descriptionFragment]] of Object.entries(expectedSakiko)) {
+      const fallback = sakikoFallbacks[skillId as keyof typeof sakikoFallbacks];
+      const generated = sakiko.skills.find((skill) => skill.id === skillId)!;
+      expect(fallback.name.ja).toBe(name);
+      expect(fallback.description.ja).toContain(descriptionFragment);
+      expect(generated.name.ja).toBe(name);
+      expect(generated.effects[0].description.ja).toContain(descriptionFragment);
+    }
+
+    const orchidFallback = baseSkillLocalizationFallbacks.char_4215_buddy.skills["meet_spd_notOwned_P[000]"];
+    const orchidGenerated = rhodesCovert.skills.find((skill) => skill.id === "meet_spd_notOwned_P[000]")!;
+    expect(orchidFallback.description.ja).toContain("焔狐竜オーキッドが制御中枢に配置");
+    expect(orchidGenerated.effects[0].description.ja).toContain("焔狐竜オーキッドが制御中枢に配置");
+
+    const cairnFallback = baseSkillLocalizationFallbacks.char_4214_cairn.skills["meet_spd&exchange[001]"];
+    const cairnGenerated = cairn.skills.find((skill) => skill.id === "meet_spd&exchange[001]")!;
+    expect(cairnFallback.description.ja).toContain("応接室配置時");
+    expect(cairnGenerated.effects[0].description.ja).toContain("応接室配置時");
   });
 
   it("marks unverified selected-language skill text without excluding operators", async () => {

@@ -119,6 +119,9 @@ const yatoAlter = operators.find((operator) => operator.id === "char_1029_yato2"
 const terraResearchCommission = operators.find((operator) => operator.id === "char_4077_palico")!;
 const iana = operators.find((operator) => operator.id === "char_4124_iana")!;
 const bibeak = operators.find((operator) => operator.id === "char_252_bibeak")!;
+const proviso = operators.find((operator) => operator.id === "char_4032_provs")!;
+const tequila = operators.find((operator) => operator.id === "char_486_takila")!;
+const ambriel = operators.find((operator) => operator.id === "char_302_glaze")!;
 const ascalon = operators.find((operator) => operator.id === "char_4132_ascln")!;
 const saileach = operators.find((operator) => operator.id === "char_479_sleach")!;
 const kaltsit = operators.find((operator) => operator.id === "char_003_kalts")!;
@@ -127,6 +130,7 @@ const minimalist = operators.find((operator) => operator.id === "char_4054_malis
 const greyyAlter = operators.find((operator) => operator.id === "char_1027_greyy2")!;
 const pozemka = operators.find((operator) => operator.id === "char_4055_bgsnow")!;
 const kirara = operators.find((operator) => operator.id === "char_478_kirara")!;
+const tuye = operators.find((operator) => operator.id === "char_402_tuye")!;
 const waaiFu = operators.find((operator) => operator.id === "char_243_waaifu")!;
 const shu = operators.find((operator) => operator.id === "char_2025_shu")!;
 const alanna = operators.find((operator) => operator.id === "char_4178_alanna")!;
@@ -161,6 +165,13 @@ const weedy = operators.find((operator) => operator.id === "char_400_weedy")!;
 const vulcan = operators.find((operator) => operator.id === "char_163_hpsts")!;
 const warmy = operators.find((operator) => operator.id === "char_4081_warmy")!;
 const totter = operators.find((operator) => operator.id === "char_4062_totter")!;
+const iris = operators.find((operator) => operator.id === "char_338_iris")!;
+const czerny = operators.find((operator) => operator.id === "char_4047_pianst")!;
+const senshi = operators.find((operator) => operator.id === "char_4143_sensi")!;
+const marcille = operators.find((operator) => operator.id === "char_4141_marcil")!;
+const rosmontis = operators.find((operator) => operator.id === "char_391_rosmon")!;
+const closure = operators.find((operator) => operator.id === "char_4228_closur")!;
+const crackborne = operators.find((operator) => operator.id === "char_4225_tanya")!;
 const levelLockedOperator = operators.find((operator) => operator.skills.some((skill) => skill.unlockLevel > 1))!;
 const levelLockedSkill = levelLockedOperator.skills.find((skill) => skill.unlockLevel > 1)!;
 
@@ -879,12 +890,97 @@ describe("optimizer", () => {
     expect(candidate.efficiency).toBeCloseTo(0.2);
   });
 
+  it("converts dormitory-level resources for Perception Information and Monster Meal consumers", () => {
+    const state = createDefaultState();
+    ownOperators(state, [iris.id, senshi.id, marcille.id, rosmontis.id]);
+    const dormitory = state.facilities.find((facility) => facility.id === "dormitory-1")!;
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const baseRosmontis = findCandidates(factory, state).find((assignment) => assignment.operatorId === rosmontis.id)!;
+    const withIris = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(dormitory, iris.id)]
+    }).find((assignment) => assignment.operatorId === rosmontis.id)!;
+    const baseMarcille = findCandidates(factory, state).find((assignment) => assignment.operatorId === marcille.id)!;
+    const withSenshi = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      assignments: [contextAssignment(dormitory, senshi.id)]
+    }).find((assignment) => assignment.operatorId === marcille.id)!;
+
+    expect(withIris.efficiency - baseRosmontis.efficiency).toBeCloseTo(0.05);
+    expect(withSenshi.efficiency - baseMarcille.efficiency).toBeCloseTo(0.05);
+  });
+
+  it("uses owned dormitory resource producers in generated production plans", () => {
+    const state = createDefaultState();
+    ownOperators(state, [iris.id, czerny.id, senshi.id, marcille.id, rosmontis.id]);
+    const factory = { ...state.facilities.find((facility) => facility.id === "factory-1")!, slotCount: 2 };
+    const dormitory = state.facilities.find((facility) => facility.id === "dormitory-1")!;
+    state.facilities = [factory, dormitory];
+
+    const plan = generateAssignmentPlan(state);
+    const factoryPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === factory.id)!;
+    const rosmontisAssignment = factoryPlan.assignments.find(
+      (assignment) => assignment.operatorId === rosmontis.id
+    )!;
+    const marcilleAssignment = factoryPlan.assignments.find(
+      (assignment) => assignment.operatorId === marcille.id
+    )!;
+
+    expect(rosmontisAssignment.efficiency).toBeCloseTo(0.1);
+    expect(marcilleAssignment.efficiency).toBeCloseTo(0.35);
+    expect(plan.facilityPlans.every((facilityPlan) => facilityPlan.facility.type !== "dormitory")).toBe(true);
+  });
+
+  it("retains morale-only effects that lack English source text", () => {
+    const closureEffect = closure.skills.find((skill) => skill.id === "control_mp_cost[014]")!.effects[0];
+    const crackborneEffect = crackborne.skills.find((skill) => skill.id === "dorm_rec_oneself[040]")!.effects[0];
+
+    expect(closureEffect.moraleEffects).toEqual([
+      expect.objectContaining({ type: "recovery", target: "room", amount: 0.05 })
+    ]);
+    expect(crackborneEffect.moraleEffects).toEqual([
+      expect.objectContaining({ type: "recovery", target: "self", amount: 0.55 })
+    ]);
+  });
+
   it("does not score high-value order probability as generic trading efficiency", () => {
     const state = createDefaultState();
     ownOperators(state, [bibeak.id]);
     const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
 
     expect(findCandidates(trading, state).some((assignment) => assignment.operatorId === bibeak.id)).toBe(false);
+  });
+
+  it("scores Proviso's defaulted orders from the normal gold-order distribution", () => {
+    const state = createDefaultState();
+    ownOperators(state, [proviso.id, ambriel.id]);
+    const trading = { ...state.facilities.find((facility) => facility.id === "trading-1")!, slotCount: 1 };
+    state.facilities = [trading];
+
+    const candidates = findCandidates(trading, state);
+    const provisoCandidate = candidates.find((assignment) => assignment.operatorId === proviso.id)!;
+    const ambrielCandidate = candidates.find((assignment) => assignment.operatorId === ambriel.id)!;
+    const plan = generateAssignmentPlan(state);
+    const tradingPlan = plan.facilityPlans[0];
+
+    expect(provisoCandidate.score).toBeGreaterThan(ambrielCandidate.score);
+    expect(tradingPlan.assignments.map((assignment) => assignment.operatorId)).toContain(proviso.id);
+    expect(tradingPlan.expectedEfficiency).toBeCloseTo(4.5 / 2.9 - 1);
+  });
+
+  it("scores Tequila's natural four-gold orders without treating defaulted orders as high value", () => {
+    const state = createDefaultState();
+    ownOperators(state, [proviso.id, tequila.id]);
+    const trading = { ...state.facilities.find((facility) => facility.id === "trading-1")!, slotCount: 2 };
+    state.facilities = [trading];
+
+    const plan = generateAssignmentPlan(state);
+    const tradingPlan = plan.facilityPlans[0];
+
+    expect(tradingPlan.assignments.map((assignment) => assignment.operatorId)).toEqual(
+      expect.arrayContaining([proviso.id, tequila.id])
+    );
+    expect(tradingPlan.expectedEfficiency).toBeCloseTo(4.7 / 2.9 - 1);
   });
 
   it("does not score training-room or office-only control effects as control productivity", () => {
@@ -1012,19 +1108,57 @@ describe("optimizer", () => {
     expect(candidate.efficiency).toBeCloseTo(0.1);
   });
 
-  it("keeps Kirara's fixed trading bonus while excluding unsupported line scaling", () => {
+  it("models Kirara's generated gold lines for consumers in the same trading post", () => {
     const state = createDefaultState();
-    ownOperators(state, [kirara.id]);
-    const trading = state.facilities.find((facility) => facility.id === "trading-1")!;
-    const candidate = findCandidates(trading, state).find((assignment) => assignment.operatorId === kirara.id)!;
+    ownOperators(state, [kirara.id, pozemka.id, tuye.id]);
+    const firstTrading = state.facilities.find((facility) => facility.id === "trading-1")!;
+    const secondTrading = state.facilities.find((facility) => facility.id === "trading-2")!;
+    const candidate = findCandidates(firstTrading, state).find((assignment) => assignment.operatorId === kirara.id)!;
     const firstEffect = kirara.skills.find((skill) => skill.id === "trade_ord_line_gold[000]")!.effects[0];
     const secondEffect = kirara.skills.find((skill) => skill.id === "trade_ord_line_gold[010]")!.effects[0];
+    const context = {
+      facilities: state.facilities,
+      assignments: [contextAssignment(firstTrading, kirara.id)]
+    };
+    const samePostPozemka = findCandidates(firstTrading, state, 0, context).find(
+      (assignment) => assignment.operatorId === pozemka.id
+    )!;
+    const samePostTuye = findCandidates(firstTrading, state, 0, context).find(
+      (assignment) => assignment.operatorId === tuye.id
+    )!;
+    const otherPostPozemka = findCandidates(secondTrading, state, 0, context).find(
+      (assignment) => assignment.operatorId === pozemka.id
+    )!;
+    const otherPostTuye = findCandidates(secondTrading, state, 0, context).find(
+      (assignment) => assignment.operatorId === tuye.id
+    )!;
 
     expect(firstEffect.product).toBe("lmd");
     expect(secondEffect.product).toBe("lmd");
-    expect(firstEffect.ignoredForOptimization).toBeUndefined();
-    expect(secondEffect.ignoredForOptimization).toBeUndefined();
+    expect(firstEffect.unsupportedReason).toBeUndefined();
+    expect(secondEffect.unsupportedReason).toBeUndefined();
     expect(candidate.efficiency).toBeCloseTo(0.05);
+    expect(samePostPozemka.efficiency).toBeCloseTo(0.2);
+    expect(samePostTuye.efficiency).toBeCloseTo(0.35);
+    expect(otherPostPozemka.efficiency).toBeCloseTo(0.1);
+    expect(otherPostTuye.efficiency).toBeCloseTo(0.2);
+  });
+
+  it("reevaluates tentative trading teams before selecting Kirara line synergies", () => {
+    const state = createDefaultState();
+    ownOperators(state, [kirara.id, pozemka.id, tuye.id]);
+    state.facilities = state.facilities
+      .filter((facility) => facility.id !== "trading-2")
+      .map((facility) => (facility.id === "trading-1" ? { ...facility, slotCount: 2 } : facility));
+
+    const plan = generateAssignmentPlan(state);
+    const tradingPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === "trading-1")!;
+
+    expect(tradingPlan.assignments.map((assignment) => assignment.operatorId)).toEqual(
+      expect.arrayContaining([kirara.id, tuye.id])
+    );
+    expect(tradingPlan.assignments.map((assignment) => assignment.operatorId)).not.toContain(pozemka.id);
+    expect(tradingPlan.expectedEfficiency).toBeCloseTo(0.4);
   });
 
   it("keeps morale-cost factory capacity skills product-neutral", () => {

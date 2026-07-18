@@ -437,9 +437,12 @@
           {
             "index": 0,
             "patch": {
-              "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "goldOrderValueExpectation"
+              "efficiency": 0,
+              "tradingOrderEffects": [
+                {
+                  "type": "defaultedOrderRule"
+                }
+              ]
             }
           }
         ]
@@ -449,9 +452,13 @@
           {
             "index": 0,
             "patch": {
-              "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "goldOrderValueExpectation"
+              "efficiency": 0,
+              "tradingOrderEffects": [
+                {
+                  "type": "defaultedOrderExtraGold",
+                  "amount": 1
+                }
+              ]
             }
           }
         ]
@@ -461,9 +468,13 @@
           {
             "index": 0,
             "patch": {
-              "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "goldOrderValueExpectation"
+              "efficiency": 0,
+              "tradingOrderEffects": [
+                {
+                  "type": "defaultedOrderExtraGold",
+                  "amount": 2
+                }
+              ]
             }
           }
         ]
@@ -1074,10 +1085,10 @@
             "patch": {
               "product": "lmd",
               "efficiency": 0.05,
+              "baseEfficiency": 0,
               "scaling": {
-                "type": "facilityProductCount",
-                "facility": "factory",
-                "product": "gold"
+                "type": "resource",
+                "resource": "goldProductionLine"
               }
             }
           }
@@ -1089,15 +1100,21 @@
             "index": 0,
             "patch": {
               "product": "lmd",
-              "efficiency": 0.05,
-              "scaling": {
-                "type": "affiliation",
-                "affiliations": [
-                  "durin"
-                ],
-                "scope": "base",
-                "max": 4
-              }
+              "efficiency": 0,
+              "resourceEffects": [
+                {
+                  "resource": "goldProductionLine",
+                  "amount": 1,
+                  "scaling": {
+                    "type": "affiliation",
+                    "affiliations": [
+                      "durin"
+                    ],
+                    "scope": "base",
+                    "max": 4
+                  }
+                }
+              ]
             }
           }
         ]
@@ -1901,9 +1918,13 @@
           {
             "index": 0,
             "patch": {
-              "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "goldOrderValueExpectation"
+              "efficiency": 0,
+              "tradingOrderEffects": [
+                {
+                  "type": "highValueOrderExtraLmd",
+                  "amount": 250
+                }
+              ]
             }
           }
         ]
@@ -1913,9 +1934,13 @@
           {
             "index": 0,
             "patch": {
-              "efficiency": 0.05,
-              "ignoredForOptimization": true,
-              "unsupportedReason": "goldOrderValueExpectation"
+              "efficiency": 0,
+              "tradingOrderEffects": [
+                {
+                  "type": "highValueOrderExtraLmd",
+                  "amount": 500
+                }
+              ]
             }
           }
         ]
@@ -2520,7 +2545,19 @@
               "product": "lmd",
               "efficiency": 0,
               "baseEfficiency": 0.05,
-              "unsupportedReason": "goldProductionLineCountNotModeled"
+              "resourceEffects": [
+                {
+                  "resource": "goldProductionLine",
+                  "amount": 2,
+                  "scaling": {
+                    "type": "facilityProductCount",
+                    "facility": "factory",
+                    "product": "gold",
+                    "per": 4,
+                    "scope": "sameFacility"
+                  }
+                }
+              ]
             }
           }
         ]
@@ -2533,7 +2570,19 @@
               "product": "lmd",
               "efficiency": 0,
               "baseEfficiency": 0.05,
-              "unsupportedReason": "goldProductionLineCountNotModeled"
+              "resourceEffects": [
+                {
+                  "resource": "goldProductionLine",
+                  "amount": 2,
+                  "scaling": {
+                    "type": "facilityProductCount",
+                    "facility": "factory",
+                    "product": "gold",
+                    "per": 2,
+                    "scope": "sameFacility"
+                  }
+                }
+              ]
             }
           }
         ]
@@ -4064,7 +4113,14 @@
           {
             "index": 0,
             "patch": {
-              "product": "lmd"
+              "product": "lmd",
+              "efficiency": 0.15,
+              "baseEfficiency": 0.05,
+              "scaling": {
+                "type": "resource",
+                "resource": "goldProductionLine",
+                "per": 4
+              }
             }
           }
         ]
@@ -4074,7 +4130,14 @@
           {
             "index": 0,
             "patch": {
-              "product": "lmd"
+              "product": "lmd",
+              "efficiency": 0.15,
+              "baseEfficiency": 0.05,
+              "scaling": {
+                "type": "resource",
+                "resource": "goldProductionLine",
+                "per": 2
+              }
             }
           }
         ]
@@ -4136,5 +4199,122 @@
     "addAffiliations": [
       "platform"
     ]
+  },
+  "char_338_iris": {
+    "skills": {
+      "dorm_rec_bd_n1[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "resourceEffects": [
+                {
+                  "resource": "perceptionInfo",
+                  "amount": 1,
+                  "scaling": {
+                    "type": "facilityLevel",
+                    "facility": "dormitory",
+                    "max": 5
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4047_pianst": {
+    "skills": {
+      "dorm_rec_bd_n1[100]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "resourceEffects": [
+                {
+                  "resource": "perceptionInfo",
+                  "amount": 1,
+                  "scaling": {
+                    "type": "facilityLevel",
+                    "facility": "dormitory",
+                    "max": 5
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4143_sensi": {
+    "skills": {
+      "dorm_rec_bd_dungeon[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "resourceEffects": [
+                {
+                  "resource": "magicFood",
+                  "amount": 1,
+                  "scaling": {
+                    "type": "facilityLevel",
+                    "facility": "dormitory",
+                    "max": 5
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4228_closur": {
+    "skills": {
+      "control_mp_cost[014]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "moraleEffects": [
+                {
+                  "type": "recovery",
+                  "target": "room",
+                  "amount": 0.05
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_4225_tanya": {
+    "skills": {
+      "dorm_rec_oneself[040]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0,
+              "moraleEffects": [
+                {
+                  "type": "recovery",
+                  "target": "self",
+                  "amount": 0.55
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
   }
 }

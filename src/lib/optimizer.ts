@@ -176,8 +176,13 @@ function buildFacilityPlans(
   contextAssignments: Assignment[],
   excludedOperatorIds: ReadonlySet<string> = new Set()
 ): FacilityPlan[] {
+  const dormitoryResourceAssignments = implicitDormitoryResourceAssignments(state, contextAssignments);
+  const unavailableOperatorIds = new Set([
+    ...excludedOperatorIds,
+    ...dormitoryResourceAssignments.map((assignment) => assignment.operatorId)
+  ]);
   const context: AssignmentEvaluationContext = {
-    assignments: contextAssignments,
+    assignments: [...contextAssignments, ...dormitoryResourceAssignments],
     facilities: state.facilities,
     roster: state.roster,
     shiftHours: rotationShiftHours(state.rotationCount)
@@ -189,13 +194,23 @@ function buildFacilityPlans(
     const remoteEfficiencyBonus = calculateRemoteFacilityEfficiencyBonus(facility, context);
     const facilityBonus = globalBonus + remoteEfficiencyBonus;
       const candidates = findCandidates(facility, state, 0, context)
-        .filter((candidate) => !excludedOperatorIds.has(candidate.operatorId))
+        .filter((candidate) => !unavailableOperatorIds.has(candidate.operatorId))
         .sort((a, b) => b.score - a.score);
+      const teamOptions = buildFacilityTeamOptions(candidates, facility.slotCount)
+        .map((assignments) => reevaluateFacilityTeam(assignments, facility, state, context))
+        .sort(
+          (a, b) =>
+            facilityTeamSelectionScore(b, facility, state.preference, facilityBonus) -
+              facilityTeamSelectionScore(a, facility, state.preference, facilityBonus) ||
+            a.map((assignment) => assignment.operatorId).sort().join("|").localeCompare(
+              b.map((assignment) => assignment.operatorId).sort().join("|")
+            )
+        );
       return {
         facility,
         facilityBonus,
         candidates,
-        teamOptions: buildFacilityTeamOptions(candidates, facility.slotCount)
+        teamOptions
       };
     });
   type SearchState = {
@@ -212,7 +227,7 @@ function buildFacilityPlans(
         if (operatorIds.some((operatorId) => searchState.usedOperatorIds.has(operatorId))) {
           continue;
         }
-        const expectedEfficiency = effectiveFacilityEfficiency(assignments) + candidateSet.facilityBonus;
+        const expectedEfficiency = effectiveFacilityEfficiency(assignments, candidateSet.facilityBonus);
         nextStates.push({
           usedOperatorIds: new Set([...searchState.usedOperatorIds, ...operatorIds]),
           selectionScore:
@@ -260,9 +275,62 @@ function buildFacilityPlans(
     state,
     plans,
     context,
-    excludedOperatorIds,
+    unavailableOperatorIds,
     new Map(facilityCandidates.map(({ facility, candidates }) => [facility.id, candidates]))
   );
+}
+
+function implicitDormitoryResourceAssignments(state: AppState, contextAssignments: Assignment[]) {
+  const dormitories = state.facilities.filter((facility) => facility.type === "dormitory");
+  if (!dormitories.length) {
+    return [];
+  }
+
+  const assignedOperatorIds = new Set(contextAssignments.map((assignment) => assignment.operatorId));
+  const producers = operators
+    .flatMap((operator) => {
+      const rosterEntry = state.roster[operator.id];
+      if (!rosterEntry?.owned || assignedOperatorIds.has(operator.id)) {
+        return [];
+      }
+
+      const activeSkills = activeBaseSkills(operator, rosterEntry.elite, rosterEntry.level);
+      const resourceSkill = activeSkills.find((skill) =>
+        skill.effects.some(
+          (effect) => effect.facility === "dormitory" && Boolean(effect.resourceEffects?.length)
+        )
+      );
+      const hasWorkingFacilitySkill = activeSkills.some((skill) =>
+        skill.effects.some(
+          (effect) => effect.facility !== "dormitory" && !effect.ignoredForOptimization
+        )
+      );
+      return resourceSkill && !hasWorkingFacilitySkill ? [{ operator, resourceSkill }] : [];
+    })
+    .sort((a, b) => a.operator.id.localeCompare(b.operator.id));
+
+  const assignments: Assignment[] = [];
+  let producerIndex = 0;
+  for (const dormitory of dormitories) {
+    const occupiedSlots = contextAssignments.filter(
+      (assignment) => assignment.facilityId === dormitory.id && !assignment.doesNotConsumeFacilitySlot
+    ).length;
+    const availableSlots = Math.max(dormitory.slotCount - occupiedSlots, 0);
+    for (let slot = 0; slot < availableSlots && producerIndex < producers.length; slot += 1) {
+      const producer = producers[producerIndex++];
+      assignments.push({
+        facilityId: dormitory.id,
+        operatorId: producer.operator.id,
+        skillId: producer.resourceSkill.id,
+        score: 0,
+        efficiency: 0,
+        fatigueHours: moraleCapacity,
+        recoveryHours: 0,
+        reason: "Dormitory resource producer"
+      });
+    }
+  }
+  return assignments;
 }
 
 function fillVacantFacilitySlots(
@@ -371,6 +439,50 @@ function buildFacilityTeamOptions(candidates: Assignment[], slotCount: number) {
   );
 }
 
+function reevaluateFacilityTeam(
+  assignments: Assignment[],
+  facility: FacilitySlot,
+  state: AppState,
+  context: AssignmentEvaluationContext
+) {
+  if (!assignments.length) {
+    return assignments;
+  }
+
+  const tentativeContext: AssignmentEvaluationContext = {
+    ...context,
+    assignments: [
+      ...context.assignments.filter((assignment) => assignment.facilityId !== facility.id),
+      ...assignments
+    ]
+  };
+
+  return assignments.map((assignment) => {
+    if (
+      assignment.skillId === "baseline" ||
+      assignment.skillId === "skillless-prerequisite" ||
+      assignment.skillId === "base-skillless-prerequisite"
+    ) {
+      return assignment;
+    }
+    const operator = operators.find((candidate) => candidate.id === assignment.operatorId);
+    const rosterEntry = state.roster[assignment.operatorId];
+    if (!operator || !rosterEntry) {
+      return assignment;
+    }
+    const reevaluated = bestSkillForFacility(
+      operator,
+      rosterEntry,
+      facility,
+      state.preference,
+      0,
+      state.language,
+      tentativeContext
+    );
+    return reevaluated.find((candidate) => candidate.skillId === assignment.skillId) ?? reevaluated[0] ?? assignment;
+  });
+}
+
 function assignmentStateSignature(state: { plans: FacilityPlan[] }) {
   return state.plans
     .flatMap((plan) => plan.assignments.map((assignment) => `${plan.facility.id}:${assignment.operatorId}:${assignment.skillId}`))
@@ -404,7 +516,7 @@ export function attachRotationAlternatives(state: AppState, facilityPlans: Facil
     const remoteEfficiencyBonus = calculateRemoteFacilityEfficiencyBonus(plan.facility, alternativeContext);
     return {
       ...plan,
-      alternativeExpectedEfficiency: effectiveFacilityEfficiency(plan.alternatives) + globalBonus + remoteEfficiencyBonus
+      alternativeExpectedEfficiency: effectiveFacilityEfficiency(plan.alternatives, globalBonus + remoteEfficiencyBonus)
     };
   });
 }
@@ -768,6 +880,10 @@ function bestSkillForFacility(
         const variantRawEfficiency = rawEfficiency + extraConditionalBonus;
         const variantEffectiveEfficiency =
           externalGlobalEffect || remoteFacilityEfficiencyEffect || remoteFacilityStatEffect || remoteFacilityCountEffect ? 0 : variantRawEfficiency;
+        const scoredEfficiency =
+          facility.type === "trading"
+            ? tradingOrderAdjustedEfficiency(variantEffectiveEfficiency, effect.tradingOrderEffects ?? [])
+            : variantEffectiveEfficiency;
         const skilllessPrerequisiteOperatorIds = Array.from(
           new Set([...mandatorySkilllessPrerequisiteOperatorIds, ...extraSkilllessPrerequisiteOperatorIds])
         );
@@ -783,10 +899,11 @@ function bestSkillForFacility(
           score:
             externalGlobalEffect
               ? globalEffectEfficiency * globalEffectScoreMultiplier
-              : variantEffectiveEfficiency * productMultiplier * facilityWeight(facility),
+              : scoredEfficiency * productMultiplier * facilityWeight(facility),
           efficiency: variantEffectiveEfficiency,
           storageLimit,
           orderLimit,
+          ...(effect.tradingOrderEffects?.length ? { tradingOrderEffects: effect.tradingOrderEffects } : {}),
           ...(effect.suppressesOtherFactoryEfficiency ? { suppressesOtherFactoryEfficiency: true } : {}),
           ...(effect.globalEffect?.stackKey ? { globalStackKey: globalEffectStackIdentity(effect) } : {}),
           ...(skilllessPrerequisiteOperatorIds.length ? { skilllessPrerequisiteOperatorIds } : {}),
@@ -839,7 +956,8 @@ function bestSkillForFacility(
       commonRemoteScore,
       remoteFacilityStatBonuses,
       remoteFacilityEfficiencyBonuses,
-      remoteFacilityCountBonuses
+      remoteFacilityCountBonuses,
+      productWeight(facility.product, preference) * facilityWeight(facility)
     );
   };
   const bestAssignment = aggregate(true);
@@ -890,9 +1008,9 @@ function applyMoraleDurations(state: AppState, facilityPlans: FacilityPlan[]) {
       calculateRemoteFacilityEfficiencyBonus(plan.facility, finalAlternativeContext);
     return {
       ...plan,
-      expectedEfficiency: effectiveFacilityEfficiency(plan.assignments) + activeBonus,
+      expectedEfficiency: effectiveFacilityEfficiency(plan.assignments, activeBonus),
       score: effectiveFacilityScore(plan.assignments, plan.facility, state.preference, activeBonus),
-      alternativeExpectedEfficiency: effectiveFacilityEfficiency(plan.alternatives) + alternativeBonus
+      alternativeExpectedEfficiency: effectiveFacilityEfficiency(plan.alternatives, alternativeBonus)
     };
   });
 }
@@ -1149,7 +1267,8 @@ function aggregateOperatorAssignments(
   commonRemoteScore: number,
   remoteFacilityStatBonuses: NonNullable<Assignment["remoteFacilityStatBonuses"]>,
   remoteFacilityEfficiencyBonuses: NonNullable<Assignment["remoteFacilityEfficiencyBonuses"]>,
-  remoteFacilityCountBonuses: NonNullable<Assignment["remoteFacilityCountBonuses"]>
+  remoteFacilityCountBonuses: NonNullable<Assignment["remoteFacilityCountBonuses"]>,
+  localScoreMultiplier: number
 ): Assignment | undefined {
   if (!assignments.length) {
     return undefined;
@@ -1165,14 +1284,26 @@ function aggregateOperatorAssignments(
   const scalesWithFacilityStat = Array.from(
     new Set(assignments.flatMap((assignment) => assignment.scalesWithFacilityStat ?? []))
   );
+  const aggregateEfficiency = assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0);
+  const tradingOrderEffects = assignments.flatMap((assignment) => assignment.tradingOrderEffects ?? []);
+  const isolatedTradingScore = assignments.reduce(
+    (sum, assignment) =>
+      sum + tradingOrderAdjustedEfficiency(assignment.efficiency, assignment.tradingOrderEffects ?? []) * localScoreMultiplier,
+    0
+  );
+  const aggregateTradingScore = tradingOrderAdjustedEfficiency(aggregateEfficiency, tradingOrderEffects) * localScoreMultiplier;
 
   return {
     ...first,
     skillId: assignments.map((assignment) => assignment.skillId).join("+"),
-    score: assignments.reduce((sum, assignment) => sum + assignment.score, commonRemoteScore),
-    efficiency: assignments.reduce((sum, assignment) => sum + assignment.efficiency, 0),
+    score:
+      assignments.reduce((sum, assignment) => sum + assignment.score, commonRemoteScore) +
+      aggregateTradingScore -
+      isolatedTradingScore,
+    efficiency: aggregateEfficiency,
     storageLimit: first.storageLimit,
     orderLimit: first.orderLimit,
+    tradingOrderEffects,
     suppressesOtherFactoryEfficiency: assignments.some((assignment) => assignment.suppressesOtherFactoryEfficiency) || undefined,
     globalStackKey: globalStackKeys[0],
     globalStackKeys: globalStackKeys.length ? globalStackKeys : undefined,
@@ -1327,10 +1458,10 @@ function activeRemoteFacilityCountBonuses(
     .flatMap((effect) => effect.facilityCountBonuses ?? []);
 }
 
-function effectiveFacilityEfficiency(assignments: Assignment[]) {
+function effectiveFacilityEfficiency(assignments: Assignment[], globalBonus = 0) {
   const suppressingAssignments = assignments.filter((assignment) => assignment.suppressesOtherFactoryEfficiency);
   const countedAssignments = suppressingAssignments.length ? suppressingAssignments : assignments;
-  return countedAssignments.reduce((sum, assignment) => {
+  const baseEfficiency = countedAssignments.reduce((sum, assignment) => {
     const teamScalingAdjustment = (assignment.facilityStatScalings ?? []).reduce((scalingSum, scaling) => {
       const otherLimit = countedAssignments
         .filter((other) => other !== assignment)
@@ -1346,11 +1477,49 @@ function effectiveFacilityEfficiency(assignments: Assignment[]) {
       return scalingSum + (desiredSteps - currentSteps) * scaling.efficiencyPerStep;
     }, 0);
     return sum + (assignment.efficiency + teamScalingAdjustment) * (assignment.shiftUptime ?? 1);
-  }, 0);
+  }, globalBonus);
+  return tradingOrderAdjustedEfficiency(
+    baseEfficiency,
+    countedAssignments.flatMap((assignment) => assignment.tradingOrderEffects ?? [])
+  );
 }
 
 function effectiveFacilityScore(assignments: Assignment[], facility: FacilitySlot, preference: OptimizationPreference, globalBonus = 0) {
-  return (effectiveFacilityEfficiency(assignments) + globalBonus) * productWeight(facility.product, preference) * facilityWeight(facility);
+  return effectiveFacilityEfficiency(assignments, globalBonus) * productWeight(facility.product, preference) * facilityWeight(facility);
+}
+
+const normalGoldOrderDistribution = [
+  { gold: 2, probability: 0.3 },
+  { gold: 3, probability: 0.5 },
+  { gold: 4, probability: 0.2 }
+] as const;
+
+function tradingOrderAdjustedEfficiency(
+  orderAcquisitionEfficiency: number,
+  effects: NonNullable<BaseSkillEffect["tradingOrderEffects"]>
+) {
+  if (!effects.length) {
+    return orderAcquisitionEfficiency;
+  }
+
+  const hasDefaultedOrderRule = effects.some((effect) => effect.type === "defaultedOrderRule");
+  const defaultedOrderExtraGold = effects
+    .filter((effect) => effect.type === "defaultedOrderExtraGold")
+    .reduce((maximum, effect) => Math.max(maximum, effect.amount), 0);
+  const highValueOrderExtraLmd = effects
+    .filter((effect) => effect.type === "highValueOrderExtraLmd")
+    .reduce((maximum, effect) => Math.max(maximum, effect.amount), 0);
+  const baselineGold = normalGoldOrderDistribution.reduce(
+    (sum, order) => sum + order.gold * order.probability,
+    0
+  );
+  const expectedGoldEquivalent = normalGoldOrderDistribution.reduce((sum, order) => {
+    const breachBonus = hasDefaultedOrderRule && order.gold < 4 ? defaultedOrderExtraGold : 0;
+    const highValueBonus = order.gold === 4 ? highValueOrderExtraLmd / 500 : 0;
+    return sum + (order.gold + breachBonus + highValueBonus) * order.probability;
+  }, 0);
+  const orderValueMultiplier = expectedGoldEquivalent / baselineGold;
+  return (1 + orderAcquisitionEfficiency) * orderValueMultiplier - 1;
 }
 
 function facilityTeamSelectionScore(
@@ -1668,6 +1837,11 @@ function resourceAmount(resource: string, context?: AssignmentEvaluationContext,
     return 0;
   }
 
+  const baseResource =
+    resource === "goldProductionLine"
+      ? context.facilities.filter((facility) => facility.type === "factory" && facility.product === "gold").length
+      : 0;
+
   const assignedResource = context.assignments.reduce((sum, assignment) => {
     if (candidateOperator && assignment.operatorId === candidateOperator.id) {
       return sum;
@@ -1678,16 +1852,24 @@ function resourceAmount(resource: string, context?: AssignmentEvaluationContext,
       return sum;
     }
 
-    return sum + resourceAmountFromOperator(resource, operator, facility, context);
+    return sum + resourceAmountFromOperator(resource, operator, facility, context, candidateFacility);
   }, 0);
 
   const candidateResource =
-    candidateOperator && candidateFacility ? resourceAmountFromOperator(resource, candidateOperator, candidateFacility, context) : 0;
+    candidateOperator && candidateFacility
+      ? resourceAmountFromOperator(resource, candidateOperator, candidateFacility, context, candidateFacility)
+      : 0;
 
-  return assignedResource + candidateResource;
+  return baseResource + assignedResource + candidateResource;
 }
 
-function resourceAmountFromOperator(resource: string, operator: Operator, facility: FacilitySlot, context: AssignmentEvaluationContext) {
+function resourceAmountFromOperator(
+  resource: string,
+  operator: Operator,
+  facility: FacilitySlot,
+  context: AssignmentEvaluationContext,
+  targetFacility?: FacilitySlot
+) {
   const effects = activeBaseSkills(
     operator,
     context.roster?.[operator.id]?.elite ?? 0,
@@ -1702,6 +1884,10 @@ function resourceAmountFromOperator(resource: string, operator: Operator, facili
       effectSum +
       (effect.resourceEffects ?? [])
         .filter((resourceEffect) => resourceEffect.resource === resource)
+        .filter(
+          (resourceEffect) =>
+            resourceEffect.scaling?.scope !== "sameFacility" || !targetFacility || facility.id === targetFacility.id
+        )
         .reduce(
           (resourceSum, resourceEffect) => resourceSum + resourceEffect.amount * resourceEffectMultiplier(resourceEffect, operator, facility, context),
           0
@@ -1727,6 +1913,19 @@ function resourceEffectMultiplier(
       (facility) => !resourceEffect.scaling?.facility || facility.type === resourceEffect.scaling.facility
     ).length;
     return resourceEffect.scaling.max ? Math.min(count, resourceEffect.scaling.max) : count;
+  }
+  if (resourceEffect.scaling.type === "facilityLevel") {
+    const level = maxFacilityLevelByType[resourceEffect.scaling.facility ?? facility.type];
+    return resourceEffect.scaling.max ? Math.min(level, resourceEffect.scaling.max) : level;
+  }
+  if (resourceEffect.scaling.type === "facilityProductCount") {
+    const count = context.facilities.filter(
+      (facility) =>
+        (!resourceEffect.scaling?.facility || facility.type === resourceEffect.scaling.facility) &&
+        (!resourceEffect.scaling?.product || facility.product === resourceEffect.scaling.product)
+    ).length;
+    const scaled = resourceEffect.scaling.per ? Math.floor(count / resourceEffect.scaling.per) : count;
+    return resourceEffect.scaling.max ? Math.min(scaled, resourceEffect.scaling.max) : scaled;
   }
   if (resourceEffect.scaling.type === "affiliation") {
     const assignedMatches = context.assignments.filter((assignment) => {
