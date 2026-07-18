@@ -166,6 +166,7 @@ const vulcan = operators.find((operator) => operator.id === "char_163_hpsts")!;
 const warmy = operators.find((operator) => operator.id === "char_4081_warmy")!;
 const totter = operators.find((operator) => operator.id === "char_4062_totter")!;
 const iris = operators.find((operator) => operator.id === "char_338_iris")!;
+const czerny = operators.find((operator) => operator.id === "char_4047_pianst")!;
 const senshi = operators.find((operator) => operator.id === "char_4143_sensi")!;
 const marcille = operators.find((operator) => operator.id === "char_4141_marcil")!;
 const rosmontis = operators.find((operator) => operator.id === "char_391_rosmon")!;
@@ -907,6 +908,27 @@ describe("optimizer", () => {
 
     expect(withIris.efficiency - baseRosmontis.efficiency).toBeCloseTo(0.05);
     expect(withSenshi.efficiency - baseMarcille.efficiency).toBeCloseTo(0.05);
+  });
+
+  it("uses owned dormitory resource producers in generated production plans", () => {
+    const state = createDefaultState();
+    ownOperators(state, [iris.id, czerny.id, senshi.id, marcille.id, rosmontis.id]);
+    const factory = { ...state.facilities.find((facility) => facility.id === "factory-1")!, slotCount: 2 };
+    const dormitory = state.facilities.find((facility) => facility.id === "dormitory-1")!;
+    state.facilities = [factory, dormitory];
+
+    const plan = generateAssignmentPlan(state);
+    const factoryPlan = plan.facilityPlans.find((facilityPlan) => facilityPlan.facility.id === factory.id)!;
+    const rosmontisAssignment = factoryPlan.assignments.find(
+      (assignment) => assignment.operatorId === rosmontis.id
+    )!;
+    const marcilleAssignment = factoryPlan.assignments.find(
+      (assignment) => assignment.operatorId === marcille.id
+    )!;
+
+    expect(rosmontisAssignment.efficiency).toBeCloseTo(0.1);
+    expect(marcilleAssignment.efficiency).toBeCloseTo(0.35);
+    expect(plan.facilityPlans.every((facilityPlan) => facilityPlan.facility.type !== "dormitory")).toBe(true);
   });
 
   it("retains morale-only effects that lack English source text", () => {

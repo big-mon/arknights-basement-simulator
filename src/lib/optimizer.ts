@@ -176,8 +176,13 @@ function buildFacilityPlans(
   contextAssignments: Assignment[],
   excludedOperatorIds: ReadonlySet<string> = new Set()
 ): FacilityPlan[] {
+  const dormitoryResourceAssignments = implicitDormitoryResourceAssignments(state, contextAssignments);
+  const unavailableOperatorIds = new Set([
+    ...excludedOperatorIds,
+    ...dormitoryResourceAssignments.map((assignment) => assignment.operatorId)
+  ]);
   const context: AssignmentEvaluationContext = {
-    assignments: contextAssignments,
+    assignments: [...contextAssignments, ...dormitoryResourceAssignments],
     facilities: state.facilities,
     roster: state.roster,
     shiftHours: rotationShiftHours(state.rotationCount)
@@ -189,7 +194,7 @@ function buildFacilityPlans(
     const remoteEfficiencyBonus = calculateRemoteFacilityEfficiencyBonus(facility, context);
     const facilityBonus = globalBonus + remoteEfficiencyBonus;
       const candidates = findCandidates(facility, state, 0, context)
-        .filter((candidate) => !excludedOperatorIds.has(candidate.operatorId))
+        .filter((candidate) => !unavailableOperatorIds.has(candidate.operatorId))
         .sort((a, b) => b.score - a.score);
       const teamOptions = buildFacilityTeamOptions(candidates, facility.slotCount)
         .map((assignments) => reevaluateFacilityTeam(assignments, facility, state, context))
@@ -270,9 +275,62 @@ function buildFacilityPlans(
     state,
     plans,
     context,
-    excludedOperatorIds,
+    unavailableOperatorIds,
     new Map(facilityCandidates.map(({ facility, candidates }) => [facility.id, candidates]))
   );
+}
+
+function implicitDormitoryResourceAssignments(state: AppState, contextAssignments: Assignment[]) {
+  const dormitories = state.facilities.filter((facility) => facility.type === "dormitory");
+  if (!dormitories.length) {
+    return [];
+  }
+
+  const assignedOperatorIds = new Set(contextAssignments.map((assignment) => assignment.operatorId));
+  const producers = operators
+    .flatMap((operator) => {
+      const rosterEntry = state.roster[operator.id];
+      if (!rosterEntry?.owned || assignedOperatorIds.has(operator.id)) {
+        return [];
+      }
+
+      const activeSkills = activeBaseSkills(operator, rosterEntry.elite, rosterEntry.level);
+      const resourceSkill = activeSkills.find((skill) =>
+        skill.effects.some(
+          (effect) => effect.facility === "dormitory" && Boolean(effect.resourceEffects?.length)
+        )
+      );
+      const hasWorkingFacilitySkill = activeSkills.some((skill) =>
+        skill.effects.some(
+          (effect) => effect.facility !== "dormitory" && !effect.ignoredForOptimization
+        )
+      );
+      return resourceSkill && !hasWorkingFacilitySkill ? [{ operator, resourceSkill }] : [];
+    })
+    .sort((a, b) => a.operator.id.localeCompare(b.operator.id));
+
+  const assignments: Assignment[] = [];
+  let producerIndex = 0;
+  for (const dormitory of dormitories) {
+    const occupiedSlots = contextAssignments.filter(
+      (assignment) => assignment.facilityId === dormitory.id && !assignment.doesNotConsumeFacilitySlot
+    ).length;
+    const availableSlots = Math.max(dormitory.slotCount - occupiedSlots, 0);
+    for (let slot = 0; slot < availableSlots && producerIndex < producers.length; slot += 1) {
+      const producer = producers[producerIndex++];
+      assignments.push({
+        facilityId: dormitory.id,
+        operatorId: producer.operator.id,
+        skillId: producer.resourceSkill.id,
+        score: 0,
+        efficiency: 0,
+        fatigueHours: moraleCapacity,
+        recoveryHours: 0,
+        reason: "Dormitory resource producer"
+      });
+    }
+  }
+  return assignments;
 }
 
 function fillVacantFacilitySlots(

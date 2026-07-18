@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { applyWikiJapaneseLocalization } from "./wiki-localization-merge.mjs";
 
 const root = process.cwd();
 const operatorsPath = path.join(root, "src", "data", "operators.json");
@@ -201,14 +202,7 @@ for (const operator of operators) {
     const operatorFallback = (fallbacks[operator.id] ??= { skills: {} });
     const skillFallback = (operatorFallback.skills[skill.id] ??= {});
     const localizedName = nameFallbacks[operator.id]?.[skill.id] ?? row.name;
-    if (wikiManaged || !skill.name.ja?.trim()) {
-      skill.name.ja = localizedName;
-      skillFallback.name = { ...(skillFallback.name ?? {}), ja: localizedName };
-    }
-    for (const effect of skill.effects) {
-      if (!effect.hiddenFromUi && (wikiManaged || !effect.description.ja?.trim())) effect.description.ja = row.description;
-    }
-    skillFallback.description = { ...(skillFallback.description ?? {}), ja: row.description };
+    applyWikiJapaneseLocalization(skill, skillFallback, localizedName, row.description);
     importedSkills += 1;
   }
 }
