@@ -1057,11 +1057,13 @@ function selectMoraleExchangeTarget(
   workingContext: AssignmentEvaluationContext
 ) {
   const workingOperatorIds = new Set(workingContext.assignments.map((assignment) => assignment.operatorId));
+  const recoveringOperatorIds = new Set(recoveringAssignments.map((assignment) => assignment.operatorId));
   const exchangeAvailable = operators.some((operator) => {
     const rosterEntry = state.roster[operator.id];
     return (
       rosterEntry?.owned &&
       !workingOperatorIds.has(operator.id) &&
+      !recoveringOperatorIds.has(operator.id) &&
       operator.skills.some((skill) => skill.effects.some((effect) => Boolean(effect.moraleExchange))) &&
       activeBaseSkills(operator, rosterEntry.elite, rosterEntry.level).some((skill) =>
         skill.effects.some((effect) => effect.facility === "dormitory" && effect.moraleExchange?.target === "previous")

@@ -1102,6 +1102,35 @@ describe("optimizer", () => {
     expect(activeAssignments.find((assignment) => assignment.moraleExchangeApplied)?.recoveryHours).toBe(0);
   });
 
+  it("does not use Fiammetta as a full-morale swap source after she worked the shift", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) entry.owned = false;
+    const factory = { ...state.facilities.find((facility) => facility.id === "factory-1")!, slotCount: 2 };
+    state.facilities = [factory];
+    const workers = operators
+      .filter(
+        (operator) =>
+          operator.id !== fiammetta.id &&
+          operator.skills.some((skill) =>
+            skill.effects.some(
+              (effect) =>
+                effect.facility === "factory" &&
+                (!effect.product || effect.product === factory.product) &&
+                !effect.ignoredForOptimization &&
+                effect.efficiency > 0
+            )
+          )
+      )
+      .slice(0, 3);
+    ownOperators(state, [fiammetta.id, ...workers.map((operator) => operator.id)]);
+
+    const plan = generateAssignmentPlan(state);
+    const alternatives = plan.facilityPlans[0].alternatives;
+
+    expect(alternatives.some((assignment) => assignment.operatorId === fiammetta.id)).toBe(true);
+    expect(alternatives.some((assignment) => assignment.moraleExchangeApplied)).toBe(false);
+  });
+
   it("retains morale-only effects that lack English source text", () => {
     const closureEffect = closure.skills.find((skill) => skill.id === "control_mp_cost[014]")!.effects[0];
     const crackborneEffect = crackborne.skills.find((skill) => skill.id === "dorm_rec_oneself[040]")!.effects[0];
