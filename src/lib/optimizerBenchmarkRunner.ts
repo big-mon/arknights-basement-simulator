@@ -35,6 +35,7 @@ export interface BenchmarkObservation {
       id: string;
       durationHours: number;
       assignments: Record<string, string[]>;
+      remoteSupportOperatorIds?: Record<string, string[]>;
     }>;
   };
   resources?: BenchmarkResourceOutput;
@@ -349,7 +350,7 @@ function compareRotationAndComposition(
       );
     }
     for (const [facilityId, assignment] of Object.entries(expectedShift.assignments)) {
-      if (!assignment.operatorIds) {
+      if (!assignment.operatorIds && !assignment.sourceOnlyOperatorIds) {
         diagnostics.push({
           path: `composition/search/${expectedShift.id}/${facilityId}`,
           category: "search",
@@ -357,7 +358,53 @@ function compareRotationAndComposition(
           message: "reference composition is label-only and is not independently identified"
         });
       }
+      if (assignment.remoteSupport?.operatorIds) {
+        const actualSupportIds = actualShift?.remoteSupportOperatorIds?.[facilityId];
+        addComparison(
+          diagnostics,
+          `composition/remote-support/${expectedShift.id}/${facilityId}`,
+          "search",
+          assignment.remoteSupport.operatorIds,
+          actualSupportIds,
+          Array.isArray(actualSupportIds) && sameStringSet(assignment.remoteSupport.operatorIds, actualSupportIds)
+        );
+      }
+      for (const unresolved of assignment.remoteSupport?.unresolved ?? []) {
+        diagnostics.push({
+          path: `reference/unresolved-support/${expectedShift.id}/${facilityId}/${unresolved.sourceName}`,
+          category: "reference",
+          severity: "info",
+          message: unresolved.reason
+        });
+      }
+      for (const operatorId of assignment.sourceOnlyOperatorIds ?? []) {
+        diagnostics.push({
+          path: `reference/source-only/${expectedShift.id}/${facilityId}/${operatorId}`,
+          category: "reference",
+          severity: "info",
+          message: "source-only operator is excluded from runnable composition matching"
+        });
+      }
     }
+  }
+
+  for (const conflict of fixture.compositionEvidence?.conflicts ?? []) {
+    diagnostics.push({
+      path: `reference/conflict/${conflict.path}`,
+      category: "reference",
+      severity: "info",
+      expected: conflict.sourceValue,
+      actual: conflict.benchmarkValue,
+      message: conflict.notes
+    });
+  }
+  for (const disputed of fixture.compositionEvidence?.disputedAssignments ?? []) {
+    diagnostics.push({
+      path: `reference/disputed-assignment/${disputed.shiftId}/${disputed.facilityIds.join("+")}`,
+      category: "reference",
+      severity: "info",
+      message: disputed.reason
+    });
   }
 
   const candidates = compositionCandidates(fixture);

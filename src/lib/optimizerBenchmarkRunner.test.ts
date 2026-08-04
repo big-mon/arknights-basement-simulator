@@ -147,6 +147,44 @@ describe("runOptimizerBenchmarkBatch", () => {
     }));
   });
 
+  it("compares remote support requirements deterministically without treating them as occupants", () => {
+    const fixture = resourceFixture() as Record<string, any>;
+    fixture.rotation.shifts[0].assignments["trading-1"].remoteSupport = {
+      operatorIds: ["support-b", "support-a"],
+      unresolved: [{ sourceName: "Unknown Support", reason: "Not mapped by the fixed source catalog." }],
+      notes: ["Remote support is outside the trading-post slot count."]
+    };
+
+    const matched = runOptimizerBenchmarkBatch([fixture], {
+      "runner-case": observation({
+        rotation: {
+          cycleHours: 24,
+          shifts: [{
+            id: "day",
+            durationHours: 24,
+            assignments: { "trading-1": ["b", "a"] },
+            remoteSupportOperatorIds: { "trading-1": ["support-a", "support-b"] }
+          }]
+        }
+      } as any)
+    });
+    const missing = runOptimizerBenchmarkBatch([fixture], { "runner-case": observation() });
+
+    expect(matched.cases[0]).toMatchObject({ status: "passed", matchedComposition: "primary" });
+    expect(matched.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "composition/remote-support/day/trading-1",
+      passed: true
+    }));
+    expect(matched.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "reference/unresolved-support/day/trading-1/Unknown Support",
+      severity: "info"
+    }));
+    expect(missing.cases[0]).toMatchObject({
+      status: "failed",
+      smallestMismatchPath: "composition/remote-support/day/trading-1"
+    });
+  });
+
   it("rejects an unexpected observed shift as a state-model mismatch", () => {
     const [operatorA, operatorB] = genericOperatorIds("JP");
     const result = runOptimizerBenchmarkBatch([resourceFixture("JP")], {
@@ -699,6 +737,9 @@ describe("runOptimizerBenchmarkBatch", () => {
               durationHours: shift.durationHours,
               assignments: Object.fromEntries(Object.entries(shift.assignments).flatMap(([facilityId, assignment]) =>
                 assignment.operatorIds ? [[facilityId, [...assignment.operatorIds]]] : []
+              )),
+              remoteSupportOperatorIds: Object.fromEntries(Object.entries(shift.assignments).flatMap(([facilityId, assignment]) =>
+                assignment.remoteSupport?.operatorIds ? [[facilityId, [...assignment.remoteSupport.operatorIds]]] : []
               ))
             }))
           },

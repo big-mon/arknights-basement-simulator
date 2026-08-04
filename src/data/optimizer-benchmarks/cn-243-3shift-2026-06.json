@@ -18,7 +18,7 @@
       "accessedAt": "2026-08-04",
       "language": "zh",
       "role": "throughput",
-      "notes": "Composition: data/non-standard-configs/config-02-243-2change-3shift.json; source plan: 2026-06 泡影苍霆 logic-base infographic #2."
+      "notes": "Fixed commit/path: d374e1513a90adb45cb37259047e5db02db8ac1d, data/non-standard-configs/config-02-243-2change-3shift.json. IDs are mapped by data/operator_pool.json at the same commit."
     },
     {
       "url": "https://github.com/KayChung17/arknights-base-skill/tree/76052d941ea72d84af77e05e00136a574e99ca58",
@@ -38,6 +38,7 @@
       "243 layout; login and shift changes at 00:00, 08:00, and 16:00.",
       "All 416 CN operators are owned and unlocked; the referenced simulator had base-skill data for 414.",
       "Three external composition groups are each evaluated for 8 hours per 24-hour cycle.",
+      "The fixed config comments instead call every queue 12 hours; this conflict is preserved in compositionEvidence and is not resolved by rewriting either reference.",
       "Drones are sent to the indicated trading post by marginal gain.",
       "Outputs are arithmetic averages of per-shift steady evaluations, not independent in-game measurements.",
       "Sanity-equivalent values from the source are deliberately excluded from pass/fail."
@@ -50,7 +51,21 @@
       {
         "id": "shift-1",
         "durationHours": 8,
-        "assignments": { "full-base": { "label": "External config shift 1; drones to trading post 2" } },
+        "assignments": {
+          "control-1": { "operatorIds": ["char_4098_vvana", "char_420_flamtl", "char_308_swire", "char_1044_hsgma2", "char_4186_tmoris"] },
+          "factory-3": { "label": "battle record", "operatorIds": ["char_190_clour", "char_336_folivo", "char_485_pallas"] },
+          "factory-4": { "label": "battle record", "operatorIds": ["char_430_fartth", "char_496_wildmn", "char_431_ashlok"] },
+          "factory-1": { "label": "gold", "operatorIds": ["char_446_aroma", "char_243_waaifu", "char_4054_malist"] },
+          "factory-2": { "label": "gold", "operatorIds": ["char_4106_bryota", "char_237_gravel", "char_1039_thorn2"] },
+          "trading-1": { "operatorIds": ["char_254_vodfox", "char_4032_provs", "char_486_takila"] },
+          "trading-2": { "operatorIds": ["char_427_vigil", "char_4037_demetr", "char_4228_closur"] },
+          "power-1": { "operatorIds": ["char_253_greyy"] },
+          "power-2": { "operatorIds": ["char_1040_blaze2"] },
+          "power-3": { "operatorIds": ["char_377_gdglow"] },
+          "office-1": { "sourceOnlyOperatorIds": ["char_1052_kalts2"] },
+          "reception-1": { "operatorIds": ["char_4087_ines", "char_4100_caper"] },
+          "dormitory-1": { "operatorIds": ["char_391_rosmon", "char_4195_radian"] }
+        },
         "referenceOutputPer24Hours": {
           "goldProduced": 89.6,
           "battleRecordExp": 26500,
@@ -61,7 +76,21 @@
       {
         "id": "shift-2",
         "durationHours": 8,
-        "assignments": { "full-base": { "label": "External config shift 2; drones to trading post 1" } },
+        "assignments": {
+          "control-1": { "operatorIds": ["char_4098_vvana", "char_420_flamtl", "char_002_amiya", "char_4110_delphn", "char_1048_orchd2"] },
+          "factory-3": { "label": "battle record", "operatorIds": ["char_159_peacok", "char_241_panda", "char_243_waaifu"] },
+          "factory-4": { "label": "battle record", "operatorIds": ["char_430_fartth", "char_496_wildmn", "char_431_ashlok"] },
+          "factory-1": { "label": "gold", "operatorIds": ["char_4106_bryota", "char_237_gravel", "char_1039_thorn2"] },
+          "factory-2": { "label": "gold", "operatorIds": ["char_385_finlpp", "char_400_weedy", "char_416_zumama"] },
+          "trading-1": { "operatorIds": ["char_254_vodfox", "char_252_bibeak", "char_486_takila"] },
+          "trading-2": { "operatorIds": ["char_112_siege", "char_154_morgan", "char_4032_provs"] },
+          "power-1": { "operatorIds": ["char_1027_greyy2"] },
+          "power-2": { "operatorIds": ["char_1040_blaze2"] },
+          "power-3": { "operatorIds": ["char_107_liskam"] },
+          "office-1": { "sourceOnlyOperatorIds": ["char_1052_kalts2"] },
+          "reception-1": { "operatorIds": ["char_4194_rmixer", "char_4100_caper"] },
+          "dormitory-1": { "operatorIds": ["char_391_rosmon", "char_4195_radian"] }
+        },
         "referenceOutputPer24Hours": {
           "goldProduced": 93.8,
           "battleRecordExp": 30500,
@@ -72,13 +101,70 @@
       {
         "id": "shift-3",
         "durationHours": 8,
-        "assignments": { "full-base": { "label": "External config shift 3; drones to trading post 1" } },
+        "assignments": {
+          "control-1": { "operatorIds": ["char_2023_ling", "char_2015_dusk", "char_308_swire", "char_1044_hsgma2", "char_4186_tmoris"] },
+          "factory-3": { "label": "battle record", "operatorIds": ["char_190_clour", "char_336_folivo", "char_485_pallas"] },
+          "factory-4": { "label": "battle record", "operatorIds": ["char_1042_phatm2", "char_1502_crosly", "char_391_rosmon"] },
+          "factory-1": { "label": "gold", "operatorIds": ["char_446_aroma", "char_243_waaifu", "char_4054_malist"] },
+          "factory-2": { "label": "gold", "operatorIds": ["char_385_finlpp", "char_400_weedy", "char_416_zumama"] },
+          "trading-1": { "operatorIds": ["char_427_vigil", "char_4037_demetr", "char_4228_closur"] },
+          "trading-2": { "operatorIds": ["char_4046_ebnhlz", "char_4203_kichi", "char_4032_provs"] },
+          "power-1": { "operatorIds": ["char_1027_greyy2"] },
+          "power-2": { "operatorIds": ["char_1040_blaze2"] },
+          "power-3": { "operatorIds": ["char_253_greyy"] },
+          "office-1": { "operatorIds": ["char_4065_judge"] },
+          "reception-1": { "operatorIds": ["char_4087_ines", "char_4194_rmixer"] },
+          "dormitory-1": { "operatorIds": ["char_4047_pianst", "char_338_iris", "char_245_cello"] }
+        },
         "referenceOutputPer24Hours": {
           "goldProduced": 93,
           "battleRecordExp": 26100,
           "lmd": 57212,
           "dronesUsed": 427
         }
+      }
+    ]
+  },
+  "compositionEvidence": {
+    "status": "disputed",
+    "sourceOnlyOperators": [
+      {
+        "sourceName": "凯尔希·思衡托",
+        "operatorId": "char_1052_kalts2",
+        "reason": "Mapped by the fixed operator_pool.json but absent from the checked-in 324-operator runtime catalog and CN availability snapshot."
+      },
+      {
+        "sourceName": "逻各斯",
+        "operatorId": "char_4133_logos",
+        "reason": "Mapped by the fixed operator_pool.json but absent from the checked-in 324-operator runtime catalog and CN availability snapshot."
+      }
+    ],
+    "conflicts": [
+      {
+        "path": "rotation.shifts.durationHours",
+        "sourceValue": "12 hours per queue",
+        "benchmarkValue": "8 hours per shift",
+        "notes": "Every queue comment in the fixed config says 12 hours, while the saved throughput benchmark evaluates three 8-hour shifts in one 24-hour day."
+      }
+    ],
+    "disputedAssignments": [
+      {
+        "shiftId": "shift-1",
+        "facilityIds": ["workshop-1", "training-1"],
+        "sourceOperators": [{ "sourceName": "煌", "operatorId": "char_017_huang" }, { "sourceName": "逻各斯", "operatorId": "char_4133_logos" }],
+        "reason": "The same Blaze and Logos list is repeated for workshop and training and may describe alternatives, so it is not flattened into simultaneous occupancy."
+      },
+      {
+        "shiftId": "shift-2",
+        "facilityIds": ["workshop-1", "training-1"],
+        "sourceOperators": [{ "sourceName": "煌", "operatorId": "char_017_huang" }, { "sourceName": "逻各斯", "operatorId": "char_4133_logos" }],
+        "reason": "The same Blaze and Logos list is repeated for workshop and training and may describe alternatives, so it is not flattened into simultaneous occupancy."
+      },
+      {
+        "shiftId": "shift-3",
+        "facilityIds": ["workshop-1", "training-1"],
+        "sourceOperators": [{ "sourceName": "煌", "operatorId": "char_017_huang" }, { "sourceName": "逻各斯", "operatorId": "char_4133_logos" }],
+        "reason": "The same Blaze and Logos list is repeated for workshop and training and may describe alternatives, so it is not flattened into simultaneous occupancy."
       }
     ]
   },
