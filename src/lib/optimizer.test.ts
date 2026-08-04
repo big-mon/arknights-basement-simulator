@@ -2403,6 +2403,46 @@ describe("optimizer", () => {
     expect(plan.facilityPlans.every((facilityPlan) => facilityPlan.facility.type !== "dormitory")).toBe(true);
   });
 
+  it("excludes a marked-owned CN-only operator from normal JP candidate and plan generation", () => {
+    const state = createDefaultState();
+    state.region = "JP";
+    state.facilities = [{ id: "trading-1", type: "trading", name: "Trading", slotCount: 1, product: "lmd" }];
+    state.roster[closure.id].owned = true;
+
+    expect(findCandidates(state.facilities[0], state).map((candidate) => candidate.operatorId)).not.toContain(closure.id);
+    expect(generateAssignmentPlan(state).facilityPlans[0].assignments.map((assignment) => assignment.operatorId)).not.toContain(closure.id);
+  });
+
+  it("permits the verified CN-only operator through normal CN candidate and plan generation", () => {
+    const state = createDefaultState();
+    state.region = "CN";
+    state.facilities = [{ id: "trading-1", type: "trading", name: "Trading", slotCount: 1, product: "lmd" }];
+    state.roster[closure.id].owned = true;
+
+    expect(findCandidates(state.facilities[0], state).map((candidate) => candidate.operatorId)).toContain(closure.id);
+    expect(generateAssignmentPlan(state).facilityPlans[0].assignments.map((assignment) => assignment.operatorId)).toContain(closure.id);
+  });
+
+  it("keeps optimizer output unchanged across regions when every owned operator is available in both", () => {
+    const jpState = createDefaultState();
+    jpState.region = "JP";
+    jpState.roster[amiya.id].owned = true;
+    const cnState = structuredClone(jpState);
+    cnState.region = "CN";
+    const signature = (state: typeof jpState) => {
+      const plan = generateAssignmentPlan(state);
+      return {
+        totalScore: plan.totalScore,
+        dailyValue: plan.dailyValue,
+        facilityPlans: plan.facilityPlans,
+        rotation: plan.rotation,
+        warnings: plan.warnings
+      };
+    };
+
+    expect(signature(cnState)).toEqual(signature(jpState));
+  });
+
   it("round-trips exported state json", () => {
     const state = createDefaultState();
     state.roster.char_002_amiya.owned = true;
@@ -2410,6 +2450,7 @@ describe("optimizer", () => {
     state.language = "en";
     state.layout = "153";
     state.rotationCount = 2;
+    state.region = "CN";
     state.facilities = createFacilitiesForLayout("153", state.facilities);
 
     const restored = importState(exportState(state));
@@ -2419,6 +2460,7 @@ describe("optimizer", () => {
     expect(restored.language).toBe("en");
     expect(restored.layout).toBe("153");
     expect(restored.rotationCount).toBe(2);
+    expect(restored.region).toBe("CN");
     expect(restored.facilities).toHaveLength(state.facilities.length);
   });
 

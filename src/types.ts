@@ -10,6 +10,8 @@ export type RotationCount = 2;
 
 export type LanguageCode = "ja" | "zh" | "en";
 
+export type AppRegion = "JP" | "CN";
+
 export type LocalizedText = Partial<Record<LanguageCode, string>>;
 
 export type OperatorProfession =
@@ -230,6 +232,7 @@ export interface OptimizationPreference {
 
 export interface AppState {
   language: LanguageCode;
+  region: AppRegion;
   layout: BaseLayout;
   rotationCount: RotationCount;
   roster: Roster;

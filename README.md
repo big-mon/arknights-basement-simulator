@@ -59,7 +59,8 @@ pnpm import:game-data
 ゲームデータの取り込みには主に以下を利用しています。
 
 - CN game data: `Kengxxiao/ArknightsGameData`
-- Yostar game data: `Kengxxiao/ArknightsGameData_YoStar`
+- JP game data: `ArknightsAssets/ArknightsGamedata` (`jp/gamedata/excel`)
+- EN game data: `Kengxxiao/ArknightsGameData_YoStar`
 - Operator face icons: [`yuanyan3060/ArknightsGameResource`](https://github.com/yuanyan3060/ArknightsGameResource) (`avatar/`)
 
 オペレーターの顔アイコンはゲームクライアント由来の素材です。画像の著作権はArknights / Hypergryphおよび各権利者に帰属します。

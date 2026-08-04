@@ -1,0 +1,74 @@
+{
+  "kind": "formula",
+  "id": "base-mechanics-2026-07",
+  "region": "GLOBAL",
+  "referenceProvenance": {
+    "version": "CN model snapshots 2026-07-31 and 2026-08-02",
+    "observedAt": "2026-08-04"
+  },
+  "confidence": "corroborated",
+  "sources": [
+    {
+      "url": "https://arknights.wiki.gg/wiki/RIIC",
+      "title": "RIIC",
+      "accessedAt": "2026-08-04",
+      "language": "en",
+      "role": "primary-text",
+      "notes": "Corroborates 24 morale, morale-zero behavior, drone cap 235, and the 243 layout."
+    },
+    {
+      "url": "https://github.com/Hnsr0327/arknights-base-simulation/tree/d374e1513a90adb45cb37259047e5db02db8ac1d",
+      "title": "arknights-base-simulation at d374e151",
+      "accessedAt": "2026-08-04",
+      "language": "zh",
+      "role": "formula",
+      "notes": "One of two independent stored implementations agreeing on the listed constants."
+    },
+    {
+      "url": "https://github.com/KayChung17/arknights-base-skill/tree/76052d941ea72d84af77e05e00136a574e99ca58",
+      "title": "arknights-base-skill at 76052d94",
+      "accessedAt": "2026-08-04",
+      "language": "zh",
+      "role": "formula",
+      "notes": "Independent state and resource-ledger implementation agreeing on the listed constants."
+    },
+    {
+      "url": "https://prts.wiki/w/%E7%BD%97%E5%BE%B7%E5%B2%9B%E5%9F%BA%E5%BB%BA",
+      "title": "PRTS 罗德岛基建",
+      "accessedAt": "2026-08-04",
+      "language": "zh",
+      "role": "primary-text",
+      "notes": "Cited by both implementations; direct access timed out during research, so this fixture is not confirmed."
+    }
+  ],
+  "assumptions": {
+    "layout": "243",
+    "drones": "not-applicable",
+    "facilityProducts": ["gold", "battleRecord", "lmd"],
+    "objectiveProfile": "formula-only",
+    "notes": [
+      "Values shared by the JP and CN mechanics under study are marked GLOBAL; region-specific availability is not implied.",
+      "Factory timings assume a level-3 factory.",
+      "Normal-order values are long-run probability-weighted expectations for a level-3 trading post.",
+      "Dormitory recovery assumes a level-5 maximum-ambience dormitory before operator recovery bonuses.",
+      "PRTS could not be directly rechecked on 2026-08-04; agreement between stored models supports corroborated, not confirmed, confidence."
+    ]
+  },
+  "formulas": [
+    { "id": "operator-morale-cap", "expression": "moraleCap = 24", "expectedValue": 24, "unit": "morale" },
+    { "id": "base-morale-consumption", "expression": "baseMoraleConsumption = 1", "expectedValue": 1, "unit": "morale/hour" },
+    { "id": "max-dormitory-recovery", "expression": "maxDormitoryRecovery = 4", "expectedValue": 4, "unit": "morale/hour" },
+    { "id": "drone-cap", "expression": "droneCap = 235", "expectedValue": 235, "unit": "drones" },
+    { "id": "base-drone-recovery", "expression": "baseDroneRecovery = 10", "expectedValue": 10, "unit": "drones/hour" },
+    { "id": "drone-time-reduction", "expression": "oneDroneTimeReduction = 3", "expectedValue": 3, "unit": "minutes/drone" },
+    { "id": "battle-record-time", "expression": "advancedBattleRecordTime = 180", "expectedValue": 180, "unit": "minutes/item" },
+    { "id": "battle-record-exp", "expression": "advancedBattleRecordExp = 1000", "expectedValue": 1000, "unit": "EXP/item" },
+    { "id": "gold-time", "expression": "goldTime = 72", "expectedValue": 72, "unit": "minutes/item" },
+    { "id": "order-two-probability", "expression": "P(orderGold = 2) = 0.30", "expectedValue": 0.3, "unit": "probability" },
+    { "id": "order-three-probability", "expression": "P(orderGold = 3) = 0.50", "expectedValue": 0.5, "unit": "probability" },
+    { "id": "order-four-probability", "expression": "P(orderGold = 4) = 0.20", "expectedValue": 0.2, "unit": "probability" },
+    { "id": "expected-order-gold", "expression": "2 * 0.30 + 3 * 0.50 + 4 * 0.20 = 2.9", "expectedValue": 2.9, "unit": "gold/order" },
+    { "id": "expected-order-lmd", "expression": "1000 * 0.30 + 1500 * 0.50 + 2000 * 0.20 = 1450", "expectedValue": 1450, "unit": "LMD/order" },
+    { "id": "expected-order-time", "expression": "144 * 0.30 + 210 * 0.50 + 276 * 0.20 = 203.4", "expectedValue": 203.4, "unit": "minutes/order" }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "kind": "resource-output",
+  "scope": "full-base",
+  "id": "cn-243-3shift-2026-06",
+  "region": "CN",
+  "referenceProvenance": {
+    "version": "泡影苍霆 2026-06; simulator commit d374e1513a90adb45cb37259047e5db02db8ac1d",
+    "observedAt": "2026-08-04"
+  },
+  "runtimeDataProvenance": {
+    "operatorAvailabilitySourceCommit": "81c6d458a1778a9ba878a95c4e6fe48fb4254041"
+  },
+  "confidence": "corroborated",
+  "sources": [
+    {
+      "url": "https://github.com/Hnsr0327/arknights-base-simulation/tree/d374e1513a90adb45cb37259047e5db02db8ac1d",
+      "title": "arknights-base-simulation at d374e151",
+      "accessedAt": "2026-08-04",
+      "language": "zh",
+      "role": "throughput",
+      "notes": "Composition: data/non-standard-configs/config-02-243-2change-3shift.json; source plan: 2026-06 泡影苍霆 logic-base infographic #2."
+    },
+    {
+      "url": "https://github.com/KayChung17/arknights-base-skill/tree/76052d941ea72d84af77e05e00136a574e99ca58",
+      "title": "arknights-base-skill at 76052d94",
+      "accessedAt": "2026-08-04",
+      "language": "zh",
+      "role": "formula",
+      "notes": "Independent state and resource-ledger model used to corroborate mechanism constants, not this exact throughput."
+    }
+  ],
+  "assumptions": {
+    "layout": "243",
+    "drones": "trading",
+    "facilityProducts": ["gold", "battleRecord", "lmd"],
+    "objectiveProfile": "balanced",
+    "notes": [
+      "243 layout; login and shift changes at 00:00, 08:00, and 16:00.",
+      "All 416 CN operators are owned and unlocked; the referenced simulator had base-skill data for 414.",
+      "Three external composition groups are each evaluated for 8 hours per 24-hour cycle.",
+      "Drones are sent to the indicated trading post by marginal gain.",
+      "Outputs are arithmetic averages of per-shift steady evaluations, not independent in-game measurements.",
+      "Sanity-equivalent values from the source are deliberately excluded from pass/fail."
+    ]
+  },
+  "roster": { "mode": "all-unlocked" },
+  "rotation": {
+    "cycleHours": 24,
+    "shifts": [
+      {
+        "id": "shift-1",
+        "durationHours": 8,
+        "assignments": { "full-base": { "label": "External config shift 1; drones to trading post 2" } },
+        "referenceOutputPer24Hours": {
+          "goldProduced": 89.6,
+          "battleRecordExp": 26500,
+          "lmd": 57363,
+          "dronesUsed": 420
+        }
+      },
+      {
+        "id": "shift-2",
+        "durationHours": 8,
+        "assignments": { "full-base": { "label": "External config shift 2; drones to trading post 1" } },
+        "referenceOutputPer24Hours": {
+          "goldProduced": 93.8,
+          "battleRecordExp": 30500,
+          "lmd": 53011,
+          "dronesUsed": 427
+        }
+      },
+      {
+        "id": "shift-3",
+        "durationHours": 8,
+        "assignments": { "full-base": { "label": "External config shift 3; drones to trading post 1" } },
+        "referenceOutputPer24Hours": {
+          "goldProduced": 93,
+          "battleRecordExp": 26100,
+          "lmd": 57212,
+          "dronesUsed": 427
+        }
+      }
+    ]
+  },
+  "expected": {
+    "output": {
+      "goldProduced": 92.1333333333333,
+      "battleRecordExp": 27700,
+      "lmd": 55862
+    },
+    "formulas": [
+      "goldProduced = (89.6 + 93.8 + 93.0) / 3 = 92.1333333333333",
+      "battleRecordExp = (26500 + 30500 + 26100) / 3 = 27700",
+      "lmd = (57363 + 53011 + 57212) / 3 = 55862"
+    ],
+    "tolerance": { "type": "relative", "value": 0.01 }
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "kind": "resource-output",
+  "scope": "facility-group",
+  "id": "jp-243-factory-3group-2025-11",
+  "region": "JP",
+  "referenceProvenance": {
+    "version": "Wikiru backup 38 (2025-11-02 18:43:20)",
+    "observedAt": "2026-08-04"
+  },
+  "runtimeDataProvenance": {
+    "operatorAvailabilitySourceCommit": "7faf192d15eeac8b236c561a1938679f4642279e"
+  },
+  "confidence": "corroborated",
+  "sources": [
+    {
+      "url": "https://arknights.wikiru.jp/?SandBox/%E5%9F%BA%E5%9C%B0%E3%82%B7%E3%83%95%E3%83%88%EF%BC%881%E6%97%A52%E5%9B%9E%E5%85%A5%E6%9B%BF%EF%BC%89",
+      "title": "基地シフト（1日2回入替）",
+      "accessedAt": "2026-08-04",
+      "language": "ja",
+      "role": "composition",
+      "notes": "Backup 38. The page presents one operational plan, not a uniquely optimal solution."
+    },
+    {
+      "url": "https://arknights.wikiru.jp/?SandBox/%E5%9F%BA%E5%9C%B0%E3%82%B9%E3%82%AD%E3%83%AB%E7%B5%84%E3%81%BF%E5%90%88%E3%82%8F%E3%81%9B%E4%BE%8B",
+      "title": "基地スキル組み合わせ例",
+      "accessedAt": "2026-08-04",
+      "language": "ja",
+      "role": "formula",
+      "notes": "Corroborates selected team efficiencies and conditions."
+    }
+  ],
+  "assumptions": {
+    "layout": "243",
+    "drones": "excluded",
+    "facilityProducts": ["gold", "battleRecord"],
+    "objectiveProfile": "balanced",
+    "notes": [
+      "243 layout with two gold factories and two battle-record factories.",
+      "Three groups rotate every 12 hours in a 36-hour cycle; each team works 24 hours per cycle.",
+      "All JP-available operators are owned with all base skills unlocked.",
+      "Drones, storage stoppage, and morale exhaustion are excluded from these factory-only outputs.",
+      "The source plan sends drones to gold production, so it is not a Phase 1 full-base LMD benchmark."
+    ]
+  },
+  "roster": { "mode": "all-unlocked" },
+  "rotation": {
+    "cycleHours": 36,
+    "shifts": [
+      {
+        "id": "groups-a-b",
+        "durationHours": 12,
+        "assignments": {
+          "factory-battle-record-1": {
+            "label": "FEater + Conviction + Minimalist (+110%)",
+            "operatorIds": ["char_241_panda", "char_159_peacok", "char_4054_malist"]
+          },
+          "factory-battle-record-2": { "label": "Flametail-linked Pinus Sylvestris team (+115.5%)" },
+          "factory-gold-1": {
+            "label": "Purestream + Weedy + Eunectes (+140%)",
+            "operatorIds": ["char_385_finlpp", "char_400_weedy", "char_416_zumama"]
+          },
+          "factory-gold-2": { "label": "Perception Information team (+125.42%)" }
+        }
+      },
+      {
+        "id": "groups-b-c",
+        "durationHours": 12,
+        "assignments": {
+          "factory-battle-record-1": { "label": "Flametail-linked Pinus Sylvestris team (+115.5%)" },
+          "factory-battle-record-2": {
+            "label": "Pallas + Scene + Vermeil (+104.75%)",
+            "operatorIds": ["char_485_pallas", "char_336_folivo", "char_190_clour"]
+          },
+          "factory-gold-1": { "label": "Perception Information team (+125.42%)" },
+          "factory-gold-2": { "label": "Metalworking team (+123%)" }
+        }
+      },
+      {
+        "id": "groups-c-a",
+        "durationHours": 12,
+        "assignments": {
+          "factory-battle-record-1": {
+            "label": "Pallas + Scene + Vermeil (+104.75%)",
+            "operatorIds": ["char_485_pallas", "char_336_folivo", "char_190_clour"]
+          },
+          "factory-battle-record-2": {
+            "label": "FEater + Conviction + Minimalist (+110%)",
+            "operatorIds": ["char_241_panda", "char_159_peacok", "char_4054_malist"]
+          },
+          "factory-gold-1": { "label": "Metalworking team (+123%)" },
+          "factory-gold-2": {
+            "label": "Purestream + Weedy + Eunectes (+140%)",
+            "operatorIds": ["char_385_finlpp", "char_400_weedy", "char_416_zumama"]
+          }
+        }
+      }
+    ]
+  },
+  "expected": {
+    "output": {
+      "goldProduced": 91.7893333333333,
+      "battleRecordExp": 33613.3333333333
+    },
+    "formulas": [
+      "battleRecordMultiplier = 2 + (2 / 3) * (1.10 + 1.155 + 1.0475) = 4.201666666666666",
+      "battleRecordExp = (1440 / 180) * 1000 * 4.201666666666666 = 33613.3333333333",
+      "goldMultiplier = 2 + (2 / 3) * (1.40 + 1.2542 + 1.23) = 4.589466666666666",
+      "goldProduced = (1440 / 72) * 4.589466666666666 = 91.7893333333333"
+    ],
+    "tolerance": { "type": "absolute", "value": 0.000000001 }
+  }
+}

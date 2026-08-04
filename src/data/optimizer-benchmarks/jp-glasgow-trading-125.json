@@ -1,0 +1,68 @@
+{
+  "kind": "resource-output",
+  "scope": "facility-team",
+  "id": "jp-glasgow-trading-125",
+  "region": "JP",
+  "referenceProvenance": {
+    "version": "Source page observed 2026-08-04",
+    "observedAt": "2026-08-04"
+  },
+  "runtimeDataProvenance": {
+    "operatorAvailabilitySourceCommit": "7faf192d15eeac8b236c561a1938679f4642279e"
+  },
+  "confidence": "disputed",
+  "sources": [
+    {
+      "url": "https://arknights.wikiru.jp/?SandBox/%E5%9F%BA%E5%9C%B0%E3%82%B9%E3%82%AD%E3%83%AB%E7%B5%84%E3%81%BF%E5%90%88%E3%82%8F%E3%81%9B%E4%BE%8B",
+      "title": "基地スキル組み合わせ例",
+      "accessedAt": "2026-08-04",
+      "language": "ja",
+      "role": "formula",
+      "notes": "Single-source team formula; not eligible as a full-base LMD pass/fail value."
+    }
+  ],
+  "assumptions": {
+    "layout": "243",
+    "drones": "excluded",
+    "facilityProducts": ["gold", "lmd"],
+    "objectiveProfile": "lmd",
+    "notes": [
+      "One level-3 trading post is held at +125% efficiency for 24 hours.",
+      "Delphine is assigned to the control center; Morgan and Siege are assigned with one compatible substitute in the trading post.",
+      "Only normal level-3 orders are modeled: 2.9 gold, 1450 LMD, and 203.4 minutes per expected order.",
+      "High-quality orders, Proviso, Shamare, Tequila, drones, morale exhaustion, and order-cap stoppage are excluded."
+    ]
+  },
+  "roster": {
+    "mode": "explicit",
+    "operatorIds": ["char_4110_delphn", "char_154_morgan", "char_112_siege"]
+  },
+  "rotation": {
+    "cycleHours": 24,
+    "shifts": [
+      {
+        "id": "reference-team",
+        "durationHours": 24,
+        "assignments": {
+          "control-center": { "label": "Delphine", "operatorIds": ["char_4110_delphn"] },
+          "trading-1": {
+            "label": "Morgan + Siege + compatible substitute (+125%)",
+            "operatorIds": ["char_154_morgan", "char_112_siege"]
+          }
+        }
+      }
+    ]
+  },
+  "expected": {
+    "output": {
+      "goldConsumed": 46.1946902654867,
+      "lmd": 23097.3451327434
+    },
+    "formulas": [
+      "orders = (1440 / 203.4) * (1 + 1.25) = 15.9292035398230",
+      "goldConsumed = orders * 2.9 = 46.1946902654867",
+      "lmd = orders * 1450 = 23097.3451327434"
+    ],
+    "tolerance": { "type": "absolute", "value": 0.000000001 }
+  }
+}

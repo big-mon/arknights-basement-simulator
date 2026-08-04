@@ -344,7 +344,7 @@ export function App() {
           <button
             type="button"
             className="icon-button"
-            onClick={() => setState((current) => ({ ...createDefaultState(), language: current.language }))}
+            onClick={() => setState((current) => ({ ...createDefaultState(), language: current.language, region: current.region }))}
             title={text.reset}
           >
             <RotateCcw size={18} />
@@ -808,6 +808,7 @@ function selectedPreferencePreset(preference: { gold: number; battleRecord: numb
 function optimizationInputKey(state: AppState) {
   return JSON.stringify({
     language: state.language,
+    region: state.region,
     layout: state.layout,
     rotationCount: state.rotationCount,
     roster: state.roster,

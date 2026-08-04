@@ -1,8 +1,9 @@
-import { createDefaultState, createFacilitiesForLayout, isBaseLayout, isRotationCount, operators } from "../data/defaults";
+import { createDefaultState, createFacilitiesForLayout, isAppRegion, isBaseLayout, isRotationCount, operators } from "../data/defaults";
 import { isLanguageCode } from "../i18n";
 import { clampEliteForOperator } from "./elite";
 import type {
   AppState,
+  AppRegion,
   BaseLayout,
   FacilitySlot,
   FacilityType,
@@ -71,6 +72,7 @@ function normalizeState(parsed: unknown, defaults: AppState, requireRecognizedSh
 
   return {
     language: normalizeLanguage(maybeState.language, defaults.language),
+    region: normalizeRegion(maybeState.region, defaults.region),
     layout,
     rotationCount: normalizeRotationCount(maybeState.rotationCount, defaults.rotationCount),
     roster: normalizeRoster(maybeState.roster),
@@ -131,6 +133,10 @@ function normalizeRotationCount(rotationCount: unknown, fallback: RotationCount)
 
 function normalizeLanguage(language: unknown, fallback: LanguageCode): LanguageCode {
   return isLanguageCode(language) ? language : fallback;
+}
+
+function normalizeRegion(region: unknown, fallback: AppRegion): AppRegion {
+  return isAppRegion(region) ? region : fallback;
 }
 
 function normalizePreference(preference: unknown, fallback: OptimizationPreference): OptimizationPreference {

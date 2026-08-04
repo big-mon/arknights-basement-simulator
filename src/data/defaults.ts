@@ -1,4 +1,4 @@
-import type { AppState, BaseLayout, FacilitySlot, OptimizationPreference, Operator, ProductType, Roster, RotationCount } from "../types";
+import type { AppRegion, AppState, BaseLayout, FacilitySlot, OptimizationPreference, Operator, ProductType, Roster, RotationCount } from "../types";
 import operatorsData from "./operators.json";
 import { defaultLevelForOperator } from "../lib/operatorLevel";
 import { maxEliteForRarity } from "../lib/elite";
@@ -8,6 +8,8 @@ export const operators = operatorsData as Operator[];
 
 export const defaultLayout: BaseLayout = "243";
 export const defaultRotationCount: RotationCount = 2;
+// The app is Japanese-first, so new and legacy states use the JP roster boundary.
+export const defaultRegion: AppRegion = "JP";
 
 export function isBaseLayout(value: unknown): value is BaseLayout {
   return value === "243" || value === "153";
@@ -15,6 +17,10 @@ export function isBaseLayout(value: unknown): value is BaseLayout {
 
 export function isRotationCount(value: unknown): value is RotationCount {
   return value === 2;
+}
+
+export function isAppRegion(value: unknown): value is AppRegion {
+  return value === "JP" || value === "CN";
 }
 
 export const layoutPresets: Record<
@@ -117,6 +123,7 @@ export function createDefaultRosterEntry(operator: Operator) {
 export function createDefaultState(): AppState {
   return {
     language: defaultLanguage,
+    region: defaultRegion,
     layout: defaultLayout,
     rotationCount: defaultRotationCount,
     roster: createDefaultRoster(),

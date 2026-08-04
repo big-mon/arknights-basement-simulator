@@ -40,7 +40,8 @@ The app lets users select owned operators, choose a base layout, and see facilit
 The importer currently uses:
 
 - CN game data from `Kengxxiao/ArknightsGameData`
-- Yostar `ja_JP` and `en_US` game data from `Kengxxiao/ArknightsGameData_YoStar`
+- JP game data from `ArknightsAssets/ArknightsGamedata` under `jp/gamedata/excel`
+- Yostar `en_US` game data from `Kengxxiao/ArknightsGameData_YoStar`
 
 Do not assume that every `ja_JP` value is a confirmed correct Japanese display name. Some newer or region-lagged operators may be missing, untranslated, provisional, or still identical to Chinese names.
 
@@ -56,7 +57,7 @@ Important current limitation: `operator-name-overrides.json` is named like an ov
 Preferred name precedence for future work:
 
 1. Manually verified Japanese name override.
-2. Yostar `ja_JP` name.
+2. `ArknightsAssets/ArknightsGamedata` JP name.
 3. English name.
 4. Chinese name with a visible "name uncertain" indication in UI.
 
