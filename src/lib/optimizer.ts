@@ -6,6 +6,7 @@ import {
   isOperatorAvailable,
   operatorAvailabilitySnapshot
 } from "./operatorAvailability";
+import { scheduleEpsilonHours } from "./schedule";
 import type {
   AppState,
   Assignment,
@@ -115,8 +116,9 @@ const averageNormalGoldOrderHours = normalGoldOrderHours.reduce(
   0
 );
 
-function rotationShiftHours(rotationCount: AppState["rotationCount"]) {
-  return 24 / rotationCount;
+function optimizerShiftHours(state: AppState) {
+  const firstShift = state.schedule.shifts[0];
+  return firstShift ? firstShift.endHour - firstShift.startHour : 12;
 }
 
 export function averageEffectEfficiency(effect: BaseSkillEffect, shiftHours: number) {
@@ -176,14 +178,20 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
     0
   );
 
-  const warnings = buildWarnings(state, enabledFacilities, facilityPlans);
+  const rotationResult = buildRotationWindows(activeAssignments, alternativeAssignments, state.schedule);
+  const warnings = [
+    ...buildWarnings(state, enabledFacilities, facilityPlans),
+    ...rotationResult.diagnostics.map((diagnostic) => diagnostic.message)
+  ];
 
   return {
     generatedAt: new Date().toISOString(),
     totalScore,
     dailyValue,
     facilityPlans,
-    rotation: buildRotationWindows(activeAssignments, alternativeAssignments, state.rotationCount),
+    schedule: structuredClone(state.schedule),
+    rotation: rotationResult.windows,
+    diagnostics: rotationResult.diagnostics,
     warnings
   };
 }
@@ -203,7 +211,7 @@ function buildFacilityPlans(
     assignments: [...contextAssignments, ...dormitoryResourceAssignments],
     facilities: state.facilities,
     roster: state.roster,
-    shiftHours: rotationShiftHours(state.rotationCount)
+    shiftHours: optimizerShiftHours(state)
   };
   const facilityCandidates = [...enabledFacilities]
     .sort((a, b) => a.id.localeCompare(b.id))
@@ -526,7 +534,7 @@ export function attachRotationAlternatives(state: AppState, facilityPlans: Facil
     assignments: plansWithAlternatives.flatMap((plan) => plan.alternatives),
     facilities: state.facilities,
     roster: state.roster,
-    shiftHours: rotationShiftHours(state.rotationCount)
+    shiftHours: optimizerShiftHours(state)
   };
 
   return plansWithAlternatives.map((plan) => {
@@ -772,21 +780,42 @@ function statScalingStepCount(value: number, scaling: NonNullable<Assignment["fa
   return scaling.max ? Math.min(scaled, scaling.max) : scaled;
 }
 
-function buildRotationWindows(activeAssignments: Assignment[], alternativeAssignments: Assignment[], _rotationCount = 2) {
-  return [
-    {
-      label: "1回目ローテーション",
-      hours: 12,
-      assignments: activeAssignments.filter((assignment) => assignment.fatigueHours > 0),
-      recovery: alternativeAssignments.filter((assignment) => assignment.fatigueHours > 0)
-    },
-    {
-      label: "2回目ローテーション",
-      hours: 12,
-      assignments: alternativeAssignments.filter((assignment) => assignment.fatigueHours > 0),
-      recovery: activeAssignments.filter((assignment) => assignment.fatigueHours > 0)
+function buildRotationWindows(activeAssignments: Assignment[], alternativeAssignments: Assignment[], schedule: AppState["schedule"]) {
+  const populatedGroups = new Map<string, Assignment[]>();
+  const firstGroup = schedule.groups[0];
+  const secondGroup = schedule.groups[1];
+  const firstDuration = schedule.shifts[0]?.endHour - schedule.shifts[0]?.startHour;
+  const canUseWholeBaseGroups = schedule.shifts.every((shift) =>
+    shift.activeGroupIds.length === 1 && Math.abs((shift.endHour - shift.startHour) - firstDuration) <= scheduleEpsilonHours
+  );
+  if (canUseWholeBaseGroups && firstGroup) populatedGroups.set(firstGroup.id, activeAssignments.filter((assignment) => assignment.fatigueHours > 0));
+  if (canUseWholeBaseGroups && secondGroup) populatedGroups.set(secondGroup.id, alternativeAssignments.filter((assignment) => assignment.fatigueHours > 0));
+
+  const diagnostics: AssignmentPlan["diagnostics"] = [];
+  const windows = schedule.shifts.map((shift, index) => {
+    const incompleteGroupIds = shift.activeGroupIds.filter((groupId) => !populatedGroups.has(groupId));
+    for (const groupId of incompleteGroupIds) {
+      diagnostics.push({
+        code: "schedule-group-unpopulated",
+        groupId,
+        shiftId: shift.id,
+        message: `Schedule group ${groupId} is not populated for shift ${shift.id}`
+      });
     }
-  ];
+    return {
+      label: `${index + 1}回目ローテーション`,
+      hours: shift.endHour - shift.startHour,
+      shiftId: shift.id,
+      startHour: shift.startHour,
+      endHour: shift.endHour,
+      activeGroupIds: [...shift.activeGroupIds],
+      recoveryGroupIds: [...shift.recoveryGroupIds],
+      incompleteGroupIds,
+      assignments: shift.activeGroupIds.flatMap((groupId) => populatedGroups.get(groupId) ?? []),
+      recovery: shift.recoveryGroupIds.flatMap((groupId) => populatedGroups.get(groupId) ?? [])
+    };
+  });
+  return { windows, diagnostics };
 }
 
 export function findCandidates(
@@ -799,7 +828,7 @@ export function findCandidates(
     assignments: context?.assignments ?? [],
     facilities: context?.facilities ?? state.facilities,
     roster: context?.roster ?? state.roster,
-    shiftHours: context?.shiftHours ?? rotationShiftHours(state.rotationCount)
+    shiftHours: context?.shiftHours ?? optimizerShiftHours(state)
   };
 
   return operators
@@ -1003,7 +1032,7 @@ function applyMoraleDurations(state: AppState, facilityPlans: FacilityPlan[]) {
     assignments,
     facilities: state.facilities,
     roster: state.roster,
-    shiftHours: rotationShiftHours(state.rotationCount)
+    shiftHours: optimizerShiftHours(state)
   });
   const activeContext = createContext(activeSourceAssignments);
   const alternativeContext = createContext(alternativeSourceAssignments);

@@ -1,6 +1,8 @@
 import operatorsData from "../data/operators.json";
 import { operatorAvailabilitySnapshot } from "./operatorAvailability";
 import { calculateCanonicalSha256 } from "./phase1AssumptionBundle";
+import { validateSchedule } from "./schedule";
+import type { ScheduleState } from "../types";
 
 const PASS_FAIL_AUTHORITY_SHA256_BY_ID: Readonly<Record<string, string>> = {
   "jp-wikiru-backup38-12h-v2": "a9f1f69b2bceff6896cc2bdcfaa61b88d648548fb21729a9a3ec19afae96f8b5"
@@ -198,6 +200,27 @@ export interface ResourceOutputBenchmark extends BenchmarkBase {
       durationHours: number;
       workerGroupIds?: string[];
       factoryProducts?: { gold: number; battleRecord: number };
+      assignments: Record<string, BenchmarkAssignment>;
+      operatorStates?: Array<{
+        operatorId: string;
+        activity: "work" | "recovery" | "idle" | "exchange-support";
+        durationHours: number;
+        moraleStart: number;
+        moraleDelta: number;
+        moraleEnd: number;
+      }>;
+      resources?: BenchmarkResourceOutput & {
+        droneDestination: "trading-post-1";
+        goldInventoryStart: number;
+        goldInventoryEnd: number;
+        droneInventoryStart: number;
+        droneInventoryEnd: number;
+      };
+      referenceOutputPer24Hours?: BenchmarkResourceOutput;
+    }>;
+  };
+  schedule?: Omit<ScheduleState, "shifts"> & {
+    shifts: Array<ScheduleState["shifts"][number] & {
       assignments: Record<string, BenchmarkAssignment>;
       operatorStates?: Array<{
         operatorId: string;
@@ -1406,53 +1429,68 @@ function validateResourceBenchmark(benchmark: Record<string, unknown>, errors: s
     errors.push("all-unlocked roster must not contain operatorIds");
   }
 
-  if (!isRecord(benchmark.rotation) || !Array.isArray(benchmark.rotation.shifts) || benchmark.rotation.shifts.length === 0) {
-    errors.push("rotation must contain shifts");
+  const hasSchedule = isRecord(benchmark.schedule);
+  const hasRotation = isRecord(benchmark.rotation);
+  if (hasSchedule === hasRotation) {
+    errors.push("resource-output benchmark must contain exactly one of schedule or rotation");
+  }
+  const scheduleOrRotation = hasSchedule ? benchmark.schedule : benchmark.rotation;
+  const statePath = hasSchedule ? "schedule" : "rotation";
+  if (!isRecord(scheduleOrRotation) || !Array.isArray(scheduleOrRotation.shifts) || scheduleOrRotation.shifts.length === 0) {
+    errors.push(`${statePath} must contain shifts`);
   } else {
-    const cycleHours = benchmark.rotation.cycleHours;
+    if (hasSchedule) {
+      const scheduleValidation = validateSchedule(scheduleOrRotation);
+      if (!scheduleValidation.ok) errors.push(...scheduleValidation.errors.map((error) => `schedule ${error}`));
+    }
+    const cycleHours = scheduleOrRotation.cycleHours;
     if (typeof cycleHours !== "number" || !Number.isFinite(cycleHours) || cycleHours <= 0) {
-      errors.push("rotation.cycleHours must be a finite positive number");
+      errors.push(`${statePath}.cycleHours must be a finite positive number`);
     }
     let durationTotal = 0;
     const shiftIds = new Set<string>();
-    benchmark.rotation.shifts.forEach((shift, index) => {
+    scheduleOrRotation.shifts.forEach((shift, index) => {
       if (!isRecord(shift) || !isNonEmptyString(shift.id)) {
-        errors.push(`rotation.shifts[${index}] is malformed`);
+        errors.push(`${statePath}.shifts[${index}] is malformed`);
         return;
       }
-      if (shiftIds.has(shift.id)) errors.push(`rotation.shifts[${index}].id must be unique`);
+      if (shiftIds.has(shift.id)) errors.push(`${statePath}.shifts[${index}].id must be unique`);
       shiftIds.add(shift.id);
-      if (typeof shift.durationHours !== "number" || !Number.isFinite(shift.durationHours) || shift.durationHours <= 0) {
+      if (hasSchedule && (typeof shift.startHour !== "number" || typeof shift.endHour !== "number")) {
+        errors.push(`schedule.shifts[${index}] boundaries must be finite numbers`);
+      } else if (hasSchedule) {
+        durationTotal += (shift.endHour as number) - (shift.startHour as number);
+      } else if (typeof shift.durationHours !== "number" || !Number.isFinite(shift.durationHours) || shift.durationHours <= 0) {
         errors.push(`rotation.shifts[${index}].durationHours must be a finite positive number`);
       } else {
         durationTotal += shift.durationHours;
       }
       if (!isRecord(shift.assignments) || Object.keys(shift.assignments).length === 0) {
-        errors.push(`rotation.shifts[${index}].assignments must not be empty`);
+        errors.push(`${statePath}.shifts[${index}].assignments must not be empty`);
       } else {
         const assignedOperatorIds = new Set<string>();
         for (const [facilityId, assignment] of Object.entries(shift.assignments)) {
           if (!isNonEmptyString(facilityId) || !isRecord(assignment)) {
-            errors.push(`rotation.shifts[${index}].assignments is malformed`);
+            errors.push(`${statePath}.shifts[${index}].assignments is malformed`);
             continue;
           }
           const hasLabel = isNonEmptyString(assignment.label);
           const hasIds = Array.isArray(assignment.operatorIds) && assignment.operatorIds.length > 0 && assignment.operatorIds.every(isNonEmptyString);
           const hasSourceOnlyIds = Array.isArray(assignment.sourceOnlyOperatorIds) && assignment.sourceOnlyOperatorIds.length > 0 && assignment.sourceOnlyOperatorIds.every(isNonEmptyString);
-          if (!hasLabel && !hasIds && !hasSourceOnlyIds) errors.push(`rotation.shifts[${index}].assignments.${facilityId} needs a label, operatorIds, or sourceOnlyOperatorIds`);
+          if (!hasLabel && !hasIds && !hasSourceOnlyIds) errors.push(`${statePath}.shifts[${index}].assignments.${facilityId} needs a label, operatorIds, or sourceOnlyOperatorIds`);
           if (assignment.operatorIds !== undefined && !hasIds) {
-            errors.push(`rotation.shifts[${index}].assignments.${facilityId}.operatorIds is malformed`);
+            errors.push(`${statePath}.shifts[${index}].assignments.${facilityId}.operatorIds is malformed`);
           } else if (hasIds) {
             const slots = facilitySlotCount(facilityId);
             if (slots !== undefined && (assignment.operatorIds as string[]).length > slots) {
-              errors.push(`rotation.shifts[${index}].assignments.${facilityId}.operatorIds exceeds ${facilityId} slot count ${slots}`);
+              errors.push(`${statePath}.shifts[${index}].assignments.${facilityId}.operatorIds exceeds ${facilityId} slot count ${slots}`);
             }
             for (const [operatorIndex, operatorId] of (assignment.operatorIds as string[]).entries()) {
-              if (assignedOperatorIds.has(operatorId)) errors.push(`rotation.shifts[${index}] assigns ${operatorId} more than once`);
+              if (assignedOperatorIds.has(operatorId)) errors.push(`${statePath}.shifts[${index}] assigns ${operatorId} more than once`);
               assignedOperatorIds.add(operatorId);
               validateOperatorReference(
                 operatorId,
-                `rotation.shifts[${index}].assignments.${facilityId}.operatorIds[${operatorIndex}]`,
+                `${statePath}.shifts[${index}].assignments.${facilityId}.operatorIds[${operatorIndex}]`,
                 benchmark.region,
                 explicitRosterIds,
                 errors
@@ -1460,10 +1498,10 @@ function validateResourceBenchmark(benchmark: Record<string, unknown>, errors: s
             }
           }
           if (assignment.sourceOnlyOperatorIds !== undefined && !hasSourceOnlyIds) {
-            errors.push(`rotation.shifts[${index}].assignments.${facilityId}.sourceOnlyOperatorIds is malformed`);
+            errors.push(`${statePath}.shifts[${index}].assignments.${facilityId}.sourceOnlyOperatorIds is malformed`);
           }
           if (assignment.remoteSupport !== undefined) {
-            const supportPath = `rotation.shifts[${index}].assignments.${facilityId}.remoteSupport`;
+            const supportPath = `${statePath}.shifts[${index}].assignments.${facilityId}.remoteSupport`;
             if (!isRecord(assignment.remoteSupport)) {
               errors.push(`${supportPath} must be an object`);
             } else {
@@ -1487,15 +1525,15 @@ function validateResourceBenchmark(benchmark: Record<string, unknown>, errors: s
         }
       }
       if (shift.referenceOutputPer24Hours !== undefined) {
-        validateResourceOutput(shift.referenceOutputPer24Hours, `rotation.shifts[${index}].referenceOutputPer24Hours`, errors);
+        validateResourceOutput(shift.referenceOutputPer24Hours, `${statePath}.shifts[${index}].referenceOutputPer24Hours`, errors);
       }
     });
     if (typeof cycleHours === "number" && Number.isFinite(cycleHours) && Math.abs(durationTotal - cycleHours) > 1e-9) {
-      errors.push("rotation shift durations must sum to cycleHours");
+      errors.push(`${statePath} shift durations must sum to cycleHours`);
     }
 
     const declaredSourceOnlyIds = validateCompositionEvidence(benchmark.compositionEvidence, shiftIds, errors);
-    for (const [shiftIndex, shift] of benchmark.rotation.shifts.entries()) {
+    for (const [shiftIndex, shift] of scheduleOrRotation.shifts.entries()) {
       if (!isRecord(shift) || !isRecord(shift.assignments)) continue;
       for (const [facilityId, assignment] of Object.entries(shift.assignments)) {
         if (!isRecord(assignment)) continue;
@@ -1504,7 +1542,7 @@ function validateResourceBenchmark(benchmark: Record<string, unknown>, errors: s
         for (const [operatorIndex, operatorId] of remoteIds.entries()) {
           validateOperatorReference(
             operatorId,
-            `rotation.shifts[${shiftIndex}].assignments.${facilityId}.remoteSupport.operatorIds[${operatorIndex}]`,
+            `${statePath}.shifts[${shiftIndex}].assignments.${facilityId}.remoteSupport.operatorIds[${operatorIndex}]`,
             benchmark.region,
             explicitRosterIds,
             errors
@@ -1561,7 +1599,7 @@ function validateResourceBenchmark(benchmark: Record<string, unknown>, errors: s
 
   validateEquivalentCompositions(
     benchmark.expected.equivalentCompositions,
-    benchmark.rotation,
+    scheduleOrRotation,
     benchmark.region,
     explicitRosterIds,
     errors
@@ -1670,7 +1708,8 @@ export function hasResolvedExecutableCompositionAuthority(benchmark: ResourceOut
     return false;
   }
 
-  return benchmark.rotation.shifts.every((shift) =>
+  const shifts = benchmark.schedule?.shifts ?? benchmark.rotation.shifts;
+  return shifts.every((shift) =>
     Object.values(shift.assignments).every((assignment) =>
       (assignment.sourceOnlyOperatorIds?.length ?? 0) === 0 &&
       (assignment.remoteSupport?.unresolved?.length ?? 0) === 0

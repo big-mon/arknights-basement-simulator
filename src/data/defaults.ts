@@ -1,4 +1,4 @@
-import type { AppRegion, AppState, BaseLayout, FacilitySlot, OptimizationPreference, Operator, ProductType, Roster, RotationCount } from "../types";
+import type { AppRegion, AppState, BaseLayout, FacilitySlot, OptimizationPreference, Operator, ProductType, Roster, RotationCount, ScheduleState } from "../types";
 import operatorsData from "./operators.json";
 import { defaultLevelForOperator } from "../lib/operatorLevel";
 import { maxEliteForRarity } from "../lib/elite";
@@ -8,6 +8,14 @@ export const operators = operatorsData as Operator[];
 
 export const defaultLayout: BaseLayout = "243";
 export const defaultRotationCount: RotationCount = 2;
+export const defaultSchedule: ScheduleState = {
+  cycleHours: 24,
+  groups: [{ id: "group-a" }, { id: "group-b" }],
+  shifts: [
+    { id: "shift-a", startHour: 0, endHour: 12, activeGroupIds: ["group-a"], recoveryGroupIds: ["group-b"] },
+    { id: "shift-b", startHour: 12, endHour: 24, activeGroupIds: ["group-b"], recoveryGroupIds: ["group-a"] }
+  ]
+};
 // The app is Japanese-first, so new and legacy states use the JP roster boundary.
 export const defaultRegion: AppRegion = "JP";
 
@@ -125,7 +133,7 @@ export function createDefaultState(): AppState {
     language: defaultLanguage,
     region: defaultRegion,
     layout: defaultLayout,
-    rotationCount: defaultRotationCount,
+    schedule: structuredClone(defaultSchedule),
     roster: createDefaultRoster(),
     facilities: createFacilitiesForLayout(defaultLayout),
     preference: defaultPreference

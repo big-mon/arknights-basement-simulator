@@ -45,12 +45,16 @@
     ]
   },
   "roster": { "mode": "all-unlocked" },
-  "rotation": {
+  "schedule": {
     "cycleHours": 24,
+    "groups": [{ "id": "composition-1" }, { "id": "composition-2" }, { "id": "composition-3" }],
     "shifts": [
       {
         "id": "shift-1",
-        "durationHours": 8,
+        "startHour": 0,
+        "endHour": 8,
+        "activeGroupIds": ["composition-1"],
+        "recoveryGroupIds": [],
         "assignments": {
           "control-1": { "operatorIds": ["char_4098_vvana", "char_420_flamtl", "char_308_swire", "char_1044_hsgma2", "char_4186_tmoris"] },
           "factory-3": { "label": "battle record", "operatorIds": ["char_190_clour", "char_336_folivo", "char_485_pallas"] },
@@ -75,7 +79,10 @@
       },
       {
         "id": "shift-2",
-        "durationHours": 8,
+        "startHour": 8,
+        "endHour": 16,
+        "activeGroupIds": ["composition-2"],
+        "recoveryGroupIds": [],
         "assignments": {
           "control-1": { "operatorIds": ["char_4098_vvana", "char_420_flamtl", "char_002_amiya", "char_4110_delphn", "char_1048_orchd2"] },
           "factory-3": { "label": "battle record", "operatorIds": ["char_159_peacok", "char_241_panda", "char_243_waaifu"] },
@@ -100,7 +107,10 @@
       },
       {
         "id": "shift-3",
-        "durationHours": 8,
+        "startHour": 16,
+        "endHour": 24,
+        "activeGroupIds": ["composition-3"],
+        "recoveryGroupIds": [],
         "assignments": {
           "control-1": { "operatorIds": ["char_2023_ling", "char_2015_dusk", "char_308_swire", "char_1044_hsgma2", "char_4186_tmoris"] },
           "factory-3": { "label": "battle record", "operatorIds": ["char_190_clour", "char_336_folivo", "char_485_pallas"] },
@@ -141,7 +151,7 @@
     ],
     "conflicts": [
       {
-        "path": "rotation.shifts.durationHours",
+        "path": "schedule.shifts.durationHours",
         "sourceValue": "12 hours per queue",
         "benchmarkValue": "8 hours per shift",
         "notes": "Every queue comment in the fixed config says 12 hours, while the saved throughput benchmark evaluates three 8-hour shifts in one 24-hour day."

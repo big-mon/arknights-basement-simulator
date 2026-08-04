@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createDefaultState } from "../data/defaults";
 import { createMaxLevel243BenchmarkContext } from "./benchmarkBaseContext";
 import { createResourceLedger } from "./resourceLedger";
 import {
@@ -85,11 +86,13 @@ function setDroneFlows(
 
 function steadyInput(): SustainableCycleInput {
   return {
+    schedule: createDefaultState().schedule,
     shifts: [
       {
-        id: "A",
+        id: "shift-a",
         startHour: 0,
         endHour: 12,
+        groupIds: ["group-a"],
         assignments: [
           { facilityId: "factory-1", operatorId: "worker-a", moraleConsumptionPerHour: 1 },
           { facilityId: "trading-1", operatorId: "resource-a-trading", moraleConsumptionPerHour: 0 }
@@ -100,9 +103,10 @@ function steadyInput(): SustainableCycleInput {
         ]
       },
       {
-        id: "B",
+        id: "shift-b",
         startHour: 12,
         endHour: 24,
+        groupIds: ["group-b"],
         assignments: [
           { facilityId: "factory-1", operatorId: "worker-b", moraleConsumptionPerHour: 1 },
           { facilityId: "trading-1", operatorId: "resource-b-trading", moraleConsumptionPerHour: 0 }
@@ -143,9 +147,10 @@ function steadyInput(): SustainableCycleInput {
 
 function emptyCycle(overrides: Partial<SustainableCycleInput> = {}): SustainableCycleInput {
   return {
+    schedule: createDefaultState().schedule,
     shifts: [
-      { id: "A", startHour: 0, endHour: 12, assignments: [], resourceContributions: [] },
-      { id: "B", startHour: 12, endHour: 24, assignments: [], resourceContributions: [] }
+      { id: "shift-a", startHour: 0, endHour: 12, groupIds: ["group-a"], assignments: [], resourceContributions: [] },
+      { id: "shift-b", startHour: 12, endHour: 24, groupIds: ["group-b"], assignments: [], resourceContributions: [] }
     ],
     startingDrones: 0,
     initialMorale: {},
@@ -210,7 +215,7 @@ describe("evaluateSustainableCycle", () => {
       contribution("ownerless", "factory-1", "factory-gold", createResourceLedger({ natural: { goldProduced: 1 } }))
     ];
     expect(() => evaluateSustainableCycle(ownerless)).toThrowError(
-      new RangeError("shifts[0].resourceContributions[0].facilityId factory-1 has no matching assignment in shift A")
+      new RangeError("shifts[0].resourceContributions[0].facilityId factory-1 has no matching assignment in shift shift-a")
     );
 
     const wrongKind = emptyCycle({ initialMorale: { witness: 24 } });
@@ -234,7 +239,7 @@ describe("evaluateSustainableCycle", () => {
       contribution("duplicate", "power-1", "power-drone", emptyLedger())
     ];
     expect(() => evaluateSustainableCycle(duplicateId)).toThrowError(
-      new RangeError("shifts[0].resourceContributions[1].id duplicates contribution ID duplicate in shift A")
+      new RangeError("shifts[0].resourceContributions[1].id duplicates contribution ID duplicate in shift shift-a")
     );
 
     const duplicateFacility = emptyCycle({ initialMorale: { trading: 24 } });
@@ -246,7 +251,7 @@ describe("evaluateSustainableCycle", () => {
       contribution("drone-orders", "trading-1", "trading-post", createResourceLedger({ drone: { goldConsumed: 1, lmd: 500 }, dronesUsed: 1 }))
     ];
     expect(() => evaluateSustainableCycle(duplicateFacility)).toThrowError(
-      new RangeError("shifts[0].resourceContributions[1].facilityId duplicates facility trading-1 in shift A")
+      new RangeError("shifts[0].resourceContributions[1].facilityId duplicates facility trading-1 in shift shift-a")
     );
   });
 
@@ -316,8 +321,8 @@ describe("evaluateSustainableCycle", () => {
       overflow: 0,
       ending: 0,
       timeline: [
-        { hour: 12, shiftId: "A", opening: 0, generated: 0.6000000000000001, overflow: 0, available: 0.6000000000000001, used: 0.6000000000000001, ending: 0 },
-        { hour: 24, shiftId: "B", opening: 0, generated: 0, overflow: 0, available: 0, used: 0, ending: 0 }
+        { hour: 12, shiftId: "shift-a", opening: 0, generated: 0.6000000000000001, overflow: 0, available: 0.6000000000000001, used: 0.6000000000000001, ending: 0 },
+        { hour: 24, shiftId: "shift-b", opening: 0, generated: 0, overflow: 0, available: 0, used: 0, ending: 0 }
       ]
     });
   });
@@ -348,8 +353,8 @@ describe("evaluateSustainableCycle", () => {
       overflow: 0,
       ending: 0,
       timeline: [
-        { hour: 12, shiftId: "A", opening: 0, generated: 5, overflow: 0, available: 5, used: 5, ending: 0 },
-        { hour: 24, shiftId: "B", opening: 0, generated: 2.5, overflow: 0, available: 2.5, used: 2.5, ending: 0 }
+        { hour: 12, shiftId: "shift-a", opening: 0, generated: 5, overflow: 0, available: 5, used: 5, ending: 0 },
+        { hour: 24, shiftId: "shift-b", opening: 0, generated: 2.5, overflow: 0, available: 2.5, used: 2.5, ending: 0 }
       ]
     });
   });
@@ -369,8 +374,8 @@ describe("evaluateSustainableCycle", () => {
       ending: 230
     });
     expect(cappedResult.drones.timeline).toEqual([
-      { hour: 12, shiftId: "A", opening: 230, generated: 10, overflow: 5, available: 235, used: 5, ending: 230 },
-      { hour: 24, shiftId: "B", opening: 230, generated: 10, overflow: 5, available: 235, used: 5, ending: 230 }
+      { hour: 12, shiftId: "shift-a", opening: 230, generated: 10, overflow: 5, available: 235, used: 5, ending: 230 },
+      { hour: 24, shiftId: "shift-b", opening: 230, generated: 10, overflow: 5, available: 235, used: 5, ending: 230 }
     ]);
 
     const underflow = emptyCycle({ startingDrones: 0 });
@@ -379,7 +384,7 @@ describe("evaluateSustainableCycle", () => {
     expect(underflowResult.failures).toContainEqual(expect.objectContaining({
       category: "resource",
       code: "drone-prefix-underflow",
-      shiftId: "A",
+      shiftId: "shift-a",
       hour: 12
     }));
   });
@@ -426,7 +431,7 @@ describe("evaluateSustainableCycle", () => {
     ]));
   });
 
-  it("rejects a worker reused across the two work groups", () => {
+  it("allows a worker reused in non-overlapping shifts", () => {
     const input = steadyInput();
     input.recoveryPlacements = [];
     input.shifts[1].assignments[0] = {
@@ -436,11 +441,7 @@ describe("evaluateSustainableCycle", () => {
     };
 
     const result = evaluateSustainableCycle(input);
-    expect(result.failures).toContainEqual(expect.objectContaining({
-      category: "overlap",
-      code: "cross-group-worker-reuse",
-      operatorId: "worker-a"
-    }));
+    expect(result.failures).not.toContainEqual(expect.objectContaining({ category: "overlap", operatorId: "worker-a" }));
   });
 
   it("rejects unknown facilities and facility slot overflow when context is supplied", () => {
@@ -551,7 +552,7 @@ describe("evaluateSustainableCycle", () => {
     expect(result.failures.filter((item) => item.code === "fatigued-before-shift-end")).toEqual([expect.objectContaining({
       category: "morale",
       operatorId: "tired",
-      shiftId: "A",
+      shiftId: "shift-a",
       hour: 5
     })]);
     expect(result.operators[0]).toMatchObject({ productiveHours: 5, uptime: 5 / 12, finalMorale: 0 });
@@ -608,7 +609,7 @@ describe("evaluateSustainableCycle", () => {
       category: "morale",
       operatorId: "exhausted",
       facilityId: "factory-1",
-      shiftId: "A",
+      shiftId: "shift-a",
       hour: 0
     })]);
     expect(result.operators[0]).toMatchObject({
@@ -1025,5 +1026,98 @@ describe("evaluateSustainableCycle", () => {
 
     expect(input).toEqual(snapshot);
     expect(first).toEqual(second);
+  });
+
+  it("uses a 36-hour three-shift schedule and permits non-overlapping operator reuse", () => {
+    const input = emptyCycle({
+      schedule: {
+        cycleHours: 36,
+        groups: [{ id: "A" }, { id: "B" }, { id: "C" }],
+        shifts: [
+          { id: "ab", startHour: 0, endHour: 12, activeGroupIds: ["A", "B"], recoveryGroupIds: ["C"] },
+          { id: "bc", startHour: 12, endHour: 24, activeGroupIds: ["B", "C"], recoveryGroupIds: ["A"] },
+          { id: "ca", startHour: 24, endHour: 36, activeGroupIds: ["C", "A"], recoveryGroupIds: ["B"] }
+        ]
+      },
+      shifts: [
+        { id: "ab", startHour: 0, endHour: 12, groupIds: ["A", "B"], assignments: [{ facilityId: "factory-1", operatorId: "worker" }], resourceContributions: [] },
+        { id: "bc", startHour: 12, endHour: 24, groupIds: ["B", "C"], assignments: [], resourceContributions: [] },
+        { id: "ca", startHour: 24, endHour: 36, groupIds: ["C", "A"], assignments: [{ facilityId: "factory-1", operatorId: "worker" }], resourceContributions: [] }
+      ],
+      initialMorale: { worker: 24 }
+    });
+
+    const result = evaluateSustainableCycle(input);
+    expect(result.operators[0]).toMatchObject({ scheduledWorkHours: 24, productiveHours: 24 });
+    expect(result.operators[0].timeline.at(-1)?.endHour).toBe(36);
+  });
+
+  it("uses uneven schedule boundaries without a hidden 12-hour or 24-hour cycle", () => {
+    const input = emptyCycle({
+      schedule: {
+        cycleHours: 30,
+        groups: [{ id: "A" }, { id: "B" }, { id: "C" }],
+        shifts: [
+          { id: "five", startHour: 0, endHour: 5, activeGroupIds: ["A"], recoveryGroupIds: [] },
+          { id: "ten", startHour: 5, endHour: 15, activeGroupIds: ["B"], recoveryGroupIds: [] },
+          { id: "fifteen", startHour: 15, endHour: 30, activeGroupIds: ["C"], recoveryGroupIds: [] }
+        ]
+      },
+      shifts: [
+        { id: "five", startHour: 0, endHour: 5, groupIds: ["A"], assignments: [{ facilityId: "factory-1", operatorId: "gold-five", moraleConsumptionPerHour: 0 }], resourceContributions: [contribution("five-gold", "factory-1", "factory-gold", createResourceLedger({ natural: { goldProduced: 1 } }))] },
+        { id: "ten", startHour: 5, endHour: 15, groupIds: ["B"], assignments: [{ facilityId: "factory-1", operatorId: "gold-ten", moraleConsumptionPerHour: 0 }], resourceContributions: [contribution("ten-gold", "factory-1", "factory-gold", createResourceLedger({ natural: { goldProduced: 2 } }))] },
+        { id: "fifteen", startHour: 15, endHour: 30, groupIds: ["C"], assignments: [{ facilityId: "factory-1", operatorId: "gold-fifteen", moraleConsumptionPerHour: 0 }], resourceContributions: [contribution("fifteen-gold", "factory-1", "factory-gold", createResourceLedger({ natural: { goldProduced: 3 } }))] }
+      ],
+      initialMorale: { "gold-five": 24, "gold-ten": 24, "gold-fifteen": 24 }
+    });
+
+    const result = evaluateSustainableCycle(input);
+
+    expect(result.gold.timeline).toEqual([
+      { hour: 0, gold: 0 },
+      { hour: 5, gold: 1 },
+      { hour: 15, gold: 3 },
+      { hour: 30, gold: 6 }
+    ]);
+  });
+
+  it("rejects exchange events at or beyond the cycle boundary", () => {
+    for (const atHour of [24, 25]) {
+      const input = emptyCycle({
+        initialMorale: { source: 24, target: 10 },
+        recoveryPlacements: [
+          { dormitoryId: "dormitory-1", operatorId: "source", startHour: 12, endHour: 24 },
+          {
+            dormitoryId: "dormitory-1",
+            operatorId: "target",
+            startHour: 12,
+            endHour: 24,
+            moraleExchange: { atHour, sourceOperatorId: "source" }
+          }
+        ]
+      });
+
+      expect(() => evaluateSustainableCycle(input)).toThrow(/moraleExchange\.atHour must be within its recovery event/);
+    }
+  });
+
+  it("rejects simultaneous duplicate occupancy with both facility and shift evidence", () => {
+    const input = emptyCycle({ initialMorale: { "worker-a": 24 } });
+    input.shifts[0].assignments.push(
+      { facilityId: "factory-1", operatorId: "worker-a" },
+      { facilityId: "factory-2", operatorId: "worker-a" }
+    );
+
+    const result = evaluateSustainableCycle(input);
+    expect(result.failures).toContainEqual(expect.objectContaining({
+      code: "simultaneous-operator-occupancy",
+      operatorId: "worker-a",
+      facilityId: "factory-2",
+      shiftId: "shift-a",
+      overlappingFacilityId: "factory-1",
+      overlappingShiftId: "shift-a",
+      overlapStartHour: 0,
+      overlapEndHour: 12
+    }));
   });
 });

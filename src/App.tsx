@@ -20,6 +20,7 @@ import { OperatorCard } from "./components/OperatorCard";
 import { Stat } from "./components/Stat";
 import {
   createDefaultState,
+  defaultSchedule,
   createDefaultRosterEntry,
   createFacilitiesForLayout,
   defaultLayout,
@@ -276,9 +277,10 @@ export function App() {
   }
 
   function updateRotationCount(rotationCount: RotationCount) {
+    if (rotationCount !== 2) return;
     setState((current) => ({
       ...current,
-      rotationCount
+      schedule: structuredClone(defaultSchedule)
     }));
   }
 
@@ -644,7 +646,7 @@ export function App() {
             {plan.rotation.map((window, rotationIndex) => (
               <details key={window.label} className="rotation-section" open={rotationIndex === 0}>
                 <summary className="rotation-section-heading">
-                  <h3 id={`rotation-${rotationIndex + 1}`}>{text.plan.rotationLabel(rotationIndex, state.rotationCount)}</h3>
+                  <h3 id={`rotation-${rotationIndex + 1}`}>{text.plan.rotationLabel(rotationIndex, plan.rotation.length)}</h3>
                   <span>{window.hours}h · {rotationIndex === 0 ? planResultLabels[language].primary : planResultLabels[language].secondary}</span>
                 </summary>
                 <div className="plan-grid">
@@ -652,8 +654,12 @@ export function App() {
                     <FacilityPlanCard
                       key={`${window.label}-${facilityPlan.facility.id}`}
                       facilityPlan={facilityPlan}
-                      assignments={rotationAssignmentsForFacility(facilityPlan, rotationIndex)}
-                      expectedEfficiency={rotationExpectedEfficiencyForFacility(facilityPlan, rotationIndex)}
+                      assignments={window.assignments.filter(
+                        (assignment) => assignment.facilityId === facilityPlan.facility.id && !assignment.doesNotConsumeFacilitySlot
+                      )}
+                      expectedEfficiency={window.assignments.some((assignment) => assignment.facilityId === facilityPlan.facility.id)
+                        ? rotationExpectedEfficiencyForFacility(facilityPlan, rotationIndex)
+                        : 0}
                       language={language}
                       operatorNameById={(operatorId) => operatorNameById(operators, operatorId, language)}
                     />
@@ -810,7 +816,7 @@ function optimizationInputKey(state: AppState) {
     language: state.language,
     region: state.region,
     layout: state.layout,
-    rotationCount: state.rotationCount,
+    schedule: state.schedule,
     roster: state.roster,
     facilities: state.facilities,
     preference: state.preference

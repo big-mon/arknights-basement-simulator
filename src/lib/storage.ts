@@ -1,4 +1,4 @@
-import { createDefaultState, createFacilitiesForLayout, isAppRegion, isBaseLayout, isRotationCount, operators } from "../data/defaults";
+import { createDefaultState, createFacilitiesForLayout, defaultSchedule, isAppRegion, isBaseLayout, isRotationCount, operators } from "../data/defaults";
 import { isLanguageCode } from "../i18n";
 import { clampEliteForOperator } from "./elite";
 import type {
@@ -12,9 +12,9 @@ import type {
   OptimizationPreference,
   ProductType,
   Roster,
-  RosterEntry,
-  RotationCount
+  RosterEntry
 } from "../types";
+import { normalizeSchedule } from "./schedule";
 
 const storageKey = "arknights-basement-state-v1";
 export const maxImportJsonBytes = 128 * 1024;
@@ -74,7 +74,7 @@ function normalizeState(parsed: unknown, defaults: AppState, requireRecognizedSh
     language: normalizeLanguage(maybeState.language, defaults.language),
     region: normalizeRegion(maybeState.region, defaults.region),
     layout,
-    rotationCount: normalizeRotationCount(maybeState.rotationCount, defaults.rotationCount),
+    schedule: normalizeStoredSchedule(maybeState.schedule, maybeState.rotationCount),
     roster: normalizeRoster(maybeState.roster),
     facilities: createFacilitiesForLayout(layout, facilities),
     preference: normalizePreference(maybeState.preference, defaults.preference)
@@ -127,8 +127,16 @@ function normalizeLayout(layout: unknown, facilities: FacilitySlot[] | undefined
   return isBaseLayout(layout) ? layout : inferLayout(facilities) ?? fallback;
 }
 
-function normalizeRotationCount(rotationCount: unknown, fallback: RotationCount): RotationCount {
-  return isRotationCount(rotationCount) ? rotationCount : fallback;
+function normalizeStoredSchedule(schedule: unknown, legacyRotationCount: unknown) {
+  if (schedule !== undefined) {
+    try {
+      return normalizeSchedule(schedule);
+    } catch {
+      return structuredClone(defaultSchedule);
+    }
+  }
+  if (legacyRotationCount === undefined || isRotationCount(legacyRotationCount)) return structuredClone(defaultSchedule);
+  return structuredClone(defaultSchedule);
 }
 
 function normalizeLanguage(language: unknown, fallback: LanguageCode): LanguageCode {

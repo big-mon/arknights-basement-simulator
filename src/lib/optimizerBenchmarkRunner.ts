@@ -35,6 +35,10 @@ export interface BenchmarkObservation {
     shifts: Array<{
       id: string;
       durationHours: number;
+      startHour?: number;
+      endHour?: number;
+      activeGroupIds?: string[];
+      recoveryGroupIds?: string[];
       assignments: Record<string, string[]>;
       remoteSupportOperatorIds?: Record<string, string[]>;
     }>;
@@ -47,6 +51,32 @@ export interface BenchmarkObservation {
     path: string;
     evidence: string;
   }>;
+}
+
+type ComparableBenchmarkShift = {
+  id: string;
+  durationHours: number;
+  startHour?: number;
+  endHour?: number;
+  activeGroupIds?: string[];
+  recoveryGroupIds?: string[];
+  assignments: ResourceOutputBenchmark["rotation"]["shifts"][number]["assignments"];
+};
+
+function benchmarkCycleAndShifts(fixture: ResourceOutputBenchmark): {
+  cycleHours: number;
+  shifts: ComparableBenchmarkShift[];
+} {
+  if (fixture.schedule) {
+    return {
+      cycleHours: fixture.schedule.cycleHours,
+      shifts: fixture.schedule.shifts.map((shift) => ({
+        ...shift,
+        durationHours: shift.endHour - shift.startHour
+      }))
+    };
+  }
+  return { cycleHours: fixture.rotation.cycleHours, shifts: fixture.rotation.shifts };
 }
 
 export type BenchmarkObservationMap = Readonly<Record<string, BenchmarkObservation | undefined>>;
@@ -240,7 +270,7 @@ function compositionCandidates(fixture: ResourceOutputBenchmark): Array<{
   name: "primary" | `equivalent[${number}]`;
   shifts: BenchmarkEquivalentComposition["shifts"];
 }> {
-  const primary: BenchmarkEquivalentComposition["shifts"] = fixture.rotation.shifts.map((shift) => ({
+  const primary: BenchmarkEquivalentComposition["shifts"] = benchmarkCycleAndShifts(fixture).shifts.map((shift) => ({
     shiftId: shift.id,
     assignments: Object.fromEntries(Object.entries(shift.assignments).flatMap(([facilityId, assignment]) =>
       assignment.operatorIds ? [[facilityId, assignment.operatorIds]] : []
@@ -258,7 +288,7 @@ function compositionCandidates(fixture: ResourceOutputBenchmark): Array<{
 function identifiedRemoteSupportByShift(
   fixture: ResourceOutputBenchmark
 ): Map<string, Record<string, readonly string[]>> {
-  return new Map(fixture.rotation.shifts.map((shift) => [
+  return new Map(benchmarkCycleAndShifts(fixture).shifts.map((shift) => [
     shift.id,
     Object.fromEntries(Object.entries(shift.assignments).flatMap(([facilityId, assignment]) =>
       assignment.remoteSupport?.operatorIds?.length
@@ -312,8 +342,9 @@ function compareRotationAndComposition(
 ): "primary" | `equivalent[${number}]` | undefined {
   const actualRotation = observation.rotation;
   const actualShifts = actualRotation?.shifts;
+  const expectedRotation = benchmarkCycleAndShifts(fixture);
   const expectedRemoteSupportByShift = identifiedRemoteSupportByShift(fixture);
-  const expectedShiftIds = new Set(fixture.rotation.shifts.map((shift) => shift.id));
+  const expectedShiftIds = new Set(expectedRotation.shifts.map((shift) => shift.id));
   const actualShiftCounts = new Map<string, number>();
   for (const shift of actualShifts ?? []) {
     actualShiftCounts.set(shift.id, (actualShiftCounts.get(shift.id) ?? 0) + 1);
@@ -331,9 +362,9 @@ function compareRotationAndComposition(
     diagnostics,
     "rotation/state-model/cycleHours",
     "state-model",
-    fixture.rotation.cycleHours,
+    expectedRotation.cycleHours,
     actualRotation?.cycleHours,
-    fixture.rotation.cycleHours === actualRotation?.cycleHours
+    expectedRotation.cycleHours === actualRotation?.cycleHours
   );
   for (const [shiftId, count] of [...actualShiftCounts].sort(([left], [right]) => left.localeCompare(right))) {
     if (count > 1) {
@@ -359,7 +390,7 @@ function compareRotationAndComposition(
       );
     }
   }
-  for (const expectedShift of fixture.rotation.shifts) {
+  for (const expectedShift of expectedRotation.shifts) {
     const actualShift = actualShiftById.get(expectedShift.id);
     const actualShiftCount = actualShiftCounts.get(expectedShift.id) ?? 0;
     if (actualShiftCount <= 1) {
@@ -381,6 +412,40 @@ function compareRotationAndComposition(
         actualShift.durationHours,
         expectedShift.durationHours === actualShift.durationHours
       );
+      if (expectedShift.startHour !== undefined) {
+        addComparison(
+          diagnostics,
+          `rotation/state-model/shifts/${expectedShift.id}/startHour`,
+          "state-model",
+          expectedShift.startHour,
+          actualShift.startHour,
+          expectedShift.startHour === actualShift.startHour
+        );
+        addComparison(
+          diagnostics,
+          `rotation/state-model/shifts/${expectedShift.id}/endHour`,
+          "state-model",
+          expectedShift.endHour,
+          actualShift.endHour,
+          expectedShift.endHour === actualShift.endHour
+        );
+        addComparison(
+          diagnostics,
+          `rotation/state-model/shifts/${expectedShift.id}/activeGroupIds`,
+          "state-model",
+          expectedShift.activeGroupIds,
+          actualShift.activeGroupIds,
+          Array.isArray(actualShift.activeGroupIds) && sameStringSet(expectedShift.activeGroupIds ?? [], actualShift.activeGroupIds)
+        );
+        addComparison(
+          diagnostics,
+          `rotation/state-model/shifts/${expectedShift.id}/recoveryGroupIds`,
+          "state-model",
+          expectedShift.recoveryGroupIds,
+          actualShift.recoveryGroupIds,
+          Array.isArray(actualShift.recoveryGroupIds) && sameStringSet(expectedShift.recoveryGroupIds ?? [], actualShift.recoveryGroupIds)
+        );
+      }
     }
     for (const [facilityId, assignment] of Object.entries(expectedShift.assignments)) {
       if (!assignment.operatorIds && !assignment.sourceOnlyOperatorIds) {
@@ -454,7 +519,10 @@ function compareRotationAndComposition(
   }
 
   const candidates = compositionCandidates(fixture);
-  const matched = allowCompositionMatch && observedShiftIdsValid
+  const scheduleStateMatches = !diagnostics.some((diagnostic) =>
+    diagnostic.category === "state-model" && diagnostic.severity === "error"
+  );
+  const matched = allowCompositionMatch && observedShiftIdsValid && scheduleStateMatches
     ? candidates.find((candidate) => candidateMatches(
       candidate.shifts,
       actualShifts,

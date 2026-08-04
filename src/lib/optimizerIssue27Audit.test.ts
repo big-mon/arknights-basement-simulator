@@ -54,17 +54,20 @@ describe("Issue #27 current-implementation audit", () => {
     }));
   });
 
-  it("locks the smallest reproducible 3-group versus 2-window state mismatch", () => {
-    expect(jpFactory.rotation.shifts).toHaveLength(3);
-    expect(cnFullBase.rotation.shifts).toHaveLength(3);
+  it("propagates each benchmark schedule while leaving composition search unresolved", () => {
+    expect(jpFactory.schedule.shifts).toHaveLength(3);
+    expect(cnFullBase.schedule.shifts).toHaveLength(3);
     expect(observations["jp-243-factory-3group-2025-11"]?.rotation).toMatchObject({
-      cycleHours: 24,
-      shifts: [{ id: "current-window-1", durationHours: 12 }, { id: "current-window-2", durationHours: 12 }]
+      cycleHours: 36,
+      shifts: [{ id: "groups-a-b", durationHours: 12 }, { id: "groups-b-c", durationHours: 12 }, { id: "groups-c-a", durationHours: 12 }]
     });
-    expect(observations["cn-243-3shift-2026-06"]?.rotation?.shifts).toHaveLength(2);
+    expect(observations["cn-243-3shift-2026-06"]?.rotation?.shifts).toHaveLength(3);
     expect(observations["jp-wikiru-backup38-12h-v2"]?.rotation).toMatchObject({
       cycleHours: 24,
-      shifts: [{ id: "current-window-1", durationHours: 12 }, { id: "current-window-2", durationHours: 12 }]
+      shifts: [
+        { id: "shift-a", durationHours: 12, startHour: 0, endHour: 12, activeGroupIds: ["group-a"], recoveryGroupIds: ["group-b"] },
+        { id: "shift-b", durationHours: 12, startHour: 12, endHour: 24, activeGroupIds: ["group-b"], recoveryGroupIds: ["group-a"] }
+      ]
     });
   });
 
@@ -80,7 +83,7 @@ describe("Issue #27 current-implementation audit", () => {
           message: "source-only operator is excluded from runnable composition matching"
         }),
         expect.objectContaining({
-          path: "reference/conflict/rotation.shifts.durationHours",
+          path: "reference/conflict/schedule.shifts.durationHours",
           severity: "info",
           expected: "12 hours per queue",
           actual: "8 hours per shift"

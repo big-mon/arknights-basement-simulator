@@ -37,12 +37,16 @@
     "mode": "explicit",
     "operatorIds": ["char_4110_delphn", "char_154_morgan", "char_112_siege"]
   },
-  "rotation": {
+  "schedule": {
     "cycleHours": 24,
+    "groups": [{ "id": "reference-team" }],
     "shifts": [
       {
         "id": "reference-team",
-        "durationHours": 24,
+        "startHour": 0,
+        "endHour": 24,
+        "activeGroupIds": ["reference-team"],
+        "recoveryGroupIds": [],
         "assignments": {
           "control-center": { "label": "Delphine", "operatorIds": ["char_4110_delphn"] },
           "trading-1": {

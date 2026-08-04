@@ -174,6 +174,41 @@ describe("runOptimizerBenchmarkBatch", () => {
     }));
   });
 
+  it("matches schedule boundaries and groups by stable shift ID rather than array position", () => {
+    const fixture = resourceFixture("JP") as Record<string, any>;
+    const [operatorA, operatorB] = genericOperatorIds("JP");
+    delete fixture.rotation;
+    fixture.schedule = {
+      cycleHours: 24,
+      groups: [{ id: "group-a" }, { id: "group-b" }],
+      shifts: [
+        { id: "day", startHour: 0, endHour: 12, activeGroupIds: ["group-a"], recoveryGroupIds: ["group-b"], assignments: { "trading-1": { operatorIds: [operatorA, operatorB] } } },
+        { id: "night", startHour: 12, endHour: 24, activeGroupIds: ["group-b"], recoveryGroupIds: ["group-a"], assignments: { "trading-1": { operatorIds: [operatorA, operatorB] } } }
+      ]
+    };
+    const scheduledObservation = observation("JP", {
+      rotation: {
+        cycleHours: 24,
+        shifts: [
+          { id: "night", durationHours: 12, startHour: 12, endHour: 24, activeGroupIds: ["group-b"], recoveryGroupIds: ["group-a"], assignments: { "trading-1": [operatorB, operatorA] } },
+          { id: "day", durationHours: 12, startHour: 0, endHour: 12, activeGroupIds: ["group-a"], recoveryGroupIds: ["group-b"], assignments: { "trading-1": [operatorA, operatorB] } }
+        ]
+      }
+    });
+
+    const matched = runOptimizerBenchmarkBatch([fixture], { "runner-case": scheduledObservation });
+    expect(matched.cases[0]).toMatchObject({ status: "non-gating", matchedComposition: "primary" });
+    expect(matched.cases[0].diagnostics.filter((item) => item.severity === "error")).toHaveLength(0);
+
+    scheduledObservation.rotation!.shifts[1].activeGroupIds = ["group-b"];
+    const mismatched = runOptimizerBenchmarkBatch([fixture], { "runner-case": scheduledObservation });
+    expect(mismatched.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "rotation/state-model/shifts/day/activeGroupIds",
+      severity: "error"
+    }));
+    expect(mismatched.cases[0].matchedComposition).toBeUndefined();
+  });
+
   it("does not report a composition match for a source-only unknown operator", () => {
     const fixture = resourceFixture("JP", {
       compositionEvidence: {
@@ -1093,13 +1128,30 @@ describe("runOptimizerBenchmarkBatch", () => {
             formulaValues: Object.fromEntries(fixture.formulas.map((formula) => [formula.id, formula.expectedValue]))
           }];
         }
+        const fixtureShifts = fixture.schedule
+          ? fixture.schedule.shifts.map((shift) => ({
+              id: shift.id,
+              durationHours: shift.endHour - shift.startHour,
+              startHour: shift.startHour,
+              endHour: shift.endHour,
+              activeGroupIds: [...shift.activeGroupIds],
+              recoveryGroupIds: [...shift.recoveryGroupIds],
+              assignments: shift.assignments
+            }))
+          : fixture.rotation.shifts;
         return [fixture.id, {
           metadata,
           rotation: {
-            cycleHours: fixture.rotation.cycleHours,
-            shifts: fixture.rotation.shifts.map((shift) => ({
+            cycleHours: fixture.schedule?.cycleHours ?? fixture.rotation.cycleHours,
+            shifts: fixtureShifts.map((shift) => ({
               id: shift.id,
               durationHours: shift.durationHours,
+              ...("startHour" in shift ? {
+                startHour: shift.startHour,
+                endHour: shift.endHour,
+                activeGroupIds: [...shift.activeGroupIds],
+                recoveryGroupIds: [...shift.recoveryGroupIds]
+              } : {}),
               assignments: Object.fromEntries(Object.entries(shift.assignments).flatMap(([facilityId, assignment]) =>
                 assignment.operatorIds ? [[facilityId, [...assignment.operatorIds]]] : []
               )),

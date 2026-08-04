@@ -568,7 +568,9 @@ describe("App", () => {
       totalScore: 0,
       dailyValue: 0,
       facilityPlans: [],
+      schedule: createDefaultState().schedule,
       rotation: [],
+      diagnostics: [],
       warnings: []
     };
 
@@ -803,5 +805,27 @@ describe("App", () => {
 
     expect(screen.getByRole("combobox", { name: /基地構成/ })).toHaveValue("243");
     expect(screen.getByRole("button", { name: /2回.*選択中/ })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("labels every imported schedule window using the propagated shift count", async () => {
+    const user = userEvent.setup();
+    const state = createDefaultState();
+    state.schedule = {
+      cycleHours: 24,
+      groups: [{ id: "A" }, { id: "B" }, { id: "C" }],
+      shifts: [
+        { id: "one", startHour: 0, endHour: 8, activeGroupIds: ["A"], recoveryGroupIds: [] },
+        { id: "two", startHour: 8, endHour: 16, activeGroupIds: ["B"], recoveryGroupIds: [] },
+        { id: "three", startHour: 16, endHour: 24, activeGroupIds: ["C"], recoveryGroupIds: [] }
+      ]
+    };
+    window.localStorage.setItem("arknights-basement-state-v1", JSON.stringify(state));
+
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /提案/ }));
+
+    expect(screen.getByRole("heading", { name: "第1ローテーション" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "第2ローテーション" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "第3ローテーション" })).toBeInTheDocument();
   });
 });

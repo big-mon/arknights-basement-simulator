@@ -2334,10 +2334,40 @@ describe("optimizer", () => {
     ownBaselineRoster(state);
     const plan = generateAssignmentPlan(state);
 
-    expect(state.rotationCount).toBe(2);
+    expect(state.schedule.shifts).toHaveLength(2);
     expect(plan.rotation).toHaveLength(2);
     expect(plan.rotation[0].assignments.length).toBeGreaterThan(0);
     expect(plan.rotation[1].recovery.length).toBeGreaterThan(0);
+    expect(plan.schedule).toEqual(state.schedule);
+    expect(plan.rotation.map((window) => ({
+      shiftId: window.shiftId,
+      startHour: window.startHour,
+      endHour: window.endHour,
+      activeGroupIds: window.activeGroupIds,
+      recoveryGroupIds: window.recoveryGroupIds
+    }))).toEqual([
+      { shiftId: "shift-a", startHour: 0, endHour: 12, activeGroupIds: ["group-a"], recoveryGroupIds: ["group-b"] },
+      { shiftId: "shift-b", startHour: 12, endHour: 24, activeGroupIds: ["group-b"], recoveryGroupIds: ["group-a"] }
+    ]);
+  });
+
+  it("preserves unpopulated schedule groups as incomplete windows without cloning assignments", () => {
+    const state = createDefaultState();
+    state.roster[operators[0].id].owned = true;
+    state.schedule = {
+      cycleHours: 24,
+      groups: [{ id: "A" }, { id: "B" }, { id: "C" }],
+      shifts: [
+        { id: "one", startHour: 0, endHour: 8, activeGroupIds: ["A"], recoveryGroupIds: ["B", "C"] },
+        { id: "two", startHour: 8, endHour: 16, activeGroupIds: ["B"], recoveryGroupIds: ["A", "C"] },
+        { id: "three", startHour: 16, endHour: 24, activeGroupIds: ["C"], recoveryGroupIds: ["A", "B"] }
+      ]
+    };
+
+    const plan = generateAssignmentPlan(state);
+    expect(plan.rotation).toHaveLength(3);
+    expect(plan.rotation[2]).toMatchObject({ shiftId: "three", assignments: [], incompleteGroupIds: ["C"] });
+    expect(plan.diagnostics).toContainEqual(expect.objectContaining({ code: "schedule-group-unpopulated", groupId: "C", shiftId: "three" }));
   });
 
   it("keeps facility assignments stable when the facility list order changes", () => {
@@ -2449,7 +2479,6 @@ describe("optimizer", () => {
     state.roster.char_002_amiya.elite = 2;
     state.language = "en";
     state.layout = "153";
-    state.rotationCount = 2;
     state.region = "CN";
     state.facilities = createFacilitiesForLayout("153", state.facilities);
 
@@ -2459,7 +2488,7 @@ describe("optimizer", () => {
     expect(restored.roster.char_002_amiya.elite).toBe(2);
     expect(restored.language).toBe("en");
     expect(restored.layout).toBe("153");
-    expect(restored.rotationCount).toBe(2);
+    expect(restored.schedule).toEqual(state.schedule);
     expect(restored.region).toBe("CN");
     expect(restored.facilities).toHaveLength(state.facilities.length);
   });

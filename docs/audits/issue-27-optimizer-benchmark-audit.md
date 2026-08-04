@@ -3,11 +3,11 @@
 ## 監査メタデータとscope
 
 - 再監査日: 2026-08-07（Asia/Tokyo）
-- accepted stack parent（PR39 head）: `9b64cbe22d2772b436e37b28e667d0bd29d64b62`
-- 対象: accepted PR39 headをauthority baselineとするcurrent PR40 candidate worktreeで、固定source evidenceを追補した結果。final PR40 commit SHAは未作成
-- 制約: このworktree ticketではproduction optimizer修正、fixture expected-valueのobservationへのコピー、install、commit、push、merge、Issue/GitHub mutationは行わない
+- accepted stack parent（PR40 head）: `9cea2686467455b05a6b3c1ae8a757390ed1494e`
+- 対象: accepted PR40 authorityへIssue #33のvariable schedule-state commitをsemantic rebaseした結果
+- 制約: schedule state表現・保存・plan伝播・standalone evaluator対応だけを統合し、composition search、plan数量計算、UIデザイン、fixture expected outputを拡張しない
 
-過去監査のbranch/baseや未コミット成果物に関する記述はcurrent scopeの根拠にせず、この文書内のSHAはaccepted PR39 stack parentの識別にだけ使用する。
+過去監査のbranch/baseや旧出力件数はcurrent authorityとして再利用しない。検証結果はrebase後に実行したコマンドから別途報告する。
 
 ## Observation authority
 
@@ -18,95 +18,51 @@
 - callerがroster metadataを別途宣言するAPIはない。`generateAssignmentPlan`、metadata region、runtime availability commit、roster metadataは同じstate/snapshot境界から得る。
 - availability snapshotに存在して軽量operator catalogに未収録のIDも、選択されたownershipとしてstateに保持する。optimizerはoperator recordのないIDを候補にしないが、metadataが実stateのownershipを隠さないようにする。
 - JP/CN all-unlocked、Glasgow explicit、accepted Wikiru explicitを維持する。
-- `generateAssignmentPlan`はactual resource quantitiesを返さないため、observationの`resources`はmissingのままにする。fixtureの`expected.output`はコピーしない。
-- label-only compositionはoperator ID集合を同定できないためunprovedのままにする。
+- schedule fixtureを監査するときは、そのfixtureのstable group ID、ordered shift ID、明示境界、active/recovery group IDだけを`AppState.schedule`へ渡し、planが実際に返したschedule/assignmentを観測する。fixture expected quantityやexpected assignmentは観測へコピーしない。
+- `generateAssignmentPlan`はactual resource quantitiesを返さないため、observationの`resources`はmissingのままにする。
 
 GLOBAL base mechanics observationは、checked-in fixture constantsを消費する`simulateFacilityProduction`、`simulateTradingPostDrones24h`、`evaluateSustainableCycle`のrepository内経路を診断する。これはchecked-in repository constantsの再現であり、独立した外部game truthの検証ではない。
 
-## Current deterministic result
+## Accepted five-fixture authority
 
-```text
-optimizer benchmarks: FAILED (passed=0 failed=1 not-run=0 non-gating=4 invalid=0)
-NON-GATING jp-243-factory-3group-2025-11
-NON-GATING jp-glasgow-trading-125
-NON-GATING cn-243-3shift-2026-06
-NON-GATING base-mechanics-2026-07
-FAIL jp-wikiru-backup38-12h-v2 rotation/state-model/cycleHours: expected 36, actual 24
-```
-
-aggregate benchmark statusは意図的に`FAILED`である。唯一のaccepted Wikiru gating fixtureが最初に36h expected対24h actualでfailし、legacy fixturesは引き続きnon-gatingである。5 fixtureのcurrent statusは次のとおり。
-
-| fixture | contract / confidence | Gate | current observation |
+| fixture | contract / confidence | Gate | current authority |
 |---|---|---:|---|
-| `jp-243-factory-3group-2025-11` | legacy / `disputed` | non-gating | JP all-unlocked。12 factory assignmentsのoccupantはID化済みでremote supportは別表現。referenceは36h・3 shifts、planは24h・2 windows。quantities missing |
-| `jp-glasgow-trading-125` | legacy / `disputed` | non-gating | JP Glasgow explicit。referenceは1x24h、planは2x12h。quantities missing |
-| `cn-243-3shift-2026-06` | legacy / `disputed` | non-gating | CN all-unlocked。fixed `operator_pool` mapped IDは57/57すべてpinned accepted CN availability snapshotに存在する。うち55 IDはchecked-in軽量runtime catalog/base-skill dataに収録されたcomparable ID。`char_1052_kalts2`と`char_4133_logos`はavailabilityには存在するが同runtime dataに未収録のためsource-only/non-runnable evidenceとしてのみ保持する。12h source commentと3x8h benchmarkが衝突し、workshop/training assignmentも曖昧。planは2x12h、quantities missing |
-| `base-mechanics-2026-07` | legacy / `corroborated` | non-gating | 15 checked-in formula valuesのrepository内diagnostic。独立外部検証ではない |
-| `jp-wikiru-backup38-12h-v2` | `phase1-pass-fail-v1` / `corroborated` | gating, FAIL | JP explicit。metadata boundary一致後、最初のfailureはfull rotation `cycleHours`: expected 36、plan 24。quantities missing |
+| `jp-243-factory-3group-2025-11` | legacy / `disputed` | non-gating | JP all-unlocked。12 factory assignmentsのoccupantはID化済みでremote supportは別表現。36h・3 shift scheduleをplanへ伝播するが、actual quantitiesと3-group composition searchは未解決 |
+| `jp-glasgow-trading-125` | legacy / `disputed` | non-gating | JP Glasgow explicit。sourceの1x24h scheduleをplanへ伝播する。互換代替枠はlabel-onlyで、quantitiesはmissing |
+| `cn-243-3shift-2026-06` | legacy / `disputed` | non-gating | CN all-unlocked。24h・3x8h scheduleをplanへ伝播する。57 source IDsのうち55はcomparable、2はsource-only。12h source commentとの衝突とworkshop/training解釈はdiagnosticのまま |
+| `base-mechanics-2026-07` | legacy / `corroborated` | non-gating | checked-in formula valuesのrepository内diagnostic。独立外部検証ではない |
+| `jp-wikiru-backup38-12h-v2` | `phase1-pass-fail-v1` / `corroborated` | gating | canonical SHA-256 pin、explicit roster、固定source、24h evaluation window、36h full-cycle witnessを保持する。current planはlegacy-compatible 24h・2x12h scheduleでactual quantitiesもないため、最初のfailureは36h expected対24h actual |
 
-`corroborated`を`confirmed`とは扱わない。legacy disputed fixturesとdiagnostic-only base mechanicsはaggregate pass/failをgateしない。accepted fixtureだけがgatingであり、そのfailureによりaggregateは`FAILED`となる。
+`corroborated`を`confirmed`とは扱わない。legacy disputed fixturesとdiagnostic-only base mechanicsはaggregate pass/failをgateしない。source-only/reference conflict/disputed assignment、または未解決remote supportを含むfixtureをpass/fail eligibleへ昇格しない。
 
-source-only/reference conflict/disputed assignment、および未解決のremote supportを含むfixtureは、current PR40 authorityではpass/fail eligibleにしない。
+## PR40 source-evidence authority
 
-## PR40 source-evidence integration scope
+- accepted Wikiru fixtureはcanonical content SHA-256で固定し、runtime provenanceとexplicit rosterのexact equalityを要求する。
+- `evaluationWindow`は具体的な連続24時間（12h x 2 shifts）であり、`expected.output`はこの窓だけに対応する。
+- `rotation`は36時間（12h x 3 shifts）のfull-cycle sustainability witnessであり、51 explicit operator IDs、各shiftの施設配置、operator states、gold/drone inventoryを保持する。
+- identified remote supportはfacility occupantと別に所有・比較し、missing/wrong/duplicate/unexpected supportをexact pathで診断する。
+- JP factory occupant IDs、CN source-only/conflict evidence、five-fixture gate modelを保持する。schedule-state統合によってlegacy fixtureをgatingへ昇格しない。
+- composition comparisonはshift/facility/operator/supportの完全一致を要求する。未解決authorityでは`matchedComposition`を返さず、unexpected shift/facility/supportも診断する。
 
-PR40の固定source evidenceは、accepted five-fixture gate modelを変更せずlegacy fixtureの参照構成を具体化する。
+## Issue #33 schedule-state integration
 
-- JP factoryは全occupantをoperator IDで保持し、Viviana/Flametailと未解決のWhisperainをfacility slot外のremote supportとして分離する。
-- CN fixed config/operator poolの57 source namesをID化し、57/57 mapped IDがpinned accepted CN availability snapshotに存在することを境界とする。うち55 IDはchecked-in軽量runtime catalog/base-skill dataに収録されたcomparable IDである。`char_1052_kalts2`と`char_4133_logos`はavailabilityには存在するが同runtime dataに未収録でruntime catalog mechanicsを利用できないため、source-only/non-runnable evidenceとしてrunnable composition matchingから除外する。
-- CN config commentの12h/queueとbenchmarkの3x8h、およびworkshop/trainingの重複配置解釈はmachine-readable conflict/disputed evidenceとして保持する。
-- この追加証拠はlegacy fixtureをgatingへ昇格せず、accepted Wikiru fixtureのcanonical authority、runtime equality、24h evaluation window、36h full-cycle contractを変更しない。search correctnessやexternal game truthも主張しない。
+共通schedule stateは`cycleHours`、stable group IDs、連続する明示境界を持つordered shifts、各shiftのactive/recovery group IDsを保持する。group数とshift数は独立であり、validatorはduplicate/unknown group、duplicate shift ID、gap、overlap、cycle外境界、未使用groupをrejectする。
 
-## Accepted fixture: 24h output windowと36h sustainability witness
+runnerはschedule fixtureについて、shift配列位置ではなくstable shift IDでduration、start/end boundary、active/recovery group集合を比較する。state mismatchまたは未解決composition authorityがある場合は`matchedComposition`を返さない。formatterとcross-category hierarchyはaccepted PR40のまま維持する。
 
-`jp-wikiru-backup38-12h-v2`は次の2つの時間境界を意図的に分けている。
+standalone sustainable-cycle evaluatorは可変shift数とcycle境界を受け取る一方、accepted PR38以降の次のauthorityを維持する。
 
-- `evaluationWindow`: 24h、12h x 2 shifts、`groups-a-b`と`groups-b-c`。`expected.output`のresource quantitiesはこのconcrete 24-hour windowに対応する。
-- full rotation: 36h、12h x 3 shifts、`groups-a-b`、`groups-b-c`、`groups-c-a`。51 explicit operator IDs、各shift 12施設・29配置、operator stateとgold/drone ledgerを含むsustainability witnessである。
+- 資源はshift直下のstale `resourceLedger`ではなくfacility-owned `resourceContributions`から集約する。
+- drone inventoryはshift indexごとのfractional generation、cap、prefix spend、cycle closureを検証する。
+- power witness、gold prefix/carryover、morale/closureのfinite arithmetic、same-dorm exchange制約を維持する。
+- operatorの非重複は同時occupancyについて検証し、時間が重ならないshift間の再利用は許容する。
 
-current plan observationは24h・2 windows (`current-window-1`, `current-window-2`)だけで、actual quantitiesを持たない。したがって、24h expected resource outputとの数量比較も、36h full-cycleのoperator state/resource equalityとcycle closureも証明できない。accepted compositionはlabel-onlyではないが、current planは2-windowかつ別のshift/facility identityであり、36hの3-shift composition equalityを成立させられない。
+## Remaining blockers
 
-## 原因のauthorityと分類
+1. actual quantityとdrone ledgerはassignment planへ未統合で、resource observationはmissingである。
+2. sustainable-cycle resultはplan/UIへ未統合である。
+3. optimizerのfractional time/morale curve問題はschedule表現とは別scopeである。
+4. scheduleを表現できても、未生成group assignmentやexternal-equivalent compositionの探索正しさは証明されない。
+5. CN timing/source conflictsとsource-only mechanicsはnon-gating diagnosticのままである。
 
-runnerの通常mismatchは`certainty: "suspected"`のままにする。`provenCauses`は、同一path・同一categoryのerrorがあり、かつexact executable evidenceを提示できる場合だけ昇格できる。current observationsは`provenCauses`を追加していない。
-
-次はnamed testで確認するexecutable repository factsである。repository内再現を独立した外部game truthと混同しない。
-
-| repository fact | named executable evidence | 意味する範囲 |
-|---|---|---|
-| 現行planは36h/3-groupでなく24h/2-window | `locks the smallest reproducible 3-group versus 2-window state mismatch` | state-model mismatchを再現する。外部理論値そのものの正しさは証明しない |
-| planにresource/sustainable-cycle outputsがない | `confirms generated plans do not expose quantity or sustainable-cycle results` | actual quantityがmissingである理由を再現する |
-| fractional hoursの平均が整数時間へtruncateされる | `confirms optimizer morale/time averaging still truncates fractional hours` | continuous curve limitationをsynthetic caseで再現する |
-| CN source-only operatorとsource conflictをrunnable compositionから分離する | `keeps unavailable quantities missing and CN source conflicts diagnostic` | disputed evidenceを比較可能occupantやactual quantityへ昇格しない |
-| all-unlocked metadataとregion/commitがstate snapshot由来 | `derives all-unlocked metadata and provenance from the state snapshot consumed by the plan` | caller metadataとの二重authorityを排除する |
-| explicit metadataがactual regional ownership由来 | `derives explicit metadata from actual region-available ownership with no caller roster declaration` | unavailable/unknown IDをmetadataへ偽装できない |
-| disputed/legacyはdiagnostic、acceptedだけがgating | `keeps disputed and formula-only references diagnostic while the accepted contract gates` | aggregate gate policyを固定する |
-
-`search`や`interpretation`は、actual resource comparisonとfull composition equalityが成立しない現状では確定原因に昇格できない。通常mismatchはsuspectedのままにし、missing quantityを0またはfixture expected値として扱わない。
-
-## Follow-upsとdependency status
-
-#30（reference/runtime provenance分離）と#31（AppState region伝播）はprior dependenciesとしてcompleted。PR40 evidenceは#32相当のcomposition identityをfixtureへ統合するが、外部Issueのstatus mutationは主張しない。
-
-| Issue | OPEN scope | current blocker |
-|---|---|---|
-| #32 | composition IDs | PR40 evidenceでJP occupant ID、remote support、CN source-only/conflict evidenceをfixtureへ統合 |
-| #33 | schedule state | 3 groups、36h full rotation、可変shift identityをplan stateで表現する |
-| #34 | continuous curves | fractional時間とmorale境界を連続/区分計算する |
-| #35 | plan quantities / drone ledger | assignment planからactual resourcesとdrone内訳を生成する |
-| #36 | sustainability integration | schedule、morale、recovery、inventory、cycle closureをplanへ統合する |
-
-#28は本監査のout of scopeであり、mutationしていない。production fix、expected-value copyingも行っていない。
-
-## このworktreeでの検証
-
-以下は上記current PR40 candidate edits後に、既存のlocal executableで実行した実出力である。
-
-- runner: `./node_modules/.bin/vitest run src/lib/optimizerBenchmarkRunner.test.ts --reporter=verbose` — 1 file / 35 tests PASS
-- benchmark: `./node_modules/.bin/vitest run src/lib/optimizerBenchmark.test.ts --reporter=verbose` — 1 file / 155 tests PASS
-- focused audit/formatter: `./node_modules/.bin/vitest run src/lib/optimizerIssue27Audit.test.ts --reporter=verbose` — 1 file / 9 tests PASS。5-fixture deterministic formatted outputは上記と同一
-- full suite: `./node_modules/.bin/vitest run` — 17 files / 592 tests PASS
-- build: `./node_modules/.bin/tsc -b && ./node_modules/.bin/vite build` — exit 0。TypeScript PASS、Vite 1715 modules transformed、build PASS
-- base-skill audit: `node scripts/audit-base-skills.mjs` — exit 0。330 operators / 607 skills / 616 effects、unclassified production effects 0、unmodeled production curves 0、morale descriptions without model 0
-- localization audit: `node scripts/audit-localization.mjs` — exit 0。330 operators。missing counts: operator names en 6 / ja 6、skill descriptions en 34 / ja 9、skill names en 34 / ja 9
-- `git diff --check`: PASS。ticketで変更したfileは本documentのみ。worktreeには別のpreexisting source/test changesが残る
+#28、Issue/GitHub state、production search、expected valuesはこのrebaseで変更していない。

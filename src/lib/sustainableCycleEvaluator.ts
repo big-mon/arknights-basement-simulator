@@ -9,6 +9,8 @@ import {
   validateResourceLedger,
   type ResourceLedger
 } from "./resourceLedger";
+import { normalizeSchedule, scheduleEpsilonHours } from "./schedule";
+import type { ScheduleState } from "../types";
 
 export interface CycleFacilityAssignment {
   facilityId: string;
@@ -33,6 +35,7 @@ export interface CycleShift {
   id: string;
   startHour: number;
   endHour: number;
+  groupIds: string[];
   assignments: CycleFacilityAssignment[];
   resourceContributions: CycleFacilityResourceContribution[];
 }
@@ -58,7 +61,8 @@ export interface CycleRecoveryPlacement {
 }
 
 export interface SustainableCycleInput {
-  shifts: [CycleShift, CycleShift];
+  schedule: ScheduleState;
+  shifts: CycleShift[];
   startingDrones: number;
   initialMorale: Record<string, number>;
   recoveryPlacements: CycleRecoveryPlacement[];
@@ -80,6 +84,10 @@ export interface CycleFailure {
   dormitoryId?: string;
   shiftId?: string;
   hour?: number;
+  overlappingFacilityId?: string;
+  overlappingShiftId?: string;
+  overlapStartHour?: number;
+  overlapEndHour?: number;
 }
 
 export type MoraleTimelineMode = "idle" | "work" | "recovery";
@@ -166,8 +174,6 @@ function documentedMechanic(id: string): number {
 const verifiedMoraleCap = documentedMechanic("operator-morale-cap");
 const verifiedConsumptionRate = documentedMechanic("base-morale-consumption");
 const verifiedDormitoryRecoveryRate = documentedMechanic("max-dormitory-recovery");
-const cycleHours = 24;
-const shiftHours = 12;
 const calculationEpsilon = 1e-12;
 const exchangeFullMoraleEpsilon = 1e-9;
 const defaultCycleClosureTolerance = 1e-9;
@@ -254,7 +260,8 @@ function failure(category: CycleFailureCategory, code: string, message: string, 
 }
 
 interface ValidatedInput {
-  shifts: [CycleShift, CycleShift];
+  schedule: ScheduleState;
+  shifts: CycleShift[];
   placements: CycleRecoveryPlacement[];
   initialMorale: Map<string, number>;
   moraleCap: number;
@@ -263,14 +270,15 @@ interface ValidatedInput {
   startingDrones: number;
   droneCap: number;
   context: BenchmarkBaseContext;
-  ledgers: [ResourceLedger, ResourceLedger];
+  ledgers: ResourceLedger[];
 }
 
 function validateInput(input: SustainableCycleInput): ValidatedInput {
-  if (!input || !Array.isArray(input.shifts) || input.shifts.length !== 2) {
-    throw new RangeError("shifts must contain fixed 12-hour shift A and shift B");
+  if (!input) throw new RangeError("input is required");
+  const schedule = normalizeSchedule(input.schedule);
+  if (!Array.isArray(input.shifts) || input.shifts.length !== schedule.shifts.length) {
+    throw new RangeError(`shifts must contain exactly the ${schedule.shifts.length} schedule shifts`);
   }
-  const expectedBoundaries = [[0, 12], [12, 24]] as const;
   const seenShiftIds = new Set<string>();
   input.shifts.forEach((shift, index) => {
     const shiftPath = `shifts[${index}]`;
@@ -280,10 +288,15 @@ function validateInput(input: SustainableCycleInput): ValidatedInput {
     nonEmptyId(shift.id, `shifts[${index}].id`);
     if (seenShiftIds.has(shift.id)) throw new RangeError(`duplicate shift ID: ${shift.id}`);
     seenShiftIds.add(shift.id);
-    if (shift.startHour !== expectedBoundaries[index][0] || shift.endHour !== expectedBoundaries[index][1]) {
-      throw new RangeError(`shifts[${index}] must use fixed boundary ${expectedBoundaries[index][0]}..${expectedBoundaries[index][1]}`);
+    const expected = schedule.shifts[index];
+    if (shift.id !== expected.id) throw new RangeError(`shifts[${index}].id must match schedule shift ${expected.id}`);
+    if (Math.abs(shift.startHour - expected.startHour) > scheduleEpsilonHours || Math.abs(shift.endHour - expected.endHour) > scheduleEpsilonHours) {
+      throw new RangeError(`shifts[${index}] boundaries must match schedule ${expected.startHour}..${expected.endHour}`);
     }
-    if (shift.endHour - shift.startHour !== shiftHours) throw new RangeError(`shifts[${index}] must be 12 hours`);
+    if (!Array.isArray(shift.groupIds) || shift.groupIds.length !== expected.activeGroupIds.length ||
+        shift.groupIds.some((groupId, groupIndex) => groupId !== expected.activeGroupIds[groupIndex])) {
+      throw new RangeError(`shifts[${index}].groupIds must match schedule activeGroupIds`);
+    }
     if (!Array.isArray(shift.assignments)) throw new RangeError(`shifts[${index}].assignments must be an array`);
     shift.assignments.forEach((assignment, assignmentIndex) => {
       nonEmptyId(assignment.facilityId, `shifts[${index}].assignments[${assignmentIndex}].facilityId`);
@@ -327,7 +340,7 @@ function validateInput(input: SustainableCycleInput): ValidatedInput {
     nonEmptyId(placement.operatorId, `${path}.operatorId`);
     const start = finiteNonNegative(placement.startHour, `${path}.startHour`);
     const end = finiteNonNegative(placement.endHour, `${path}.endHour`);
-    if (start < 0 || end > cycleHours || start >= end) throw new RangeError(`${path} interval must be within 0..24 with start < end`);
+    if (start < 0 || end > schedule.cycleHours || start >= end) throw new RangeError(`${path} interval must be within 0..${schedule.cycleHours} with start < end`);
     finiteNonNegative(placement.recoveryRatePerHour ?? verifiedDormitoryRecoveryRate, `${path}.recoveryRatePerHour`);
     if (placement.conditionalModifiers !== undefined && !Array.isArray(placement.conditionalModifiers)) {
       throw new RangeError(`${path}.conditionalModifiers must be an array`);
@@ -413,6 +426,7 @@ function validateInput(input: SustainableCycleInput): ValidatedInput {
   }
 
   return {
+    schedule,
     shifts: input.shifts,
     placements: input.recoveryPlacements,
     initialMorale,
@@ -422,15 +436,13 @@ function validateInput(input: SustainableCycleInput): ValidatedInput {
     startingDrones,
     droneCap,
     context,
-    ledgers: ledgers as [ResourceLedger, ResourceLedger]
+    ledgers
   };
 }
 
 function collectStructuralFailures(input: ValidatedInput): CycleFailure[] {
   const failures: CycleFailure[] = [];
   const facilityById = new Map(input.context.facilities.map((item) => [item.id, item]));
-  const workersByShift: Array<Set<string>> = [];
-
   input.shifts.forEach((shift) => {
     const operators = new Set<string>();
     const records = new Set<string>();
@@ -441,9 +453,21 @@ function collectStructuralFailures(input: ValidatedInput): CycleFailure[] {
         shiftId: shift.id, facilityId: assignment.facilityId, operatorId: assignment.operatorId
       }));
       records.add(recordKey);
-      if (operators.has(assignment.operatorId)) failures.push(failure("overlap", "duplicate-operator-in-shift", `operator ${assignment.operatorId} is assigned more than once in shift ${shift.id}`, {
-        shiftId: shift.id, operatorId: assignment.operatorId
-      }));
+      if (operators.has(assignment.operatorId)) {
+        const previous = shift.assignments.find((item) => item !== assignment && item.operatorId === assignment.operatorId)!;
+        failures.push(failure("overlap", "duplicate-operator-in-shift", `operator ${assignment.operatorId} is assigned more than once in shift ${shift.id}`, {
+          shiftId: shift.id, operatorId: assignment.operatorId
+        }));
+        failures.push(failure("overlap", "simultaneous-operator-occupancy", `operator ${assignment.operatorId} occupies ${previous.facilityId} and ${assignment.facilityId} during ${shift.startHour}..${shift.endHour}`, {
+          shiftId: shift.id,
+          facilityId: assignment.facilityId,
+          operatorId: assignment.operatorId,
+          overlappingShiftId: shift.id,
+          overlappingFacilityId: previous.facilityId,
+          overlapStartHour: shift.startHour,
+          overlapEndHour: shift.endHour
+        }));
+      }
       operators.add(assignment.operatorId);
       facilityOccupancy.set(assignment.facilityId, (facilityOccupancy.get(assignment.facilityId) ?? 0) + 1);
       if (!facilityById.has(assignment.facilityId)) failures.push(failure("overlap", "unknown-facility", `unknown facility ${assignment.facilityId}`, {
@@ -456,11 +480,7 @@ function collectStructuralFailures(input: ValidatedInput): CycleFailure[] {
         shiftId: shift.id, facilityId
       }));
     }
-    workersByShift.push(operators);
   });
-  for (const operatorId of workersByShift[0]) {
-    if (workersByShift[1].has(operatorId)) failures.push(failure("overlap", "cross-group-worker-reuse", `operator ${operatorId} appears in both work groups`, { operatorId }));
-  }
 
   const dormitories = input.context.facilities.filter((facility) => facility.type === "dormitory");
   const dormById = new Map(dormitories.map((dorm) => [dorm.id, dorm]));
@@ -479,7 +499,7 @@ function collectStructuralFailures(input: ValidatedInput): CycleFailure[] {
       }));
     }
   }
-  const occupancyBoundaries = [...new Set([0, cycleHours, ...input.placements.flatMap((item) => [item.startHour, item.endHour])])].sort((a, b) => a - b);
+  const occupancyBoundaries = [...new Set([0, input.schedule.cycleHours, ...input.placements.flatMap((item) => [item.startHour, item.endHour])])].sort((a, b) => a - b);
   for (let index = 0; index < occupancyBoundaries.length - 1; index += 1) {
     const start = occupancyBoundaries[index];
     const end = occupancyBoundaries[index + 1];
@@ -742,8 +762,11 @@ function processExchange(
   if (!event) return;
   const sourceState = states.get(event.sourceOperatorId)!;
   const targetState = states.get(targetPlacement.operatorId)!;
-  const useWindow = Math.floor(event.atHour / shiftHours);
-  const sourceUseKey = `${useWindow}\u0000${event.sourceOperatorId}`;
+  const eventShiftIndex = input.schedule.shifts.findIndex((shift) =>
+    event.atHour >= shift.startHour - scheduleEpsilonHours && event.atHour < shift.endHour - scheduleEpsilonHours
+  );
+  const eventShift = input.schedule.shifts[eventShiftIndex];
+  const sourceUseKey = `${eventShift?.id ?? `${targetPlacement.startHour}:${targetPlacement.endHour}`}\u0000${event.sourceOperatorId}`;
   let valid = true;
   if (Math.abs(sourceState.morale - input.moraleCap) > exchangeFullMoraleEpsilon) {
     failures.push(failure("morale", "exchange-source-not-full", `exchange source ${event.sourceOperatorId} is not at full morale`, {
@@ -770,7 +793,7 @@ function processExchange(
     }));
     valid = false;
   }
-  const disallowedStart = Math.max(0, targetPlacement.startHour - shiftHours);
+  const disallowedStart = eventShiftIndex > 0 ? input.schedule.shifts[eventShiftIndex - 1].startHour : 0;
   const sourceWorked = input.shifts.some((shift) =>
     shift.assignments.some((assignment) => assignment.operatorId === event.sourceOperatorId) &&
     intervalsOverlap(disallowedStart, targetPlacement.endHour, shift.startHour, shift.endHour)
@@ -859,7 +882,7 @@ export function evaluateSustainableCycle(input: SustainableCycleInput): Sustaina
   const exchangePlacements = validated.placements.filter((placement) => placement.moraleExchange);
   const boundaries = [...new Set([
     0,
-    cycleHours,
+    validated.schedule.cycleHours,
     ...validated.shifts.flatMap((shift) => [shift.startHour, shift.endHour]),
     ...validated.placements.flatMap((placement) => [placement.startHour, placement.endHour]),
     ...exchangePlacements.map((placement) => placement.moraleExchange!.atHour)
@@ -888,7 +911,7 @@ export function evaluateSustainableCycle(input: SustainableCycleInput): Sustaina
     const initial = validated.initialMorale.get(operatorId)!;
     if (Math.abs(state.morale - initial) > validated.closureTolerance) {
       failures.push(failure("cycle-closure", "morale-state-not-closed", `operator ${operatorId} ends at ${state.morale} instead of cycle-start morale ${initial}`, {
-        operatorId, hour: cycleHours
+        operatorId, hour: validated.schedule.cycleHours
       }));
     }
     return {
@@ -950,7 +973,7 @@ export function evaluateSustainableCycle(input: SustainableCycleInput): Sustaina
       "cycle-closure",
       "drone-state-not-closed",
       `drone inventory ends at ${currentDrones} instead of cycle-start inventory ${validated.startingDrones}`,
-      { hour: cycleHours }
+      { hour: validated.schedule.cycleHours }
     ));
   }
 
