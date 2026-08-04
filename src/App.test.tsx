@@ -8,6 +8,7 @@ import { createDefaultState, operators } from "./data/defaults";
 import { productLabels } from "./i18n";
 import { localizeText } from "./lib/localization";
 import { availableOperators, isOperatorAvailable, operatorAvailabilitySnapshot } from "./lib/operatorAvailability";
+import { evaluatePlanResources } from "./lib/planResourceEvaluator";
 import { maxImportJsonBytes } from "./lib/storage";
 import type { Assignment, AssignmentPlan, FacilityPlan } from "./types";
 
@@ -571,6 +572,11 @@ describe("App", () => {
       schedule: createDefaultState().schedule,
       rotation: [],
       diagnostics: [],
+      resources: evaluatePlanResources({
+        schedule: createDefaultState().schedule,
+        facilityPlans: [],
+        rotation: []
+      }),
       warnings: []
     };
 

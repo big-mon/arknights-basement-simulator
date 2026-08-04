@@ -1223,6 +1223,40 @@ describe("runOptimizerBenchmarkBatch", () => {
     }));
   });
 
+  it("preserves machine-readable plan resource missing reasons without substituting zero", () => {
+    const result = runOptimizerBenchmarkBatch([resourceFixture("JP")], {
+      "runner-case": observation("JP", {
+        resources: undefined,
+        planResourceMissingReasons: [{
+          code: "unsupported-trading-order-effect",
+          path: "rotation/day/facilities/trading-1/operators/op/effects/skill/tradingOrderEffects/0/fixedSpecialOrder/pepe",
+          message: "Trading-order effect has no faithful quantity mapping",
+          operatorId: "op",
+          effectId: "skill:tradingOrderEffects[0]:fixedSpecialOrder:pepe",
+          effectIndex: 0,
+          effectType: "fixedSpecialOrder",
+          effectKind: "pepe"
+        }]
+      })
+    });
+
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      code: "unsupported-trading-order-effect",
+      path: "calculation/plan-resources/rotation/day/facilities/trading-1/operators/op/effects/skill/tradingOrderEffects/0/fixedSpecialOrder/pepe",
+      category: "calculation",
+      severity: "info",
+      operatorId: "op",
+      effectId: "skill:tradingOrderEffects[0]:fixedSpecialOrder:pepe",
+      effectIndex: 0,
+      effectType: "fixedSpecialOrder",
+      effectKind: "pepe"
+    }));
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "calculation/resource-values/lmd",
+      actual: undefined
+    }));
+  });
+
   it("preserves fixture order, formats deterministic minimal failures, and does not mutate inputs", () => {
     const fixtures = [gatingFixture("z-first"), gatingFixture("a-second")];
     const observations: BenchmarkObservationMap = {

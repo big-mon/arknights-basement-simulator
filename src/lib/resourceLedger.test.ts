@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   aggregateResourceLedgers,
   createResourceLedger,
+  scaleResourceLedger,
   validateResourceLedger,
   type ResourceLedger,
   type ResourceLedgerInput
@@ -59,6 +60,36 @@ describe("resource ledger", () => {
     expect(total).toMatchObject({ goldProduced: 10, goldConsumed: 3, goldNetChange: 7, lmd: 150 });
     expect(total.natural).not.toBe(first.natural);
     expect(inputs).toEqual(before);
+  });
+
+  it("scales every resource and drone count immutably", () => {
+    const ledger = createResourceLedger({
+      natural: { goldProduced: 12, goldConsumed: 4, battleRecordExp: 1000, lmd: 2000 },
+      drone: { goldConsumed: 3, lmd: 1500 },
+      dronesGenerated: 241,
+      dronesUsed: 200
+    });
+    const before = structuredClone(ledger);
+
+    const scaled = scaleResourceLedger(ledger, 0.5);
+
+    expect(scaled).toEqual(createResourceLedger({
+      natural: { goldProduced: 6, goldConsumed: 2, battleRecordExp: 500, lmd: 1000 },
+      drone: { goldConsumed: 1.5, lmd: 750 },
+      dronesGenerated: 120.5,
+      dronesUsed: 100
+    }));
+    expect(ledger).toEqual(before);
+    expect(scaled).not.toBe(ledger);
+  });
+
+  it("strict-validates the complete ledger before scaling", () => {
+    const forged = {
+      ...createResourceLedger({ natural: { lmd: 10 } }),
+      lmd: 999
+    };
+
+    expect(() => scaleResourceLedger(forged, 0.5)).toThrow(/ledger\.lmd.*inconsistent/);
   });
 
   it.each([

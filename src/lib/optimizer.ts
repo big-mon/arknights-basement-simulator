@@ -6,6 +6,7 @@ import {
   isOperatorAvailable,
   operatorAvailabilitySnapshot
 } from "./operatorAvailability";
+import { evaluatePlanResources } from "./planResourceEvaluator";
 import { normalizeSchedule, scheduleEpsilonHours } from "./schedule";
 import type {
   AppState,
@@ -349,7 +350,7 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
     ...rotationResult.diagnostics.map((diagnostic) => diagnostic.message)
   ];
 
-  return {
+  const plan = {
     generatedAt: new Date().toISOString(),
     totalScore,
     dailyValue,
@@ -358,6 +359,10 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
     rotation: rotationResult.windows,
     diagnostics: rotationResult.diagnostics,
     warnings
+  };
+  return {
+    ...plan,
+    resources: evaluatePlanResources(plan)
   };
 }
 
