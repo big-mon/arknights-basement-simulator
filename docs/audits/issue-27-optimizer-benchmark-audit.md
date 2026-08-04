@@ -3,9 +3,8 @@
 ## 監査メタデータとscope
 
 - 再監査日: 2026-08-07（Asia/Tokyo）
-- accepted stack parent（PR40 head）: `9cea2686467455b05a6b3c1ae8a757390ed1494e`
-- 対象: accepted PR40 authorityへIssue #33のvariable schedule-state commitをsemantic rebaseした結果
-- 制約: schedule state表現・保存・plan伝播・standalone evaluator対応だけを統合し、composition search、plan数量計算、UIデザイン、fixture expected outputを拡張しない
+- 対象: accepted PR41 authorityを完全な基礎とするIssue #34の曲線平均blocker追補
+- 制約: Issue #34のtime/morale曲線平均と監査証拠だけを変更し、composition search、plan数量計算、resource ledger、schedule state、UIを拡張しない
 
 過去監査のbranch/baseや旧出力件数はcurrent authorityとして再利用しない。検証結果はrebase後に実行したコマンドから別途報告する。
 
@@ -74,12 +73,17 @@ standalone sustainable-cycle evaluatorは可変shift数とcycle境界を受け�
 - power witness、gold prefix/carryover、morale/closureのfinite arithmetic、same-dorm exchange制約を維持する。
 - operatorの非重複は同時occupancyについて検証し、時間が重ならないshift間の再利用は許容する。
 
+## Issue #34 continuous curve integration
+
+Issue #34のscopeでは、optimizerのtime/morale曲線平均を連続する端数時間へ対応させた。public helperの`averageEffectEfficiency`は1時間単位の区分一定値を、`averageMoraleCurveEfficiency`は消費体力閾値単位の区分一定値を、それぞれ実際の区間幅で加重平均する。cap/floor到達後も同じ連続区間モデルを保ち、不正なduration/rateは決定的に拒否する。
+
+監査回帰はexpected fixture値をコピーせず、time curveの2時間を`(0.1 * 1 + 0.2 * 1) / 2 = 0.15`、2.5時間を`(0.1 * 1 + 0.2 * 1 + 0.3 * 0.5) / 2.5 = 0.18`、morale curveの2.5時間を`(0.3 * 2 + 0.2 * 0.5) / 2.5 = 0.28`として独立に手計算する。actual quantityのplan統合、composition search、resource ledger、schedule、standalone evaluatorはこのscopeでは変更しない。
+
 ## Remaining blockers
 
 1. actual quantityとdrone ledgerはassignment planへ未統合で、resource observationはmissingである。
 2. sustainable-cycle resultはplan/UIへ未統合である。
-3. optimizerのfractional time/morale curve問題はschedule表現とは別scopeである。
-4. 36h scheduleを表現できても、optimizerが未生成の第3 groupを含むgroup assignmentやexternal-equivalent compositionの探索正しさは証明されない。現在のaccepted Wikiru観測ではpair-active shift assignmentがmissingである。
-5. CN timing/source conflictsとsource-only mechanicsはnon-gating diagnosticのままである。
+3. 36h scheduleを表現できても、optimizerが未生成の第3 groupを含むgroup assignmentやexternal-equivalent compositionの探索正しさは証明されない。現在のaccepted Wikiru観測ではpair-active shift assignmentがmissingである。
+4. CN timing/source conflictsとsource-only mechanicsはnon-gating diagnosticのままである。
 
 #28、Issue/GitHub state、production search、expected valuesはこのrebaseで変更していない。

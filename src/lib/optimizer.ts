@@ -121,36 +121,200 @@ function optimizerShiftHours(state: AppState) {
   return firstShift ? firstShift.endHour - firstShift.startHour : 12;
 }
 
+function finiteNumber(value: number, name: string) {
+  if (!Number.isFinite(value)) {
+    throw new RangeError(`${name} must be finite`);
+  }
+  return value;
+}
+
+function positiveFiniteNumber(value: number, name: string) {
+  const finite = finiteNumber(value, name);
+  if (finite <= 0) {
+    throw new RangeError(`${name} must be positive`);
+  }
+  return finite;
+}
+
+function finiteCalculation(value: number, name: string) {
+  if (!Number.isFinite(value)) {
+    throw new RangeError(`${name} produced a non-finite result`);
+  }
+  return value;
+}
+
+function averageArithmeticSegments(
+  durationHours: number,
+  segmentWidthHours: number,
+  initialValue: number,
+  increment: number
+) {
+  if (segmentWidthHours === 0) {
+    if (increment === 0) return initialValue;
+    throw new RangeError("piecewise segment count produced a non-finite result");
+  }
+  const segmentCount = finiteCalculation(
+    durationHours / segmentWidthHours,
+    "piecewise segment count"
+  );
+  const fullSegments = Math.floor(segmentCount);
+  const fullDuration = finiteCalculation(fullSegments * segmentWidthHours, "full segment duration");
+  const finalDuration = Math.max(0, durationHours - fullDuration);
+  let average = 0;
+  if (fullSegments > 0) {
+    const averageIndex = (fullSegments - 1) / 2;
+    const fullAverage = finiteCalculation(
+      initialValue + finiteCalculation(increment * averageIndex, "arithmetic sequence increment"),
+      "arithmetic sequence value"
+    );
+    average = finiteCalculation(
+      (fullDuration / durationHours) * fullAverage,
+      "full segment weighted average"
+    );
+  }
+  if (finalDuration > 0) {
+    const finalValue = finiteCalculation(
+      initialValue + finiteCalculation(increment * fullSegments, "final segment increment"),
+      "final segment value"
+    );
+    average = finiteCalculation(
+      average + (finalDuration / durationHours) * finalValue,
+      "piecewise weighted average"
+    );
+  }
+  return average;
+}
+
+function averageBoundedArithmeticSegments(
+  durationHours: number,
+  segmentWidthHours: number,
+  initialValue: number,
+  increment: number,
+  bound: number,
+  boundKind: "upper" | "lower"
+) {
+  const clamp = boundKind === "upper" ? Math.min : Math.max;
+  if (increment === 0) return clamp(initialValue, bound);
+  if (segmentWidthHours === 0) {
+    const movesTowardBound = boundKind === "upper" ? increment > 0 : increment < 0;
+    if (movesTowardBound) return bound;
+    throw new RangeError("piecewise segment count produced a non-finite result");
+  }
+
+  const initiallyBounded = boundKind === "upper" ? initialValue >= bound : initialValue <= bound;
+  const movesTowardBound = boundKind === "upper" ? increment > 0 : increment < 0;
+  if (initiallyBounded === movesTowardBound) {
+    return initiallyBounded ? bound : averageArithmeticSegments(
+      durationHours,
+      segmentWidthHours,
+      initialValue,
+      increment
+    );
+  }
+
+  const distance = finiteCalculation(Math.abs(bound - initialValue), "piecewise bound distance");
+  const transitionIndex = Math.ceil(finiteCalculation(
+    distance / Math.abs(increment),
+    "piecewise bound index"
+  ));
+  const transitionHours = finiteCalculation(
+    transitionIndex * segmentWidthHours,
+    "piecewise bound duration"
+  );
+  if (transitionHours >= durationHours) {
+    return initiallyBounded ? bound : averageArithmeticSegments(
+      durationHours,
+      segmentWidthHours,
+      initialValue,
+      increment
+    );
+  }
+
+  const transitionFraction = transitionHours / durationHours;
+  if (!initiallyBounded) {
+    const arithmeticAverage = averageArithmeticSegments(
+      transitionHours,
+      segmentWidthHours,
+      initialValue,
+      increment
+    );
+    return finiteCalculation(
+      transitionFraction * arithmeticAverage + (1 - transitionFraction) * bound,
+      "bounded arithmetic weighted average"
+    );
+  }
+
+  const transitionedValue = finiteCalculation(
+    initialValue + finiteCalculation(increment * transitionIndex, "bound transition increment"),
+    "bound transition value"
+  );
+  const arithmeticAverage = averageArithmeticSegments(
+    durationHours - transitionHours,
+    segmentWidthHours,
+    transitionedValue,
+    increment
+  );
+  return finiteCalculation(
+    transitionFraction * bound + (1 - transitionFraction) * arithmeticAverage,
+    "bounded arithmetic weighted average"
+  );
+}
+
 export function averageEffectEfficiency(effect: BaseSkillEffect, shiftHours: number) {
+  const durationHours = positiveFiniteNumber(shiftHours, "shiftHours");
   if (effect.moraleCurve) {
-    return averageMoraleCurveEfficiency(effect.moraleCurve, shiftHours, 1);
+    return averageMoraleCurveEfficiency(effect.moraleCurve, durationHours, 1);
   }
   if (!effect.timeCurve) {
     return effect.efficiency;
   }
-  const hours = Math.max(1, Math.trunc(shiftHours));
   const { initialEfficiency, efficiencyPerHour, maxEfficiency, startsAfterFirstHour } = effect.timeCurve;
-  let total = 0;
-  for (let hour = 0; hour < hours; hour += 1) {
-    const increments = startsAfterFirstHour ? hour : hour + 1;
-    total += Math.min(initialEfficiency + efficiencyPerHour * increments, maxEfficiency);
-  }
-  return total / hours;
+  finiteNumber(initialEfficiency, "timeCurve.initialEfficiency");
+  finiteNumber(efficiencyPerHour, "timeCurve.efficiencyPerHour");
+  finiteNumber(maxEfficiency, "timeCurve.maxEfficiency");
+  const firstSegmentValue = finiteCalculation(
+    initialEfficiency + (startsAfterFirstHour ? 0 : efficiencyPerHour),
+    "timeCurve first segment"
+  );
+  return averageBoundedArithmeticSegments(
+    durationHours,
+    1,
+    firstSegmentValue,
+    efficiencyPerHour,
+    maxEfficiency,
+    "upper"
+  );
 }
 
-function averageMoraleCurveEfficiency(
+export function averageMoraleCurveEfficiency(
   curve: NonNullable<BaseSkillEffect["moraleCurve"]>,
   shiftHours: number,
   moraleConsumptionPerHour: number
 ) {
-  const hours = Math.max(1, Math.trunc(shiftHours));
-  let total = 0;
-  for (let hour = 0; hour < hours; hour += 1) {
-    const moraleSpent = hour * moraleConsumptionPerHour;
-    const steps = Math.floor(moraleSpent / curve.moralePerStep);
-    total += Math.max(curve.initialEfficiency + curve.efficiencyPerStep * steps, curve.minEfficiency);
+  const durationHours = positiveFiniteNumber(shiftHours, "shiftHours");
+  const consumptionRate = finiteNumber(moraleConsumptionPerHour, "moraleConsumptionPerHour");
+  if (consumptionRate < 0) {
+    throw new RangeError("moraleConsumptionPerHour must be non-negative");
   }
-  return total / hours;
+  finiteNumber(curve.initialEfficiency, "moraleCurve.initialEfficiency");
+  finiteNumber(curve.efficiencyPerStep, "moraleCurve.efficiencyPerStep");
+  positiveFiniteNumber(curve.moralePerStep, "moraleCurve.moralePerStep");
+  finiteNumber(curve.minEfficiency, "moraleCurve.minEfficiency");
+  if (consumptionRate === 0) {
+    return Math.max(curve.initialEfficiency, curve.minEfficiency);
+  }
+  const thresholdHours = finiteCalculation(
+    curve.moralePerStep / consumptionRate,
+    "moraleCurve threshold duration"
+  );
+  return averageBoundedArithmeticSegments(
+    durationHours,
+    thresholdHours,
+    curve.initialEfficiency,
+    curve.efficiencyPerStep,
+    curve.minEfficiency,
+    "lower"
+  );
 }
 
 export function generateAssignmentPlan(state: AppState): AssignmentPlan {
