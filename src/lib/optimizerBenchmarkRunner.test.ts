@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { optimizerBenchmarkFixtures } from "../data/optimizer-benchmarks";
 import {
   effectiveBenchmarkScheduleAuthority,
+  isPassFailEligible,
   validateOptimizerBenchmark,
   type OptimizerBenchmark,
   type ResourceOutputBenchmark
@@ -18,9 +19,15 @@ import {
 } from "./optimizerBenchmarkRunner";
 
 const alternativeCommit = "0000000000000000000000000000000000000000";
-const checkedGatingFixture = optimizerBenchmarkFixtures.find((item) =>
-  (item as { contractVersion?: string }).contractVersion === "phase1-pass-fail-v1"
-) as ResourceOutputBenchmark;
+const checkedGatingFixture = (() => {
+  const fixture = optimizerBenchmarkFixtures.find((item) =>
+    (item as { id?: string }).id === "jp-wikiru-backup38-12h-v2"
+  ) as ResourceOutputBenchmark | undefined;
+  if (!fixture || !isPassFailEligible(fixture)) {
+    throw new Error("checked-in Wikiru benchmark fixture must remain pass/fail eligible");
+  }
+  return fixture;
+})();
 
 function genericOperatorIds(region: OperatorAvailabilityRegion): readonly [string, string, string, string] {
   const operatorIds = operatorAvailabilitySnapshot.regions[region].operatorIds;

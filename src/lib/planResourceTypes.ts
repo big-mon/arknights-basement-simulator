@@ -8,6 +8,8 @@ export type PlanResourceMissingCode =
   | "unsupported-factory-product"
   | "unsupported-trading-order-effect"
   | "invalid-evaluated-efficiency"
+  | "support-resource-unresolved"
+  | "support-fixed-context-unresolved"
   | "calculator-error";
 
 export type PlanResourceTradingEffectType =
@@ -26,6 +28,45 @@ export interface PlanResourceMissingReason {
   effectIndex?: number;
   effectType?: PlanResourceTradingEffectType;
   effectKind?: "pepe" | "closure";
+  sourceId?: string;
+  scheduleWindowId?: string;
+  contextKey?: "dormitoryOccupancy";
+  diagnosticCode?: string;
+}
+
+export interface PlanFixedSourceEvidence {
+  sourceId: string;
+  scheduleWindowId: string;
+  operatorId: string;
+  facilityId: string;
+  facilityType: string;
+  facilityLevel: number;
+  facilitySlot: number;
+  facilityCapacity: number;
+  resourceKey: string;
+  amount: number;
+  provenance: Readonly<{ source: string; detail: string }>;
+  assumptions: readonly string[];
+  simplifications: readonly string[];
+}
+
+export interface PlanFixedContextEvidence {
+  contextKey: "dormitoryOccupancy";
+  amount: number;
+  provenance: Readonly<{ source: string; detail: string }>;
+  assumptions: readonly string[];
+  simplifications: readonly string[];
+}
+
+export interface PlanResourceEvidence {
+  fixedSources: readonly Readonly<PlanFixedSourceEvidence>[];
+  fixedContexts: readonly Readonly<PlanFixedContextEvidence>[];
+}
+
+export interface PlanFacilityEfficiencyEvaluationEvidence {
+  provenance: "optimizer-normal-team-reevaluation-with-resolved-support-context";
+  fixedResourceAmounts: Readonly<Record<string, number>>;
+  fixedDormitoryOccupancy?: number;
 }
 
 export interface PlanFacilityResourceResult {
@@ -34,6 +75,7 @@ export interface PlanFacilityResourceResult {
   product: "gold" | "battleRecord" | "lmd";
   operatorIds: readonly string[];
   additiveEfficiency: number;
+  efficiencyEvaluation?: Readonly<PlanFacilityEfficiencyEvaluationEvidence>;
   ledger: ResourceLedger;
 }
 
@@ -76,6 +118,7 @@ export interface PlanResourceEvaluation {
   assumptions: Readonly<PlanResourceAssumptions>;
   windows: readonly Readonly<PlanWindowResourceResult>[];
   missing: readonly Readonly<PlanResourceMissingReason>[];
+  evidence?: Readonly<PlanResourceEvidence>;
   drone?: Readonly<PlanDroneResourceResult>;
   cycleLedger?: ResourceLedger;
   per24Ledger?: ResourceLedger;

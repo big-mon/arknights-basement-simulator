@@ -295,7 +295,8 @@
             "timeCurve": {
               "initialEfficiency": 0,
               "efficiencyPerHour": 0.02,
-              "maxEfficiency": 0.2
+              "maxEfficiency": 0.2,
+              "startsAfterFirstHour": true
             }
           }
         ]
@@ -20894,6 +20895,91 @@
                 "type": "consumption",
                 "target": "self",
                 "amount": -0.15
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "char_436_whispr",
+    "name": {
+      "zh": "絮雨",
+      "ja": "ウィスパーレイン",
+      "en": "Whisperain"
+    },
+    "affiliations": [
+      "iberia"
+    ],
+    "rarity": 5,
+    "profession": "医療",
+    "skills": [
+      {
+        "id": "hire_spd_bd_n1_n1[100]",
+        "name": {
+          "zh": "记忆碎片",
+          "ja": "記憶の欠片",
+          "en": "Memory Fragment"
+        },
+        "slot": 0,
+        "unlockPhase": 0,
+        "unlockLevel": 1,
+        "effects": [
+          {
+            "facility": "office",
+            "tags": [
+              "office"
+            ],
+            "description": {
+              "zh": "进驻人力办公室时，人脉资源的联络速度+20%，每个招募位（不包含初始招募位）+10记忆碎片",
+              "ja": "事務室配置時、事務連絡速度+20%、初期募集枠を除く募集枠1つにつき記憶の欠片+10",
+              "en": "When assigned to the HR Office, HR contacting speed +20%. For each recruitment slot excluding the initial slot, Memory Fragments +10"
+            },
+            "efficiency": 0.2,
+            "resourceEffects": [
+              {
+                "resource": "memoryFragments",
+                "amount": 10,
+                "scaling": {
+                  "type": "facilityRecruitmentSlots",
+                  "excludedInitialSlots": 1
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "hire_spd_bd_n1[000]",
+        "name": {
+          "zh": "感知信息",
+          "ja": "知覚情報",
+          "en": "Perception Information"
+        },
+        "slot": 1,
+        "unlockPhase": 2,
+        "unlockLevel": 1,
+        "effects": [
+          {
+            "facility": "office",
+            "tags": [
+              "office"
+            ],
+            "description": {
+              "zh": "进驻人力办公室时，每1点记忆碎片转化为1点感知信息",
+              "ja": "事務室配置時、記憶の欠片1につき知覚情報1に転化",
+              "en": "When assigned to the HR Office, every 1 Memory Fragment is converted into 1 Perception Information"
+            },
+            "efficiency": 0,
+            "resourceEffects": [
+              {
+                "resource": "perceptionInfo",
+                "amount": 1,
+                "scaling": {
+                  "type": "resource",
+                  "resource": "memoryFragments"
+                }
               }
             ]
           }

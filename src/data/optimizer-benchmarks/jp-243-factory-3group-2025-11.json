@@ -1,6 +1,7 @@
 {
   "kind": "resource-output",
-  "scope": "facility-group",
+  "contractVersion": "phase1-pass-fail-v1",
+  "scope": "full-base",
   "id": "jp-243-factory-3group-2025-11",
   "region": "JP",
   "referenceProvenance": {
@@ -10,7 +11,7 @@
   "runtimeDataProvenance": {
     "operatorAvailabilitySourceCommit": "7faf192d15eeac8b236c561a1938679f4642279e"
   },
-  "confidence": "disputed",
+  "confidence": "corroborated",
   "sources": [
     {
       "url": "https://arknights.wikiru.jp/?SandBox/%E5%9F%BA%E5%9C%B0%E3%82%B7%E3%83%95%E3%83%88%EF%BC%881%E6%97%A52%E5%9B%9E%E5%85%A5%E6%9B%BF%EF%BC%89",
@@ -18,7 +19,8 @@
       "accessedAt": "2026-08-04",
       "language": "ja",
       "role": "composition",
-      "notes": "Backup 38. Captured page sections content_1_11 through content_1_14 identify the Perception Information, Metalworking, and Pinus headings. The page presents one operational plan, not a uniquely optimal solution."
+      "notes": "Backup 38. Captured page sections content_1_11 through content_1_14 identify the Perception Information, Metalworking, and Pinus headings. The page presents one operational plan, not a uniquely optimal solution.",
+      "contentSha256": "33b7f7d08f5249b0d93efad441ef1dd7ec95d7e5939fdda7e02c9625d9cb45a8"
     },
     {
       "url": "https://arknights.wikiru.jp/?SandBox/%E5%9F%BA%E5%9C%B0%E3%82%B9%E3%82%AD%E3%83%AB%E7%B5%84%E3%81%BF%E5%90%88%E3%82%8F%E3%81%9B%E4%BE%8B",
@@ -31,140 +33,2108 @@
   ],
   "assumptions": {
     "layout": "243",
-    "drones": "excluded",
-    "facilityProducts": ["gold", "battleRecord"],
+    "drones": "trading-post-1",
+    "facilityProducts": [
+      "gold",
+      "battleRecord"
+    ],
     "objectiveProfile": "balanced",
     "notes": [
       "243 layout with two gold factories and two battle-record factories.",
-      "Three groups rotate every 12 hours in a 36-hour cycle; each team works 24 hours per cycle.",
-      "All JP-available operators are owned with all base skills unlocked.",
-      "Drones, storage stoppage, and morale exhaustion are excluded from these factory-only outputs.",
-      "The source plan sends drones to gold production, so it is not a Phase 1 full-base LMD benchmark."
+      "The exact evaluation window is groups-a-b plus groups-b-c (24 hours); groups-c-a completes the separate 36-hour sustainability cycle.",
+      "All explicitly rostered JP-available operators have all base skills unlocked.",
+      "Fixed office and dormitory context is normalized-theoretical; identified ordinary remote support remains separate from factory occupants.",
+      "Storage stoppage is excluded; the strict ledger explicitly witnesses drone generation, allocation, gold continuity, and every resource field.",
+      "Factory compositions and the complete base rotation are backed by Wikiru backup 38; the Phase 1 assumption bundle supplies only the three pinned PR40 domains."
+    ],
+    "initialMorale": 24,
+    "initialDrones": 0,
+    "initialGold": 0,
+    "assumptionBundle": {
+      "id": "arknights-basement.phase1-project-assumptions",
+      "version": 2,
+      "contentSha256": "5aca766b23d7eabfbb924d460b878d07351c5377ec0007ee12194de7fe1565ba",
+      "allowedAssumptionIds": [
+        "phase1.high-value-order-probability.v1",
+        "phase1.perception-information-factory-efficiency.v1",
+        "phase1.signed-equivalent-morale-delta.v1"
+      ]
+    }
+  },
+  "roster": {
+    "mode": "explicit",
+    "operatorIds": [
+      "char_002_amiya",
+      "char_010_chen",
+      "char_1011_lava2",
+      "char_1019_siege2",
+      "char_1027_greyy2",
+      "char_1039_thorn2",
+      "char_1044_hsgma2",
+      "char_1050_chen3",
+      "char_107_liskam",
+      "char_112_siege",
+      "char_154_morgan",
+      "char_159_peacok",
+      "char_190_clour",
+      "char_2014_nian",
+      "char_2015_dusk",
+      "char_2023_ling",
+      "char_2024_chyue",
+      "char_214_kafka",
+      "char_237_gravel",
+      "char_241_panda",
+      "char_243_waaifu",
+      "char_253_greyy",
+      "char_254_vodfox",
+      "char_300_phenxi",
+      "char_308_swire",
+      "char_332_archet",
+      "char_336_folivo",
+      "char_338_iris",
+      "char_377_gdglow",
+      "char_385_finlpp",
+      "char_391_rosmon",
+      "char_400_weedy",
+      "char_4032_provs",
+      "char_4047_pianst",
+      "char_4054_malist",
+      "char_4087_ines",
+      "char_4098_vvana",
+      "char_4106_bryota",
+      "char_4110_delphn",
+      "char_416_zumama",
+      "char_4179_monstr",
+      "char_420_flamtl",
+      "char_430_fartth",
+      "char_431_ashlok",
+      "char_436_whispr",
+      "char_446_aroma",
+      "char_455_nothin",
+      "char_473_mberry",
+      "char_485_pallas",
+      "char_486_takila",
+      "char_496_wildmn"
     ]
   },
-  "roster": { "mode": "all-unlocked" },
-  "schedule": {
+  "supportResourceScenario": {
+    "sources": [
+      {
+        "id": "whisperain-office-perception-groups-a-b",
+        "scheduleWindowId": "groups-a-b",
+        "operatorId": "char_436_whispr",
+        "region": "JP",
+        "facility": {
+          "backing": "fixed-normalized-theoretical",
+          "id": "office-1",
+          "type": "office",
+          "level": 2,
+          "slot": 1,
+          "capacity": 1,
+          "provenance": {
+            "source": "checked-in JP normalized-theoretical benchmark scenario",
+            "detail": "Fixed Level 2 office used only to normalize the documented recruitment-slot interaction"
+          },
+          "assumptions": [
+            "The office has reached recruitment slot 3"
+          ],
+          "simplifications": [
+            "Office recruitment progression is fixed rather than scheduled"
+          ]
+        },
+        "resourceKey": "perceptionInfo",
+        "amount": 20,
+        "provenance": {
+          "source": "checked-in Whisperain HIRE base-skill metadata",
+          "detail": "Two additional recruitment slots beyond the initial slot contribute 20 Perception Information"
+        },
+        "assumptions": [
+          "Whisperain occupies office slot 1 for groups-a-b with recruitment slot 3 unlocked"
+        ],
+        "simplifications": [
+          "Recruitment-slot state remains fixed throughout the 12-hour window"
+        ]
+      },
+      {
+        "id": "dusk-control-perception-groups-b-c",
+        "scheduleWindowId": "groups-b-c",
+        "operatorId": "char_2015_dusk",
+        "region": "JP",
+        "facility": {
+          "backing": "app-state",
+          "id": "control-1",
+          "type": "control",
+          "level": 5,
+          "slot": 2,
+          "capacity": 5
+        },
+        "resourceKey": "perceptionInfo",
+        "amount": 10,
+        "provenance": {
+          "source": "checked-in Dusk base-skill metadata",
+          "detail": "Dusk contributes 10 Perception Information in the control center while morale is above 12"
+        },
+        "assumptions": [
+          "Dusk occupies control-1 slot 1 and starts groups-b-c above 12 morale"
+        ],
+        "simplifications": [
+          "Dusk morale remains above 12 for the complete fixed 12-hour window"
+        ]
+      },
+      {
+        "id": "ordinary-char_420_flamtl-groups-a-b",
+        "scheduleWindowId": "groups-a-b",
+        "operatorId": "char_420_flamtl",
+        "region": "JP",
+        "facility": {
+          "backing": "app-state",
+          "id": "control-1",
+          "type": "control",
+          "level": 5,
+          "slot": 2,
+          "capacity": 5
+        },
+        "resourceKey": "ordinarySupportPlacement",
+        "amount": 0,
+        "provenance": {
+          "source": "Wikiru backup 38 composition and checked-in JP base-skill metadata",
+          "detail": "Flametail supplies the Pinus Sylvestris factory condition"
+        },
+        "assumptions": [
+          "char_420_flamtl occupies control-1 throughout groups-a-b"
+        ],
+        "simplifications": [
+          "The support placement is fixed for the complete 12-hour window"
+        ]
+      },
+      {
+        "id": "ordinary-char_1027_greyy2-groups-a-b",
+        "scheduleWindowId": "groups-a-b",
+        "operatorId": "char_1027_greyy2",
+        "region": "JP",
+        "facility": {
+          "backing": "app-state",
+          "id": "power-1",
+          "type": "power",
+          "level": 3,
+          "slot": 1,
+          "capacity": 1
+        },
+        "resourceKey": "ordinarySupportPlacement",
+        "amount": 0,
+        "provenance": {
+          "source": "Wikiru backup 38 composition and checked-in JP base-skill metadata",
+          "detail": "Greyy the Lightningbearer supplies the virtual power-plant condition"
+        },
+        "assumptions": [
+          "char_1027_greyy2 occupies power-1 throughout groups-a-b"
+        ],
+        "simplifications": [
+          "The support placement is fixed for the complete 12-hour window"
+        ]
+      },
+      {
+        "id": "ordinary-char_420_flamtl-groups-b-c",
+        "scheduleWindowId": "groups-b-c",
+        "operatorId": "char_420_flamtl",
+        "region": "JP",
+        "facility": {
+          "backing": "app-state",
+          "id": "control-1",
+          "type": "control",
+          "level": 5,
+          "slot": 3,
+          "capacity": 5
+        },
+        "resourceKey": "ordinarySupportPlacement",
+        "amount": 0,
+        "provenance": {
+          "source": "Wikiru backup 38 composition and checked-in JP base-skill metadata",
+          "detail": "Flametail supplies the Pinus Sylvestris factory condition"
+        },
+        "assumptions": [
+          "char_420_flamtl occupies control-1 throughout groups-b-c"
+        ],
+        "simplifications": [
+          "The support placement is fixed for the complete 12-hour window"
+        ]
+      },
+      {
+        "id": "ordinary-char_4098_vvana-groups-b-c",
+        "scheduleWindowId": "groups-b-c",
+        "operatorId": "char_4098_vvana",
+        "region": "JP",
+        "facility": {
+          "backing": "app-state",
+          "id": "control-1",
+          "type": "control",
+          "level": 5,
+          "slot": 1,
+          "capacity": 5
+        },
+        "resourceKey": "ordinarySupportPlacement",
+        "amount": 0,
+        "provenance": {
+          "source": "Wikiru backup 38 composition and checked-in JP base-skill metadata",
+          "detail": "Viviana supplies the Metalworking factory condition"
+        },
+        "assumptions": [
+          "char_4098_vvana occupies control-1 throughout groups-b-c"
+        ],
+        "simplifications": [
+          "The support placement is fixed for the complete 12-hour window"
+        ]
+      },
+      {
+        "id": "ordinary-char_4098_vvana-groups-c-a",
+        "scheduleWindowId": "groups-c-a",
+        "operatorId": "char_4098_vvana",
+        "region": "JP",
+        "facility": {
+          "backing": "app-state",
+          "id": "control-1",
+          "type": "control",
+          "level": 5,
+          "slot": 1,
+          "capacity": 5
+        },
+        "resourceKey": "ordinarySupportPlacement",
+        "amount": 0,
+        "provenance": {
+          "source": "Wikiru backup 38 composition and checked-in JP base-skill metadata",
+          "detail": "Viviana supplies the Metalworking factory condition"
+        },
+        "assumptions": [
+          "char_4098_vvana occupies control-1 throughout groups-c-a"
+        ],
+        "simplifications": [
+          "The support placement is fixed for the complete 12-hour window"
+        ]
+      },
+      {
+        "id": "ordinary-char_1027_greyy2-groups-c-a",
+        "scheduleWindowId": "groups-c-a",
+        "operatorId": "char_1027_greyy2",
+        "region": "JP",
+        "facility": {
+          "backing": "app-state",
+          "id": "power-1",
+          "type": "power",
+          "level": 3,
+          "slot": 1,
+          "capacity": 1
+        },
+        "resourceKey": "ordinarySupportPlacement",
+        "amount": 0,
+        "provenance": {
+          "source": "Wikiru backup 38 composition and checked-in JP base-skill metadata",
+          "detail": "Greyy the Lightningbearer supplies the virtual power-plant condition"
+        },
+        "assumptions": [
+          "char_1027_greyy2 occupies power-1 throughout groups-c-a"
+        ],
+        "simplifications": [
+          "The support placement is fixed for the complete 12-hour window"
+        ]
+      }
+    ],
+    "fixedContext": {
+      "dormitoryOccupancy": {
+        "backing": "fixed-normalized-theoretical",
+        "amount": 20,
+        "provenance": {
+          "source": "checked-in JP normalized-theoretical benchmark scenario",
+          "detail": "Four dormitories are treated as fully occupied for the Perception Information calculation"
+        },
+        "assumptions": [
+          "All 20 dormitory slots remain occupied in every schedule window"
+        ],
+        "simplifications": [
+          "Dormitory occupant identities and transitions are not scheduled"
+        ]
+      }
+    }
+  },
+  "expected": {
+    "output": {
+      "goldProduced": 91.38333333333334,
+      "goldConsumed": 0,
+      "goldNetChange": 91.38333333333334,
+      "battleRecordExp": 33830,
+      "lmd": 0,
+      "dronesGenerated": 240,
+      "dronesUsed": 0,
+      "droneLmd": 0,
+      "droneGoldConsumed": 0
+    },
+    "formulas": [
+      "evaluationWindow = groups-a-b (12h) + groups-b-c (12h) = 24h; groups-c-a is excluded from expected.output",
+      "expected.output equals the exact sum of the two selected per-shift resource witnesses",
+      "groups-c-a closes the 36h morale and assignment cycle without contributing to the selected 24h output"
+    ],
+    "tolerance": {
+      "type": "relative",
+      "value": 0.001,
+      "zeroExpectedAbsolute": 0
+    },
+    "outputBasis": "concrete-24-hour-window"
+  },
+  "evaluationWindow": {
+    "start": {
+      "mode": "source-relative",
+      "sourceIndex": 0,
+      "shiftId": "groups-a-b"
+    },
+    "durationHours": 24,
+    "shiftHours": 12,
+    "workSlotCount": 2,
+    "workerGroupCount": 3,
+    "shiftIds": [
+      "groups-a-b",
+      "groups-b-c"
+    ]
+  },
+  "rotation": {
     "cycleHours": 36,
-    "groups": [{ "id": "A" }, { "id": "B" }, { "id": "C" }],
+    "moraleCap": 24,
+    "fullCycleOperatorIds": [
+      "char_002_amiya",
+      "char_010_chen",
+      "char_1011_lava2",
+      "char_1019_siege2",
+      "char_1027_greyy2",
+      "char_1039_thorn2",
+      "char_1044_hsgma2",
+      "char_1050_chen3",
+      "char_107_liskam",
+      "char_112_siege",
+      "char_154_morgan",
+      "char_159_peacok",
+      "char_190_clour",
+      "char_2014_nian",
+      "char_2015_dusk",
+      "char_2023_ling",
+      "char_2024_chyue",
+      "char_214_kafka",
+      "char_237_gravel",
+      "char_241_panda",
+      "char_243_waaifu",
+      "char_253_greyy",
+      "char_254_vodfox",
+      "char_300_phenxi",
+      "char_308_swire",
+      "char_332_archet",
+      "char_336_folivo",
+      "char_338_iris",
+      "char_377_gdglow",
+      "char_385_finlpp",
+      "char_391_rosmon",
+      "char_400_weedy",
+      "char_4032_provs",
+      "char_4047_pianst",
+      "char_4054_malist",
+      "char_4087_ines",
+      "char_4098_vvana",
+      "char_4106_bryota",
+      "char_4110_delphn",
+      "char_416_zumama",
+      "char_4179_monstr",
+      "char_420_flamtl",
+      "char_430_fartth",
+      "char_431_ashlok",
+      "char_436_whispr",
+      "char_446_aroma",
+      "char_455_nothin",
+      "char_473_mberry",
+      "char_485_pallas",
+      "char_486_takila",
+      "char_496_wildmn"
+    ],
+    "facilities": [
+      {
+        "id": "trading-post-1",
+        "type": "tradingPost",
+        "product": "lmd",
+        "level": 3,
+        "capacity": 3
+      },
+      {
+        "id": "trading-post-2",
+        "type": "tradingPost",
+        "product": "lmd",
+        "level": 3,
+        "capacity": 3
+      },
+      {
+        "id": "factory-gold-1",
+        "type": "factory",
+        "product": "gold",
+        "level": 3,
+        "capacity": 3
+      },
+      {
+        "id": "factory-gold-2",
+        "type": "factory",
+        "product": "gold",
+        "level": 3,
+        "capacity": 3
+      },
+      {
+        "id": "factory-battle-record-1",
+        "type": "factory",
+        "product": "battleRecord",
+        "level": 3,
+        "capacity": 3
+      },
+      {
+        "id": "factory-battle-record-2",
+        "type": "factory",
+        "product": "battleRecord",
+        "level": 3,
+        "capacity": 3
+      },
+      {
+        "id": "power-plant-1",
+        "type": "powerPlant",
+        "level": 3,
+        "capacity": 1
+      },
+      {
+        "id": "power-plant-2",
+        "type": "powerPlant",
+        "level": 3,
+        "capacity": 1
+      },
+      {
+        "id": "power-plant-3",
+        "type": "powerPlant",
+        "level": 3,
+        "capacity": 1
+      },
+      {
+        "id": "control-center",
+        "type": "controlCenter",
+        "level": 5,
+        "capacity": 5
+      },
+      {
+        "id": "reception",
+        "type": "reception",
+        "level": 3,
+        "capacity": 2
+      },
+      {
+        "id": "office",
+        "type": "office",
+        "level": 3,
+        "capacity": 1
+      }
+    ],
+    "supportDependencies": [],
+    "supportContexts": [
+      {
+        "id": "dormitory-1",
+        "type": "dormitory",
+        "activity": "recovery",
+        "level": 5,
+        "capacity": 5
+      },
+      {
+        "id": "dormitory-2",
+        "type": "dormitory",
+        "activity": "recovery",
+        "level": 5,
+        "capacity": 5
+      },
+      {
+        "id": "dormitory-3",
+        "type": "dormitory",
+        "activity": "recovery",
+        "level": 5,
+        "capacity": 5
+      },
+      {
+        "id": "dormitory-4",
+        "type": "dormitory",
+        "activity": "recovery",
+        "level": 5,
+        "capacity": 5
+      },
+      {
+        "id": "morale-exchange-1",
+        "type": "operator-support",
+        "activity": "exchange-support",
+        "capacity": 1
+      }
+    ],
+    "workerGroupCount": 3,
+    "compositionSourceIndex": 0,
+    "fullCycleSourceIndex": 0,
+    "goldInventory": {
+      "initial": 0,
+      "final": 137.68333333333334,
+      "boundaryPolicy": "carryover"
+    },
+    "droneInventory": {
+      "initial": 0,
+      "final": 360,
+      "boundaryPolicy": "carryover"
+    },
     "shifts": [
       {
         "id": "groups-a-b",
-        "startHour": 0,
-        "endHour": 12,
-        "activeGroupIds": ["A", "B"],
-        "recoveryGroupIds": ["C"],
+        "durationHours": 12,
+        "workerGroupIds": [
+          "group-a",
+          "group-b"
+        ],
+        "factoryProducts": {
+          "gold": 2,
+          "battleRecord": 2
+        },
         "assignments": {
+          "control-center": {
+            "operatorIds": [
+              "char_4179_monstr",
+              "char_2024_chyue",
+              "char_2015_dusk",
+              "char_2023_ling",
+              "char_4098_vvana"
+            ]
+          },
+          "reception": {
+            "operatorIds": [
+              "char_1050_chen3",
+              "char_010_chen"
+            ]
+          },
           "factory-battle-record-1": {
-            "label": "FEater + Conviction + Minimalist (+110%)",
-            "operatorIds": ["char_241_panda", "char_159_peacok", "char_4054_malist"]
+            "operatorIds": [
+              "char_241_panda",
+              "char_159_peacok",
+              "char_4054_malist"
+            ]
           },
           "factory-battle-record-2": {
-            "label": "Flametail-linked Pinus Sylvestris team (+115.5%)",
-            "operatorIds": ["char_431_ashlok", "char_496_wildmn", "char_430_fartth"],
-            "remoteSupport": {
-              "operatorIds": ["char_420_flamtl"],
-              "notes": ["Flametail is a remote/control-center dependency, not a fourth factory occupant."]
-            }
+            "operatorIds": [
+              "char_431_ashlok",
+              "char_496_wildmn",
+              "char_430_fartth"
+            ]
           },
           "factory-gold-1": {
-            "label": "Purestream + Weedy + Eunectes (+140%)",
-            "operatorIds": ["char_385_finlpp", "char_400_weedy", "char_416_zumama"]
+            "operatorIds": [
+              "char_385_finlpp",
+              "char_400_weedy",
+              "char_416_zumama"
+            ]
           },
           "factory-gold-2": {
-            "label": "Perception Information team (+125.42%)",
-            "operatorIds": ["char_446_aroma", "char_243_waaifu", "char_391_rosmon"],
-            "remoteSupport": {
-              "unresolved": [{
-                "sourceName": "ウィスパーレイン",
-                "reason": "The captured JP heading identifies Whisperain as remote support, but the checked-in 324-operator catalog has no matching operator ID."
-              }],
-              "notes": ["Whisperain is support provenance, not a fourth factory occupant."]
-            }
+            "operatorIds": [
+              "char_446_aroma",
+              "char_243_waaifu",
+              "char_391_rosmon"
+            ]
+          },
+          "trading-post-1": {
+            "operatorIds": [
+              "char_4032_provs",
+              "char_332_archet",
+              "char_455_nothin"
+            ]
+          },
+          "trading-post-2": {
+            "operatorIds": [
+              "char_254_vodfox",
+              "char_214_kafka",
+              "char_486_takila"
+            ]
+          },
+          "power-plant-1": {
+            "operatorIds": [
+              "char_1011_lava2"
+            ]
+          },
+          "power-plant-2": {
+            "operatorIds": [
+              "char_107_liskam"
+            ]
+          },
+          "power-plant-3": {
+            "operatorIds": [
+              "char_1027_greyy2"
+            ]
+          },
+          "office": {
+            "operatorIds": [
+              "char_473_mberry"
+            ]
           }
+        },
+        "operatorStates": [
+          {
+            "operatorId": "char_002_amiya",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": 0,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_010_chen",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_1011_lava2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_1019_siege2",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_1027_greyy2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_1039_thorn2",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_1044_hsgma2",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": 0,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_1050_chen3",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_107_liskam",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_112_siege",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_154_morgan",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_159_peacok",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_190_clour",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_2014_nian",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": 0,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_2015_dusk",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_2023_ling",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_2024_chyue",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_214_kafka",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_237_gravel",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_241_panda",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_243_waaifu",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_253_greyy",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": 0,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_254_vodfox",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_300_phenxi",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": 0,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_308_swire",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": 0,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_332_archet",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_336_folivo",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_338_iris",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": 0,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_377_gdglow",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_385_finlpp",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_391_rosmon",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_400_weedy",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_4032_provs",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_4047_pianst",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": 0,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_4054_malist",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_4087_ines",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_4098_vvana",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_4106_bryota",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_4110_delphn",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": 0,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_416_zumama",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_4179_monstr",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_420_flamtl",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_430_fartth",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_431_ashlok",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_436_whispr",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": 0,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_446_aroma",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_455_nothin",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_473_mberry",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_485_pallas",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_486_takila",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_496_wildmn",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          }
+        ],
+        "resources": {
+          "goldProduced": 46.542,
+          "goldConsumed": 0,
+          "battleRecordExp": 17020,
+          "lmd": 0,
+          "dronesGenerated": 120,
+          "dronesUsed": 0,
+          "droneLmd": 0,
+          "droneGoldConsumed": 0,
+          "droneDestination": "trading-post-1",
+          "goldInventoryStart": 0,
+          "goldInventoryEnd": 46.542,
+          "droneInventoryStart": 0,
+          "droneInventoryEnd": 120
         }
       },
       {
         "id": "groups-b-c",
-        "startHour": 12,
-        "endHour": 24,
-        "activeGroupIds": ["B", "C"],
-        "recoveryGroupIds": ["A"],
+        "durationHours": 12,
+        "workerGroupIds": [
+          "group-b",
+          "group-c"
+        ],
+        "factoryProducts": {
+          "gold": 2,
+          "battleRecord": 2
+        },
         "assignments": {
+          "control-center": {
+            "operatorIds": [
+              "char_1044_hsgma2",
+              "char_420_flamtl",
+              "char_4110_delphn",
+              "char_308_swire",
+              "char_4098_vvana"
+            ]
+          },
+          "reception": {
+            "operatorIds": [
+              "char_010_chen",
+              "char_4087_ines"
+            ]
+          },
           "factory-battle-record-1": {
-            "label": "Flametail-linked Pinus Sylvestris team (+115.5%)",
-            "operatorIds": ["char_431_ashlok", "char_496_wildmn", "char_430_fartth"],
-            "remoteSupport": {
-              "operatorIds": ["char_420_flamtl"],
-              "notes": ["Flametail is a remote/control-center dependency, not a fourth factory occupant."]
-            }
+            "operatorIds": [
+              "char_431_ashlok",
+              "char_496_wildmn",
+              "char_430_fartth"
+            ]
           },
           "factory-battle-record-2": {
-            "label": "Pallas + Scene + Vermeil (+104.75%)",
-            "operatorIds": ["char_485_pallas", "char_336_folivo", "char_190_clour"]
+            "operatorIds": [
+              "char_485_pallas",
+              "char_336_folivo",
+              "char_190_clour"
+            ]
           },
           "factory-gold-1": {
-            "label": "Perception Information team (+125.42%)",
-            "operatorIds": ["char_446_aroma", "char_243_waaifu", "char_391_rosmon"],
-            "remoteSupport": {
-              "unresolved": [{
-                "sourceName": "ウィスパーレイン",
-                "reason": "The captured JP heading identifies Whisperain as remote support, but the checked-in 324-operator catalog has no matching operator ID."
-              }],
-              "notes": ["Whisperain is support provenance, not a fourth factory occupant."]
-            }
+            "operatorIds": [
+              "char_446_aroma",
+              "char_243_waaifu",
+              "char_391_rosmon"
+            ]
           },
           "factory-gold-2": {
-            "label": "Metalworking team (+123%)",
-            "operatorIds": ["char_4106_bryota", "char_237_gravel", "char_1039_thorn2"],
-            "remoteSupport": {
-              "operatorIds": ["char_4098_vvana"],
-              "notes": ["Viviana is a remote/control-center dependency, not a fourth factory occupant."]
-            }
+            "operatorIds": [
+              "char_4106_bryota",
+              "char_237_gravel",
+              "char_1039_thorn2"
+            ]
+          },
+          "trading-post-1": {
+            "operatorIds": [
+              "char_254_vodfox",
+              "char_214_kafka",
+              "char_486_takila"
+            ]
+          },
+          "trading-post-2": {
+            "operatorIds": [
+              "char_112_siege",
+              "char_154_morgan",
+              "char_1019_siege2"
+            ]
+          },
+          "power-plant-1": {
+            "operatorIds": [
+              "char_107_liskam"
+            ]
+          },
+          "power-plant-2": {
+            "operatorIds": [
+              "char_377_gdglow"
+            ]
+          },
+          "power-plant-3": {
+            "operatorIds": [
+              "char_253_greyy"
+            ]
+          },
+          "office": {
+            "operatorIds": [
+              "char_436_whispr"
+            ]
           }
+        },
+        "operatorStates": [
+          {
+            "operatorId": "char_002_amiya",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": 0,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_010_chen",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_1011_lava2",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_1019_siege2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_1027_greyy2",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_1039_thorn2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_1044_hsgma2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_1050_chen3",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_107_liskam",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_112_siege",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_154_morgan",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_159_peacok",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_190_clour",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_2014_nian",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": 0,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_2015_dusk",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_2023_ling",
+            "activity": "exchange-support",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_2024_chyue",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_214_kafka",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_237_gravel",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_241_panda",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_243_waaifu",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_253_greyy",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_254_vodfox",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_300_phenxi",
+            "activity": "exchange-support",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -24,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_308_swire",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_332_archet",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_336_folivo",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_338_iris",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": 0,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_377_gdglow",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_385_finlpp",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_391_rosmon",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_400_weedy",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_4032_provs",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_4047_pianst",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": 0,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_4054_malist",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_4087_ines",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_4098_vvana",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_4106_bryota",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_4110_delphn",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_416_zumama",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_4179_monstr",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_420_flamtl",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_430_fartth",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_431_ashlok",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_436_whispr",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_446_aroma",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_455_nothin",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_473_mberry",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_485_pallas",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_486_takila",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_496_wildmn",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          }
+        ],
+        "resources": {
+          "goldProduced": 44.84133333333334,
+          "goldConsumed": 0,
+          "battleRecordExp": 16810,
+          "lmd": 0,
+          "dronesGenerated": 120,
+          "dronesUsed": 0,
+          "droneLmd": 0,
+          "droneGoldConsumed": 0,
+          "droneDestination": "trading-post-1",
+          "goldInventoryStart": 46.542,
+          "goldInventoryEnd": 91.38333333333334,
+          "droneInventoryStart": 120,
+          "droneInventoryEnd": 240
         }
       },
       {
         "id": "groups-c-a",
-        "startHour": 24,
-        "endHour": 36,
-        "activeGroupIds": ["C", "A"],
-        "recoveryGroupIds": ["B"],
+        "durationHours": 12,
+        "workerGroupIds": [
+          "group-c",
+          "group-a"
+        ],
+        "factoryProducts": {
+          "gold": 2,
+          "battleRecord": 2
+        },
         "assignments": {
+          "control-center": {
+            "operatorIds": [
+              "char_4179_monstr",
+              "char_420_flamtl",
+              "char_2024_chyue",
+              "char_2015_dusk",
+              "char_2023_ling"
+            ]
+          },
+          "reception": {
+            "operatorIds": [
+              "char_4087_ines",
+              "char_1050_chen3"
+            ]
+          },
           "factory-battle-record-1": {
-            "label": "Pallas + Scene + Vermeil (+104.75%)",
-            "operatorIds": ["char_485_pallas", "char_336_folivo", "char_190_clour"]
+            "operatorIds": [
+              "char_485_pallas",
+              "char_336_folivo",
+              "char_190_clour"
+            ]
           },
           "factory-battle-record-2": {
-            "label": "FEater + Conviction + Minimalist (+110%)",
-            "operatorIds": ["char_241_panda", "char_159_peacok", "char_4054_malist"]
+            "operatorIds": [
+              "char_241_panda",
+              "char_159_peacok",
+              "char_4054_malist"
+            ]
           },
           "factory-gold-1": {
-            "label": "Metalworking team (+123%)",
-            "operatorIds": ["char_4106_bryota", "char_237_gravel", "char_1039_thorn2"],
-            "remoteSupport": {
-              "operatorIds": ["char_4098_vvana"],
-              "notes": ["Viviana is a remote/control-center dependency, not a fourth factory occupant."]
-            }
+            "operatorIds": [
+              "char_4106_bryota",
+              "char_237_gravel",
+              "char_1039_thorn2"
+            ]
           },
           "factory-gold-2": {
-            "label": "Purestream + Weedy + Eunectes (+140%)",
-            "operatorIds": ["char_385_finlpp", "char_400_weedy", "char_416_zumama"]
+            "operatorIds": [
+              "char_385_finlpp",
+              "char_400_weedy",
+              "char_416_zumama"
+            ]
+          },
+          "trading-post-1": {
+            "operatorIds": [
+              "char_112_siege",
+              "char_154_morgan",
+              "char_1019_siege2"
+            ]
+          },
+          "trading-post-2": {
+            "operatorIds": [
+              "char_4032_provs",
+              "char_332_archet",
+              "char_455_nothin"
+            ]
+          },
+          "power-plant-1": {
+            "operatorIds": [
+              "char_377_gdglow"
+            ]
+          },
+          "power-plant-2": {
+            "operatorIds": [
+              "char_1011_lava2"
+            ]
+          },
+          "power-plant-3": {
+            "operatorIds": [
+              "char_1027_greyy2"
+            ]
+          },
+          "office": {
+            "operatorIds": [
+              "char_473_mberry"
+            ]
           }
+        },
+        "operatorStates": [
+          {
+            "operatorId": "char_002_amiya",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": 0,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_010_chen",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_1011_lava2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_1019_siege2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_1027_greyy2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_1039_thorn2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_1044_hsgma2",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_1050_chen3",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_107_liskam",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_112_siege",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_154_morgan",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_159_peacok",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_190_clour",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_2014_nian",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": 0,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_2015_dusk",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_2023_ling",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_2024_chyue",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_214_kafka",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_237_gravel",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_241_panda",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_243_waaifu",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_253_greyy",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_254_vodfox",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_300_phenxi",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_308_swire",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_332_archet",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_336_folivo",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_338_iris",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": 0,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_377_gdglow",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_385_finlpp",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_391_rosmon",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_400_weedy",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_4032_provs",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_4047_pianst",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": 0,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_4054_malist",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_4087_ines",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_4098_vvana",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_4106_bryota",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_4110_delphn",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_416_zumama",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_4179_monstr",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_420_flamtl",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_430_fartth",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_431_ashlok",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_436_whispr",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_446_aroma",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_455_nothin",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_473_mberry",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24,
+            "moraleDelta": -12,
+            "moraleEnd": 12
+          },
+          {
+            "operatorId": "char_485_pallas",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12,
+            "moraleDelta": -12,
+            "moraleEnd": 0
+          },
+          {
+            "operatorId": "char_486_takila",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          },
+          {
+            "operatorId": "char_496_wildmn",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0,
+            "moraleDelta": 24,
+            "moraleEnd": 24
+          }
+        ],
+        "resources": {
+          "goldProduced": 46.3,
+          "goldConsumed": 0,
+          "battleRecordExp": 16590,
+          "lmd": 0,
+          "dronesGenerated": 120,
+          "dronesUsed": 0,
+          "droneLmd": 0,
+          "droneGoldConsumed": 0,
+          "droneDestination": "trading-post-1",
+          "goldInventoryStart": 91.38333333333334,
+          "goldInventoryEnd": 137.68333333333334,
+          "droneInventoryStart": 240,
+          "droneInventoryEnd": 360
         }
       }
     ]
   },
-  "expected": {
-    "output": {
-      "goldProduced": 91.7893333333333,
-      "battleRecordExp": 33613.3333333333
-    },
-    "formulas": [
-      "battleRecordMultiplier = 2 + (2 / 3) * (1.10 + 1.155 + 1.0475) = 4.201666666666666",
-      "battleRecordExp = (1440 / 180) * 1000 * 4.201666666666666 = 33613.3333333333",
-      "goldMultiplier = 2 + (2 / 3) * (1.40 + 1.2542 + 1.23) = 4.589466666666666",
-      "goldProduced = (1440 / 72) * 4.589466666666666 = 91.7893333333333"
-    ],
-    "tolerance": { "type": "absolute", "value": 0.000000001 }
+  "compositionEvidence": {
+    "status": "comparable",
+    "sourceOnlyOperators": [],
+    "conflicts": [],
+    "disputedAssignments": []
   }
 }

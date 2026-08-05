@@ -9,6 +9,11 @@ import {
 import { evaluatePlanResources } from "./planResourceEvaluator";
 import { evaluatePlanSustainability } from "./planSustainabilityEvaluator";
 import { normalizeSchedule, scheduleEpsilonHours } from "./schedule";
+import { resolveSupportResourceScenario } from "./supportResourceScenario";
+import { modeledFacilityLevel } from "./facilityLevel";
+import { activeBaseSkills } from "./activeBaseSkills";
+import { splitCyclicHalfOpenInterval } from "./cyclicInterval";
+export { activeBaseSkills } from "./activeBaseSkills";
 import type {
   AppState,
   Assignment,
@@ -19,10 +24,13 @@ import type {
   BaseSkillEffect,
   FacilityPlan,
   FacilitySlot,
+  GenerateAssignmentPlanOptions,
   Operator,
   OptimizationPreference,
   ProductType,
-  RosterEntry
+  RosterEntry,
+  SupportResourceScenarioEvaluation,
+  WindowFacilityEfficiencyEvaluation
 } from "../types";
 
 type AssignmentEvaluationContext = {
@@ -30,7 +38,58 @@ type AssignmentEvaluationContext = {
   facilities: FacilitySlot[];
   roster?: AppState["roster"];
   shiftHours?: number;
+  fixedResourceAmounts?: Readonly<Record<string, number>>;
+  fixedDormitoryOccupancy?: number;
+  excludedOrdinaryResourceOperatorIds?: ReadonlySet<string>;
+  reservedOperatorIds?: ReadonlySet<string>;
+  reservedFacilitySlots?: ReadonlyMap<string, number>;
 };
+
+export type ExplicitFacilityTeamDiagnosticCode =
+  | "evaluation-hours-invalid"
+  | "facility-not-found"
+  | "facility-capacity-exceeded"
+  | "facility-declared-more-than-once"
+  | "operator-not-found"
+  | "operator-unowned"
+  | "operator-region-unavailable"
+  | "operator-facility-ineligible"
+  | "operator-assignment-conflict";
+
+export interface ExplicitFacilityTeamDiagnostic {
+  code: ExplicitFacilityTeamDiagnosticCode;
+  path: string;
+  message: string;
+  facilityId?: string;
+  operatorId?: string;
+}
+
+export interface ExplicitFacilityTeamInspectionInput {
+  teams: readonly { facilityId: string; operatorIds: readonly string[] }[];
+  supportPlacements?: readonly { facilityId: string; operatorIds: readonly string[] }[];
+  evaluationHours: number;
+  fixedResourceAmounts?: Readonly<Record<string, number>>;
+  fixedDormitoryOccupancy?: number;
+  excludedOrdinaryResourceOperatorIds?: ReadonlySet<string>;
+}
+
+export type ExplicitFacilityTeamInspectionResult =
+  | {
+      status: "complete";
+      diagnostics: readonly ExplicitFacilityTeamDiagnostic[];
+      teams: readonly {
+        facilityId: string;
+        assignments: readonly Assignment[];
+        expectedEfficiency: number;
+      }[];
+      supportAssignments: readonly Assignment[];
+    }
+  | {
+      status: "incomplete";
+      diagnostics: readonly ExplicitFacilityTeamDiagnostic[];
+      teams: readonly [];
+      supportAssignments: readonly [];
+    };
 
 type GlobalBonusBucket = {
   stackKey?: string;
@@ -96,15 +155,6 @@ const baselineAssignmentReasons: Record<AppState["language"], string> = {
   ja: "適用可能な基地スキルなし（基準効率）",
   zh: "无可用基建技能（基础效率）",
   en: "No applicable base skill (baseline efficiency)"
-};
-
-const maxFacilityLevelByType: Record<FacilitySlot["type"], number> = {
-  factory: 3,
-  trading: 3,
-  power: 3,
-  control: 5,
-  dormitory: 5,
-  reception: 3
 };
 
 const tradingPostBaseOrderLimit = 10;
@@ -319,14 +369,44 @@ export function averageMoraleCurveEfficiency(
   );
 }
 
-export function generateAssignmentPlan(state: AppState): AssignmentPlan {
+export function generateAssignmentPlan(
+  state: AppState,
+  options: GenerateAssignmentPlanOptions = {}
+): AssignmentPlan {
+  return generateAssignmentPlanInternal(state, options, true);
+}
+
+function generateAssignmentPlanInternal(
+  state: AppState,
+  options: GenerateAssignmentPlanOptions,
+  allowSupportFallback: boolean
+): AssignmentPlan {
   state = { ...state, schedule: normalizeSchedule(state.schedule) };
+  const scenarioState = state;
   state = createRegionallyAvailableState(state, operatorAvailabilitySnapshot, state.region);
   const enabledFacilities = state.facilities.filter((facility) => facility.type !== "dormitory");
-  let facilityPlans = buildFacilityPlans(state, enabledFacilities, []);
+  const scheduleSkeleton = buildRotationWindows([], [], state.schedule).windows;
+  const supportSelectionContext = allowSupportFallback && options.supportResourceScenario
+    ? buildSupportSelectionContext(
+        state,
+        resolveSupportResourceScenario(
+          scenarioState,
+          options.supportResourceScenario,
+          scheduleSkeleton
+        ),
+        scheduleSkeleton
+      )
+    : undefined;
+  let facilityPlans = buildFacilityPlans(state, enabledFacilities, [], new Set(), supportSelectionContext);
 
   for (let index = 0; index < 3; index += 1) {
-    const nextFacilityPlans = buildFacilityPlans(state, enabledFacilities, facilityPlans.flatMap((plan) => plan.assignments));
+    const nextFacilityPlans = buildFacilityPlans(
+      state,
+      enabledFacilities,
+      facilityPlans.flatMap((plan) => plan.assignments),
+      new Set(),
+      supportSelectionContext
+    );
     if (assignmentSignature(nextFacilityPlans) === assignmentSignature(facilityPlans)) {
       facilityPlans = nextFacilityPlans;
       break;
@@ -334,13 +414,13 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
     facilityPlans = nextFacilityPlans;
   }
 
-  facilityPlans = attachRotationAlternatives(state, facilityPlans);
+  facilityPlans = attachRotationAlternativesWithContext(state, facilityPlans, supportSelectionContext);
   facilityPlans = applyMoraleDurations(state, facilityPlans);
 
   const activeAssignments = facilityPlans.flatMap((plan) => plan.assignments);
   const alternativeAssignments = facilityPlans.flatMap((plan) => plan.alternatives);
   const totalScore = facilityPlans.reduce((sum, plan) => sum + plan.score, 0);
-  const dailyValue = facilityPlans.reduce(
+  let dailyValue = facilityPlans.reduce(
     (sum, plan) => sum + plan.expectedEfficiency * productWeight(plan.facility.product, state.preference) * 24,
     0
   );
@@ -351,6 +431,25 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
     ...rotationResult.diagnostics.map((diagnostic) => diagnostic.message)
   ];
 
+  const supportResourceScenario = options.supportResourceScenario
+    ? resolveSupportResourceScenario(scenarioState, options.supportResourceScenario, rotationResult.windows)
+    : undefined;
+  if (allowSupportFallback && supportSelectionContext && supportResourceScenario && !supportResourceScenario.complete) {
+    return generateAssignmentPlanInternal(scenarioState, options, false);
+  }
+  const windowFacilityEfficiencyEvaluations = supportResourceScenario?.complete
+    ? evaluateWindowFacilityEfficiencies(state, facilityPlans, rotationResult.windows, supportResourceScenario)
+    : undefined;
+  if (windowFacilityEfficiencyEvaluations) {
+    dailyValue = windowFacilityEfficiencyEvaluations.reduce((sum, evaluation) => {
+      const facility = facilityPlans.find((plan) => plan.facility.id === evaluation.facilityId)?.facility;
+      const window = rotationResult.windows.find((candidate) => candidate.shiftId === evaluation.scheduleWindowId);
+      return facility && window
+        ? sum + evaluation.additiveEfficiency * productWeight(facility.product, state.preference) *
+          (window.endHour - window.startHour) * 24 / state.schedule.cycleHours
+        : sum;
+    }, 0);
+  }
   const plan = {
     generatedAt: new Date().toISOString(),
     totalScore,
@@ -359,7 +458,9 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
     schedule: structuredClone(state.schedule),
     rotation: rotationResult.windows,
     diagnostics: rotationResult.diagnostics,
-    warnings
+    warnings,
+    ...(supportResourceScenario ? { supportResourceScenario } : {}),
+    ...(windowFacilityEfficiencyEvaluations ? { windowFacilityEfficiencyEvaluations } : {})
   };
   const resources = evaluatePlanResources(plan);
   const planWithResources = { ...plan, resources };
@@ -369,18 +470,378 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
   };
 }
 
+function buildSupportSelectionContext(
+  state: AppState,
+  scenario: SupportResourceScenarioEvaluation,
+  scheduleSkeleton: AssignmentPlan["rotation"]
+): AssignmentEvaluationContext | undefined {
+  if (!scenario.complete || !Number.isFinite(state.schedule.cycleHours) || state.schedule.cycleHours <= 0) {
+    return undefined;
+  }
+  const windowHours = new Map(
+    scheduleSkeleton.map((window) => [window.shiftId, window.endHour - window.startHour])
+  );
+  const weightedEntries = scenario.sources.reduce<Map<string, number>>((amounts, evidence) => {
+    if (evidence.status !== "resolved") return amounts;
+    const duration = windowHours.get(evidence.source.scheduleWindowId);
+    if (duration === undefined || !Number.isFinite(duration)) return amounts;
+    const weightedAmount = evidence.source.amount * duration / state.schedule.cycleHours;
+    if (!Number.isFinite(weightedAmount)) return amounts;
+    amounts.set(
+      evidence.source.resourceKey,
+      (amounts.get(evidence.source.resourceKey) ?? 0) + weightedAmount
+    );
+    return amounts;
+  }, new Map());
+  const fixedResourceAmounts = Object.freeze(Object.fromEntries(
+    [...weightedEntries.entries()].sort(([left], [right]) => left.localeCompare(right))
+  ));
+  const fixedDormitoryOccupancy = scenario.fixedContext?.dormitoryOccupancy.status === "resolved"
+    ? scenario.fixedContext.dormitoryOccupancy.context.amount
+    : undefined;
+  const excludedOrdinaryResourceOperatorIds = new Set(
+    scenario.sources
+      .filter((evidence) => evidence.status === "resolved")
+      .map((evidence) => evidence.source.operatorId)
+      .sort()
+  );
+  const reservedFacilitySlots = maximumConcurrentAppStateSourceReservations(
+    scenario,
+    scheduleSkeleton,
+    state.schedule.cycleHours
+  );
+  return {
+    assignments: [],
+    facilities: state.facilities,
+    roster: state.roster,
+    shiftHours: optimizerShiftHours(state),
+    fixedResourceAmounts,
+    fixedDormitoryOccupancy,
+    excludedOrdinaryResourceOperatorIds,
+    reservedOperatorIds: excludedOrdinaryResourceOperatorIds,
+    reservedFacilitySlots
+  };
+}
+
+function maximumConcurrentAppStateSourceReservations(
+  scenario: SupportResourceScenarioEvaluation,
+  scheduleWindows: AssignmentPlan["rotation"],
+  cycleHours: number
+): ReadonlyMap<string, number> {
+  const windowsById = new Map(scheduleWindows.map((window) => [window.shiftId, window]));
+  const sourcesByFacility = new Map<string, Array<{ operatorId: string; startHour: number; endHour: number }>>();
+  for (const evidence of scenario.sources) {
+    if (evidence.status !== "resolved" || evidence.source.facility.backing !== "app-state") continue;
+    const window = windowsById.get(evidence.source.scheduleWindowId);
+    if (!window) continue;
+    const entries = sourcesByFacility.get(evidence.source.facility.id) ?? [];
+    entries.push(...splitCyclicHalfOpenInterval(window, cycleHours).map((segment) => ({
+      operatorId: evidence.source.operatorId,
+      ...segment
+    })));
+    sourcesByFacility.set(evidence.source.facility.id, entries);
+  }
+  return new Map(
+    [...sourcesByFacility.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([facilityId, entries]) => {
+        const boundaries = [...new Set(entries.flatMap((entry) => [entry.startHour, entry.endHour]))]
+          .sort((left, right) => left - right);
+        let maximum = 0;
+        for (let index = 0; index < boundaries.length - 1; index += 1) {
+          const midpoint = (boundaries[index] + boundaries[index + 1]) / 2;
+          maximum = Math.max(maximum, new Set(
+            entries
+              .filter((entry) => entry.startHour <= midpoint && midpoint < entry.endHour)
+              .map((entry) => entry.operatorId)
+          ).size);
+        }
+        return [facilityId, maximum] as const;
+      })
+  );
+}
+
+export function inspectExplicitFacilityTeams(
+  state: AppState,
+  input: ExplicitFacilityTeamInspectionInput
+): ExplicitFacilityTeamInspectionResult {
+  const diagnostics: ExplicitFacilityTeamDiagnostic[] = [];
+  const teamFacilities = new Set<string>();
+  const operatorPaths = new Map<string, string>();
+  const allDeclarations = [
+    ...input.teams.map((team, index) => ({ ...team, path: `teams[${index}]`, kind: "team" as const })),
+    ...(input.supportPlacements ?? []).map((placement, index) => ({
+      ...placement,
+      path: `supportPlacements[${index}]`,
+      kind: "support" as const
+    }))
+  ];
+
+  if (!Number.isFinite(input.evaluationHours) || input.evaluationHours <= 0) {
+    diagnostics.push({
+      code: "evaluation-hours-invalid",
+      path: "evaluationHours",
+      message: "Evaluation hours must be finite and positive"
+    });
+  }
+
+  for (const declaration of allDeclarations) {
+    const facility = state.facilities.find((candidate) => candidate.id === declaration.facilityId);
+    if (!facility) {
+      diagnostics.push({
+        code: "facility-not-found",
+        path: `${declaration.path}.facilityId`,
+        facilityId: declaration.facilityId,
+        message: `Facility ${declaration.facilityId} does not exist`
+      });
+    } else if (declaration.operatorIds.length > facility.slotCount) {
+      diagnostics.push({
+        code: "facility-capacity-exceeded",
+        path: `${declaration.path}.operatorIds`,
+        facilityId: declaration.facilityId,
+        message: `Facility ${declaration.facilityId} capacity ${facility.slotCount} is exceeded`
+      });
+    }
+    if (declaration.kind === "team") {
+      if (teamFacilities.has(declaration.facilityId)) {
+        diagnostics.push({
+          code: "facility-declared-more-than-once",
+          path: `${declaration.path}.facilityId`,
+          facilityId: declaration.facilityId,
+          message: `Facility ${declaration.facilityId} is declared more than once`
+        });
+      }
+      teamFacilities.add(declaration.facilityId);
+    }
+    for (const [operatorIndex, operatorId] of declaration.operatorIds.entries()) {
+      const path = `${declaration.path}.operatorIds[${operatorIndex}]`;
+      const previousPath = operatorPaths.get(operatorId);
+      if (previousPath) {
+        diagnostics.push({
+          code: "operator-assignment-conflict",
+          path,
+          facilityId: declaration.facilityId,
+          operatorId,
+          message: `Operator ${operatorId} is already assigned at ${previousPath}`
+        });
+      } else {
+        operatorPaths.set(operatorId, path);
+      }
+      const operator = operators.find((candidate) => candidate.id === operatorId);
+      if (!operator) {
+        diagnostics.push({
+          code: "operator-not-found",
+          path,
+          facilityId: declaration.facilityId,
+          operatorId,
+          message: `Operator ${operatorId} does not exist in the catalog`
+        });
+      } else if (!state.roster[operatorId]?.owned) {
+        diagnostics.push({
+          code: "operator-unowned",
+          path,
+          facilityId: declaration.facilityId,
+          operatorId,
+          message: `Operator ${operatorId} is not owned`
+        });
+      } else if (!isOperatorAvailable(operatorAvailabilitySnapshot, state.region, operatorId)) {
+        diagnostics.push({
+          code: "operator-region-unavailable",
+          path,
+          facilityId: declaration.facilityId,
+          operatorId,
+          message: `Operator ${operatorId} is unavailable in region ${state.region}`
+        });
+      }
+    }
+  }
+
+  const orderedDiagnostics = () => diagnostics.sort(
+    (left, right) => left.path.localeCompare(right.path) || left.code.localeCompare(right.code)
+  );
+  if (diagnostics.length > 0) {
+    return { status: "incomplete", diagnostics: orderedDiagnostics(), teams: [], supportAssignments: [] };
+  }
+
+  const placeholders = allDeclarations.flatMap((declaration) => declaration.operatorIds.map((operatorId) => ({
+    facilityId: declaration.facilityId,
+    operatorId,
+    skillId: "baseline",
+    score: 0,
+    efficiency: 0,
+    fatigueHours: moraleCapacity,
+    recoveryHours: input.evaluationHours / maxDormitoryRecoveryPerHour,
+    reason: "Explicit inspection context placeholder"
+  } satisfies Assignment)));
+  const baseContext: AssignmentEvaluationContext = {
+    assignments: placeholders,
+    facilities: state.facilities,
+    roster: state.roster,
+    shiftHours: input.evaluationHours,
+    fixedResourceAmounts: input.fixedResourceAmounts,
+    fixedDormitoryOccupancy: input.fixedDormitoryOccupancy,
+    excludedOrdinaryResourceOperatorIds: input.excludedOrdinaryResourceOperatorIds
+  };
+  const resolveAssignments = (
+    facilityId: string,
+    operatorIds: readonly string[],
+    path: string,
+    context: AssignmentEvaluationContext
+  ) => {
+    const facility = state.facilities.find((candidate) => candidate.id === facilityId)!;
+    const candidates = findCandidates(facility, state, 0, context);
+    return operatorIds.flatMap((operatorId, operatorIndex) => {
+      const assignment = candidates.find((candidate) => candidate.operatorId === operatorId);
+      if (assignment) return [assignment];
+      diagnostics.push({
+        code: "operator-facility-ineligible",
+        path: `${path}.operatorIds[${operatorIndex}]`,
+        facilityId,
+        operatorId,
+        message: `Operator ${operatorId} has no ordinary eligible candidate for ${facilityId}`
+      });
+      return [];
+    });
+  };
+
+  const rawTeams = input.teams.map((team, index) => ({
+    facility: state.facilities.find((candidate) => candidate.id === team.facilityId)!,
+    assignments: resolveAssignments(team.facilityId, team.operatorIds, `teams[${index}]`, baseContext)
+  }));
+  if (diagnostics.length > 0) {
+    return { status: "incomplete", diagnostics: orderedDiagnostics(), teams: [], supportAssignments: [] };
+  }
+  const rawTeamAssignments = rawTeams.flatMap((team) => team.assignments);
+  const supportContext = { ...baseContext, assignments: [...rawTeamAssignments, ...placeholders] };
+  const rawSupportGroups = (input.supportPlacements ?? []).map((placement, index) => ({
+    facility: state.facilities.find((candidate) => candidate.id === placement.facilityId)!,
+    assignments: resolveAssignments(
+      placement.facilityId,
+      placement.operatorIds,
+      `supportPlacements[${index}]`,
+      supportContext
+    )
+  }));
+  if (diagnostics.length > 0) {
+    return { status: "incomplete", diagnostics: orderedDiagnostics(), teams: [], supportAssignments: [] };
+  }
+  const allRawSupport = rawSupportGroups.flatMap((group) => group.assignments);
+  const combinedContext = { ...baseContext, assignments: [...allRawSupport, ...rawTeamAssignments] };
+  const supportAssignments = rawSupportGroups.flatMap(({ facility, assignments }) =>
+    reevaluateFacilityTeam(assignments, facility, state, combinedContext)
+  ).sort((left, right) =>
+    left.facilityId.localeCompare(right.facilityId) || left.operatorId.localeCompare(right.operatorId)
+  );
+  const finalContext = { ...baseContext, assignments: [...supportAssignments, ...rawTeamAssignments] };
+  const teams = rawTeams.map(({ facility, assignments }) => {
+    const reevaluated = reevaluateFacilityTeam(assignments, facility, state, finalContext);
+    const facilityBonus = calculateGlobalBonus(state, facility, finalContext) +
+      calculateRemoteFacilityEfficiencyBonus(facility, finalContext);
+    return {
+      facilityId: facility.id,
+      assignments: reevaluated,
+      expectedEfficiency: effectiveFacilityEfficiency(reevaluated, facilityBonus)
+    };
+  });
+  return { status: "complete", diagnostics: [], teams, supportAssignments };
+}
+
+function evaluateWindowFacilityEfficiencies(
+  state: AppState,
+  facilityPlans: readonly FacilityPlan[],
+  rotation: readonly AssignmentPlan["rotation"][number][],
+  scenario: SupportResourceScenarioEvaluation
+): WindowFacilityEfficiencyEvaluation[] {
+  const fixedDormitoryOccupancy = scenario.fixedContext?.dormitoryOccupancy.status === "resolved"
+    ? scenario.fixedContext.dormitoryOccupancy.context.amount
+    : undefined;
+  const reservedOperatorIds = new Set(
+    scenario.sources
+      .filter((evidence) => evidence.status === "resolved")
+      .map((evidence) => evidence.source.operatorId)
+  );
+  const reservedFacilitySlots = maximumConcurrentAppStateSourceReservations(
+    scenario,
+    [...rotation],
+    state.schedule.cycleHours
+  );
+
+  return rotation.flatMap((window) => {
+    const windowSources = scenario.sources.filter(
+      (evidence) => evidence.status === "resolved" && evidence.source.scheduleWindowId === window.shiftId
+    );
+    const fixedResourceAmounts = windowSources.reduce<Record<string, number>>((amounts, evidence) => {
+      amounts[evidence.source.resourceKey] =
+        (amounts[evidence.source.resourceKey] ?? 0) + evidence.source.amount;
+      return amounts;
+    }, {});
+    const excludedOrdinaryResourceOperatorIds = new Set(
+      windowSources.map((evidence) => evidence.source.operatorId)
+    );
+    const implicitDormitoryAssignments = implicitDormitoryResourceAssignments(
+      state,
+      window.assignments,
+      reservedOperatorIds,
+      reservedFacilitySlots
+    );
+    const context: AssignmentEvaluationContext = {
+      assignments: [...window.assignments, ...implicitDormitoryAssignments],
+      facilities: state.facilities,
+      roster: state.roster,
+      shiftHours: window.endHour - window.startHour,
+      fixedResourceAmounts,
+      fixedDormitoryOccupancy,
+      excludedOrdinaryResourceOperatorIds
+    };
+
+    return [...facilityPlans]
+      .sort((left, right) => left.facility.id.localeCompare(right.facility.id))
+      .map((plan) => {
+        const selectedAssignments = window.assignments.filter(
+          (assignment) => assignment.facilityId === plan.facility.id
+        );
+        const reevaluatedAssignments = reevaluateFacilityTeam(
+          selectedAssignments,
+          plan.facility,
+          state,
+          context
+        );
+        const facilityBonus =
+          calculateGlobalBonus(state, plan.facility, context) +
+          calculateRemoteFacilityEfficiencyBonus(plan.facility, context);
+        return {
+          scheduleWindowId: window.shiftId,
+          facilityId: plan.facility.id,
+          additiveEfficiency: effectiveFacilityEfficiency(reevaluatedAssignments, facilityBonus),
+          provenance: "optimizer-normal-team-reevaluation-with-resolved-support-context" as const,
+          fixedResourceAmounts: Object.freeze({ ...fixedResourceAmounts }),
+          ...(fixedDormitoryOccupancy === undefined ? {} : { fixedDormitoryOccupancy })
+        };
+      });
+  });
+}
+
 function buildFacilityPlans(
   state: AppState,
   enabledFacilities: FacilitySlot[],
   contextAssignments: Assignment[],
-  excludedOperatorIds: ReadonlySet<string> = new Set()
+  excludedOperatorIds: ReadonlySet<string> = new Set(),
+  selectionContext?: AssignmentEvaluationContext
 ): FacilityPlan[] {
-  const dormitoryResourceAssignments = implicitDormitoryResourceAssignments(state, contextAssignments);
+  const reservedOperatorIds = selectionContext?.reservedOperatorIds ?? new Set<string>();
+  const dormitoryResourceAssignments = implicitDormitoryResourceAssignments(
+    state,
+    contextAssignments,
+    reservedOperatorIds,
+    selectionContext?.reservedFacilitySlots
+  );
   const unavailableOperatorIds = new Set([
     ...excludedOperatorIds,
+    ...reservedOperatorIds,
     ...dormitoryResourceAssignments.map((assignment) => assignment.operatorId)
   ]);
   const context: AssignmentEvaluationContext = {
+    ...selectionContext,
     assignments: [...contextAssignments, ...dormitoryResourceAssignments],
     facilities: state.facilities,
     roster: state.roster,
@@ -395,7 +856,10 @@ function buildFacilityPlans(
       const candidates = findCandidates(facility, state, 0, context)
         .filter((candidate) => !unavailableOperatorIds.has(candidate.operatorId))
         .sort((a, b) => b.score - a.score);
-      const teamOptions = buildFacilityTeamOptions(candidates, facility.slotCount)
+      const teamOptions = buildFacilityTeamOptions(
+        candidates,
+        availableOrdinaryFacilitySlots(facility, selectionContext)
+      )
         .map((assignments) => reevaluateFacilityTeam(assignments, facility, state, context))
         .sort(
           (a, b) =>
@@ -479,7 +943,12 @@ function buildFacilityPlans(
   );
 }
 
-function implicitDormitoryResourceAssignments(state: AppState, contextAssignments: Assignment[]) {
+function implicitDormitoryResourceAssignments(
+  state: AppState,
+  contextAssignments: Assignment[],
+  reservedOperatorIds: ReadonlySet<string> = new Set(),
+  reservedFacilitySlots: ReadonlyMap<string, number> = new Map()
+) {
   const dormitories = state.facilities.filter((facility) => facility.type === "dormitory");
   if (!dormitories.length) {
     return [];
@@ -489,7 +958,7 @@ function implicitDormitoryResourceAssignments(state: AppState, contextAssignment
   const producers = operators
     .flatMap((operator) => {
       const rosterEntry = state.roster[operator.id];
-      if (!rosterEntry?.owned || assignedOperatorIds.has(operator.id)) {
+      if (!rosterEntry?.owned || assignedOperatorIds.has(operator.id) || reservedOperatorIds.has(operator.id)) {
         return [];
       }
 
@@ -514,7 +983,10 @@ function implicitDormitoryResourceAssignments(state: AppState, contextAssignment
     const occupiedSlots = contextAssignments.filter(
       (assignment) => assignment.facilityId === dormitory.id && !assignment.doesNotConsumeFacilitySlot
     ).length;
-    const availableSlots = Math.max(dormitory.slotCount - occupiedSlots, 0);
+    const availableSlots = Math.max(
+      dormitory.slotCount - (reservedFacilitySlots.get(dormitory.id) ?? 0) - occupiedSlots,
+      0
+    );
     for (let slot = 0; slot < availableSlots && producerIndex < producers.length; slot += 1) {
       const producer = producers[producerIndex++];
       assignments.push({
@@ -549,7 +1021,8 @@ function fillVacantFacilitySlots(
       .sort((a, b) => a.facility.id.localeCompare(b.facility.id))
       .map((plan) => {
         const assignments = [...plan.assignments];
-        if (facilitySlotOccupancy(assignments) >= plan.facility.slotCount) {
+        const availableSlots = availableOrdinaryFacilitySlots(plan.facility, context);
+        if (facilitySlotOccupancy(assignments) >= availableSlots) {
           return [plan.facility.id, plan] as const;
         }
         const globalStackKeys = new Set(assignments.flatMap((assignment) => assignmentGlobalStackKeys(assignment)));
@@ -571,7 +1044,7 @@ function fillVacantFacilitySlots(
         );
 
         for (const operator of fillerOperators) {
-          if (facilitySlotOccupancy(assignments) >= plan.facility.slotCount) {
+          if (facilitySlotOccupancy(assignments) >= availableSlots) {
             break;
           }
           if (!state.roster[operator.id]?.owned || usedOperatorIds.has(operator.id)) {
@@ -595,6 +1068,13 @@ function fillVacantFacilitySlots(
   );
 
   return facilityPlans.map((plan) => filledPlansByFacilityId.get(plan.facility.id) ?? plan);
+}
+
+function availableOrdinaryFacilitySlots(
+  facility: FacilitySlot,
+  context?: Pick<AssignmentEvaluationContext, "reservedFacilitySlots">
+) {
+  return Math.max(facility.slotCount - (context?.reservedFacilitySlots?.get(facility.id) ?? 0), 0);
 }
 
 function fillerSkillScore(assignment: Assignment | undefined) {
@@ -690,13 +1170,33 @@ function assignmentStateSignature(state: { plans: FacilityPlan[] }) {
 }
 
 export function attachRotationAlternatives(state: AppState, facilityPlans: FacilityPlan[]): FacilityPlan[] {
+  return attachRotationAlternativesWithContext(state, facilityPlans);
+}
+
+function attachRotationAlternativesWithContext(
+  state: AppState,
+  facilityPlans: FacilityPlan[],
+  selectionContext?: AssignmentEvaluationContext
+): FacilityPlan[] {
   const firstRotationOperatorIds = new Set(facilityPlans.flatMap((plan) => plan.assignments.map((assignment) => assignment.operatorId)));
-  let plansWithAlternatives = buildAlternativeFacilityPlans(state, facilityPlans, firstRotationOperatorIds, []);
+  let plansWithAlternatives = buildAlternativeFacilityPlans(
+    state,
+    facilityPlans,
+    firstRotationOperatorIds,
+    [],
+    selectionContext
+  );
 
   for (let index = 0; index < 3; index += 1) {
     const previousSignature = alternativeAssignmentSignature(plansWithAlternatives);
     const contextAssignments = plansWithAlternatives.flatMap((plan) => plan.alternatives);
-    const nextPlans = buildAlternativeFacilityPlans(state, facilityPlans, firstRotationOperatorIds, contextAssignments);
+    const nextPlans = buildAlternativeFacilityPlans(
+      state,
+      facilityPlans,
+      firstRotationOperatorIds,
+      contextAssignments,
+      selectionContext
+    );
     plansWithAlternatives = nextPlans;
     if (alternativeAssignmentSignature(nextPlans) === previousSignature) {
       break;
@@ -704,6 +1204,7 @@ export function attachRotationAlternatives(state: AppState, facilityPlans: Facil
   }
 
   const alternativeContext: AssignmentEvaluationContext = {
+    ...selectionContext,
     assignments: plansWithAlternatives.flatMap((plan) => plan.alternatives),
     facilities: state.facilities,
     roster: state.roster,
@@ -724,13 +1225,15 @@ function buildAlternativeFacilityPlans(
   state: AppState,
   facilityPlans: FacilityPlan[],
   firstRotationOperatorIds: Set<string>,
-  contextAssignments: Assignment[]
+  contextAssignments: Assignment[],
+  selectionContext?: AssignmentEvaluationContext
 ) {
   const alternativePlans = buildFacilityPlans(
     state,
     facilityPlans.map((plan) => plan.facility),
     contextAssignments,
-    firstRotationOperatorIds
+    firstRotationOperatorIds,
+    selectionContext
   );
   const alternativesByFacilityId = new Map(
     alternativePlans.map((plan) => [plan.facility.id, plan.assignments])
@@ -1011,7 +1514,10 @@ export function findCandidates(
     assignments: context?.assignments ?? [],
     facilities: context?.facilities ?? state.facilities,
     roster: context?.roster ?? state.roster,
-    shiftHours: context?.shiftHours ?? optimizerShiftHours(state)
+    shiftHours: context?.shiftHours ?? optimizerShiftHours(state),
+    fixedResourceAmounts: context?.fixedResourceAmounts,
+    fixedDormitoryOccupancy: context?.fixedDormitoryOccupancy,
+    excludedOrdinaryResourceOperatorIds: context?.excludedOrdinaryResourceOperatorIds
   };
 
   return operators
@@ -1800,31 +2306,6 @@ function aggregateOperatorAssignments(
   };
 }
 
-export function activeBaseSkills(operator: Operator, elite: number, level: number): BaseSkill[] {
-  const clampedElite = clampEliteForOperator(operator, elite);
-  const normalizedLevel = Number.isFinite(level) ? Math.max(1, Math.trunc(level)) : 1;
-  const activeBySlot = new Map<number, BaseSkill>();
-
-  for (const skill of operator.skills) {
-    const phaseUnlocked = skill.unlockPhase < clampedElite;
-    const levelUnlocked = skill.unlockPhase === clampedElite && skill.unlockLevel <= normalizedLevel;
-    if (!phaseUnlocked && !levelUnlocked) {
-      continue;
-    }
-
-    const selected = activeBySlot.get(skill.slot);
-    if (
-      !selected ||
-      skill.unlockPhase > selected.unlockPhase ||
-      (skill.unlockPhase === selected.unlockPhase && skill.unlockLevel > selected.unlockLevel)
-    ) {
-      activeBySlot.set(skill.slot, skill);
-    }
-  }
-
-  return [...activeBySlot.values()].sort((a, b) => a.slot - b.slot);
-}
-
 function activeFacilityLimit(
   operator: Operator,
   elite: number,
@@ -2110,7 +2591,7 @@ function effectScalingMultiplier(
   }
 
   if (effect.scaling.type === "facilityLevel") {
-    const level = maxFacilityLevelByType[effect.scaling.facility ?? facility.type];
+    const level = modeledFacilityLevel(effect.scaling.facility ?? facility.type);
     return effect.scaling.max ? Math.min(level, effect.scaling.max) : level;
   }
 
@@ -2620,12 +3101,16 @@ function resourceAmount(
   }
 
   const baseResource =
-    resource === "goldProductionLine"
+    (context.fixedResourceAmounts?.[resource] ?? 0) +
+    (resource === "goldProductionLine"
       ? context.facilities.filter((facility) => facility.type === "factory" && facility.product === "gold").length
-      : 0;
+      : 0);
 
   const assignedResource = context.assignments.reduce((sum, assignment) => {
     if (candidateOperator && assignment.operatorId === candidateOperator.id) {
+      return sum;
+    }
+    if (context.excludedOrdinaryResourceOperatorIds?.has(assignment.operatorId)) {
       return sum;
     }
     const operator = operators.find((candidate) => candidate.id === assignment.operatorId);
@@ -2638,7 +3123,9 @@ function resourceAmount(
   }, 0);
 
   const candidateResource =
-    candidateOperator && candidateFacility
+    candidateOperator &&
+    candidateFacility &&
+    !context.excludedOrdinaryResourceOperatorIds?.has(candidateOperator.id)
       ? resourceAmountFromOperator(resource, candidateOperator, candidateFacility, context, candidateFacility)
       : 0;
 
@@ -2704,7 +3191,7 @@ function resourceEffectMultiplier(
     return resourceEffect.scaling.max ? Math.min(count, resourceEffect.scaling.max) : count;
   }
   if (resourceEffect.scaling.type === "facilityLevel") {
-    const level = maxFacilityLevelByType[resourceEffect.scaling.facility ?? facility.type];
+    const level = modeledFacilityLevel(resourceEffect.scaling.facility ?? facility.type);
     return resourceEffect.scaling.max ? Math.min(level, resourceEffect.scaling.max) : level;
   }
   if (resourceEffect.scaling.type === "facilityProductCount") {
@@ -2717,7 +3204,7 @@ function resourceEffectMultiplier(
     return resourceEffect.scaling.max ? Math.min(scaled, resourceEffect.scaling.max) : scaled;
   }
   if (resourceEffect.scaling.type === "dormitoryOccupancy") {
-    const count = context.assignments.filter((assignment) => {
+    const count = context.fixedDormitoryOccupancy ?? context.assignments.filter((assignment) => {
       const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
       return (
         assignedFacility?.type === "dormitory" &&

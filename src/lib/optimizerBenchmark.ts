@@ -2,7 +2,7 @@ import operatorsData from "../data/operators.json";
 import { operatorAvailabilitySnapshot } from "./operatorAvailability";
 import { calculateCanonicalSha256 } from "./phase1AssumptionBundle";
 import { scheduleEpsilonHours, validateSchedule } from "./schedule";
-import type { ScheduleState } from "../types";
+import type { ScheduleState, SupportResourceScenarioInput } from "../types";
 
 const PASS_FAIL_AUTHORITY_SHA256_BY_ID: Readonly<Record<string, string>> = {
   "jp-wikiru-backup38-12h-v2": "a9f1f69b2bceff6896cc2bdcfaa61b88d648548fb21729a9a3ec19afae96f8b5"
@@ -108,6 +108,7 @@ export interface BenchmarkEquivalentComposition {
 }
 
 export interface BenchmarkRemoteSupport {
+  facilityId?: string;
   operatorIds?: string[];
   unresolved?: Array<{ sourceName: string; reason: string }>;
   notes: string[];
@@ -248,6 +249,7 @@ export interface ResourceOutputBenchmark extends BenchmarkBase {
     equivalentCompositions?: BenchmarkEquivalentComposition[];
   };
   compositionEvidence?: BenchmarkCompositionEvidence;
+  supportResourceScenario?: SupportResourceScenarioInput;
 }
 
 export type OptimizerBenchmark = FormulaBenchmark | ResourceOutputBenchmark;
@@ -1290,6 +1292,103 @@ function validateStringArray(value: unknown, path: string, errors: string[]): va
   return true;
 }
 
+function validateRequiredTextArray(value: unknown, path: string, errors: string[]): void {
+  if (!Array.isArray(value) || value.length === 0 || !value.every(isNonEmptyString)) {
+    errors.push(`${path} must contain at least one non-empty string`);
+  }
+}
+
+function validateProvenance(value: unknown, path: string, errors: string[]): void {
+  if (!isRecord(value)) {
+    errors.push(`${path} must be an object`);
+    return;
+  }
+  if (!isNonEmptyString(value.source)) errors.push(`${path}.source must be a non-empty string`);
+  if (!isNonEmptyString(value.detail)) errors.push(`${path}.detail must be a non-empty string`);
+}
+
+function validateSupportResourceScenario(
+  value: unknown,
+  region: "JP" | "CN" | undefined,
+  shiftIds: ReadonlySet<string>,
+  errors: string[]
+): void {
+  const root = "supportResourceScenario";
+  if (!isRecord(value)) {
+    errors.push(`${root} must be an object when present`);
+    return;
+  }
+  if (!Array.isArray(value.sources) || value.sources.length === 0) {
+    errors.push(`${root}.sources must contain at least one source`);
+  } else {
+    const sourceIds = new Set<string>();
+    value.sources.forEach((source, index) => {
+      const path = `${root}.sources[${index}]`;
+      if (!isRecord(source)) {
+        errors.push(`${path} must be an object`);
+        return;
+      }
+      if (!isNonEmptyString(source.id)) {
+        errors.push(`${path}.id must be a non-empty string`);
+      } else if (sourceIds.has(source.id)) {
+        errors.push(`${path}.id must be unique`);
+      } else {
+        sourceIds.add(source.id);
+      }
+      if (!isNonEmptyString(source.scheduleWindowId) || !shiftIds.has(source.scheduleWindowId)) {
+        errors.push(`${path}.scheduleWindowId must name a fixture schedule window`);
+      }
+      if (source.region !== region) errors.push(`${path}.region must equal fixture region ${region}`);
+      if (!isNonEmptyString(source.operatorId)) errors.push(`${path}.operatorId must be a non-empty string`);
+      if (!isNonEmptyString(source.resourceKey)) errors.push(`${path}.resourceKey must be a non-empty string`);
+      if (typeof source.amount !== "number" || !Number.isFinite(source.amount) || source.amount < 0) {
+        errors.push(`${path}.amount must be a finite non-negative number`);
+      }
+      validateProvenance(source.provenance, `${path}.provenance`, errors);
+      validateRequiredTextArray(source.assumptions, `${path}.assumptions`, errors);
+      validateRequiredTextArray(source.simplifications, `${path}.simplifications`, errors);
+
+      if (!isRecord(source.facility)) {
+        errors.push(`${path}.facility must be an object`);
+        return;
+      }
+      const facility = source.facility;
+      if (!isNonEmptyString(facility.id)) errors.push(`${path}.facility.id must be a non-empty string`);
+      if (!isNonEmptyString(facility.type)) errors.push(`${path}.facility.type must be a non-empty string`);
+      for (const key of ["level", "slot", "capacity"] as const) {
+        if (typeof facility[key] !== "number" || !Number.isInteger(facility[key]) || facility[key] <= 0) {
+          errors.push(`${path}.facility.${key} must be a positive integer`);
+        }
+      }
+      if (facility.backing !== "app-state" && facility.backing !== "fixed-normalized-theoretical") {
+        errors.push(`${path}.facility.backing is invalid`);
+      }
+      if (facility.backing === "fixed-normalized-theoretical") {
+        validateProvenance(facility.provenance, `${path}.facility.provenance`, errors);
+        validateRequiredTextArray(facility.assumptions, `${path}.facility.assumptions`, errors);
+        validateRequiredTextArray(facility.simplifications, `${path}.facility.simplifications`, errors);
+      }
+    });
+  }
+
+  if (!isRecord(value.fixedContext) || !isRecord(value.fixedContext.dormitoryOccupancy)) {
+    errors.push(`${root}.fixedContext.dormitoryOccupancy must be present`);
+    return;
+  }
+  const context = value.fixedContext.dormitoryOccupancy;
+  const contextPath = `${root}.fixedContext.dormitoryOccupancy`;
+  if (context.backing !== "fixed-normalized-theoretical") {
+    errors.push(`${contextPath}.backing must be fixed-normalized-theoretical`);
+  }
+  if (typeof context.amount !== "number" || !Number.isFinite(context.amount) ||
+    !Number.isInteger(context.amount) || context.amount < 0) {
+    errors.push(`${contextPath}.amount must be a finite non-negative integer`);
+  }
+  validateProvenance(context.provenance, `${contextPath}.provenance`, errors);
+  validateRequiredTextArray(context.assumptions, `${contextPath}.assumptions`, errors);
+  validateRequiredTextArray(context.simplifications, `${contextPath}.simplifications`, errors);
+}
+
 function validateCompositionEvidence(value: unknown, shiftIds: Set<string>, errors: string[]): Set<string> {
   const declaredSourceOnlyIds = new Set<string>();
   if (value === undefined) return declaredSourceOnlyIds;
@@ -1508,6 +1607,9 @@ function validateResourceBenchmark(benchmark: Record<string, unknown>, errors: s
               if (assignment.remoteSupport.operatorIds !== undefined) {
                 validateStringArray(assignment.remoteSupport.operatorIds, `${supportPath}.operatorIds`, errors);
               }
+              if (assignment.remoteSupport.facilityId !== undefined && !isNonEmptyString(assignment.remoteSupport.facilityId)) {
+                errors.push(`${supportPath}.facilityId must be a non-empty string when present`);
+              }
               if (assignment.remoteSupport.unresolved !== undefined &&
                 (!Array.isArray(assignment.remoteSupport.unresolved) || assignment.remoteSupport.unresolved.length === 0 ||
                   !assignment.remoteSupport.unresolved.every((item) => isRecord(item) && isNonEmptyString(item.sourceName) && isNonEmptyString(item.reason)))) {
@@ -1533,6 +1635,14 @@ function validateResourceBenchmark(benchmark: Record<string, unknown>, errors: s
     }
 
     const declaredSourceOnlyIds = validateCompositionEvidence(benchmark.compositionEvidence, shiftIds, errors);
+    if (benchmark.supportResourceScenario !== undefined) {
+      validateSupportResourceScenario(
+        benchmark.supportResourceScenario,
+        benchmark.region === "JP" || benchmark.region === "CN" ? benchmark.region : undefined,
+        shiftIds,
+        errors
+      );
+    }
     for (const [shiftIndex, shift] of scheduleOrRotation.shifts.entries()) {
       if (!isRecord(shift) || !isRecord(shift.assignments)) continue;
       for (const [facilityId, assignment] of Object.entries(shift.assignments)) {

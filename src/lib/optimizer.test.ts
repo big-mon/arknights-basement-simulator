@@ -1259,6 +1259,45 @@ describe("optimizer", () => {
     expect(withSenshi.efficiency - baseMarcille.efficiency).toBeCloseTo(0.05);
   });
 
+  it("scales a normal factory candidate from fixed Perception Information without operator-specific branches", () => {
+    const state = createDefaultState();
+    ownOperators(state, [rosmontis.id]);
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const efficiencyWith = (perceptionInfo: number) =>
+      findCandidates(factory, state, 0, {
+        facilities: state.facilities,
+        assignments: [],
+        fixedResourceAmounts: { perceptionInfo }
+      }).find((assignment) => assignment.operatorId === rosmontis.id)!.efficiency;
+    const baseEfficiency = efficiencyWith(0);
+
+    expect(efficiencyWith(20) - baseEfficiency).toBeCloseTo(0.2);
+    expect(efficiencyWith(10) - baseEfficiency).toBeCloseTo(0.1);
+  });
+
+  it("uses fixed dormitory occupancy for normal resource scaling while omission derives from assignments", () => {
+    const state = createDefaultState();
+    ownOperators(state, [rosmontis.id, fang.id]);
+    const factory = state.facilities.find((facility) => facility.id === "factory-1")!;
+    const dormitory = state.facilities.find((facility) => facility.id === "dormitory-1")!;
+    const candidateEfficiency = (context: Parameters<typeof findCandidates>[3]) =>
+      findCandidates(factory, state, 0, context).find(
+        (assignment) => assignment.operatorId === rosmontis.id
+      )!.efficiency;
+    const assignmentDerived = candidateEfficiency({
+      facilities: state.facilities,
+      assignments: [contextAssignment(dormitory, fang.id)]
+    });
+    const fixed = candidateEfficiency({
+      facilities: state.facilities,
+      assignments: [contextAssignment(dormitory, fang.id)],
+      fixedDormitoryOccupancy: 20
+    });
+
+    expect(assignmentDerived).toBeCloseTo(0.01);
+    expect(fixed).toBeCloseTo(0.2);
+  });
+
   it("separates Chain of Thought from Soundless Resonance using actual dormitory occupancy", () => {
     const state = createDefaultState();
     ownOperators(state, [rosmontis.id, ebenholz.id, virtuosa.id, dusk.id, fang.id]);
