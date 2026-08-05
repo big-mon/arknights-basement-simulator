@@ -9,6 +9,7 @@
 - 主対象地域: 日本版（JP現行版）
 - 副対象地域: 中国版（CN最新版）
 - 実装チケット: 本仕様の承認後、別工程 `to-tickets` で作成する
+- 補足仕様: `optimizer-normalized-theoretical-scenarios.md`。本書がPhase 1のauthorityであり、補足仕様は本書を置換しない。評価窓、schedule、資源台帳、持続性、confidence、出典固定、地域gate、hardcode禁止が食い違う場合は本書を優先する
 
 ## 2. 背景
 
@@ -43,6 +44,8 @@ Phase 1では次を実装しない。
 - 計算根拠、出典、信頼度を結果画面へ表示するUI
 - 全施設を独立した成果指標として最適化する機能
 - 外部Wikiをテスト実行時に取得するオンラインテスト
+- ゲーム内操作遅延、在庫停止、全支援施設の連続morale推移を含む完全な実ゲーム再現
+- Phase 1の完了条件としてゲーム内24時間ログとの一致を要求すること
 - デプロイ、公開、Git commit、push、Pull Request作成、merge
 
 ただし、製造所・貿易所の出力へ影響する制御中枢、発電所、宿舎、応接室などの配置・スキルは、必要な範囲で計算対象に含める。
@@ -97,6 +100,14 @@ Phase 1では次を実装しない。
 
 実機内の連続消費、宿舎回復、瞬時の体力交換を、勤務枠ごとの符号付き体力変化量へ正規化した値。Phase 1では実機イベント列ではなく、始端・終端体力、上下限、枠間連続性、同時配置制約、周期閉包を検証する。
 
+### 5.13 Normalized-theoretical benchmark
+
+ゲーム内在庫の実測値ではなく、固定した施設、schedule、支援資源、除外事項のもとで算出する理論比較ケース。本仕様では、順序付き36時間全循環の先頭2勤務枠を具体的な連続24時間評価窓として評価することを意味する。36時間全循環の自然生産平均を24時間へ換算することは意味せず、その値を先頭24時間の実値として扱ってはならない。
+
+### 5.14 Support-resource scenario
+
+通常optimizerへ任意で渡す、勤務枠別の固定支援resource入力。source operatorの所有、地域利用可能性、施設slot、同時operator競合は通常制約として厳密に検証する。勤務枠内のmorale閾値や回復を固定化した場合、その簡略化をfixture、固定provenance、仮定bundleへ記録する。解決不能なsourceを0として扱わず、typed diagnosticを返し、不完全なbenchmarkを合格させない。
+
 ## 6. Phase 1の固定条件
 
 ### 6.1 基地構成
@@ -142,8 +153,23 @@ Phase 1では次を実装しない。
 - 例外がモデル上成立する場合は、外部根拠または固定したプロジェクト仮定と、体力状態遷移を基準ケースへ明記する
 - 勤務消費、通常回復、体力交換は、勤務枠ごとの符号付き等価体力差分へ正規化する
 - 各オペレーターの始端・終端体力、同時配置、上下限、枠間連続性、全循環終端の閉包を機械検証する
+- `normalized-theoretical`ケースでも36時間canonical cycleと全3勤務枠を保持し、資源台帳の24時間値は先頭2勤務枠だけから算出する
 
-### 6.4 ドローン
+### 6.4 固定support-resource scenario
+
+- 完全な支援施設simulationがPhase 1に対して過剰な場合、複雑なresourceをwindow内一定として固定できる
+- 固定sourceはoperator ID、地域、施設、slot、active window、resource、amount、provenanceを持つ
+- source operatorは所有・地域・同時配置制約を満たし、実slotを予約する
+- 固定sourceと寄与量は、固定した一次skill dataまたは許可されたプロジェクト仮定から導出し、仮定を使う場合は`assumptionBundle.allowedAssumptionIds`に含める
+- expected outputやreference team IDから固定resource量を逆算してproduction scoreへ渡してはならない
+- operator名、fixture ID、reference compositionを分岐条件としてproduction scoreへhardcodeしてはならない
+- 固定寄与はscoring contextとplanの資源台帳・evidenceへexactly once記録し、二重計上しない
+- 未所持、地域未実装、slot不足、同時再利用、provenance不備はtyped diagnosticとしてfail closedにする
+- 通常Appでscenarioが未指定の場合、既存動作を変更しない。Phase 1ではscenario設定UIを追加しない
+- Wikiru caseの勤務枠対応は本書6.3をauthorityとし、`groups-a-b`はproduction group C非稼働、`groups-b-c`は知覚情報20、`groups-c-a`は知覚情報10とする。補足仕様の例が異なる勤務枠へ対応付けている場合、その例を採用しない
+- 補足仕様は一般的なscenario input、source予約、diagnostic、evidenceの契約だけを補足し、本書の評価窓、全循環、資源台帳、持続性、confidenceおよび仮定許可範囲を変更しない
+
+### 6.5 ドローン
 
 - Phase 1では、各勤務枠で使用可能な全ドローンをその勤務枠の貿易所1へ固定投入する
 - 24時間に利用可能なドローン量は、発電所構成、発電所スキル、初期値の前提から算出する
@@ -225,11 +251,30 @@ Wikiru backup 38の固定編成について、一次根拠だけでは数量化�
 6. UI・計算で未対応効果を0として扱う場合は、未対応であることを警告可能な状態にする
 7. 上記3領域の欠落だけは、固定済みプロジェクト仮定により`corroborated`な合否基準へ昇格できる
 
+実ゲーム実測がないことだけを理由に、再現可能なnormalized-theoretical caseを`disputed`とする必要はない。一次skill data、公開schedule、固定scenario assumptionから独立再計算でき、除外事項と許容差が明記されている場合は`corroborated`とできる。ただし実ゲーム実測値と称してはならない。
+
+normalized-theoretical caseを`corroborated`にできるのは、8.1で許可した3領域の補完に限る。support-resource scenarioは新しい根拠階層ではなく、一次skill dataまたは許可済みプロジェクト仮定を勤務枠へ渡す入力契約である。可変URL、外部集計値、期待編成、期待出力をscenarioのauthorityとしてproduction計算へ注入してはならない。
+
 ### 8.3 版管理する基準データ
 
 各基準ケースは、最低限次を保持する。
 
 ```ts
+type SupportResourceScenario = {
+  id: string;
+  sources: Array<{
+    sourceOperatorId: string;
+    region: "JP" | "CN";
+    facilityId: string;
+    slot: number;
+    activeShiftIds: string[];
+    resource: string;
+    amount: number;
+    provenanceSourceIndexes: number[];
+    assumptionId?: string;
+  }>;
+};
+
 type OptimizerBenchmark = {
   id: string;
   region: "JP" | "CN";
@@ -253,6 +298,7 @@ type OptimizerBenchmark = {
   }>;
   assumptions: {
     layout: "243";
+    validationTarget?: "normalized-theoretical" | "gameplay-observation";
     evaluationWindowHours: 24;
     evaluationWindowStart:
       | { mode: "absolute"; timestamp: string; sourceIndex: number }
@@ -271,6 +317,7 @@ type OptimizerBenchmark = {
       contentSha256: string;
       allowedAssumptionIds: string[];
     };
+    supportResourceScenario?: SupportResourceScenario;
   };
   roster: {
     mode: "all-unlocked" | "explicit";
@@ -343,6 +390,14 @@ type OptimizerBenchmark = {
 - 他オペレーターの効率を無効化または変換する効果
 - 同種効果の重複不可・高い方のみ適用するルール
 
+JP factoryのsource-backed mechanicsは次を満たす。
+
+- automation系の抑制は通常の同室製造効率を無効化する一方、skill原文が保証する施設数由来の製造効率は抑制後も有効とし、免除対象の寄与だけを分離して合成する
+- Purestream、Weedy、EunectesとGreyy the Lightningbearerの発電所支援は、243の固定施設数と通常のremote effect経路から`+140%`を再現する
+- Metalworkはoperator名ではなく版固定したskill-family metadataで表現し、Bryophyta、Gravel、Thorns the Lodestarの製造組とVivianaのsource-backed Knight条件は、通常のfamily scalingとremote effect経路から`+123%`を再現する
+- Vivianaの対象判定を含む所属・family metadataは版固定した一次skill dataまたは明示overrideをauthorityとし、表示名、fixture ID、期待値による特例分岐を置かない
+- これらの計算/data修正はsupport-resource scenarioやcomposition searchから独立して検証し、scenario入力を使って欠落metadataや誤った通常計算を補正しない
+
 ### 9.4 時間変化
 
 - 時間経過で上昇・低下するスキルは、固定した連続期待値式または勤務枠単位の等価値で評価する
@@ -405,6 +460,10 @@ type OptimizerBenchmark = {
 
 provenance比較は、固定した参照根拠・一次データ・仮定bundleの不一致を診断する補助シームとする。独立再現スクリプトの保存済み出力とのbyteまたは数値一致を第2の証拠シームとする。実optimizer出力との数値比較は後続の精度ゲートで扱い、本境界では内部ヘルパーの実装詳細ではなく、基準ケースの受理・拒否・診断結果を検証する。
 
+JP factory prerequisite seamでは、通常のcandidate/team計算境界でPurestream・Weedy・EunectesとGreyy the Lightningbearerの`+140%`、automation抑制下の施設数寄与、Bryophyta・Gravel・Thorns the LodestarとVivianaの`+123%`、Metalwork familyおよびKnight metadataをexactに検証する。operator名・fixture IDの特例を許さない。
+
+support-resource scenario seamでは、scenarioあり・なしの両方を通常optimizer経路へ通し、勤務枠限定activation、source operatorとfacility slotの予約、所有・地域・同時再利用の拒否、typed diagnostic、資源台帳とevidenceへのexactly-once記録、入力順序に依存しない決定性、未指定時の既存App動作を検証する。期待出力またはreference compositionをcandidate scoringへ渡してはならない。
+
 ## 11. 原因分類
 
 差分は最低限次のいずれかへ分類する。
@@ -434,12 +493,16 @@ provenance比較は、固定した参照根拠・一次データ・仮定bundle�
 - Wikiru backup 38の12時間variant、36時間全循環、先頭2枠の24時間窓を採用する
 - bundle v2はWikiruのproduction group Cと勤務枠対応を保持し、v1の誤ったシフト対応を引き継がない
 - テストはネットワークなしで実行できる
+- JP normalized-theoretical caseを主gateとし、CN caseはsource conflict解消までsecondary/non-gatingとする
+- normalized-theoretical JP gateも先頭2勤務枠の具体24時間を使用し、36時間平均の24時間換算値を使用しない
+- optional support-resource scenarioは固定provenance、許可仮定、source予約、地域・所有・競合検証、資源台帳へのexactly-once記録を満たす。未指定時は通常App動作を変えない
 
 ### 12.2 計算精度
 
 - 判明済みのスキル単体式は、基準式と厳密一致する
 - 丸めが必要な場合は、丸め前内部値とゲーム表示値を分けて検証する
-- 24時間の金属、作戦記録、龍門幣の各実数量は、外部理論値に対して相対誤差1%以内である
+- JP gating caseの外部集計Gold・EXPは相対誤差0.1%以内とする。source/operator/window/resource amountなど離散条件は厳密一致させる
+- CNを含む非gating caseはcase固有の許容差を保持し、JP合格のために値を補完しない
 - 分母が0の項目は絶対誤差で判定し、その許容値をケースに明記する
 - ドローン寄与と自然生産を二重計上しない
 
@@ -451,6 +514,8 @@ provenance比較は、固定した参照根拠・一次データ・仮定bundle�
 - 原則として隣接勤務枠間で勤務者を再利用しない
 - 限定所持ケースで未所持オペレーターを選択しない
 - JPケースでJP未実装オペレーターを選択しない
+- referenceまたはoutput-equivalent planへ到達した実用探索は、global optimality未証明でも合格できる。ただし未証明をtyped `not-certified` diagnosticで明示し、最適性を主張しない
+- partial planまたは空planを同値編成として合格させない
 
 ### 12.4 持続性
 
@@ -501,6 +566,17 @@ provenance比較は、固定した参照根拠・一次データ・仮定bundle�
 - `pnpm test`、`pnpm build`、`pnpm audit:base-skills` を最終検証に含める
 - 現環境で依存関係が未導入の場合は、リポジトリ指定の`pnpm`と`mise`方針に従ってセットアップし、グローバルインストールや管理者権限を使わない
 
+### 14.1 Phase 1後半の依存順
+
+Issue #36の後は次の順序を維持する。
+
+1. JP factory skill metadata・suppression計算の前提Issue
+2. 固定support-resource scenarioの前提Issue
+3. Issue #28 global composition search
+4. Issue #29 限定所持の総合受け入れ
+
+計算/data、scenario state、searchを同一Issueへ混在させない。本段階ではJP factory skill metadata・suppression計算だけを先に完了させ、optional scenarioとglobal searchは後続責務として扱う。実験的差分を別責務の根拠として混入させず、各Issueはaccepted predecessorから再構成する。
+
 ## 15. 段階的な完了判定
 
 ### Gate A: 外部基準の確立
@@ -527,10 +603,13 @@ provenance比較は、固定した参照根拠・一次データ・仮定bundle�
 
 - 正しい候補計算から理論編成または同値編成を探索できる
 - 限定所持ケースでも制約違反がない
+- unproven pruningを使用した場合はnot-certifiedを返す。reference/equivalent到達と全dimension充足を満たす限り、global optimality証明はPhase 1の必須条件にしない
+- JP benchmark環境で10秒以内に完了する
 
 ### Gate E: 24時間評価と全循環持続性
 
-- 2勤務枠または3勤務枠と等価体力差分を含む、開始境界固定の24時間値が±1%以内
+- 2勤務枠または3勤務枠と等価体力差分を含む、開始境界固定の具体24時間値を使用する。JP gating caseのGold・EXPは相対±0.1%以内、その他の項目はcaseに固定した許容差以内とする
+- 36時間全循環平均を24時間値へ換算してgateを通さない
 - 出典に明示された全循環周期の終端で同じ運用状態へ戻れる
 - 全検証コマンドが成功する
 
@@ -547,6 +626,8 @@ Phase 1完了後に、別仕様として次を検討する。
 - 実機の注文列、宿舎内配置順、体力交換時刻を含むイベント忠実シミュレーション
 - UIでの計算内訳、出典、信頼度、未対応効果表示
 - ユーザー所持データに対する代替編成理由の説明
+- 制御中枢・事務室・宿舎を含む支援scheduleの完全simulationと、fixed support-resource assumptionの置換
+- ゲーム内24時間ログによるnormalized-theoretical modelの外部validation
 
 ## 17. 未確定事項と調査項目
 
