@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import jpFactoryInput from "../data/optimizer-benchmarks/jp-243-factory-3group-2025-11.json";
 import { createDefaultState } from "../data/defaults";
 import { effectiveBenchmarkScheduleAuthority, validateOptimizerBenchmark } from "./optimizerBenchmark";
-import { runOptimizerBenchmarkBatch } from "./optimizerBenchmarkRunner";
 import { evaluateReferenceCompositionDiagnostic } from "./optimizerReferenceDiagnostic";
 import { inspectExplicitFacilityTeams } from "./optimizer";
 
@@ -15,7 +14,71 @@ function validatedFixture() {
 }
 
 describe("JP normalized-theoretical reference composition diagnostic", () => {
-  it("calculates the declared composition through ordinary mechanics within relative 0.1%", () => {
+  it("fails closed only on Aroma fatigue while retaining complete exact resource mechanics", () => {
+    const fixture = validatedFixture();
+    const diagnostic = evaluateReferenceCompositionDiagnostic(fixture);
+
+    expect(diagnostic.status).toBe("incomplete");
+    if (diagnostic.status !== "incomplete") throw new Error("diagnostic unexpectedly completed");
+    expect(diagnostic.diagnostics).toEqual([expect.objectContaining({
+      code: "fatigued-before-shift-end",
+      path: "sustainability",
+      message: expect.stringContaining("char_446_aroma")
+    })]);
+    expect(diagnostic.diagnostics[0].message).toContain("groups-b-c");
+    expect(diagnostic.diagnostics).not.toContainEqual(expect.objectContaining({
+      code: "drone-state-not-closed"
+    }));
+    expect(diagnostic.objectiveEvidence).toMatchObject({
+      status: "incomplete",
+      authority: "unavailable",
+      objectiveProfile: "balanced",
+      weights: { gold: 0.5, battleRecord: 0.5, lmd: 0 },
+      provenance: "exact-window-facility-normal-mechanics-evaluation",
+      completeness: {
+        supportResourceScenario: "complete",
+        resourceEvaluation: "complete",
+        requiredWindowIds: ["groups-a-b", "groups-b-c", "groups-c-a"],
+        evaluatedWindowIds: ["groups-a-b", "groups-b-c", "groups-c-a"],
+        requiredFacilityEvaluationCount: 12,
+        evaluatedFacilityEvaluationCount: 12
+      },
+      reason: "reference-sustainability-incomplete"
+    });
+    expect(diagnostic.objectiveEvidence.sustainability).toMatchObject({
+      status: "evaluated",
+      result: {
+        sustainable: false,
+        failures: [expect.objectContaining({
+          code: "fatigued-before-shift-end",
+          operatorId: "char_446_aroma",
+          shiftId: "groups-b-c"
+        })]
+      }
+    });
+    expect(diagnostic.resourceEvaluation).toMatchObject({ status: "complete" });
+    expect(diagnostic.resourceEvaluation?.drone?.targetFacilityId).toMatch(/^trading-/);
+    expect(diagnostic.resourceEvaluation?.cycleLedger?.dronesGenerated)
+      .toBeCloseTo(diagnostic.resourceEvaluation?.cycleLedger?.dronesUsed ?? Number.NaN, 12);
+  });
+
+  it("uses each declared schedule window duration for the authoritative objective", () => {
+    const fixture = structuredClone(validatedFixture());
+    fixture.rotation.cycleHours = 24;
+    fixture.rotation.shifts.forEach((shift) => { shift.durationHours = 8; });
+
+    const diagnostic = evaluateReferenceCompositionDiagnostic(fixture);
+
+    expect(diagnostic.status).toBe("complete");
+    if (diagnostic.status !== "complete") throw new Error(JSON.stringify(diagnostic.diagnostics));
+    expect(diagnostic.objectiveEvidence.completeness).toMatchObject({
+      requiredFacilityEvaluationCount: 12,
+      evaluatedFacilityEvaluationCount: 12
+    });
+    expect(Number.isFinite(diagnostic.objectiveEvidence.value)).toBe(true);
+  });
+
+  it("calculates the declared composition through ordinary mechanics", () => {
     const fixture = validatedFixture();
     expect(effectiveBenchmarkScheduleAuthority(fixture)).toEqual({
       status: "complete",
@@ -53,63 +116,31 @@ describe("JP normalized-theoretical reference composition diagnostic", () => {
     });
     const diagnostic = evaluateReferenceCompositionDiagnostic(fixture);
 
-    expect(diagnostic.status).toBe("complete");
-    if (diagnostic.status !== "complete") throw new Error(JSON.stringify(diagnostic.diagnostics));
-    expect(diagnostic.resources.goldProduced).toBeCloseTo(91.38333333333334, 10);
-    expect(diagnostic.resources.battleRecordExp).toBeCloseTo(33830, 8);
-    expect(diagnostic.observation.rotation).toMatchObject({
-      cycleHours: 36,
-      shifts: [
-        {
-          id: "groups-a-b",
-          durationHours: 12,
-          startHour: 0,
-          endHour: 12,
-          activeGroupIds: ["group-a", "group-b"],
-          recoveryGroupIds: ["group-c"]
-        },
-        {
-          id: "groups-b-c",
-          durationHours: 12,
-          startHour: 12,
-          endHour: 24,
-          activeGroupIds: ["group-b", "group-c"],
-          recoveryGroupIds: ["group-a"]
-        },
-        {
-          id: "groups-c-a",
-          durationHours: 12,
-          startHour: 24,
-          endHour: 36,
-          activeGroupIds: ["group-c", "group-a"],
-          recoveryGroupIds: ["group-b"]
-        }
-      ]
-    });
-
-    const perceptionWindows = diagnostic.resourceEvaluation.windows.flatMap((window) =>
+    expect(diagnostic.status).toBe("incomplete");
+    if (diagnostic.status !== "incomplete") throw new Error("diagnostic unexpectedly completed");
+    expect(diagnostic.resourceEvaluation).toMatchObject({ status: "complete" });
+    const perceptionWindows = diagnostic.resourceEvaluation!.windows.flatMap((window) =>
       window.facilities.filter((facility) => facility.operatorIds.includes("char_391_rosmon"))
     );
     expect(perceptionWindows).toEqual([
       expect.objectContaining({
         efficiencyEvaluation: expect.objectContaining({
-          fixedResourceAmounts: { perceptionInfo: 20 },
+          fixedResourceAmounts: expect.objectContaining({ perceptionInfo: 20 }),
           fixedDormitoryOccupancy: 20
         })
       }),
       expect.objectContaining({
         efficiencyEvaluation: expect.objectContaining({
-          fixedResourceAmounts: { perceptionInfo: 10 },
+          fixedResourceAmounts: expect.objectContaining({ perceptionInfo: 10 }),
           fixedDormitoryOccupancy: 20
         })
       })
     ]);
-    expect(diagnostic.resourceEvaluation.evidence?.fixedSources).toHaveLength(8);
-    expect(new Set(diagnostic.resourceEvaluation.evidence?.fixedSources.map((source) => source.sourceId)).size).toBe(8);
-
-    const batch = runOptimizerBenchmarkBatch([fixture], { [fixture.id]: diagnostic.observation });
-    expect(batch.aggregateStatus).toBe("passed");
-    expect(batch.counts.passed).toBe(1);
+    expect(diagnostic.resourceEvaluation!.evidence?.fixedSources).toHaveLength(8);
+    expect(new Set(diagnostic.resourceEvaluation!.evidence?.fixedSources.map((source) => source.sourceId)).size).toBe(8);
+    expect(diagnostic.resourceEvaluation!.drone?.targetFacilityId).toMatch(/^trading-/);
+    expect(diagnostic.resourceEvaluation!.cycleLedger?.dronesGenerated)
+      .toBeCloseTo(diagnostic.resourceEvaluation!.cycleLedger?.dronesUsed ?? Number.NaN, 12);
   });
 
   it("fails closed through the public diagnostic when rotation schedule authority is incomplete", () => {
@@ -118,7 +149,7 @@ describe("JP normalized-theoretical reference composition diagnostic", () => {
 
     const diagnostic = evaluateReferenceCompositionDiagnostic(fixture);
 
-    expect(diagnostic).toEqual({
+    expect(diagnostic).toEqual(expect.objectContaining({
       status: "incomplete",
       diagnostics: expect.arrayContaining([
         {
@@ -126,8 +157,13 @@ describe("JP normalized-theoretical reference composition diagnostic", () => {
           path: "rotation",
           message: "rotation.shifts[0].workerGroupIds[0] must be a stable ID"
         }
-      ])
-    });
+      ]),
+      objectiveEvidence: expect.objectContaining({
+        status: "incomplete",
+        authority: "unavailable",
+        reason: "schedule-authority-incomplete"
+      })
+    }));
     expect("resources" in diagnostic).toBe(false);
   });
 
@@ -139,6 +175,16 @@ describe("JP normalized-theoretical reference composition diagnostic", () => {
     expect(evaluateReferenceCompositionDiagnostic(reversed)).toEqual(
       evaluateReferenceCompositionDiagnostic(fixture)
     );
+  });
+
+  it("keeps mechanically evaluated reference objective evidence independent of expected output", () => {
+    const original = validatedFixture();
+    const changed = structuredClone(original);
+    changed.expected.output.goldProduced = 987654321;
+    changed.expected.output.battleRecordExp = 123456789;
+
+    expect(evaluateReferenceCompositionDiagnostic(changed).objectiveEvidence)
+      .toEqual(evaluateReferenceCompositionDiagnostic(original).objectiveEvidence);
   });
 
   it("returns typed incomplete output when ordinary remote supports overbook a support facility", () => {

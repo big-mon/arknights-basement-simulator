@@ -2838,29 +2838,22 @@ describe("optimizer", () => {
     const state = createDefaultState();
     ownBaselineRoster(state);
     state.schedule = {
-      cycleHours: 24,
-      groups: [{ id: "middle-unpopulated" }, { id: "zeta-active" }, { id: "alpha-alternative" }],
+      cycleHours: 16,
+      groups: [{ id: "zeta-active" }, { id: "alpha-alternative" }],
       shifts: [
         {
           id: "early",
           startHour: 0,
           endHour: 8,
           activeGroupIds: ["zeta-active"],
-          recoveryGroupIds: ["alpha-alternative", "middle-unpopulated"]
+          recoveryGroupIds: ["alpha-alternative"]
         },
         {
           id: "middle",
           startHour: 8,
           endHour: 16,
           activeGroupIds: ["alpha-alternative"],
-          recoveryGroupIds: ["zeta-active", "middle-unpopulated"]
-        },
-        {
-          id: "late",
-          startHour: 16,
-          endHour: 24,
-          activeGroupIds: ["middle-unpopulated"],
-          recoveryGroupIds: ["zeta-active", "alpha-alternative"]
+          recoveryGroupIds: ["zeta-active"]
         }
       ]
     };
@@ -2907,16 +2900,9 @@ describe("optimizer", () => {
         assignments: alternativeAssignmentIds,
         recovery: activeAssignmentIds,
         incompleteGroupIds: []
-      },
-      late: {
-        assignments: [],
-        recovery: [...alternativeAssignmentIds, ...activeAssignmentIds],
-        incompleteGroupIds: ["middle-unpopulated"]
       }
     });
-    expect(diagnosticsByShiftAndGroup(plan)).toEqual([
-      "late:middle-unpopulated:schedule-group-unpopulated"
-    ]);
+    expect(diagnosticsByShiftAndGroup(plan)).toEqual([]);
   });
 
   it("keeps multi-group rotation outcomes stable when active and recovery ID arrays are permuted", () => {

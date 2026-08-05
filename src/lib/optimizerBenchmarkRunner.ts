@@ -2,6 +2,7 @@ import {
   effectiveBenchmarkScheduleAuthority,
   hasResolvedExecutableCompositionAuthority,
   isPassFailEligible,
+  resourceObjectiveWeights,
   validateOptimizerBenchmark,
   type BenchmarkEquivalentComposition,
   type BenchmarkRegion,
@@ -9,11 +10,18 @@ import {
   type BenchmarkResourceOutput,
   type BenchmarkTolerance,
   type OptimizerBenchmark,
+  type ResourceObjectiveProfile,
   type ResourceOutputBenchmark
 } from "./optimizerBenchmark";
 import type { PlanResourceMissingReason } from "./planResourceTypes";
 import type { CycleFailure } from "./sustainableCycleEvaluator";
 import type { PlanSustainabilityMissingReason } from "./planSustainabilityTypes";
+import type { PlanSustainabilityEvaluation } from "./planSustainabilityTypes";
+import type {
+  AssignmentPlanDiagnostic,
+  ScheduledSupportPlacement,
+  ScheduledSupportValidationIssue
+} from "../types";
 
 export type BenchmarkDiagnosticCategory =
   | "source-data"
@@ -22,6 +30,48 @@ export type BenchmarkDiagnosticCategory =
   | "interpretation"
   | "calculation"
   | "reference";
+
+export interface BenchmarkObjectiveCompleteness {
+  supportResourceScenario: "complete" | "incomplete";
+  resourceEvaluation: "complete" | "incomplete";
+  requiredWindowIds: readonly string[];
+  evaluatedWindowIds: readonly string[];
+  requiredFacilityEvaluationCount: number;
+  evaluatedFacilityEvaluationCount: number;
+}
+
+export type BenchmarkObjectiveSustainabilityEvidence =
+  | PlanSustainabilityEvaluation
+  | { status: "unavailable"; reason: string };
+
+export function isAuthoritativeObjectiveSustainability(
+  evidence: BenchmarkObjectiveSustainabilityEvidence | undefined
+): boolean {
+  return evidence?.status === "evaluated" &&
+    evidence.result.sustainable === true && evidence.result.failures.length === 0;
+}
+
+export type BenchmarkObjectiveEvidence =
+  | {
+      status: "complete";
+      authority: "authoritative";
+      value: number;
+      objectiveProfile: ResourceObjectiveProfile;
+      weights: Readonly<{ gold: number; battleRecord: number; lmd: number }>;
+      provenance: "exact-window-facility-normal-mechanics-evaluation";
+      completeness: Readonly<BenchmarkObjectiveCompleteness>;
+      sustainability: BenchmarkObjectiveSustainabilityEvidence;
+    }
+  | {
+      status: "incomplete";
+      authority: "unavailable";
+      objectiveProfile: ResourceOutputBenchmark["assumptions"]["objectiveProfile"];
+      weights?: Readonly<{ gold: number; battleRecord: number; lmd: number }>;
+      provenance: "exact-window-facility-normal-mechanics-evaluation";
+      completeness: Readonly<BenchmarkObjectiveCompleteness>;
+      sustainability: BenchmarkObjectiveSustainabilityEvidence;
+      reason: string;
+    };
 
 export interface BenchmarkObservation {
   metadata: {
@@ -59,6 +109,47 @@ export interface BenchmarkObservation {
     path: string;
     evidence: string;
   }>;
+  objectiveEvidence?: {
+    candidate: BenchmarkObjectiveEvidence;
+    reference: BenchmarkObjectiveEvidence;
+  };
+  planEvidence?: {
+    search: {
+      completion: "complete" | "infeasible" | "unknown";
+      proofStatus: "certified" | "not-certified";
+      diagnostics: readonly Readonly<AssignmentPlanDiagnostic>[];
+    };
+    production: {
+      requiredWindowIds: readonly string[];
+      completedWindowIds: readonly string[];
+      requiredFacilitySlots: Array<{ shiftId: string; facilityId: string; slotCount: number }>;
+      actualFacilityOperators: Array<{ shiftId: string; facilityId: string; operatorIds: string[] }>;
+    };
+    simultaneousOperatorConflicts: Array<{ shiftId: string; operatorId: string }>;
+    supportResourceScenario?: {
+      requested: boolean;
+      complete: boolean;
+      requestedSourceIds: readonly string[];
+      resolvedSourceIds: readonly string[];
+      fixedSourceEvidenceSourceIds: readonly string[];
+      fixedContextRequested: boolean;
+      fixedContextResolved: boolean;
+    };
+    scheduledSupport: {
+      completion: "complete" | "incomplete";
+      provenance: "bounded-scheduled-support-materialization-not-certified";
+      supportPlacements: readonly Readonly<ScheduledSupportPlacement>[];
+      supportCapacityValidated: boolean;
+      supportRecoveryValidated: boolean;
+      issues: readonly Readonly<ScheduledSupportValidationIssue>[];
+    };
+    resourceEvaluation: {
+      status: "complete" | "incomplete";
+      requiredWindowIds: readonly string[];
+      evaluatedWindowIds: readonly string[];
+      missingCount: number;
+    };
+  };
 }
 
 type ComparableBenchmarkShift = {
@@ -106,7 +197,7 @@ export interface BenchmarkDiagnostic {
   code?: string;
   path: string;
   category: BenchmarkDiagnosticCategory;
-  severity: "error" | "info";
+  severity: "error" | "warning" | "info";
   certainty?: "suspected" | "proven";
   passed?: boolean;
   message: string;
@@ -125,6 +216,13 @@ export interface BenchmarkDiagnostic {
   shiftId?: string;
   groupId?: string;
   sourceOperatorId?: string;
+  candidateValue?: number;
+  referenceValue?: number;
+  absoluteAdvantage?: number;
+  relativeAdvantage?: number;
+  objectiveProfile?: ResourceObjectiveProfile;
+  objectiveWeights?: Readonly<{ gold: number; battleRecord: number; lmd: number }>;
+  objectiveProvenance?: "exact-window-facility-normal-mechanics-evaluation";
 }
 
 export interface OptimizerBenchmarkCaseResult {
@@ -133,7 +231,19 @@ export interface OptimizerBenchmarkCaseResult {
   gating: boolean;
   diagnostics: BenchmarkDiagnostic[];
   smallestMismatchPath?: string;
-  matchedComposition?: "primary" | `equivalent[${number}]`;
+  matchedComposition?: "primary" | `equivalent[${number}]` | "output-equivalent";
+  acceptanceMode?: "reference" | "output-equivalent" | "objective-superior";
+  searchProofStatus?: "certified" | "not-certified";
+  objectiveComparison?: {
+    candidateValue: number;
+    referenceValue: number;
+    absoluteAdvantage: number;
+    relativeAdvantage: number;
+    tolerance: BenchmarkTolerance;
+    objectiveProfile: ResourceObjectiveProfile;
+    weights: Readonly<{ gold: number; battleRecord: number; lmd: number }>;
+    provenance: "exact-window-facility-normal-mechanics-evaluation";
+  };
 }
 
 export interface OptimizerBenchmarkBatchResult {
@@ -686,7 +796,24 @@ function compareCalculations(
     });
   }
 
-  if (observation.planSustainability?.status === "incomplete") {
+  if (fixture.kind === "resource-output" && observation.objectiveEvidence && !observation.planSustainability) {
+    diagnostics.push({
+      code: "plan-sustainability-evidence-absent",
+      path: "sustainable-cycle/evidence",
+      category: "state-model",
+      severity: "error",
+      certainty: "proven",
+      message: "Objective-superior acceptance requires plan sustainability evidence"
+    });
+  } else if (observation.planSustainability?.status === "incomplete") {
+    diagnostics.push({
+      code: "plan-sustainability-incomplete",
+      path: "sustainable-cycle/status",
+      category: "state-model",
+      severity: "error",
+      certainty: "proven",
+      message: "Objective-superior acceptance requires evaluated plan sustainability"
+    });
     for (const reason of observation.planSustainability.missing) {
       diagnostics.push({
         code: reason.code,
@@ -703,6 +830,16 @@ function compareCalculations(
       });
     }
   } else if (observation.planSustainability?.status === "evaluated") {
+    if (!observation.planSustainability.sustainable) {
+      diagnostics.push({
+        code: "plan-sustainability-unsustainable",
+        path: "sustainable-cycle/status",
+        category: "state-model",
+        severity: "error",
+        certainty: "proven",
+        message: "Objective-superior acceptance requires a sustainable plan"
+      });
+    }
     for (const failure of observation.planSustainability.failures) {
       const hour = failure.hour === undefined ? "none" : String(failure.hour);
       diagnostics.push({
@@ -759,6 +896,277 @@ function applyProvenCauses(observation: BenchmarkObservation, diagnostics: Bench
       diagnostic.evidence = cause.evidence;
     }
   }
+}
+
+function comparePlanEvidence(
+  fixture: ResourceOutputBenchmark,
+  observation: BenchmarkObservation,
+  diagnostics: BenchmarkDiagnostic[]
+): boolean {
+  const evidence = observation.planEvidence;
+  if (!evidence) return false;
+  const before = diagnostics.length;
+  const expectedRotation = benchmarkCycleAndShifts(fixture);
+  if (!expectedRotation.scheduleAuthorityComplete) return false;
+  addComparison(
+    diagnostics,
+    "composition/search/completion",
+    "search",
+    "complete",
+    evidence.search.completion,
+    evidence.search.completion === "complete"
+  );
+  diagnostics.push({
+    path: "composition/search/proof-status",
+    category: "search",
+    severity: "info",
+    actual: evidence.search.proofStatus,
+    message: evidence.search.proofStatus === "certified"
+      ? "search proof is certified"
+      : "search produced a complete plan but global optimality is not certified"
+  });
+
+  const expectedWindowIds = expectedRotation.shifts.map((shift) => shift.id);
+  addComparison(
+    diagnostics,
+    "plan-evidence/production/required-windows",
+    "state-model",
+    expectedWindowIds,
+    evidence.production.requiredWindowIds,
+    sameStringSet(expectedWindowIds, evidence.production.requiredWindowIds)
+  );
+  addComparison(
+    diagnostics,
+    "plan-evidence/production/windows",
+    "state-model",
+    evidence.production.requiredWindowIds,
+    evidence.production.completedWindowIds,
+    sameStringSet(evidence.production.requiredWindowIds, evidence.production.completedWindowIds)
+  );
+  for (const shift of expectedRotation.shifts) {
+    for (const [facilityId, assignment] of Object.entries(shift.assignments)) {
+      if (!assignment.operatorIds) continue;
+      const declared = evidence.production.requiredFacilitySlots.filter((item) =>
+        item.shiftId === shift.id && item.facilityId === facilityId
+      );
+      addComparison(
+        diagnostics,
+        `plan-evidence/production/${shift.id}/${facilityId}/required-slots`,
+        "state-model",
+        assignment.operatorIds.length,
+        declared.length === 1 ? declared[0].slotCount : undefined,
+        declared.length === 1 && declared[0].slotCount === assignment.operatorIds.length
+      );
+    }
+  }
+  for (const required of evidence.production.requiredFacilitySlots) {
+    const actual = evidence.production.actualFacilityOperators.filter((item) =>
+      item.shiftId === required.shiftId && item.facilityId === required.facilityId
+    );
+    const operatorIds = actual.length === 1 ? actual[0].operatorIds : undefined;
+    addComparison(
+      diagnostics,
+      `plan-evidence/production/${required.shiftId}/${required.facilityId}/slots`,
+      "state-model",
+      required.slotCount,
+      operatorIds?.length,
+      actual.length === 1 && operatorIds?.length === required.slotCount
+    );
+  }
+  addComparison(
+    diagnostics,
+    "plan-evidence/operator-conflicts",
+    "state-model",
+    [],
+    evidence.simultaneousOperatorConflicts,
+    evidence.simultaneousOperatorConflicts.length === 0
+  );
+
+  const expectedScenario = fixture.supportResourceScenario;
+  if (expectedScenario || evidence.supportResourceScenario?.requested) {
+    const actual = evidence.supportResourceScenario;
+    const expectedSourceIds = expectedScenario?.sources.map((source) => source.id) ?? actual?.requestedSourceIds ?? [];
+    addComparison(diagnostics, "plan-evidence/support/requested", "state-model", true, actual?.requested, actual?.requested === true);
+    addComparison(diagnostics, "plan-evidence/support/complete", "state-model", true, actual?.complete, actual?.complete === true);
+    addComparison(
+      diagnostics,
+      "plan-evidence/support/resolved-sources",
+      "state-model",
+      expectedSourceIds,
+      actual?.resolvedSourceIds,
+      Array.isArray(actual?.resolvedSourceIds) && sameStringSet(expectedSourceIds, actual.resolvedSourceIds)
+    );
+    addComparison(
+      diagnostics,
+      "plan-evidence/support/fixed-source-evidence",
+      "calculation",
+      expectedSourceIds,
+      actual?.fixedSourceEvidenceSourceIds,
+      Array.isArray(actual?.fixedSourceEvidenceSourceIds) &&
+        sameStringSet(expectedSourceIds, actual.fixedSourceEvidenceSourceIds)
+    );
+    const expectsFixedContext = expectedScenario?.fixedContext !== undefined || actual?.fixedContextRequested === true;
+    addComparison(
+      diagnostics,
+      "plan-evidence/support/fixed-context",
+      "state-model",
+      expectsFixedContext,
+      actual?.fixedContextResolved,
+      !expectsFixedContext || actual?.fixedContextResolved === true
+    );
+  }
+
+  addComparison(
+    diagnostics,
+    "plan-evidence/support/scheduled-materialization",
+    "state-model",
+    "complete",
+    evidence.scheduledSupport?.completion,
+    evidence.scheduledSupport?.completion === "complete" &&
+      evidence.scheduledSupport.provenance === "bounded-scheduled-support-materialization-not-certified"
+  );
+  addComparison(
+    diagnostics,
+    "plan-evidence/support/physical-capacity",
+    "state-model",
+    true,
+    evidence.scheduledSupport?.supportCapacityValidated,
+    evidence.scheduledSupport?.supportCapacityValidated === true
+  );
+  addComparison(
+    diagnostics,
+    "plan-evidence/support/work-recovery",
+    "state-model",
+    true,
+    evidence.scheduledSupport?.supportRecoveryValidated,
+    evidence.scheduledSupport?.supportRecoveryValidated === true
+  );
+  addComparison(
+    diagnostics,
+    "plan-evidence/support/issues",
+    "state-model",
+    0,
+    evidence.scheduledSupport?.issues.length,
+    evidence.scheduledSupport?.issues.length === 0
+  );
+
+  addComparison(
+    diagnostics,
+    "plan-evidence/resources/status",
+    "calculation",
+    "complete",
+    evidence.resourceEvaluation.status,
+    evidence.resourceEvaluation.status === "complete"
+  );
+  addComparison(
+    diagnostics,
+    "plan-evidence/resources/windows",
+    "calculation",
+    expectedWindowIds,
+    evidence.resourceEvaluation.evaluatedWindowIds,
+    sameStringSet(expectedWindowIds, evidence.resourceEvaluation.evaluatedWindowIds) &&
+      sameStringSet(expectedWindowIds, evidence.resourceEvaluation.requiredWindowIds)
+  );
+  addComparison(
+    diagnostics,
+    "plan-evidence/resources/missing-count",
+    "calculation",
+    0,
+    evidence.resourceEvaluation.missingCount,
+    evidence.resourceEvaluation.missingCount === 0
+  );
+  return diagnostics.slice(before).every((diagnostic) => diagnostic.severity !== "error");
+}
+
+function sameObjectiveWeights(
+  left: Readonly<{ gold: number; battleRecord: number; lmd: number }>,
+  right: Readonly<{ gold: number; battleRecord: number; lmd: number }>
+): boolean {
+  return left.gold === right.gold && left.battleRecord === right.battleRecord && left.lmd === right.lmd;
+}
+
+function exactObjectiveComplete(evidence: BenchmarkObjectiveEvidence): evidence is Extract<BenchmarkObjectiveEvidence, {
+  status: "complete";
+}> {
+  if (evidence.status !== "complete" || evidence.authority !== "authoritative" || !Number.isFinite(evidence.value)) {
+    return false;
+  }
+  const completeness = evidence.completeness;
+  const sustainability = evidence.sustainability;
+  return completeness.supportResourceScenario === "complete" &&
+    completeness.resourceEvaluation === "complete" &&
+    sameStringSet(completeness.requiredWindowIds, completeness.evaluatedWindowIds) &&
+    completeness.requiredFacilityEvaluationCount > 0 &&
+    completeness.requiredFacilityEvaluationCount === completeness.evaluatedFacilityEvaluationCount &&
+    isAuthoritativeObjectiveSustainability(sustainability);
+}
+
+function compareObjectiveSuperiority(
+  fixture: ResourceOutputBenchmark,
+  observation: BenchmarkObservation,
+  diagnostics: BenchmarkDiagnostic[]
+): OptimizerBenchmarkCaseResult["objectiveComparison"] | undefined {
+  const candidate = observation.objectiveEvidence?.candidate;
+  const reference = observation.objectiveEvidence?.reference;
+  const expectedProfile = fixture.assumptions.objectiveProfile;
+  const tolerance = fixture.expected.tolerance;
+  const expectedRotation = benchmarkCycleAndShifts(fixture);
+  const expectedWindowIds = expectedRotation.shifts.map((shift) => shift.id);
+  const candidateRequiredFacilityCount = observation.planEvidence?.production.requiredFacilitySlots.length;
+  const referenceRequiredFacilityCount = expectedRotation.shifts.reduce((count, shift) =>
+    count + Object.values(shift.assignments).filter((assignment) => assignment.operatorIds !== undefined).length,
+  0);
+  const comparable = expectedRotation.scheduleAuthorityComplete &&
+    candidate !== undefined && reference !== undefined &&
+    exactObjectiveComplete(candidate) && exactObjectiveComplete(reference) &&
+    expectedProfile !== "formula-only" && candidate.objectiveProfile === expectedProfile &&
+    reference.objectiveProfile === expectedProfile &&
+    candidate.objectiveProfile === reference.objectiveProfile &&
+    sameObjectiveWeights(candidate.weights, reference.weights) &&
+    sameObjectiveWeights(candidate.weights, resourceObjectiveWeights[expectedProfile]) &&
+    candidate.provenance === reference.provenance && reference.value !== 0 &&
+    sameStringSet(candidate.completeness.requiredWindowIds, expectedWindowIds) &&
+    sameStringSet(reference.completeness.requiredWindowIds, expectedWindowIds) &&
+    candidate.completeness.requiredFacilityEvaluationCount === candidateRequiredFacilityCount &&
+    reference.completeness.requiredFacilityEvaluationCount === referenceRequiredFacilityCount &&
+    tolerance.type === "relative";
+  const absoluteAdvantage = comparable ? candidate.value - reference.value : undefined;
+  const relativeAdvantage = comparable ? absoluteAdvantage! / Math.abs(reference.value) : undefined;
+  const passed = comparable && Number.isFinite(absoluteAdvantage) && Number.isFinite(relativeAdvantage) &&
+    relativeAdvantage! > tolerance.value;
+  diagnostics.push({
+    path: "objective-comparison",
+    category: "calculation",
+    severity: passed ? "info" : "error",
+    certainty: passed ? undefined : "suspected",
+    passed,
+    expected: reference?.status === "complete" ? reference.value : undefined,
+    actual: candidate?.status === "complete" ? candidate.value : undefined,
+    tolerance,
+    ...(candidate?.status === "complete" ? {
+      candidateValue: candidate.value,
+      objectiveProfile: candidate.objectiveProfile,
+      objectiveWeights: candidate.weights,
+      objectiveProvenance: candidate.provenance
+    } : {}),
+    ...(reference?.status === "complete" ? { referenceValue: reference.value } : {}),
+    ...(absoluteAdvantage === undefined ? {} : { absoluteAdvantage }),
+    ...(relativeAdvantage === undefined ? {} : { relativeAdvantage }),
+    message: passed
+      ? "candidate authoritative objective exceeds the mechanically evaluated reference beyond relative tolerance"
+      : "objective superiority requires comparable complete authoritative evidence and a strict advantage beyond relative tolerance"
+  });
+  if (!passed || !comparable) return undefined;
+  return {
+    candidateValue: candidate.value,
+    referenceValue: reference.value,
+    absoluteAdvantage: absoluteAdvantage!,
+    relativeAdvantage: relativeAdvantage!,
+    tolerance,
+    objectiveProfile: candidate.objectiveProfile,
+    weights: candidate.weights,
+    provenance: candidate.provenance
+  };
 }
 
 function invalidCase(input: unknown, errors: string[]): OptimizerBenchmarkCaseResult {
@@ -841,16 +1249,61 @@ export function runOptimizerBenchmarkBatch(
     compareInterpretations(observation, diagnostics);
     compareCalculations(fixture, observation, diagnostics);
     applyProvenCauses(observation, diagnostics);
-    diagnostics.sort(compareStableMismatchPaths);
+    const planEvidenceComplete = fixture.kind === "resource-output"
+      ? comparePlanEvidence(fixture, observation, diagnostics)
+      : false;
+    const failures = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+    const pureCompositionFailures = failures.filter((diagnostic) =>
+      diagnostic.category === "search" && diagnostic.path.startsWith("composition/")
+    );
+    const outputEquivalent = fixture.kind === "resource-output" && matchedComposition === undefined &&
+      planEvidenceComplete && pureCompositionFailures.length > 0 &&
+      failures.length === pureCompositionFailures.length;
+    if (outputEquivalent) {
+      for (const diagnostic of pureCompositionFailures) {
+        diagnostic.severity = "info";
+        diagnostic.message += "; accepted by strict complete output-equivalent evidence";
+      }
+    }
 
-    const firstFailure = smallestMismatch(diagnostics);
+    const remainingFailures = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+    const comparisonOnlyFailures = remainingFailures.filter((diagnostic) =>
+      (diagnostic.category === "search" && diagnostic.path.startsWith("composition/")) ||
+      (diagnostic.category === "calculation" && diagnostic.path.startsWith("calculation/resource-values/"))
+    );
+    const objectiveComparison = fixture.kind === "resource-output" && !outputEquivalent &&
+      planEvidenceComplete && comparisonOnlyFailures.length > 0 &&
+      comparisonOnlyFailures.length === remainingFailures.length
+      ? compareObjectiveSuperiority(fixture, observation, diagnostics)
+      : undefined;
+    if (objectiveComparison) {
+      for (const diagnostic of comparisonOnlyFailures) {
+        diagnostic.severity = "warning";
+        diagnostic.message += "; retained as a non-gating mismatch after objective-superior acceptance";
+      }
+    }
+
+    diagnostics.sort(compareStableMismatchPaths);
+    const firstFailure = diagnostics.find((diagnostic) => diagnostic.severity === "error");
+    const acceptanceMode = !firstFailure && fixture.kind === "resource-output"
+      ? objectiveComparison
+        ? "objective-superior" as const
+        : outputEquivalent
+          ? "output-equivalent" as const
+          : matchedComposition
+            ? "reference" as const
+            : undefined
+      : undefined;
     return {
       id: fixture.id,
       status: gating ? (firstFailure ? "failed" : "passed") : "non-gating",
       gating,
       diagnostics,
       ...(firstFailure ? { smallestMismatchPath: firstFailure.path } : {}),
-      ...(matchedComposition ? { matchedComposition } : {})
+      ...(matchedComposition ? { matchedComposition } : outputEquivalent ? { matchedComposition: "output-equivalent" as const } : {}),
+      ...(acceptanceMode ? { acceptanceMode } : {}),
+      ...(objectiveComparison ? { objectiveComparison } : {}),
+      ...(observation.planEvidence ? { searchProofStatus: observation.planEvidence.search.proofStatus } : {})
     };
   });
 

@@ -64,7 +64,9 @@ export interface PlanResourceEvidence {
 }
 
 export interface PlanFacilityEfficiencyEvaluationEvidence {
-  provenance: "optimizer-normal-team-reevaluation-with-resolved-support-context";
+  provenance:
+    | "optimizer-normal-team-reevaluation-with-schedule-aware-contiguous-work-and-resolved-support-context"
+    | "optimizer-normal-team-reevaluation-with-resolved-support-context";
   fixedResourceAmounts: Readonly<Record<string, number>>;
   fixedDormitoryOccupancy?: number;
 }

@@ -8,11 +8,13 @@ import {
 } from "./operatorAvailability";
 import { evaluatePlanResources } from "./planResourceEvaluator";
 import { evaluatePlanSustainability } from "./planSustainabilityEvaluator";
+import { simulateFacilityProduction } from "./facilityProduction";
 import { normalizeSchedule, scheduleEpsilonHours } from "./schedule";
 import { resolveSupportResourceScenario } from "./supportResourceScenario";
 import { modeledFacilityLevel } from "./facilityLevel";
 import { activeBaseSkills } from "./activeBaseSkills";
-import { splitCyclicHalfOpenInterval } from "./cyclicInterval";
+import { cyclicHalfOpenIntervalsOverlap, splitCyclicHalfOpenInterval } from "./cyclicInterval";
+import { searchBestConflictFreeOptions } from "./compositionSearch";
 export { activeBaseSkills } from "./activeBaseSkills";
 import type {
   AppState,
@@ -29,6 +31,8 @@ import type {
   OptimizationPreference,
   ProductType,
   RosterEntry,
+  ScheduledSupportPlacement,
+  ScheduledSupportValidationIssue,
   SupportResourceScenarioEvaluation,
   WindowFacilityEfficiencyEvaluation
 } from "../types";
@@ -38,6 +42,9 @@ type AssignmentEvaluationContext = {
   facilities: FacilitySlot[];
   roster?: AppState["roster"];
   shiftHours?: number;
+  workElapsedHours?: number;
+  moraleSpentBefore?: number;
+  workElapsedHoursByOperator?: ReadonlyMap<string, number>;
   fixedResourceAmounts?: Readonly<Record<string, number>>;
   fixedDormitoryOccupancy?: number;
   excludedOrdinaryResourceOperatorIds?: ReadonlySet<string>;
@@ -312,7 +319,22 @@ function averageBoundedArithmeticSegments(
   );
 }
 
-export function averageEffectEfficiency(effect: BaseSkillEffect, shiftHours: number) {
+function intervalAverage(
+  prefixAverage: (durationHours: number) => number,
+  durationHours: number,
+  elapsedHours: number
+) {
+  const duration = positiveFiniteNumber(durationHours, "durationHours");
+  const elapsed = finiteNumber(elapsedHours, "elapsedHours");
+  if (elapsed < 0) throw new RangeError("elapsedHours must be non-negative");
+  if (elapsed === 0) return prefixAverage(duration);
+  return finiteCalculation(
+    (prefixAverage(elapsed + duration) * (elapsed + duration) - prefixAverage(elapsed) * elapsed) / duration,
+    "interval average"
+  );
+}
+
+export function averageEffectEfficiency(effect: BaseSkillEffect, shiftHours: number, elapsedHours = 0) {
   const durationHours = positiveFiniteNumber(shiftHours, "shiftHours");
   if (effect.moraleCurve) {
     return averageMoraleCurveEfficiency(effect.moraleCurve, durationHours, 1);
@@ -328,14 +350,9 @@ export function averageEffectEfficiency(effect: BaseSkillEffect, shiftHours: num
     initialEfficiency + (startsAfterFirstHour ? 0 : efficiencyPerHour),
     "timeCurve first segment"
   );
-  return averageBoundedArithmeticSegments(
-    durationHours,
-    1,
-    firstSegmentValue,
-    efficiencyPerHour,
-    maxEfficiency,
-    "upper"
-  );
+  return intervalAverage((prefixHours) => averageBoundedArithmeticSegments(
+    prefixHours, 1, firstSegmentValue, efficiencyPerHour, maxEfficiency, "upper"
+  ), durationHours, elapsedHours);
 }
 
 export function averageMoraleCurveEfficiency(
@@ -369,11 +386,94 @@ export function averageMoraleCurveEfficiency(
   );
 }
 
+function averageMoraleCurveSegmentEfficiency(
+  curve: NonNullable<BaseSkillEffect["moraleCurve"]>,
+  shiftHours: number,
+  moraleConsumptionPerHour: number,
+  moraleSpentBefore: number
+) {
+  const spentBefore = finiteNumber(moraleSpentBefore, "moraleSpentBefore");
+  if (spentBefore < 0) throw new RangeError("moraleSpentBefore must be non-negative");
+  if (moraleConsumptionPerHour === 0) {
+    const step = Math.floor(spentBefore / positiveFiniteNumber(curve.moralePerStep, "moraleCurve.moralePerStep"));
+    return Math.max(curve.initialEfficiency + curve.efficiencyPerStep * step, curve.minEfficiency);
+  }
+  return intervalAverage(
+    (spent) => averageMoraleCurveEfficiency(curve, spent, 1),
+    shiftHours * moraleConsumptionPerHour,
+    spentBefore
+  );
+}
+
 export function generateAssignmentPlan(
   state: AppState,
   options: GenerateAssignmentPlanOptions = {}
 ): AssignmentPlan {
   return generateAssignmentPlanInternal(state, options, true);
+}
+
+export interface ScheduleAwareWorkSegment {
+  operatorId: string;
+  scheduleWindowId: string;
+  blockId: string;
+  sequenceIndex: number;
+  elapsedWorkHours: number;
+}
+
+/** Derives deterministic cyclic work blocks; a non-working or temporal gap starts a new block. */
+export function deriveScheduleAwareWorkSegments(
+  schedule: AppState["schedule"],
+  rotation: readonly Pick<AssignmentPlan["rotation"][number], "shiftId" | "startHour" | "endHour" | "assignments">[]
+): readonly ScheduleAwareWorkSegment[] {
+  const ordered = [...rotation].sort((left, right) =>
+    left.startHour - right.startHour || left.endHour - right.endHour || compareCodePoints(left.shiftId, right.shiftId)
+  );
+  const operatorIds = [...new Set(ordered.flatMap((window) =>
+    window.assignments.map((assignment) => assignment.operatorId)
+  ))].sort(compareCodePoints);
+  const segments: ScheduleAwareWorkSegment[] = [];
+  const isAdjacent = (previousIndex: number, currentIndex: number) => {
+    const previous = ordered[previousIndex];
+    const current = ordered[currentIndex];
+    return previousIndex < currentIndex
+      ? Math.abs(previous.endHour - current.startHour) <= scheduleEpsilonHours
+      : Math.abs(previous.endHour - schedule.cycleHours) <= scheduleEpsilonHours &&
+          Math.abs(current.startHour) <= scheduleEpsilonHours;
+  };
+  for (const operatorId of operatorIds) {
+    const active = new Set(ordered.flatMap((window, index) =>
+      window.assignments.some((assignment) => assignment.operatorId === operatorId) ? [index] : []
+    ));
+    const starts = [...active].filter((index) => {
+      const previous = (index + ordered.length - 1) % ordered.length;
+      return !active.has(previous) || !isAdjacent(previous, index);
+    }).sort((left, right) => left - right);
+    const deterministicStarts = starts.length > 0 ? starts : [[...active].sort((left, right) => left - right)[0]];
+    for (const [blockIndex, start] of deterministicStarts.entries()) {
+      let elapsedWorkHours = 0;
+      let sequenceIndex = 0;
+      let index = start;
+      while (active.has(index)) {
+        const window = ordered[index];
+        segments.push({
+          operatorId,
+          scheduleWindowId: window.shiftId,
+          blockId: `${operatorId}:${blockIndex}`,
+          sequenceIndex,
+          elapsedWorkHours
+        });
+        elapsedWorkHours += window.endHour - window.startHour;
+        sequenceIndex += 1;
+        const next = (index + 1) % ordered.length;
+        if (next === start || !active.has(next) || !isAdjacent(index, next) || starts.includes(next)) break;
+        index = next;
+      }
+    }
+  }
+  return segments.sort((left, right) =>
+    compareCodePoints(left.operatorId, right.operatorId) ||
+    compareCodePoints(left.blockId, right.blockId) || left.sequenceIndex - right.sequenceIndex
+  );
 }
 
 function generateAssignmentPlanInternal(
@@ -386,17 +486,22 @@ function generateAssignmentPlanInternal(
   state = createRegionallyAvailableState(state, operatorAvailabilitySnapshot, state.region);
   const enabledFacilities = state.facilities.filter((facility) => facility.type !== "dormitory");
   const scheduleSkeleton = buildRotationWindows([], [], state.schedule).windows;
-  const supportSelectionContext = allowSupportFallback && options.supportResourceScenario
-    ? buildSupportSelectionContext(
-        state,
-        resolveSupportResourceScenario(
-          scenarioState,
-          options.supportResourceScenario,
-          scheduleSkeleton
-        ),
-        scheduleSkeleton
-      )
+  const initialSupportResourceScenario = options.supportResourceScenario
+    ? resolveSupportResourceScenario(scenarioState, options.supportResourceScenario, scheduleSkeleton)
     : undefined;
+  const supportSelectionContext = allowSupportFallback && initialSupportResourceScenario
+    ? buildSupportSelectionContext(state, initialSupportResourceScenario, scheduleSkeleton)
+    : undefined;
+  if (isCanonicalThreeGroupSchedule(state.schedule)) {
+    return generateCanonicalThreeGroupPlan(
+      state,
+      scenarioState,
+      options,
+      allowSupportFallback,
+      initialSupportResourceScenario,
+      supportSelectionContext
+    );
+  }
   let facilityPlans = buildFacilityPlans(state, enabledFacilities, [], new Set(), supportSelectionContext);
 
   for (let index = 0; index < 3; index += 1) {
@@ -470,6 +575,2067 @@ function generateAssignmentPlanInternal(
   };
 }
 
+function isCanonicalThreeGroupSchedule(schedule: AppState["schedule"]) {
+  const groupIds = schedule.groups.map(({ id }) => id);
+  const declared = new Set(groupIds);
+  const activeGroupCount = schedule.shifts[0]?.activeGroupIds.length ?? 0;
+  return groupIds.length === 3 && declared.size === 3 && schedule.shifts.length > 0 &&
+    activeGroupCount > 0 &&
+    groupIds.every((groupId) => schedule.shifts.some((shift) => shift.activeGroupIds.includes(groupId))) &&
+    schedule.shifts.every((shift) =>
+      shift.activeGroupIds.length === activeGroupCount &&
+      shift.activeGroupIds.every((groupId) => declared.has(groupId))
+    );
+}
+
+type ScheduledProductionCategory = {
+  stableId: string;
+  facilities: FacilitySlot[];
+  logicalFacilities: FacilitySlot[];
+};
+
+type ScheduledProductionSelection = {
+  groupId: string;
+  dimensionId: string;
+  categoryId: string;
+  logicalIndex: number;
+  facility: FacilitySlot;
+  assignments: Assignment[];
+};
+
+function scheduleWindowFixedContext(
+  scenario: SupportResourceScenarioEvaluation | undefined,
+  shiftId: string
+) {
+  const sources = scenario?.sources
+    .filter((evidence) => evidence.status === "resolved" && evidence.source.scheduleWindowId === shiftId)
+    .sort((left, right) => compareCodePoints(left.source.id, right.source.id)) ?? [];
+  return {
+    fixedResourceAmounts: Object.freeze(sources.reduce<Record<string, number>>((amounts, evidence) => {
+      amounts[evidence.source.resourceKey] = (amounts[evidence.source.resourceKey] ?? 0) + evidence.source.amount;
+      return amounts;
+    }, {})),
+    excludedOrdinaryResourceOperatorIds: new Set(sources.map((evidence) => evidence.source.operatorId))
+  };
+}
+
+function scheduledGroupsOverlap(
+  state: AppState,
+  leftGroupId: string,
+  rightGroupId: string
+) {
+  const leftWindows = state.schedule.shifts.filter((shift) => shift.activeGroupIds.includes(leftGroupId));
+  const rightWindows = state.schedule.shifts.filter((shift) => shift.activeGroupIds.includes(rightGroupId));
+  return leftWindows.some((left) => rightWindows.some((right) =>
+    cyclicHalfOpenIntervalsOverlap(left, right, state.schedule.cycleHours)
+  ));
+}
+
+function scheduledConflictKeys(
+  state: AppState,
+  groupIds: readonly string[],
+  groupId: string,
+  kind: "operator" | "global-stack",
+  value: string
+) {
+  return groupIds
+    .filter((otherGroupId) => scheduledGroupsOverlap(state, groupId, otherGroupId))
+    .map((otherGroupId) => {
+      const pair = [groupId, otherGroupId].sort(compareCodePoints);
+      return `${kind}:${value}:${pair[0]}:${pair[1]}`;
+    });
+}
+
+function buildScheduledProductionCategories(state: AppState) {
+  const productionFacilities = state.facilities.filter((facility) =>
+    facility.type === "factory" || facility.type === "trading"
+  );
+  const maximumActiveGroups = Math.max(...state.schedule.shifts.map((shift) => shift.activeGroupIds.length));
+  const byCategory = new Map<string, FacilitySlot[]>();
+  for (const facility of productionFacilities) {
+    const stableId = `${facility.type}:${facility.product}`;
+    const facilities = byCategory.get(stableId) ?? [];
+    facilities.push(facility);
+    byCategory.set(stableId, facilities);
+  }
+  const categories: ScheduledProductionCategory[] = [];
+  const unrepresentableCategoryIds: string[] = [];
+  for (const [stableId, unsortedFacilities] of [...byCategory.entries()]
+    .sort(([left], [right]) => compareCodePoints(left, right))) {
+    const facilities = [...unsortedFacilities].sort((left, right) => compareCodePoints(left.id, right.id));
+    if (maximumActiveGroups <= 0 || facilities.length % maximumActiveGroups !== 0) {
+      unrepresentableCategoryIds.push(stableId);
+      continue;
+    }
+    const logicalFacilities = Array.from(
+      { length: facilities.length / maximumActiveGroups },
+      (_, logicalIndex) => ({ ...facilities[logicalIndex], id: `schedule:${stableId}:${logicalIndex}` })
+    );
+    categories.push({ stableId, facilities, logicalFacilities });
+  }
+  return { categories, unrepresentableCategoryIds, maximumActiveGroups };
+}
+
+function buildCanonicalScheduledProduction(
+  state: AppState,
+  staticPlans: readonly FacilityPlan[],
+  scenario: SupportResourceScenarioEvaluation | undefined,
+  selectionContext: AssignmentEvaluationContext | undefined,
+  supportPlacements: readonly ScheduledSupportPlacement[] = [],
+  supportAssignments: readonly Assignment[] = []
+) {
+  const staticAssignments = staticPlans.flatMap((plan) => plan.assignments);
+  const groupIds = state.schedule.groups.map(({ id }) => id).sort(compareCodePoints);
+  const { categories, unrepresentableCategoryIds, maximumActiveGroups } =
+    buildScheduledProductionCategories(state);
+  const logicalFacilities = categories.flatMap((category) => category.logicalFacilities);
+  const contextFacilities = [...state.facilities, ...logicalFacilities];
+  const reservedOperatorIds = selectionContext?.reservedOperatorIds ?? new Set<string>();
+  const dormitoryAssignments = implicitDormitoryResourceAssignments(
+    state,
+    [...staticAssignments],
+    reservedOperatorIds,
+    selectionContext?.reservedFacilitySlots
+  );
+  const unavailableOperatorIds = new Set([
+    ...staticAssignments.map((assignment) => assignment.operatorId),
+    ...supportAssignments.map((assignment) => assignment.operatorId),
+    ...dormitoryAssignments.map((assignment) => assignment.operatorId),
+    ...reservedOperatorIds
+  ]);
+  const staticGlobalStackKeys = new Set(staticAssignments.flatMap(assignmentGlobalStackKeys));
+  const optionSets = categories.flatMap((category) => category.logicalFacilities.map((facility, logicalIndex) => {
+    const baseContext: AssignmentEvaluationContext = {
+      ...selectionContext,
+      assignments: [...staticAssignments, ...dormitoryAssignments],
+      facilities: contextFacilities,
+      roster: state.roster,
+      shiftHours: optimizerShiftHours(state)
+    };
+    const candidates = findCandidates(facility, state, 0, baseContext)
+      .filter((candidate) => !unavailableOperatorIds.has(candidate.operatorId))
+      .sort(compareFacilityCandidates);
+    const generation = buildFacilityTeamOptionSet(
+      candidates,
+      availableOrdinaryFacilitySlots(facility, selectionContext)
+    );
+    return { category, facility, logicalIndex, candidates, generation };
+  }));
+  const moraleConsumptionCache = new Map<string, number>();
+  const dimensions = groupIds.flatMap((groupId) => optionSets.map((optionSet) => {
+    const dimensionId = `${groupId}:${optionSet.facility.id}`;
+    const activeWindows = state.schedule.shifts.filter((shift) => shift.activeGroupIds.includes(groupId));
+    const groupSegments = deriveScheduleAwareWorkSegments(
+      state.schedule,
+      state.schedule.shifts.map((shift) => ({
+        shiftId: shift.id,
+        startHour: shift.startHour,
+        endHour: shift.endHour,
+        assignments: shift.activeGroupIds.includes(groupId) ? [{
+          facilityId: optionSet.facility.id,
+          operatorId: "schedule-progress",
+          skillId: "schedule-progress",
+          score: 0,
+          efficiency: 0,
+          fatigueHours: moraleCapacity,
+          recoveryHours: 0,
+          reason: "Schedule progress marker"
+        }] : []
+      }))
+    );
+    const progressByWindow = new Map(groupSegments.map((segment) => [segment.scheduleWindowId, segment]));
+    return {
+      stableId: dimensionId,
+      required: true,
+      options: optionSet.generation.options.flatMap((rawAssignments) => {
+        const slotCount = availableOrdinaryFacilitySlots(optionSet.facility, selectionContext);
+        const fillsDimension = facilitySlotOccupancy(rawAssignments) === slotCount && slotCount > 0;
+        if (!fillsDimension || !facilityTeamHasValidStructure(rawAssignments, slotCount)) return [];
+        if (rawAssignments.flatMap(assignmentGlobalStackKeys).some((key) => staticGlobalStackKeys.has(key))) return [];
+        let aggregateScore = 0;
+        let naturalGoldNetChange = 0;
+        const moraleSpentByOperator = new Map<string, number>();
+        for (const window of [...activeWindows].sort((left, right) =>
+          (progressByWindow.get(left.id)?.sequenceIndex ?? 0) -
+            (progressByWindow.get(right.id)?.sequenceIndex ?? 0) ||
+          compareCodePoints(left.id, right.id)
+        )) {
+          const fixed = scheduleWindowFixedContext(scenario, window.id);
+          const scheduledSupport = supportAssignments.filter((assignment) =>
+            supportPlacements.some((placement) => placement.kind === "ordinary" &&
+              placement.operatorId === assignment.operatorId &&
+              placement.facilityId === assignment.facilityId &&
+              placement.scheduleWindowIds.includes(window.id))
+          );
+          const context: AssignmentEvaluationContext = {
+            ...selectionContext,
+            ...fixed,
+            assignments: [...staticAssignments, ...scheduledSupport, ...dormitoryAssignments, ...rawAssignments],
+            facilities: contextFacilities,
+            roster: state.roster,
+            shiftHours: window.endHour - window.startHour,
+            workElapsedHoursByOperator: new Map(rawAssignments.map((assignment) => [
+              assignment.operatorId,
+              progressByWindow.get(window.id)?.elapsedWorkHours ?? 0
+            ]))
+          };
+          const reevaluatedAssignments = reevaluateFacilityTeam(rawAssignments, optionSet.facility, state, context);
+          if (!facilityTeamEligibleForScheduleComparison(rawAssignments, reevaluatedAssignments, slotCount)) return [];
+          const assignments = reevaluatedAssignments.map((assignment) => {
+            if (!assignment.moraleEfficiencyCurves?.length) return assignment;
+            const cacheKey = `${optionSet.facility.id}\u0000${facilityTeamStableSignature(rawAssignments)}` +
+              `\u0000${window.id}\u0000${assignment.operatorId}`;
+            let consumptionPerHour = moraleConsumptionCache.get(cacheKey);
+            if (consumptionPerHour === undefined) {
+              consumptionPerHour = applyMoraleDurationToAssignment(
+                assignment,
+                state,
+                { ...context, moraleSpentBefore: 0 },
+                context,
+                false,
+                undefined,
+                undefined,
+                true
+              ).moraleConsumptionPerHour ?? 0;
+              moraleConsumptionCache.set(cacheKey, consumptionPerHour);
+            }
+            const moraleSpentBefore = moraleSpentByOperator.get(assignment.operatorId) ?? 0;
+            return {
+              ...assignment,
+              efficiency: assignment.efficiency + assignment.moraleEfficiencyCurves.reduce(
+                (sum, curve) => sum + averageMoraleCurveSegmentEfficiency(
+                  curve,
+                  window.endHour - window.startHour,
+                  consumptionPerHour!,
+                  moraleSpentBefore
+                ) - curve.baselineEfficiency,
+                0
+              ),
+              moraleConsumptionPerHour: consumptionPerHour
+            };
+          });
+          for (const assignment of assignments) {
+            moraleSpentByOperator.set(
+              assignment.operatorId,
+              Math.min(
+                moraleCapacity,
+                (moraleSpentByOperator.get(assignment.operatorId) ?? 0) +
+                  (assignment.moraleConsumptionPerHour ?? 0) * (window.endHour - window.startHour)
+              )
+            );
+          }
+          const facilityBonus = calculateGlobalBonus(state, optionSet.facility, context) +
+            calculateRemoteFacilityEfficiencyBonus(optionSet.facility, context);
+          aggregateScore += facilityTeamSelectionScore(
+            assignments,
+            optionSet.facility,
+            state.preference,
+            facilityBonus
+          ) * (window.endHour - window.startHour);
+          if (optionSet.facility.type === "factory" && optionSet.facility.product === "gold") {
+            naturalGoldNetChange += simulateFacilityProduction({
+              durationHours: window.endHour - window.startHour,
+              facility: { kind: "factory", level: 3, product: "gold" },
+              teamEffects: [{
+                id: `canonical-${dimensionId}-${window.id}`,
+                source: "operator",
+                additiveEfficiency: effectiveFacilityEfficiency(assignments, facilityBonus),
+                target: "gold"
+              }]
+            }).ledger.goldNetChange;
+          } else if (optionSet.facility.type === "trading") {
+            naturalGoldNetChange += simulateFacilityProduction({
+              durationHours: window.endHour - window.startHour,
+              facility: { kind: "tradingPost", level: 3, orderType: "normalLmd" },
+              teamEffects: [{
+                id: `canonical-${dimensionId}-${window.id}`,
+                source: "operator",
+                additiveEfficiency: effectiveFacilityEfficiency(assignments, facilityBonus),
+                target: "normalOrder"
+              }]
+            }).ledger.goldNetChange;
+          }
+        }
+        const operatorConflictKeys = rawAssignments.flatMap((assignment) =>
+          scheduledConflictKeys(state, groupIds, groupId, "operator", assignment.operatorId)
+        );
+        const stackConflictKeys = rawAssignments.flatMap((assignment) => assignmentGlobalStackKeys(assignment)
+          .flatMap((stackKey) => scheduledConflictKeys(state, groupIds, groupId, "global-stack", stackKey)));
+        const retentionKeys = teamRetentionKeys(rawAssignments);
+        const maximumMoraleSpent = Math.max(0, ...moraleSpentByOperator.values());
+        return [{
+          stableId: facilityTeamStableSignature(rawAssignments),
+          score: aggregateScore,
+          feasibilityRank: naturalGoldNetChange - maximumMoraleSpent * 1_000,
+          conflictKeys: [...operatorConflictKeys, ...stackConflictKeys],
+          retentionKeys,
+          fillsDimension: true,
+          value: {
+            groupId,
+            dimensionId,
+            categoryId: optionSet.category.stableId,
+            logicalIndex: optionSet.logicalIndex,
+            facility: optionSet.facility,
+            assignments: rawAssignments
+          } satisfies ScheduledProductionSelection
+        }];
+      })
+    };
+  }));
+  const dimensionIds = dimensions.map(({ stableId }) => stableId).sort(compareCodePoints);
+  const forcedIncompleteDimensionIds = unrepresentableCategoryIds.flatMap((categoryId) =>
+    groupIds.map((groupId) => `${groupId}:unrepresentable:${categoryId}`)
+  ).sort(compareCodePoints);
+  const feasibilityBySelection = new Map<string, boolean>();
+  const requiredPlacements = [...supportPlacements, ...requiredScenarioSupportPlacements(state, scenario)]
+    .filter((placement, index, placements) => placements.findIndex((candidate) =>
+      candidate.kind === placement.kind && candidate.operatorId === placement.operatorId &&
+      candidate.facilityId === placement.facilityId &&
+      candidate.scheduleWindowIds.join("\u0000") === placement.scheduleWindowIds.join("\u0000") &&
+      candidate.recoveryWindowIds.join("\u0000") === placement.recoveryWindowIds.join("\u0000")
+    ) === index);
+  const requiresClosedResourceSearch = scenario?.complete === true &&
+    state.facilities.some((facility) => facility.type === "factory" && facility.product === "gold") &&
+    state.facilities.some((facility) => facility.type === "trading");
+  const searchResult = forcedIncompleteDimensionIds.length > 0
+    ? undefined
+    : !requiresClosedResourceSearch
+      ? searchBestConflictFreeOptions(dimensions)
+      : searchBestConflictFreeOptions(dimensions, {
+        completeSelectionEvaluationBudget: supportAssignments.length === 0 ? 32 : 12,
+        isCompleteSelectionFeasible: (options) => {
+          const signature = options.map((option) => `${option.value.dimensionId}:${option.stableId}`).join("|");
+          const cached = feasibilityBySelection.get(signature);
+          if (cached !== undefined) return cached;
+          const feasible = canonicalSelectionIsSustainable(
+            state,
+            staticPlans,
+            {
+              categories,
+              groupIds,
+              maximumActiveGroups,
+              selections: options.map((option) => option.value),
+              complete: true,
+              diagnostics: []
+            },
+            scenario,
+            selectionContext,
+            requiredPlacements,
+            supportAssignments
+          );
+          feasibilityBySelection.set(signature, feasible);
+          return feasible;
+        }
+      });
+  const complete = Boolean(searchResult && searchResult.diagnostic.completion === "complete");
+  const selections = complete
+    ? searchResult!.options.map((option) => option.value)
+    : [];
+  const incompleteDimensionIds = complete
+    ? []
+    : forcedIncompleteDimensionIds.length > 0 ? forcedIncompleteDimensionIds : dimensionIds;
+  const generationDiagnostics = optionSets.map(({ generation }) => generation.diagnostic);
+  const candidateGenerationLimited = generationDiagnostics.some((diagnostic) =>
+    diagnostic.optimality === "not-certified"
+  );
+  const provenInfeasible = forcedIncompleteDimensionIds.length > 0 || Boolean(
+    searchResult?.diagnostic.completion === "infeasible" && !candidateGenerationLimited
+  );
+  const completion = complete ? "complete" as const : provenInfeasible ? "infeasible" as const : "unknown" as const;
+  const searchLimitation = searchResult?.diagnostic.limitation;
+  const notCertified = completion === "unknown" || candidateGenerationLimited ||
+    searchResult?.diagnostic.optimality === "not-certified";
+  const limitation = searchLimitation === "feasibility-budget-limited" ||
+    searchLimitation === "optimization-budget-limited"
+    ? searchLimitation
+    : candidateGenerationLimited
+      ? "candidate-generation-limited" as const
+      : searchLimitation;
+  const diagnostics: AssignmentPlan["diagnostics"] = [
+    ...(provenInfeasible ? [{
+      code: "composition-search-infeasible" as const,
+      incompleteDimensionIds,
+      message: `Composition search could not fill ${incompleteDimensionIds.length} required dimensions`
+    }] : []),
+    ...(notCertified ? [{
+      code: "composition-search-not-certified" as const,
+      limitation: limitation!,
+      visitedStates: searchResult?.diagnostic.visitedStates ?? 0,
+      discardedStates: searchResult?.diagnostic.discardedStates ?? 0,
+      feasibilityVisitedStates: searchResult?.diagnostic.feasibilityVisitedStates ?? 0,
+      feasibilityWorkBudget: searchResult?.diagnostic.feasibilityWorkBudget ?? 0,
+      feasibilityBudgetExhausted: searchResult?.diagnostic.feasibilityBudgetExhausted ?? false,
+      optimizationVisitedStates: searchResult?.diagnostic.optimizationVisitedStates ?? 0,
+      optimizationWorkBudget: searchResult?.diagnostic.optimizationWorkBudget ?? 0,
+      optimizationBudgetExhausted: searchResult?.diagnostic.optimizationBudgetExhausted ?? false,
+      candidateGenerationInputCount: generationDiagnostics.reduce((sum, item) => sum + item.inputCandidateCount, 0),
+      candidateGenerationConstructedCount: generationDiagnostics.reduce((sum, item) => sum + item.constructedOptionCount, 0),
+      candidateGenerationRetainedCount: generationDiagnostics.reduce((sum, item) => sum + item.retainedOptionCount, 0),
+      message: "Composition search returned a bounded useful plan; global optimality is not certified"
+    }] : []),
+    {
+      code: "schedule-group-search-profile" as const,
+      completion,
+      dimensionIds,
+      groupIds,
+      optionCounts: Object.freeze(Object.fromEntries(dimensions.map((dimension) => [
+        dimension.stableId,
+        dimension.options.length
+      ]))),
+      visitedStates: searchResult?.diagnostic.visitedStates ?? 0,
+      discardedStates: searchResult?.diagnostic.discardedStates ?? 0,
+      feasibilityVisitedStates: searchResult?.diagnostic.feasibilityVisitedStates ?? 0,
+      feasibilityWorkBudget: searchResult?.diagnostic.feasibilityWorkBudget ?? 0,
+      feasibilityBudgetExhausted: searchResult?.diagnostic.feasibilityBudgetExhausted ?? false,
+      optimizationVisitedStates: searchResult?.diagnostic.optimizationVisitedStates ?? 0,
+      optimizationWorkBudget: searchResult?.diagnostic.optimizationWorkBudget ?? 0,
+      optimizationBudgetExhausted: searchResult?.diagnostic.optimizationBudgetExhausted ?? false,
+      incompleteDimensionIds,
+      message: `Schedule production search ${completion === "complete" ? "completed" : completion === "infeasible" ? "was infeasible" : "was not certified complete"} across ${dimensionIds.length} dimensions`
+    }
+  ];
+  return {
+    categories,
+    groupIds,
+    maximumActiveGroups,
+    selections,
+    complete,
+    diagnostics
+  };
+}
+
+function remapAssignmentFacility(assignment: Assignment, facilityId: string): Assignment {
+  return assignment.facilityId === "base" ? assignment : { ...assignment, facilityId };
+}
+
+function fixedSupportPlacements(
+  scenario: SupportResourceScenarioEvaluation | undefined
+): ScheduledSupportPlacement[] {
+  return scenario?.sources
+    .filter((evidence) =>
+      evidence.status === "resolved" && evidence.source.resourceKey !== "ordinarySupportPlacement"
+    )
+    .map((evidence) => ({
+      kind: "fixed" as const,
+      operatorId: evidence.source.operatorId,
+      facilityId: evidence.source.facility.id,
+      scheduleWindowIds: [evidence.source.scheduleWindowId],
+      recoveryWindowIds: []
+    }))
+    .sort((left, right) =>
+      compareCodePoints(left.scheduleWindowIds[0], right.scheduleWindowIds[0]) ||
+      compareCodePoints(left.facilityId, right.facilityId) ||
+      compareCodePoints(left.operatorId, right.operatorId)
+    ) ?? [];
+}
+
+function scenarioOrdinarySupportPlacements(
+  state: AppState,
+  scenario: SupportResourceScenarioEvaluation | undefined
+): ScheduledSupportPlacement[] {
+  const windowsBySupport = new Map<string, Set<string>>();
+  for (const evidence of scenario?.sources ?? []) {
+    if (evidence.status !== "resolved" || evidence.source.resourceKey !== "ordinarySupportPlacement") continue;
+    const key = `${evidence.source.facility.id}\u0000${evidence.source.operatorId}`;
+    const windowIds = windowsBySupport.get(key) ?? new Set<string>();
+    windowIds.add(evidence.source.scheduleWindowId);
+    windowsBySupport.set(key, windowIds);
+  }
+  return [...windowsBySupport].map(([key, windowIds]) => {
+    const [facilityId, operatorId] = key.split("\u0000");
+    const scheduleWindowIds = state.schedule.shifts
+      .filter((shift) => windowIds.has(shift.id))
+      .map((shift) => shift.id);
+    const groupId = state.schedule.groups.map((group) => group.id).find((candidateGroupId) => {
+      const groupWindowIds = state.schedule.shifts
+        .filter((shift) => shift.activeGroupIds.includes(candidateGroupId))
+        .map((shift) => shift.id);
+      return groupWindowIds.length === scheduleWindowIds.length &&
+        groupWindowIds.every((windowId) => windowIds.has(windowId));
+    });
+    return {
+      kind: "ordinary" as const,
+      operatorId,
+      facilityId,
+      ...(groupId ? { groupId } : {}),
+      scheduleWindowIds,
+      recoveryWindowIds: state.schedule.shifts
+        .filter((shift) => !windowIds.has(shift.id) && (!groupId || shift.recoveryGroupIds.includes(groupId)))
+        .map((shift) => shift.id)
+    };
+  }).sort((left, right) =>
+    compareCodePoints(left.facilityId, right.facilityId) || compareCodePoints(left.operatorId, right.operatorId)
+  );
+}
+
+function requiredScenarioSupportPlacements(
+  state: AppState,
+  scenario: SupportResourceScenarioEvaluation | undefined
+): ScheduledSupportPlacement[] {
+  return [...scenarioOrdinarySupportPlacements(state, scenario), ...fixedSupportPlacements(scenario)];
+}
+
+function ordinarySupportPlacements(
+  state: AppState,
+  removalProofs: readonly {
+    supportOperatorId: string;
+    supportFacilityId: string;
+    scheduleWindowId: string;
+  }[]
+): ScheduledSupportPlacement[] {
+  const windowsBySupport = new Map<string, Set<string>>();
+  for (const proof of removalProofs) {
+    const key = `${proof.supportFacilityId}\u0000${proof.supportOperatorId}`;
+    const windowIds = windowsBySupport.get(key) ?? new Set<string>();
+    windowIds.add(proof.scheduleWindowId);
+    windowsBySupport.set(key, windowIds);
+  }
+  return [...windowsBySupport.entries()].map(([key, provenWindowIds]) => {
+    const [facilityId, operatorId] = key.split("\u0000");
+    const scheduleWindowIds = state.schedule.shifts
+      .filter((shift) => provenWindowIds.has(shift.id))
+      .map((shift) => shift.id);
+    const groupId = state.schedule.groups
+      .map((group) => group.id)
+      .sort(compareCodePoints)
+      .find((candidateGroupId) => {
+        const groupWindowIds = state.schedule.shifts
+          .filter((shift) => shift.activeGroupIds.includes(candidateGroupId))
+          .map((shift) => shift.id);
+        return groupWindowIds.length === scheduleWindowIds.length &&
+          groupWindowIds.every((windowId) => provenWindowIds.has(windowId));
+      });
+    const recoveryWindowIds = state.schedule.shifts
+      .filter((shift) => !provenWindowIds.has(shift.id) &&
+        (!groupId || shift.recoveryGroupIds.includes(groupId)))
+      .map((shift) => shift.id);
+    return {
+      kind: "ordinary" as const,
+      operatorId,
+      facilityId,
+      ...(groupId ? { groupId } : {}),
+      scheduleWindowIds,
+      recoveryWindowIds
+    };
+  }).sort((left, right) =>
+    compareCodePoints(left.facilityId, right.facilityId) ||
+    compareCodePoints(left.operatorId, right.operatorId)
+  );
+}
+
+function fixedSupportAssignment(
+  state: AppState,
+  placement: ScheduledSupportPlacement,
+  scenario: SupportResourceScenarioEvaluation | undefined,
+  shiftHours: number
+): Assignment {
+  const source = scenario?.sources.find((evidence) =>
+    evidence.status === "resolved" &&
+    evidence.source.operatorId === placement.operatorId &&
+    evidence.source.facility.id === placement.facilityId &&
+    evidence.source.scheduleWindowId === placement.scheduleWindowIds[0]
+  )?.source;
+  const facility = state.facilities.find((candidate) => candidate.id === placement.facilityId) ??
+    (source ? {
+      id: source.facility.id,
+      type: source.facility.type,
+      name: source.facility.id,
+      slotCount: source.facility.capacity
+    } as FacilitySlot : undefined);
+  const candidate = facility
+    ? findCandidates(facility, state, 0, {
+        assignments: [], facilities: canonicalWindowFacilities(state, scenario), roster: state.roster, shiftHours
+      }).find((assignment) => assignment.operatorId === placement.operatorId)
+    : undefined;
+  return candidate ?? {
+    facilityId: source?.facility.id ?? placement.facilityId,
+    operatorId: placement.operatorId,
+    skillId: "scheduled-fixed-support",
+    score: 0,
+    efficiency: 0,
+    fatigueHours: moraleCapacity,
+    recoveryHours: shiftHours / maxDormitoryRecoveryPerHour,
+    reason: "Scheduled fixed support source"
+  };
+}
+
+function canonicalWindowFacilities(
+  state: AppState,
+  scenario: SupportResourceScenarioEvaluation | undefined
+): FacilitySlot[] {
+  const facilities = [...state.facilities];
+  const knownIds = new Set(facilities.map((facility) => facility.id));
+  for (const evidence of scenario?.sources ?? []) {
+    if (evidence.status !== "resolved" || knownIds.has(evidence.source.facility.id)) continue;
+    facilities.push({
+      id: evidence.source.facility.id,
+      type: evidence.source.facility.type,
+      name: evidence.source.facility.id,
+      slotCount: evidence.source.facility.capacity
+    } as FacilitySlot);
+    knownIds.add(evidence.source.facility.id);
+  }
+  return facilities;
+}
+
+function buildCanonicalRotation(
+  state: AppState,
+  staticPlans: readonly FacilityPlan[],
+  composition: ReturnType<typeof buildCanonicalScheduledProduction>,
+  scenario: SupportResourceScenarioEvaluation | undefined,
+  selectionContext: AssignmentEvaluationContext | undefined,
+  supportPlacements: readonly ScheduledSupportPlacement[] = requiredScenarioSupportPlacements(state, scenario),
+  ordinarySupportAssignments: readonly Assignment[] = [],
+  materializeMorale = false
+) {
+  const windowFacilities = canonicalWindowFacilities(state, scenario);
+  const ordinaryPlacements = supportPlacements.filter((placement) => placement.kind === "ordinary");
+  const ordinaryPlacementAssignments = ordinaryPlacements.map((placement) =>
+    ordinarySupportAssignments.find((assignment) =>
+      assignment.operatorId === placement.operatorId && assignment.facilityId === placement.facilityId
+    ) ?? fixedSupportAssignment(state, placement, scenario, optimizerShiftHours(state))
+  );
+  const staticAssignments = [
+    ...staticPlans.flatMap((plan) => plan.assignments),
+    ...ordinaryPlacementAssignments
+  ];
+  const ordinaryPlacementByAssignment = new Map(ordinaryPlacements.map((placement) => [
+    `${placement.facilityId}\u0000${placement.operatorId}`,
+    placement
+  ]));
+  const fixedPlacements = supportPlacements.filter((placement) => placement.kind === "fixed");
+  const selectionByDimension = new Map(composition.selections.map((selection) => [selection.dimensionId, selection]));
+  const selectedByPhysicalFacility = new Map<string, Assignment[]>();
+  const rawWindows = state.schedule.shifts.map((shift, index) => {
+    const activeGroupIds = [...shift.activeGroupIds].sort(compareCodePoints);
+    const productionAssignments: Assignment[] = [];
+    const incompleteGroupIds = new Set<string>();
+    if (!composition.complete || activeGroupIds.length !== composition.maximumActiveGroups) {
+      activeGroupIds.forEach((groupId) => incompleteGroupIds.add(groupId));
+    } else {
+      for (const category of composition.categories) {
+        for (const [logicalIndex, logicalFacility] of category.logicalFacilities.entries()) {
+          for (const [activeIndex, groupId] of activeGroupIds.entries()) {
+            const selection = selectionByDimension.get(`${groupId}:${logicalFacility.id}`);
+            const physicalFacility = category.facilities[logicalIndex * composition.maximumActiveGroups + activeIndex];
+            if (!selection || !physicalFacility) {
+              incompleteGroupIds.add(groupId);
+              continue;
+            }
+            productionAssignments.push(...selection.assignments.map((assignment) =>
+              remapAssignmentFacility(assignment, physicalFacility.id)
+            ));
+          }
+        }
+      }
+    }
+    let scheduledStaticAssignments = staticAssignments.filter((assignment) => {
+      const placement = ordinaryPlacementByAssignment.get(`${assignment.facilityId}\u0000${assignment.operatorId}`);
+      return !placement || placement.scheduleWindowIds.includes(shift.id);
+    });
+    const fixedAssignments = fixedPlacements
+      .filter((placement) => placement.scheduleWindowIds.includes(shift.id))
+      .map((placement) => fixedSupportAssignment(
+        state, placement, scenario, shift.endHour - shift.startHour
+      ));
+    for (const facility of state.facilities) {
+      const fixedOccupancy = fixedAssignments.filter((assignment) =>
+        assignment.facilityId === facility.id && assignmentConsumesFacilitySlot(assignment)
+      ).length;
+      if (fixedOccupancy === 0) continue;
+      const atFacility = scheduledStaticAssignments.filter((assignment) => assignment.facilityId === facility.id);
+      const protectedSupport = atFacility.filter((assignment) =>
+        ordinaryPlacementByAssignment.has(`${assignment.facilityId}\u0000${assignment.operatorId}`)
+      );
+      const protectedIds = new Set(protectedSupport.map((assignment) => assignment.operatorId));
+      const retainedOrdinary = atFacility
+        .filter((assignment) => !protectedIds.has(assignment.operatorId) && assignmentConsumesFacilitySlot(assignment))
+        .sort(compareFacilityCandidates)
+        .slice(0, Math.max(0, facility.slotCount - fixedOccupancy - facilitySlotOccupancy(protectedSupport)));
+      const retainedIds = new Set([...protectedIds, ...retainedOrdinary.map((assignment) => assignment.operatorId)]);
+      scheduledStaticAssignments = scheduledStaticAssignments.filter((assignment) =>
+        assignment.facilityId !== facility.id || !assignmentConsumesFacilitySlot(assignment) ||
+        retainedIds.has(assignment.operatorId)
+      );
+    }
+    const preliminaryAssignments = [...scheduledStaticAssignments, ...fixedAssignments, ...productionAssignments];
+    const fixed = scheduleWindowFixedContext(scenario, shift.id);
+    const dormitoryAssignments = implicitDormitoryResourceAssignments(
+      state,
+      preliminaryAssignments,
+      selectionContext?.reservedOperatorIds,
+      selectionContext?.reservedFacilitySlots
+    );
+    const context: AssignmentEvaluationContext = {
+      ...selectionContext,
+      ...fixed,
+      assignments: [...preliminaryAssignments, ...dormitoryAssignments],
+      facilities: windowFacilities,
+      roster: state.roster,
+      shiftHours: shift.endHour - shift.startHour
+    };
+    const reevaluatedProduction = state.facilities
+      .filter((facility) => facility.type === "factory" || facility.type === "trading")
+      .sort((left, right) => compareCodePoints(left.id, right.id))
+      .flatMap((facility) => reevaluateFacilityTeam(
+        productionAssignments.filter((assignment) => assignment.facilityId === facility.id),
+        facility,
+        state,
+        context
+      ));
+    const reevaluatedAssignments = [
+      ...scheduledStaticAssignments,
+      ...fixedAssignments,
+      ...reevaluatedProduction
+    ];
+    const assignments = reevaluatedAssignments;
+    const materializedProduction = assignments.filter((assignment) =>
+      state.facilities.some((facility) =>
+        facility.id === assignment.facilityId &&
+        (facility.type === "factory" || facility.type === "trading")
+      )
+    );
+    const operatorIds = assignments.map((assignment) => assignment.operatorId);
+    const productionComplete = state.facilities
+      .filter((facility) => facility.type === "factory" || facility.type === "trading")
+      .every((facility) => {
+        const rawFacilityAssignments = productionAssignments.filter((assignment) => assignment.facilityId === facility.id);
+        const reevaluatedFacilityAssignments = materializedProduction.filter((assignment) => assignment.facilityId === facility.id);
+        return facilityTeamEligibleForScheduleComparison(
+          rawFacilityAssignments,
+          reevaluatedFacilityAssignments,
+          availableOrdinaryFacilitySlots(facility, selectionContext)
+        );
+      });
+    if (new Set(operatorIds).size !== operatorIds.length || !productionComplete) {
+      activeGroupIds.forEach((groupId) => incompleteGroupIds.add(groupId));
+    }
+    if (incompleteGroupIds.size === 0) {
+      for (const facility of state.facilities.filter((candidate) =>
+        candidate.type === "factory" || candidate.type === "trading"
+      )) {
+        if (!selectedByPhysicalFacility.has(facility.id)) {
+          selectedByPhysicalFacility.set(
+            facility.id,
+            materializedProduction.filter((assignment) => assignment.facilityId === facility.id)
+          );
+        }
+      }
+    }
+    return {
+      label: `${index + 1}回目ローテーション`,
+      hours: shift.endHour - shift.startHour,
+      shiftId: shift.id,
+      startHour: shift.startHour,
+      endHour: shift.endHour,
+      activeGroupIds: [...shift.activeGroupIds],
+      recoveryGroupIds: [...shift.recoveryGroupIds],
+      incompleteGroupIds: [...incompleteGroupIds].sort(compareCodePoints),
+      assignments: incompleteGroupIds.size === 0 ? assignments : [],
+      recovery: [
+        ...shift.recoveryGroupIds.flatMap((groupId) => composition.selections
+          .filter((selection) => selection.groupId === groupId)
+          .flatMap((selection) => selection.assignments)),
+        ...ordinaryPlacements
+          .filter((placement) => placement.recoveryWindowIds.includes(shift.id))
+          .flatMap((placement) => staticAssignments.filter((assignment) =>
+            assignment.facilityId === placement.facilityId && assignment.operatorId === placement.operatorId
+          ))
+      ]
+    };
+  });
+  if (!materializeMorale) return { windows: rawWindows, selectedByPhysicalFacility };
+
+  const materializationWindows = rawWindows.map((window) => ({
+    ...window,
+    assignments: [...window.assignments]
+  }));
+  const scheduledOperatorIds = new Set(rawWindows.flatMap((window) =>
+    window.assignments.map((assignment) => assignment.operatorId)
+  ));
+  for (const plan of staticPlans) {
+    const activeIds = new Set(plan.assignments.map((assignment) => assignment.operatorId));
+    const activeInEveryWindow = activeIds.size > 0 && materializationWindows.every((window) =>
+      [...activeIds].every((operatorId) => window.assignments.some((assignment) =>
+        assignment.facilityId === plan.facility.id && assignment.operatorId === operatorId
+      ))
+    );
+    const alternativeAssignments = plan.alternatives.length > 0
+      ? plan.alternatives
+      : selectAssignmentsForFacility(
+          findCandidates(plan.facility, state, 0, {
+            ...selectionContext,
+            assignments: materializationWindows[0]?.assignments ?? [],
+            facilities: windowFacilities,
+            roster: state.roster,
+            shiftHours: materializationWindows[0]?.hours ?? optimizerShiftHours(state)
+          }).filter((assignment) => !scheduledOperatorIds.has(assignment.operatorId)),
+          facilitySlotOccupancy(plan.assignments)
+        );
+    const alternativeIds = new Set(alternativeAssignments.map((assignment) => assignment.operatorId));
+    if (!activeInEveryWindow || alternativeIds.size === 0 ||
+        [...alternativeIds].some((operatorId) => scheduledOperatorIds.has(operatorId))) continue;
+    const recoveryWindow = materializationWindows.find((window) => {
+      const retainedOperatorIds = new Set(window.assignments
+        .filter((assignment) => assignment.facilityId !== plan.facility.id || !activeIds.has(assignment.operatorId))
+        .map((assignment) => assignment.operatorId));
+      return [...alternativeIds].every((operatorId) => !retainedOperatorIds.has(operatorId));
+    });
+    if (!recoveryWindow) continue;
+    recoveryWindow.assignments = [
+      ...recoveryWindow.assignments.filter((assignment) =>
+        assignment.facilityId !== plan.facility.id || !activeIds.has(assignment.operatorId)
+      ),
+      ...alternativeAssignments
+    ];
+  }
+
+  const windows = materializeScheduleAwareRotation(
+    state,
+    materializationWindows,
+    scenario,
+    selectionContext
+  );
+  selectedByPhysicalFacility.clear();
+  for (const window of windows.filter((candidate) => candidate.incompleteGroupIds.length === 0)) {
+    for (const facility of state.facilities.filter((candidate) =>
+      candidate.type === "factory" || candidate.type === "trading"
+    )) {
+      if (!selectedByPhysicalFacility.has(facility.id)) {
+        selectedByPhysicalFacility.set(
+          facility.id,
+          window.assignments.filter((assignment) => assignment.facilityId === facility.id)
+        );
+      }
+    }
+  }
+  return { windows, selectedByPhysicalFacility };
+}
+
+function validateScheduledSupportMaterialization(
+  state: AppState,
+  windows: readonly AssignmentPlan["rotation"][number][],
+  placements: readonly ScheduledSupportPlacement[],
+  scenario: SupportResourceScenarioEvaluation | undefined
+) {
+  const issues: ScheduledSupportValidationIssue[] = [];
+  const addIssue = (issue: ScheduledSupportValidationIssue) => {
+    if (!issues.some((existing) =>
+      existing.code === issue.code && existing.operatorId === issue.operatorId &&
+      existing.facilityId === issue.facilityId &&
+      existing.scheduleWindowIds.join("\u0000") === issue.scheduleWindowIds.join("\u0000")
+    )) issues.push(issue);
+  };
+  const facilityCapacity = (facilityId: string) =>
+    state.facilities.find((facility) => facility.id === facilityId)?.slotCount ??
+    scenario?.sources.find((evidence) =>
+      evidence.status === "resolved" && evidence.source.facility.id === facilityId
+    )?.source.facility.capacity;
+
+  for (const placement of placements) {
+    for (const window of windows) {
+      const works = window.assignments.filter((assignment) =>
+        assignment.operatorId === placement.operatorId && assignment.facilityId === placement.facilityId
+      ).length;
+      const shouldWork = placement.scheduleWindowIds.includes(window.shiftId);
+      const recovers = window.recovery.some((assignment) => assignment.operatorId === placement.operatorId);
+      const shouldRecover = placement.recoveryWindowIds.includes(window.shiftId);
+      if ((shouldWork && works !== 1) || (!shouldWork && works !== 0) ||
+          (shouldRecover && !recovers) || (!shouldRecover && placement.kind === "ordinary" && recovers)) {
+        addIssue({
+          code: "support-placement-not-materialized",
+          operatorId: placement.operatorId,
+          facilityId: placement.facilityId,
+          scheduleWindowIds: [window.shiftId],
+          message: `Scheduled support ${placement.operatorId} was not materialized exactly in ${window.shiftId}`
+        });
+      }
+    }
+  }
+
+  for (const window of windows) {
+    const workingByOperator = new Map<string, Assignment[]>();
+    for (const assignment of window.assignments) {
+      const assignments = workingByOperator.get(assignment.operatorId) ?? [];
+      assignments.push(assignment);
+      workingByOperator.set(assignment.operatorId, assignments);
+    }
+    for (const [operatorId, assignments] of workingByOperator) {
+      if (assignments.length > 1) addIssue({
+        code: "support-operator-duplicated",
+        operatorId,
+        scheduleWindowIds: [window.shiftId],
+        message: `Operator ${operatorId} has ${assignments.length} assignments in ${window.shiftId}`
+      });
+      if (window.recovery.some((assignment) => assignment.operatorId === operatorId)) addIssue({
+        code: "support-work-recovery-overlap",
+        operatorId,
+        scheduleWindowIds: [window.shiftId],
+        message: `Operator ${operatorId} works and recovers in ${window.shiftId}`
+      });
+    }
+    for (const facilityId of new Set(window.assignments.map((assignment) => assignment.facilityId))) {
+      const capacity = facilityCapacity(facilityId);
+      if (capacity === undefined) continue;
+      const occupancy = window.assignments.filter((assignment) =>
+        assignment.facilityId === facilityId && assignmentConsumesFacilitySlot(assignment)
+      ).length;
+      if (occupancy > capacity) addIssue({
+        code: "support-facility-capacity-exceeded",
+        facilityId,
+        scheduleWindowIds: [window.shiftId],
+        message: `Facility ${facilityId} has occupancy ${occupancy} above capacity ${capacity} in ${window.shiftId}`
+      });
+    }
+  }
+
+  for (let leftIndex = 0; leftIndex < windows.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < windows.length; rightIndex += 1) {
+      const left = windows[leftIndex];
+      const right = windows[rightIndex];
+      if (!cyclicHalfOpenIntervalsOverlap(left, right, state.schedule.cycleHours)) continue;
+      const leftOperators = new Set(left.assignments.map((assignment) => assignment.operatorId));
+      for (const operatorId of new Set(right.assignments.map((assignment) => assignment.operatorId))) {
+        if (leftOperators.has(operatorId)) addIssue({
+          code: "support-work-overlap",
+          operatorId,
+          scheduleWindowIds: [left.shiftId, right.shiftId].sort(compareCodePoints),
+          message: `Operator ${operatorId} works in overlapping windows ${left.shiftId} and ${right.shiftId}`
+        });
+      }
+      for (const [work, recovery] of [[left, right], [right, left]] as const) {
+        const recoveryIds = new Set(recovery.recovery.map((assignment) => assignment.operatorId));
+        for (const operatorId of new Set(work.assignments.map((assignment) => assignment.operatorId))) {
+          if (recoveryIds.has(operatorId)) addIssue({
+            code: "support-work-recovery-overlap",
+            operatorId,
+            scheduleWindowIds: [work.shiftId, recovery.shiftId].sort(compareCodePoints),
+            message: `Operator ${operatorId} works and recovers in overlapping cyclic windows`
+          });
+        }
+      }
+      for (const facilityId of new Set([...left.assignments, ...right.assignments]
+        .map((assignment) => assignment.facilityId))) {
+        const capacity = facilityCapacity(facilityId);
+        if (capacity === undefined) continue;
+        const occupants = [...left.assignments, ...right.assignments].filter((assignment) =>
+          assignment.facilityId === facilityId && assignmentConsumesFacilitySlot(assignment)
+        );
+        if (occupants.length > capacity) addIssue({
+          code: "support-facility-capacity-exceeded",
+          facilityId,
+          scheduleWindowIds: [left.shiftId, right.shiftId].sort(compareCodePoints),
+          message: `Facility ${facilityId} exceeds capacity ${capacity} across overlapping cyclic windows`
+        });
+      }
+    }
+  }
+  issues.sort((left, right) =>
+    compareCodePoints(left.code, right.code) ||
+    compareCodePoints(left.facilityId ?? "", right.facilityId ?? "") ||
+    compareCodePoints(left.operatorId ?? "", right.operatorId ?? "") ||
+    compareCodePoints(left.scheduleWindowIds.join("|"), right.scheduleWindowIds.join("|"))
+  );
+  return {
+    issues,
+    supportCapacityValidated: !issues.some((issue) =>
+      issue.code === "support-facility-capacity-exceeded" || issue.code === "support-placement-not-materialized"
+    ),
+    supportRecoveryValidated: !issues.some((issue) =>
+      issue.code !== "support-facility-capacity-exceeded"
+    )
+  };
+}
+
+type CanonicalComposition = ReturnType<typeof buildCanonicalScheduledProduction>;
+
+type CanonicalSelectionMechanicalEvidence = {
+  rotationComplete: boolean;
+  supportCapacityValidated: boolean;
+  supportRecoveryValidated: boolean;
+  supportIssueCount: number;
+  resourceStatus: "complete" | "incomplete";
+  resourceClosureSatisfied?: boolean;
+  sustainabilityStatus: "evaluated" | "incomplete" | "not-evaluated";
+  sustainable?: boolean;
+};
+
+function evaluateCanonicalSelectionMechanically(
+  state: AppState,
+  staticPlans: readonly FacilityPlan[],
+  composition: CanonicalComposition,
+  scenario: SupportResourceScenarioEvaluation | undefined,
+  selectionContext: AssignmentEvaluationContext | undefined,
+  supportPlacements: readonly ScheduledSupportPlacement[],
+  supportAssignments: readonly Assignment[]
+): CanonicalSelectionMechanicalEvidence {
+  const rotationResult = buildCanonicalRotation(
+    state,
+    staticPlans,
+    composition,
+    scenario,
+    selectionContext,
+    supportPlacements,
+    supportAssignments,
+    true
+  );
+  return evaluateCanonicalRotationMechanically(
+    state,
+    staticPlans,
+    rotationResult.windows,
+    scenario,
+    selectionContext,
+    supportPlacements
+  );
+}
+
+function evaluateCanonicalRotationMechanically(
+  state: AppState,
+  staticPlans: readonly FacilityPlan[],
+  windows: readonly AssignmentPlan["rotation"][number][],
+  scenario: SupportResourceScenarioEvaluation | undefined,
+  selectionContext: AssignmentEvaluationContext | undefined,
+  supportPlacements: readonly ScheduledSupportPlacement[]
+): CanonicalSelectionMechanicalEvidence {
+  const rotationComplete = windows.every((window) => window.incompleteGroupIds.length === 0);
+  const supportValidation = validateScheduledSupportMaterialization(
+    state,
+    windows,
+    supportPlacements,
+    scenario
+  );
+  const physicalEvidence = {
+    rotationComplete,
+    supportCapacityValidated: supportValidation.supportCapacityValidated,
+    supportRecoveryValidated: supportValidation.supportRecoveryValidated,
+    supportIssueCount: supportValidation.issues.length
+  };
+  if (!rotationComplete || !supportValidation.supportCapacityValidated ||
+      !supportValidation.supportRecoveryValidated || supportValidation.issues.length > 0) {
+    return {
+      ...physicalEvidence,
+      resourceStatus: "incomplete",
+      sustainabilityStatus: "incomplete"
+    };
+  }
+
+  const productionFacilities = state.facilities
+    .filter((facility) => facility.type === "factory" || facility.type === "trading")
+    .sort((left, right) => compareCodePoints(left.id, right.id));
+  const productionPlans = productionFacilities.map((facility) => {
+      const assignments = windows.find((window) => window.assignments.some((assignment) =>
+        assignment.facilityId === facility.id
+      ))?.assignments.filter((assignment) => assignment.facilityId === facility.id) ?? [];
+      return {
+        facility,
+        assignments,
+        expectedEfficiency: effectiveFacilityEfficiency(assignments, 0),
+        score: effectiveFacilityScore(assignments, facility, state.preference, 0),
+        alternatives: []
+      };
+    });
+  const facilityPlans = [...staticPlans, ...productionPlans];
+  const windowFacilityEfficiencyEvaluations = evaluateScheduleAwareWindowFacilityEfficiencies(
+    state,
+    facilityPlans,
+    windows,
+    scenario,
+    selectionContext
+  );
+  const plan = {
+    generatedAt: "canonical-search-mechanical-evaluation",
+    totalScore: 0,
+    dailyValue: 0,
+    facilityPlans,
+    schedule: structuredClone(state.schedule),
+    rotation: [...windows],
+    diagnostics: [],
+    warnings: [],
+    supportResourceScenario: scenario,
+    windowFacilityEfficiencyEvaluations
+  };
+  const resources = evaluatePlanResources(plan);
+  if (resources.status !== "complete" || !resources.cycleLedger) {
+    return {
+      ...physicalEvidence,
+      resourceStatus: "incomplete",
+      sustainabilityStatus: "incomplete"
+    };
+  }
+  const resourceClosureSatisfied = resources.cycleLedger.goldNetChange >= -1e-9 &&
+    Math.abs(resources.cycleLedger.dronesGenerated - resources.cycleLedger.dronesUsed) <= 1e-9;
+  if (!resourceClosureSatisfied) {
+    return {
+      ...physicalEvidence,
+      resourceStatus: "complete",
+      resourceClosureSatisfied,
+      sustainabilityStatus: "not-evaluated"
+    };
+  }
+  const sustainability = evaluatePlanSustainability({
+    plan: { ...plan, resources },
+    layout: state.layout
+  });
+  return {
+    ...physicalEvidence,
+    resourceStatus: "complete",
+    resourceClosureSatisfied,
+    sustainabilityStatus: sustainability.status,
+    ...(sustainability.status === "evaluated"
+      ? { sustainable: sustainability.result.sustainable && sustainability.result.failures.length === 0 }
+      : {})
+  };
+}
+
+function canonicalSelectionIsSustainable(
+  state: AppState,
+  staticPlans: readonly FacilityPlan[],
+  composition: CanonicalComposition,
+  scenario: SupportResourceScenarioEvaluation | undefined,
+  selectionContext: AssignmentEvaluationContext | undefined,
+  supportPlacements: readonly ScheduledSupportPlacement[],
+  supportAssignments: readonly Assignment[]
+): boolean {
+  return canonicalMechanicalEvidenceIsSustainable(evaluateCanonicalSelectionMechanically(
+    state,
+    staticPlans,
+    composition,
+    scenario,
+    selectionContext,
+    supportPlacements,
+    supportAssignments
+  ));
+}
+
+function canonicalMechanicalEvidenceIsSustainable(evidence: CanonicalSelectionMechanicalEvidence) {
+  return evidence.rotationComplete && evidence.supportCapacityValidated &&
+    evidence.supportRecoveryValidated && evidence.supportIssueCount === 0 &&
+    evidence.resourceStatus === "complete" && evidence.resourceClosureSatisfied === true &&
+    evidence.sustainabilityStatus === "evaluated" && evidence.sustainable === true;
+}
+
+type JointSupportStart = {
+  signature: string;
+  requirementSignature: string;
+  potentialScore: number;
+  staticPlans: FacilityPlan[];
+  supportPlacements: ScheduledSupportPlacement[];
+  supportAssignments: Assignment[];
+  dependencyTargetSignature: string;
+};
+
+type JointSupportEvaluation = JointSupportStart & {
+  composition: CanonicalComposition;
+  aggregateScore: number;
+  removalProofs?: ReturnType<typeof jointSupportRemovalProofs>;
+};
+
+const jointSupportRoundLimit = 1;
+const jointSupportWorkLimit = 32;
+const jointSupportSeedLimit = 16;
+
+function staticPlanSignature(plans: readonly FacilityPlan[]) {
+  return [...plans].sort((left, right) => compareCodePoints(left.facility.id, right.facility.id))
+    .flatMap((plan) => [...plan.assignments]
+      .sort((left, right) => compareCodePoints(assignmentStableSignature(left), assignmentStableSignature(right)))
+      .map((assignment) => `${plan.facility.id}:${assignmentStableSignature(assignment)}`))
+    .join("|");
+}
+
+function jointCompositionSignature(composition: CanonicalComposition) {
+  return [...composition.selections]
+    .sort((left, right) => compareCodePoints(left.dimensionId, right.dimensionId))
+    .map((selection) => `${selection.dimensionId}:${facilityTeamStableSignature(selection.assignments)}`)
+    .join("|");
+}
+
+function supportRequirementSignatures(assignment: Assignment) {
+  const efficiency = (assignment.remoteFacilityEfficiencyBonuses ?? []).map((bonus) =>
+    `efficiency:${bonus.facility}:${bonus.product ?? "*"}:${bonus.min ?? 1}:` +
+    `${[...(bonus.affiliations ?? [])].sort(compareCodePoints).join(",")}:` +
+    `${[...(bonus.groupAffiliations ?? [])].sort(compareCodePoints).join(",")}:` +
+    `${[...(bonus.operatorIds ?? [])].sort(compareCodePoints).join(",")}`
+  );
+  const stats = (assignment.remoteFacilityStatBonuses ?? []).map((bonus) =>
+    `stat:${bonus.facility}:${bonus.key}:${bonus.min ?? 1}:` +
+    `${[...(bonus.affiliations ?? [])].sort(compareCodePoints).join(",")}:` +
+    `${[...(bonus.operatorIds ?? [])].sort(compareCodePoints).join(",")}`
+  );
+  const counts = (assignment.remoteFacilityCountBonuses ?? []).map((bonus) =>
+    `count:${bonus.facility}:${bonus.amount}`
+  );
+  return [...new Set([...efficiency, ...stats, ...counts])].sort(compareCodePoints);
+}
+
+// This deliberately estimates only seed retention. A seed cannot win unless the
+// normal optimizer reevaluation below observes a physical, conflict-free support
+// placement and a strictly better aggregate result.
+function supportSeedRetentionPotential(state: AppState, assignment: Assignment) {
+  const productionFacilities = state.facilities.filter((facility) =>
+    facility.type === "factory" || facility.type === "trading"
+  );
+  return (assignment.remoteFacilityEfficiencyBonuses ?? []).reduce((sum, bonus) => {
+    const targets = operators.filter((operator) => {
+      if (!state.roster[operator.id]?.owned) return false;
+      return !bonus.affiliations?.length && !bonus.groupAffiliations?.length && !bonus.operatorIds?.length ||
+        bonus.operatorIds?.includes(operator.id) ||
+        (operator.affiliations ?? []).some((affiliation) =>
+          bonus.affiliations?.includes(affiliation) || bonus.groupAffiliations?.includes(affiliation)
+        );
+    }).length;
+    if (targets < (bonus.min ?? 1)) return sum;
+    return sum + productionFacilities
+      .filter((facility) => facility.type === bonus.facility && (!bonus.product || facility.product === bonus.product))
+      .reduce((facilitySum, facility) => facilitySum +
+        Math.max(bonus.amount, 0) * Math.min(targets, facility.slotCount) *
+        productWeight(facility.product, state.preference) * facilityWeight(facility), 0);
+  }, 0) + (assignment.remoteFacilityStatBonuses?.length ?? 0) +
+    (assignment.remoteFacilityCountBonuses?.length ?? 0);
+}
+
+function plansForForcedStaticSupport(
+  state: AppState,
+  baselinePlans: readonly FacilityPlan[],
+  supportFacility: FacilitySlot,
+  supportCandidate: Assignment,
+  candidates: readonly Assignment[],
+  selectionContext: AssignmentEvaluationContext | undefined
+) {
+  const reservedOperatorIds = selectionContext?.reservedOperatorIds ?? new Set<string>();
+  const availableSlots = availableOrdinaryFacilitySlots(supportFacility, selectionContext);
+  if (availableSlots <= 0 || reservedOperatorIds.has(supportCandidate.operatorId)) return undefined;
+  const usedOutsideFacility = new Set(baselinePlans
+    .filter((plan) => plan.facility.id !== supportFacility.id)
+    .flatMap((plan) => plan.assignments.map((assignment) => assignment.operatorId)));
+  const forcedAssignments = selectAssignmentsForFacility([
+    supportCandidate,
+    ...baselinePlans.find((plan) => plan.facility.id === supportFacility.id)?.assignments ?? [],
+    ...candidates
+  ].filter((assignment) =>
+    !reservedOperatorIds.has(assignment.operatorId) && !usedOutsideFacility.has(assignment.operatorId)
+  ), availableSlots);
+  if (!forcedAssignments.some((assignment) => assignment.operatorId === supportCandidate.operatorId) ||
+      facilitySlotOccupancy(forcedAssignments) > availableSlots) return undefined;
+  const operatorIds = baselinePlans
+    .filter((plan) => plan.facility.id !== supportFacility.id)
+    .flatMap((plan) => plan.assignments.map((assignment) => assignment.operatorId))
+    .concat(forcedAssignments.map((assignment) => assignment.operatorId));
+  if (new Set(operatorIds).size !== operatorIds.length) return undefined;
+  const plans = baselinePlans.map((plan) => plan.facility.id === supportFacility.id
+    ? { ...plan, assignments: forcedAssignments }
+    : { ...plan, assignments: [...plan.assignments] });
+  const assignments = plans.flatMap((plan) => plan.assignments);
+  const context: AssignmentEvaluationContext = {
+    ...selectionContext,
+    assignments,
+    facilities: state.facilities,
+    roster: state.roster,
+    shiftHours: optimizerShiftHours(state)
+  };
+  return plans.map((plan) => {
+    const globalBonus = calculateGlobalBonus(state, plan.facility, context) +
+      calculateRemoteFacilityEfficiencyBonus(plan.facility, context);
+    return {
+      ...plan,
+      expectedEfficiency: effectiveFacilityEfficiency(plan.assignments, globalBonus),
+      score: facilityTeamSelectionScore(plan.assignments, plan.facility, state.preference, globalBonus)
+    };
+  });
+}
+
+function jointSupportStarts(
+  state: AppState,
+  staticFacilities: readonly FacilitySlot[],
+  baselinePlans: readonly FacilityPlan[],
+  selectionContext: AssignmentEvaluationContext | undefined,
+  scenario: SupportResourceScenarioEvaluation | undefined
+) {
+  const requiredPlacements = requiredScenarioSupportPlacements(state, scenario);
+  const baselinePlansWithinFixedCapacity = baselinePlans.map((plan) => {
+    const maximumFixedOccupancy = Math.max(0, ...state.schedule.shifts.map((shift) =>
+      requiredPlacements.filter((placement) =>
+        placement.facilityId === plan.facility.id && placement.scheduleWindowIds.includes(shift.id)
+      ).length
+    ));
+    const availableSlots = Math.max(0, plan.facility.slotCount - maximumFixedOccupancy);
+    let occupiedSlots = 0;
+    return {
+      ...plan,
+      assignments: plan.assignments.filter((assignment) => {
+        if (!assignmentConsumesFacilitySlot(assignment)) return true;
+        occupiedSlots += 1;
+        return occupiedSlots <= availableSlots;
+      })
+    };
+  });
+  const baselineAssignments = baselinePlansWithinFixedCapacity.flatMap((plan) => plan.assignments);
+  const dormitoryAssignments = implicitDormitoryResourceAssignments(
+    state,
+    baselineAssignments,
+    selectionContext?.reservedOperatorIds,
+    selectionContext?.reservedFacilitySlots
+  );
+  const context: AssignmentEvaluationContext = {
+    ...selectionContext,
+    assignments: [...baselineAssignments, ...dormitoryAssignments],
+    facilities: state.facilities,
+    roster: state.roster,
+    shiftHours: optimizerShiftHours(state)
+  };
+  const representatives = new Map<string, {
+    facility: FacilitySlot;
+    assignment: Assignment;
+    requirementSignature: string;
+    potentialScore: number;
+    dependencyTargetSignature: string;
+  }>();
+  let rawDependencyStarts = 0;
+  for (const facility of [...staticFacilities].sort((left, right) => compareCodePoints(left.id, right.id))) {
+    const candidates = findCandidates(facility, state, 0, context).sort(compareFacilityCandidates);
+    for (const candidate of candidates) {
+      const requirementSignatures = supportRequirementSignatures(candidate);
+      if (!requirementSignatures.length) continue;
+      if (availableOrdinaryFacilitySlots(facility, selectionContext) <= 0 ||
+          selectionContext?.reservedOperatorIds?.has(candidate.operatorId)) continue;
+      rawDependencyStarts += 1;
+      const requirementSignature = requirementSignatures.join("&");
+      const potentialScore = supportSeedRetentionPotential(state, candidate);
+      const dependencyTargets = new Set<string>([
+        ...(candidate.remoteFacilityEfficiencyBonuses ?? []).map((bonus) => bonus.facility),
+        ...(candidate.remoteFacilityStatBonuses ?? []).map((bonus) => bonus.facility)
+      ]);
+      if (candidate.remoteFacilityCountBonuses?.length) {
+        for (const productionFacility of state.facilities.filter((target) =>
+          target.type === "factory" || target.type === "trading"
+        )) {
+          const without = findCandidates(productionFacility, state, 0, {
+            ...context, assignments: context.assignments.filter((item) => item.operatorId !== candidate.operatorId)
+          });
+          const withSupport = findCandidates(productionFacility, state, 0, {
+            ...context, assignments: [...context.assignments.filter((item) => item.operatorId !== candidate.operatorId), candidate]
+          });
+          if (withSupport.some((assignment) => {
+            const baseline = without.find((item) => item.operatorId === assignment.operatorId);
+            return baseline && (Math.abs(assignment.score - baseline.score) > 1e-12 ||
+              Math.abs(assignment.efficiency - baseline.efficiency) > 1e-12);
+          })) dependencyTargets.add(productionFacility.type);
+        }
+      }
+      const dependencyTargetSignature = [...dependencyTargets].sort(compareCodePoints).join(",");
+      const existing = representatives.get(requirementSignature);
+      if (!existing || potentialScore > existing.potentialScore ||
+          (potentialScore === existing.potentialScore &&
+            compareCodePoints(assignmentStableSignature(candidate), assignmentStableSignature(existing.assignment)) < 0)) {
+        representatives.set(requirementSignature, {
+          facility, assignment: candidate, requirementSignature, potentialScore, dependencyTargetSignature
+        });
+      }
+    }
+  }
+  const retained = [...representatives.values()]
+    .sort((left, right) => right.potentialScore - left.potentialScore ||
+      compareCodePoints(left.requirementSignature, right.requirementSignature) ||
+      compareCodePoints(assignmentStableSignature(left.assignment), assignmentStableSignature(right.assignment)));
+  const dependencyIds = new Set(retained.map((item) => item.assignment.operatorId));
+  const dependencyFacilityIds = new Set(retained.map((item) => item.facility.id));
+  const staticPlans = baselinePlansWithinFixedCapacity.map((plan) => ({
+    ...plan,
+    assignments: plan.assignments.filter((assignment) =>
+      !dependencyIds.has(assignment.operatorId) &&
+      (!dependencyFacilityIds.has(plan.facility.id) || !assignmentConsumesFacilitySlot(assignment))
+    )
+  }));
+  const groupIds = state.schedule.groups.map((group) => group.id).sort(compareCodePoints);
+  const placementFor = (item: typeof retained[number], groupId: string): ScheduledSupportPlacement => ({
+    kind: "ordinary",
+    operatorId: item.assignment.operatorId,
+    facilityId: item.facility.id,
+    groupId,
+    scheduleWindowIds: state.schedule.shifts.filter((shift) => shift.activeGroupIds.includes(groupId)).map((shift) => shift.id),
+    recoveryWindowIds: state.schedule.shifts.filter((shift) => shift.recoveryGroupIds.includes(groupId)).map((shift) => shift.id)
+  });
+  const feasible = (placements: readonly ScheduledSupportPlacement[]) => state.schedule.shifts.every((shift) =>
+    state.facilities.every((facility) => {
+      const ordinary = placements.filter((placement) => placement.facilityId === facility.id &&
+        placement.scheduleWindowIds.includes(shift.id)).length;
+      const fixed = requiredPlacements.filter((placement) =>
+        placement.facilityId === facility.id && placement.scheduleWindowIds.includes(shift.id)
+      ).length;
+      const baseline = staticPlans.find((plan) => plan.facility.id === facility.id)?.assignments
+        .filter(assignmentConsumesFacilitySlot).length ?? 0;
+      return ordinary + fixed + baseline <= facility.slotCount;
+    })
+  );
+  const candidates: JointSupportStart[] = [];
+  const seen = new Set<string>();
+  const addSeed = (items: readonly typeof retained[number][], assignedGroups: readonly string[]) => {
+    const placements = items.map((item, index) => placementFor(item, assignedGroups[index]));
+    if (!feasible(placements)) return false;
+    const signature = placements.map((placement) =>
+      `${placement.facilityId}:${placement.operatorId}:${placement.groupId}`
+    ).sort(compareCodePoints).join("|") || "baseline";
+    if (seen.has(signature)) return false;
+    seen.add(signature);
+    candidates.push({
+      signature,
+      requirementSignature: items.map((item) => item.requirementSignature).sort(compareCodePoints).join("&") || "baseline",
+      potentialScore: items.reduce((sum, item) => sum + item.potentialScore, 0),
+      staticPlans: (items.length === 0 ? baselinePlansWithinFixedCapacity : staticPlans)
+        .map((plan) => ({ ...plan, assignments: [...plan.assignments] })),
+      supportPlacements: placements,
+      supportAssignments: items.map((item) => item.assignment),
+      dependencyTargetSignature: [...new Set(items.map((item) => item.dependencyTargetSignature))]
+        .sort(compareCodePoints).join("&")
+    });
+    return true;
+  };
+  addSeed([], []);
+  // Every modeled requirement gets a deterministic individual representative
+  // before any combined-space bound is applied.
+  for (const item of retained) {
+    for (const groupId of groupIds) if (addSeed([item], [groupId])) break;
+  }
+  // Canonical distinct-group covers model simultaneously selected production
+  // dimensions without enumerating the full roster Cartesian product.
+  for (let size = 2; size <= Math.min(3, retained.length, groupIds.length); size += 1) {
+    const choose = (start: number, chosen: typeof retained) => {
+      if (chosen.length === size) {
+        const permute = (remaining: string[], assigned: string[]) => {
+          if (assigned.length === size) return addSeed(chosen, assigned);
+          for (const groupId of remaining) permute(
+            remaining.filter((candidate) => candidate !== groupId), [...assigned, groupId]
+          );
+        };
+        permute(groupIds, []);
+        return;
+      }
+      for (let index = start; index <= retained.length - (size - chosen.length); index += 1) {
+        choose(index + 1, [...chosen, retained[index]]);
+      }
+    };
+    choose(0, []);
+  }
+  const mandatorySignatures = new Set(candidates.filter((seed) =>
+    seed.supportAssignments.length <= 1
+  ).map((seed) => seed.signature));
+  const sortedCombined = candidates.filter((seed) => seed.supportAssignments.length > 1)
+    .sort((left, right) => right.supportAssignments.length - left.supportAssignments.length ||
+      Number(right.dependencyTargetSignature.indexOf("&") < 0) -
+        Number(left.dependencyTargetSignature.indexOf("&") < 0) ||
+      compareCodePoints(
+        left.supportPlacements.map((placement) => placement.groupId ?? "").join("|"),
+        right.supportPlacements.map((placement) => placement.groupId ?? "").join("|")
+      ) || right.potentialScore - left.potentialScore || compareCodePoints(left.signature, right.signature));
+  const mandatory = candidates.filter((seed) => mandatorySignatures.has(seed.signature))
+    .sort((left, right) => compareCodePoints(left.signature, right.signature));
+  const seedLimit = Math.max(jointSupportSeedLimit, mandatory.length);
+  const starts = [...mandatory, ...sortedCombined.slice(0, Math.max(0, seedLimit - mandatory.length))];
+  return {
+    starts,
+    requirementSignatures: [...representatives.keys()].sort(compareCodePoints),
+    retainedRequirementSignatures: retained.map((item) => item.requirementSignature).sort(compareCodePoints),
+    discardedOptions: Math.max(0, rawDependencyStarts - retained.length),
+    seedLimit,
+    discardedSeeds: Math.max(0, candidates.length - starts.length)
+  };
+}
+
+function canonicalAggregateScore(
+  state: AppState,
+  staticPlans: readonly FacilityPlan[],
+  composition: CanonicalComposition,
+  scenario: SupportResourceScenarioEvaluation | undefined,
+  selectionContext: AssignmentEvaluationContext | undefined,
+  supportPlacements: readonly ScheduledSupportPlacement[] = [],
+  supportAssignments: readonly Assignment[] = []
+) {
+  if (!composition.complete) return Number.NEGATIVE_INFINITY;
+  const rotation = buildCanonicalRotation(
+    state, staticPlans, composition, scenario, selectionContext,
+    [...supportPlacements, ...requiredScenarioSupportPlacements(state, scenario)], supportAssignments
+  );
+  if (rotation.windows.some((window) => window.incompleteGroupIds.length > 0)) return Number.NEGATIVE_INFINITY;
+  const productionFacilities = state.facilities
+    .filter((facility) => facility.type === "factory" || facility.type === "trading")
+    .sort((left, right) => compareCodePoints(left.id, right.id));
+  const scheduleAwareRotation = materializeScheduleAwareRotation(
+    state,
+    rotation.windows,
+    scenario,
+    selectionContext
+  );
+  const facilityPlans = productionFacilities.map((facility) => ({
+    facility,
+    assignments: scheduleAwareRotation.find((window) =>
+      window.assignments.some((assignment) => assignment.facilityId === facility.id)
+    )?.assignments.filter((assignment) => assignment.facilityId === facility.id) ?? [],
+    expectedEfficiency: 0,
+    score: 0,
+    alternatives: []
+  }));
+  const evaluations = evaluateScheduleAwareWindowFacilityEfficiencies(
+    state,
+    facilityPlans,
+    scheduleAwareRotation,
+    scenario,
+    selectionContext
+  );
+  return evaluateExactWindowFacilityObjective({
+    schedule: state.schedule,
+    facilities: productionFacilities,
+    preference: state.preference,
+    evaluations
+  }) ?? Number.NEGATIVE_INFINITY;
+}
+
+function jointSupportRemovalProofs(
+  state: AppState,
+  staticPlans: readonly FacilityPlan[],
+  composition: CanonicalComposition,
+  scenario: SupportResourceScenarioEvaluation | undefined,
+  selectionContext: AssignmentEvaluationContext | undefined,
+  supportPlacements: readonly ScheduledSupportPlacement[] = [],
+  supportAssignments: readonly Assignment[] = []
+) {
+  type RemovalNecessity =
+    | {
+        kind: "production-objective-worsened";
+        withSupportObjective: number;
+        withoutSupportObjective: number;
+      }
+    | {
+        kind: "resource-or-sustainability-failure";
+        withSupport: CanonicalSelectionMechanicalEvidence;
+        withoutSupport: CanonicalSelectionMechanicalEvidence;
+      }
+    | {
+        kind: "support-physical-failure";
+        withSupport: CanonicalSelectionMechanicalEvidence;
+        withoutSupport: CanonicalSelectionMechanicalEvidence;
+      };
+  type RemovalProof = Extract<AssignmentPlan["diagnostics"][number], {
+    code: "joint-support-search-not-certified";
+  }>["removalProofs"][number] & { necessity: RemovalNecessity };
+
+  const requiredPlacements = requiredScenarioSupportPlacements(state, scenario);
+  const selectedPlacements = [...supportPlacements, ...requiredPlacements];
+  const rotation = buildCanonicalRotation(
+    state, staticPlans, composition, scenario, selectionContext, selectedPlacements, supportAssignments, true
+  );
+  const withSupportValidation = validateScheduledSupportMaterialization(
+    state, rotation.windows, selectedPlacements, scenario
+  );
+  if (rotation.windows.some((window) => window.incompleteGroupIds.length > 0) ||
+      !withSupportValidation.supportCapacityValidated || !withSupportValidation.supportRecoveryValidated ||
+      withSupportValidation.issues.length > 0) return [] as RemovalProof[];
+
+  const staticAssignments = [...staticPlans.flatMap((plan) => plan.assignments), ...supportAssignments];
+  const proofs: RemovalProof[] = [];
+  let withSupportMechanicalEvidence: CanonicalSelectionMechanicalEvidence | undefined;
+  const authoritativeRawRotation = rawRotationFromCloneSafeProvenance(rotation.windows) ??
+    rotationWithoutMaterializationMetadata(rotation.windows);
+  for (const support of staticAssignments.sort((left, right) =>
+    compareCodePoints(left.facilityId, right.facilityId) || compareCodePoints(left.operatorId, right.operatorId)
+  )) {
+    if (!supportRequirementSignatures(support).length) continue;
+    const withoutStaticPlans = staticPlans.map((plan) => ({
+      ...plan,
+      assignments: plan.assignments.filter((assignment) =>
+        assignment.operatorId !== support.operatorId || assignment.facilityId !== support.facilityId
+      )
+    }));
+    const withoutSupportAssignments = supportAssignments.filter((assignment) =>
+      assignment.operatorId !== support.operatorId || assignment.facilityId !== support.facilityId
+    );
+    const withoutSupportPlacements = selectedPlacements.filter((placement) =>
+      placement.operatorId !== support.operatorId || placement.facilityId !== support.facilityId
+    );
+    const supportWindowIds = new Set(supportPlacements
+      .filter((placement) => placement.operatorId === support.operatorId &&
+        placement.facilityId === support.facilityId)
+      .flatMap((placement) => placement.scheduleWindowIds));
+    const proofWindows = rotation.windows.filter((window) =>
+      supportWindowIds.size > 0
+        ? supportWindowIds.has(window.shiftId)
+        : window.assignments.some((assignment) =>
+            assignment.operatorId === support.operatorId && assignment.facilityId === support.facilityId
+          )
+    );
+    const efficiencyComparisons: Omit<RemovalProof, "necessity">[] = [];
+    for (const window of proofWindows) {
+      const fixed = scheduleWindowFixedContext(scenario, window.shiftId);
+      const assignmentsWithoutSupport = window.assignments.filter((assignment) =>
+        !(assignment.facilityId === support.facilityId && assignment.operatorId === support.operatorId)
+      );
+      for (const facility of state.facilities.filter((candidate) =>
+        candidate.type === "factory" || candidate.type === "trading"
+      ).sort((left, right) => compareCodePoints(left.id, right.id))) {
+        const raw = window.assignments.filter((assignment) => assignment.facilityId === facility.id);
+        if (!raw.length) continue;
+        const withContext: AssignmentEvaluationContext = {
+          ...selectionContext,
+          ...fixed,
+          assignments: window.assignments,
+          facilities: state.facilities,
+          roster: state.roster,
+          shiftHours: window.hours
+        };
+        const withoutContext: AssignmentEvaluationContext = {
+          ...withContext,
+          assignments: assignmentsWithoutSupport
+        };
+        const withAssignments = reevaluateFacilityTeam(raw, facility, state, withContext);
+        const withoutAssignments = reevaluateFacilityTeam(raw, facility, state, withoutContext);
+        const withBonus = calculateGlobalBonus(state, facility, withContext) +
+          calculateRemoteFacilityEfficiencyBonus(facility, withContext);
+        const withoutBonus = calculateGlobalBonus(state, facility, withoutContext) +
+          calculateRemoteFacilityEfficiencyBonus(facility, withoutContext);
+        const withSupportEfficiency = effectiveFacilityEfficiency(withAssignments, withBonus);
+        const withoutSupportEfficiency = effectiveFacilityEfficiency(withoutAssignments, withoutBonus);
+        if (Math.abs(withSupportEfficiency - withoutSupportEfficiency) <= 1e-12) continue;
+        efficiencyComparisons.push({
+          supportOperatorId: support.operatorId,
+          supportFacilityId: support.facilityId,
+          productionFacilityId: facility.id,
+          productionOperatorIds: raw.map((assignment) => assignment.operatorId).sort(compareCodePoints),
+          scheduleWindowId: window.shiftId,
+          windowHours: window.hours,
+          withSupportEfficiency,
+          withoutSupportEfficiency
+        });
+      }
+    }
+    if (efficiencyComparisons.length === 0) continue;
+
+    let necessity: RemovalNecessity | undefined;
+    if (efficiencyComparisons.some((comparison) =>
+      comparison.withSupportEfficiency > comparison.withoutSupportEfficiency + 1e-12
+    )) {
+      const withSupportObjective = canonicalAggregateScore(
+        state, staticPlans, composition, scenario, selectionContext, supportPlacements, supportAssignments
+      );
+      const withoutSupportObjective = canonicalAggregateScore(
+        state,
+        withoutStaticPlans,
+        composition,
+        scenario,
+        selectionContext,
+        supportPlacements.filter((placement) =>
+          placement.operatorId !== support.operatorId || placement.facilityId !== support.facilityId
+        ),
+        withoutSupportAssignments
+      );
+      if (Number.isFinite(withSupportObjective) && Number.isFinite(withoutSupportObjective) &&
+          withoutSupportObjective < withSupportObjective - 1e-12) {
+        necessity = {
+          kind: "production-objective-worsened",
+          withSupportObjective,
+          withoutSupportObjective
+        };
+      }
+    } else {
+      const withSupport = withSupportMechanicalEvidence ?? evaluateCanonicalRotationMechanically(
+        state, staticPlans, rotation.windows, scenario, selectionContext, selectedPlacements
+      );
+      withSupportMechanicalEvidence = withSupport;
+      const rawWithoutSupport = authoritativeRawRotation.map((window) => ({
+          ...window,
+          assignments: window.assignments.filter((assignment) =>
+            assignment.operatorId !== support.operatorId || assignment.facilityId !== support.facilityId
+          ),
+          recovery: window.recovery.filter((assignment) => assignment.operatorId !== support.operatorId)
+        }));
+      const withoutSupportRotation = materializeScheduleAwareRotation(
+        state,
+        rawWithoutSupport,
+        scenario,
+        selectionContext
+      );
+      const withoutSupport = evaluateCanonicalRotationMechanically(
+        state,
+        withoutStaticPlans,
+        withoutSupportRotation,
+        scenario,
+        selectionContext,
+        withoutSupportPlacements
+      );
+      const withSupportComplete = canonicalMechanicalEvidenceIsSustainable(withSupport);
+      const withoutPhysicalComplete = withoutSupport.rotationComplete &&
+        withoutSupport.supportCapacityValidated && withoutSupport.supportRecoveryValidated &&
+        withoutSupport.supportIssueCount === 0;
+      if (withSupportComplete && !withoutPhysicalComplete) {
+        necessity = { kind: "support-physical-failure", withSupport, withoutSupport };
+      } else if (withSupportComplete && withoutSupport.resourceStatus === "complete" &&
+          (withoutSupport.resourceClosureSatisfied === false ||
+            (withoutSupport.sustainabilityStatus === "evaluated" && withoutSupport.sustainable === false))) {
+        necessity = { kind: "resource-or-sustainability-failure", withSupport, withoutSupport };
+      }
+    }
+    // An incomplete counterfactual is not evidence that the removed support is
+    // necessary for the claimed dimension. Keep each proof path fail-closed.
+    if (!necessity) continue;
+    proofs.push(...efficiencyComparisons.map((comparison) => ({ ...comparison, necessity })));
+  }
+  return proofs.sort((left, right) =>
+    compareCodePoints(left.supportOperatorId, right.supportOperatorId) ||
+    compareCodePoints(left.scheduleWindowId, right.scheduleWindowId) ||
+    compareCodePoints(left.productionFacilityId, right.productionFacilityId)
+  );
+}
+
+function canonicalizeDependencySupportFacilities(staticPlans: readonly FacilityPlan[]) {
+  const plans = staticPlans.map((plan) => ({ ...plan, assignments: [...plan.assignments] }));
+  for (const facilityType of new Set(plans.map((plan) => plan.facility.type))) {
+    const typedPlans = plans
+      .filter((plan) => plan.facility.type === facilityType)
+      .sort((left, right) => compareCodePoints(left.facility.id, right.facility.id));
+    const dependencies = typedPlans.flatMap((plan) => plan.assignments
+      .filter((assignment) => supportRequirementSignatures(assignment).length > 0)
+      .map((assignment) => ({ plan, assignment })))
+      .sort((left, right) => compareCodePoints(left.assignment.operatorId, right.assignment.operatorId));
+    for (const [dependencyIndex, { plan: sourcePlan, assignment }] of dependencies.entries()) {
+      const targetPlan = typedPlans[dependencyIndex];
+      if (!targetPlan || targetPlan.facility.id === sourcePlan.facility.id) continue;
+      const sourceIndex = sourcePlan.assignments.findIndex((candidate) =>
+        candidate.operatorId === assignment.operatorId
+      );
+      const targetIndex = targetPlan.assignments.findIndex(assignmentConsumesFacilitySlot);
+      if (sourceIndex < 0) continue;
+      const targetAssignment = targetIndex >= 0 ? targetPlan.assignments[targetIndex] : undefined;
+      sourcePlan.assignments.splice(sourceIndex, 1,
+        ...(targetAssignment ? [{ ...targetAssignment, facilityId: sourcePlan.facility.id }] : []));
+      if (targetIndex >= 0) {
+        targetPlan.assignments.splice(targetIndex, 1, { ...assignment, facilityId: targetPlan.facility.id });
+      } else {
+        targetPlan.assignments.push({ ...assignment, facilityId: targetPlan.facility.id });
+      }
+    }
+  }
+  return plans;
+}
+
+function generateCanonicalThreeGroupPlan(
+  state: AppState,
+  scenarioState: AppState,
+  options: GenerateAssignmentPlanOptions,
+  allowSupportFallback: boolean,
+  initialScenario: SupportResourceScenarioEvaluation | undefined,
+  selectionContext: AssignmentEvaluationContext | undefined
+): AssignmentPlan {
+  // Fixed facility slots are reservations only in their declared windows. The
+  // source operators remain excluded from ordinary selection in this slice;
+  // the canonical schedule validates and materializes the physical slots.
+  const scheduleSelectionContext = selectionContext ? {
+    ...selectionContext,
+    excludedOrdinaryResourceOperatorIds: selectionContext.excludedOrdinaryResourceOperatorIds,
+    reservedOperatorIds: selectionContext.reservedOperatorIds,
+    // Fixed sources reserve physical capacity only in their declared windows.
+    // The canonical rotation below materializes those windows and validates
+    // capacity, allowing a different ordinary supporter to use the slot when
+    // the fixed source is absent.
+    reservedFacilitySlots: new Map<string, number>()
+  } : undefined;
+  const staticFacilities = state.facilities.filter((facility) =>
+    facility.type !== "dormitory" && facility.type !== "factory" && facility.type !== "trading"
+  );
+  const stabilizeStaticPlans = (
+    contextAssignments: readonly Assignment[],
+    excludedOperatorIds: ReadonlySet<string>
+  ) => {
+    let plans = buildFacilityPlans(
+      state,
+      staticFacilities,
+      [...contextAssignments],
+      excludedOperatorIds,
+      scheduleSelectionContext
+    );
+    for (let index = 0; index < 3; index += 1) {
+      const next = buildFacilityPlans(
+        state,
+        staticFacilities,
+        [...contextAssignments, ...plans.flatMap((plan) => plan.assignments)],
+        excludedOperatorIds,
+        scheduleSelectionContext
+      );
+      if (assignmentSignature(next) === assignmentSignature(plans)) return next;
+      plans = next;
+    }
+    return plans;
+  };
+  let staticPlans: FacilityPlan[] = applyMoraleDurations(state, stabilizeStaticPlans([], new Set()));
+  const scenarioForSelection = selectionContext ? initialScenario : undefined;
+  const supportStarts = jointSupportStarts(
+    state, staticFacilities, staticPlans, scheduleSelectionContext, initialScenario
+  );
+  const initialComposition = buildCanonicalScheduledProduction(
+    state,
+    supportStarts.starts[0].staticPlans,
+    scenarioForSelection,
+    scheduleSelectionContext
+  );
+  const initialAggregateScore = canonicalAggregateScore(
+    state, supportStarts.starts[0].staticPlans, initialComposition, scenarioForSelection, scheduleSelectionContext
+  );
+  const evaluations: JointSupportEvaluation[] = [];
+  let jointWork = 0;
+  let removalRejected = 0;
+  let bestStaticOnlyAggregateScore = initialAggregateScore;
+  for (const start of supportStarts.starts) {
+    if (jointWork >= jointSupportWorkLimit) break;
+    const composition = start.requirementSignature === "baseline"
+      ? initialComposition
+      : buildCanonicalScheduledProduction(
+          state,
+          start.staticPlans,
+          scenarioForSelection,
+          scheduleSelectionContext,
+          start.supportPlacements,
+          start.supportAssignments
+        );
+    const aggregateScore = start.requirementSignature === "baseline"
+      ? initialAggregateScore
+      : canonicalAggregateScore(
+          state, start.staticPlans, composition, scenarioForSelection, scheduleSelectionContext,
+          start.supportPlacements, start.supportAssignments
+        );
+    jointWork += 1;
+    let candidateRemovalProofs: ReturnType<typeof jointSupportRemovalProofs> | undefined;
+    let staticOnlyAggregateScore: number | undefined;
+    if (start.supportAssignments.length === 1 && jointWork < jointSupportWorkLimit) {
+      staticOnlyAggregateScore = canonicalAggregateScore(
+        state, start.staticPlans, initialComposition, scenarioForSelection, scheduleSelectionContext,
+        start.supportPlacements, start.supportAssignments
+      );
+      jointWork += 1;
+    }
+    if (start.requirementSignature !== "baseline" && Number.isFinite(aggregateScore)) {
+      candidateRemovalProofs = jointSupportRemovalProofs(
+        state, start.staticPlans, composition, scenarioForSelection, scheduleSelectionContext,
+        start.supportPlacements, start.supportAssignments
+      );
+      const provenSupportIds = new Set(candidateRemovalProofs.map((proof) => proof.supportOperatorId));
+      if (start.supportAssignments.some((assignment) => !provenSupportIds.has(assignment.operatorId))) {
+        removalRejected += 1;
+        continue;
+      }
+      if (staticOnlyAggregateScore !== undefined) {
+        const staticOnlyProvenSupportIds = new Set(jointSupportRemovalProofs(
+          state, start.staticPlans, initialComposition, scenarioForSelection, scheduleSelectionContext,
+          start.supportPlacements, start.supportAssignments
+        ).map((proof) => proof.supportOperatorId));
+        if (start.supportAssignments.every((assignment) => staticOnlyProvenSupportIds.has(assignment.operatorId))) {
+          bestStaticOnlyAggregateScore = Math.max(bestStaticOnlyAggregateScore, staticOnlyAggregateScore);
+        }
+      }
+    }
+    evaluations.push({ ...start, composition, aggregateScore, ...(candidateRemovalProofs
+      ? { removalProofs: candidateRemovalProofs }
+      : {}) });
+  }
+  evaluations.sort((left, right) => Number(right.composition.complete) - Number(left.composition.complete) ||
+    Number(Number.isFinite(right.aggregateScore)) - Number(Number.isFinite(left.aggregateScore)) ||
+    right.aggregateScore - left.aggregateScore ||
+    compareCodePoints(
+      `${left.signature}|${jointCompositionSignature(left.composition)}`,
+      `${right.signature}|${jointCompositionSignature(right.composition)}`
+    ));
+  const winningEvaluation = evaluations[0] ?? {
+    ...supportStarts.starts[0],
+    composition: initialComposition,
+    aggregateScore: initialAggregateScore
+  };
+  staticPlans = winningEvaluation.staticPlans;
+  let composition = winningEvaluation.composition;
+  const removalProofs = winningEvaluation.removalProofs ?? jointSupportRemovalProofs(
+      state, staticPlans, composition, scenarioForSelection, scheduleSelectionContext,
+      winningEvaluation.supportPlacements, winningEvaluation.supportAssignments
+    );
+  const supportPlacements = [
+    ...winningEvaluation.supportPlacements.filter((placement) => removalProofs.some((proof) =>
+      proof.supportOperatorId === placement.operatorId && proof.supportFacilityId === placement.facilityId
+    )),
+    ...requiredScenarioSupportPlacements(state, initialScenario)
+  ];
+  const materializedRotationResult = buildCanonicalRotation(
+    state,
+    staticPlans,
+    composition,
+    initialScenario,
+    scheduleSelectionContext,
+    supportPlacements,
+    winningEvaluation.supportAssignments,
+    true
+  );
+  const supportValidation = validateScheduledSupportMaterialization(
+    state, materializedRotationResult.windows, supportPlacements, initialScenario
+  );
+  const supportScheduleComplete = supportValidation.supportCapacityValidated &&
+    supportValidation.supportRecoveryValidated && supportValidation.issues.length === 0;
+  const coordinateBaselineAggregateScore = Math.max(initialAggregateScore, bestStaticOnlyAggregateScore);
+  const jointSupportDiagnostic: AssignmentPlan["diagnostics"][number] | undefined =
+    supportStarts.starts.length > 1 ? {
+      code: "joint-support-search-not-certified",
+      message: "Bounded joint static-support and production search selected an authoritative reevaluated plan",
+      provenance: "bounded-joint-static-support-production-removal-proven",
+      initialAggregateScore: coordinateBaselineAggregateScore,
+      bestProductionOnlyAggregateScore: initialAggregateScore,
+      bestStaticOnlyAggregateScore,
+      aggregateScore: winningEvaluation.aggregateScore,
+      initialSupportOperatorIds: supportStarts.starts[0].staticPlans
+        .flatMap((plan) => plan.assignments.map((assignment) => assignment.operatorId)).sort(compareCodePoints),
+      selectedSupportOperatorIds: staticPlans
+        .flatMap((plan) => plan.assignments.map((assignment) => assignment.operatorId))
+        .concat(winningEvaluation.supportAssignments.map((assignment) => assignment.operatorId)).sort(compareCodePoints),
+      requirementSignatures: supportStarts.requirementSignatures,
+      rounds: jointSupportRoundLimit,
+      roundLimit: jointSupportRoundLimit,
+      work: jointWork,
+      workLimit: jointSupportWorkLimit,
+      discardedOptions: supportStarts.discardedOptions + removalRejected +
+        Math.max(0, supportStarts.starts.length - evaluations.length - removalRejected),
+      seedCount: supportStarts.starts.length,
+      seedLimit: supportStarts.seedLimit,
+      discardedSeeds: supportStarts.discardedSeeds,
+      retainedRequirementSignatures: supportStarts.retainedRequirementSignatures,
+      startsEvaluated: evaluations.length + removalRejected,
+      removalProofs
+    } : undefined;
+  const scheduledSupportProfile: AssignmentPlan["diagnostics"][number] = {
+    code: "scheduled-support-profile",
+    message: supportScheduleComplete
+      ? "Bounded scheduled support materialization passed physical capacity and recovery validation"
+      : "Bounded scheduled support materialization failed physical capacity or recovery validation",
+    completion: supportScheduleComplete ? "complete" : "incomplete",
+    provenance: "bounded-scheduled-support-materialization-not-certified",
+    supportPlacements,
+    supportCapacityValidated: supportValidation.supportCapacityValidated,
+    supportRecoveryValidated: supportValidation.supportRecoveryValidated,
+    issues: supportValidation.issues
+  };
+  const supportValidationDiagnostic: AssignmentPlan["diagnostics"][number] | undefined =
+    supportScheduleComplete ? undefined : {
+      code: "scheduled-support-materialization-not-certified",
+      message: "Scheduled support materialization failed physical capacity or recovery validation",
+      completion: "incomplete",
+      supportPlacements,
+      supportCapacityValidated: supportValidation.supportCapacityValidated,
+      supportRecoveryValidated: supportValidation.supportRecoveryValidated,
+      issues: supportValidation.issues
+    };
+  const rotationResult = supportScheduleComplete ? materializedRotationResult : {
+    windows: materializedRotationResult.windows.map((window) => ({
+      ...window,
+      incompleteGroupIds: [...new Set([...window.incompleteGroupIds, ...window.activeGroupIds])]
+        .sort(compareCodePoints),
+      assignments: [],
+      recovery: []
+    })),
+    selectedByPhysicalFacility: new Map<string, Assignment[]>()
+  };
+  const productionPlans = state.facilities
+    .filter((facility) => facility.type === "factory" || facility.type === "trading")
+    .sort((left, right) => compareCodePoints(left.id, right.id))
+    .map((facility) => {
+      const assignments = rotationResult.selectedByPhysicalFacility.get(facility.id) ?? [];
+      return {
+        facility,
+        assignments,
+        expectedEfficiency: effectiveFacilityEfficiency(assignments, 0),
+        score: effectiveFacilityScore(assignments, facility, state.preference, 0),
+        alternatives: []
+      };
+    });
+  const firstWindow = rotationResult.windows.find((window) => window.incompleteGroupIds.length === 0);
+  const materializedStaticPlans = staticPlans.map((plan) => {
+    const assignments = firstWindow?.assignments.filter((assignment) =>
+      assignment.facilityId === plan.facility.id
+    ) ?? plan.assignments;
+    return { ...plan, assignments };
+  });
+  const planByFacilityId = new Map([...materializedStaticPlans, ...productionPlans]
+    .map((plan) => [plan.facility.id, plan]));
+  const facilityPlans = state.facilities
+    .filter((facility) => facility.type !== "dormitory")
+    .map((facility) => planByFacilityId.get(facility.id) ?? {
+      facility, assignments: [], expectedEfficiency: 0, score: 0, alternatives: []
+    });
+  const supportResourceScenario = options.supportResourceScenario
+    ? resolveSupportResourceScenario(scenarioState, options.supportResourceScenario, rotationResult.windows)
+    : undefined;
+  if (allowSupportFallback && selectionContext && supportResourceScenario && !supportResourceScenario.complete) {
+    return generateAssignmentPlanInternal(scenarioState, options, false);
+  }
+  const windowFacilityEfficiencyEvaluations = supportResourceScenario?.complete && composition.complete &&
+      rotationResult.windows.every((window) => window.incompleteGroupIds.length === 0)
+    ? evaluateWindowFacilityEfficiencies(state, facilityPlans, rotationResult.windows, supportResourceScenario)
+    : undefined;
+  const totalScore = winningEvaluation.aggregateScore;
+  let dailyValue = rotationResult.windows.reduce((sum, window) => sum + window.assignments.reduce(
+    (windowSum, assignment) => {
+      const facility = state.facilities.find((candidate) => candidate.id === assignment.facilityId);
+      return facility && (facility.type === "factory" || facility.type === "trading")
+        ? windowSum + assignment.efficiency * productWeight(facility.product, state.preference) *
+          window.hours * 24 / state.schedule.cycleHours
+        : windowSum;
+    }, 0), 0);
+  if (windowFacilityEfficiencyEvaluations) {
+    dailyValue = windowFacilityEfficiencyEvaluations.reduce((sum, evaluation) => {
+      const facility = state.facilities.find((candidate) => candidate.id === evaluation.facilityId);
+      const window = rotationResult.windows.find((candidate) => candidate.shiftId === evaluation.scheduleWindowId);
+      return facility && window && (facility.type === "factory" || facility.type === "trading")
+        ? sum + evaluation.additiveEfficiency * productWeight(facility.product, state.preference) *
+          window.hours * 24 / state.schedule.cycleHours
+        : sum;
+    }, 0);
+  }
+  const rotationDiagnostics: AssignmentPlan["diagnostics"] = rotationResult.windows.flatMap((window) =>
+    window.incompleteGroupIds.map((groupId) => ({
+      code: "schedule-group-unpopulated" as const,
+      groupId,
+      shiftId: window.shiftId,
+      message: `Schedule group ${groupId} is not populated for shift ${window.shiftId}`
+    }))
+  );
+  const diagnostics = [
+    ...composition.diagnostics.map((diagnostic) =>
+      !supportScheduleComplete && diagnostic.code === "schedule-group-search-profile"
+        ? {
+            ...diagnostic,
+            completion: "unknown" as const,
+            incompleteDimensionIds: diagnostic.dimensionIds,
+            message: "Schedule production search is not certified because scheduled support materialization is incomplete"
+          }
+        : diagnostic
+    ),
+    ...(jointSupportDiagnostic ? [jointSupportDiagnostic] : []),
+    scheduledSupportProfile,
+    ...(supportValidationDiagnostic ? [supportValidationDiagnostic] : []),
+    ...rotationDiagnostics
+  ];
+  const warnings = [
+    ...buildWarnings(state, state.facilities.filter((facility) => facility.type !== "dormitory"), facilityPlans),
+    ...rotationDiagnostics.map((diagnostic) => diagnostic.message)
+  ];
+  const plan = {
+    generatedAt: new Date().toISOString(),
+    totalScore,
+    dailyValue,
+    facilityPlans,
+    schedule: structuredClone(state.schedule),
+    rotation: rotationResult.windows,
+    diagnostics,
+    warnings,
+    ...(supportResourceScenario ? { supportResourceScenario } : {}),
+    ...(windowFacilityEfficiencyEvaluations ? { windowFacilityEfficiencyEvaluations } : {})
+  };
+  const resources = evaluatePlanResources(plan);
+  const planWithResources = { ...plan, resources };
+  return {
+    ...planWithResources,
+    sustainability: evaluatePlanSustainability({ plan: planWithResources, layout: state.layout })
+  };
+}
+
 function buildSupportSelectionContext(
   state: AppState,
   scenario: SupportResourceScenarioEvaluation,
@@ -496,7 +2662,7 @@ function buildSupportSelectionContext(
   const fixedResourceAmounts = Object.freeze(Object.fromEntries(
     [...weightedEntries.entries()].sort(([left], [right]) => left.localeCompare(right))
   ));
-  const fixedDormitoryOccupancy = scenario.fixedContext?.dormitoryOccupancy.status === "resolved"
+  const fixedDormitoryOccupancy = scenario?.fixedContext?.dormitoryOccupancy.status === "resolved"
     ? scenario.fixedContext.dormitoryOccupancy.context.amount
     : undefined;
   const excludedOrdinaryResourceOperatorIds = new Set(
@@ -746,30 +2912,285 @@ export function inspectExplicitFacilityTeams(
   return { status: "complete", diagnostics: [], teams, supportAssignments };
 }
 
-function evaluateWindowFacilityEfficiencies(
+type ScheduleAwareRotationMetadata = {
+  contextFingerprint: string;
+  ambientContextFingerprint: string;
+  rawRotation: AssignmentPlan["rotation"];
+  materializedFingerprint: string;
+};
+
+const scheduleAwareRotationMetadata = new WeakMap<object, ScheduleAwareRotationMetadata>();
+
+function canonicalFingerprintValue(value: unknown, ancestors = new Set<object>()): string {
+  if (value === undefined) return "undefined";
+  if (value === null) return "null";
+  if (typeof value === "boolean") return value ? "boolean:true" : "boolean:false";
+  if (typeof value === "string") return `string:${JSON.stringify(value)}`;
+  if (typeof value === "number") {
+    if (Number.isNaN(value)) return "number:NaN";
+    if (value === Number.POSITIVE_INFINITY) return "number:+Infinity";
+    if (value === Number.NEGATIVE_INFINITY) return "number:-Infinity";
+    if (Object.is(value, -0)) return "number:-0";
+    return `number:${value}`;
+  }
+  if (typeof value === "bigint") return `bigint:${value}`;
+  if (typeof value !== "object") throw new TypeError(`Unsupported fingerprint value: ${typeof value}`);
+  if (ancestors.has(value)) throw new TypeError("Cannot fingerprint cyclic schedule-aware context");
+  ancestors.add(value);
+  try {
+    if (Array.isArray(value)) {
+      return `array:[${value.map((item) => canonicalFingerprintValue(item, ancestors)).join(",")}]`;
+    }
+    if (value instanceof Map) {
+      const entries = [...value.entries()].map(([key, item]) =>
+        `${canonicalFingerprintValue(key, ancestors)}=>${canonicalFingerprintValue(item, ancestors)}`
+      ).sort(compareCodePoints);
+      return `map:{${entries.join(",")}}`;
+    }
+    if (value instanceof Set) {
+      const entries = [...value].map((item) => canonicalFingerprintValue(item, ancestors)).sort(compareCodePoints);
+      return `set:{${entries.join(",")}}`;
+    }
+    if (value instanceof Date) return `date:${value.toISOString()}`;
+    const record = value as Record<string, unknown>;
+    return `object:{${Object.keys(record).sort(compareCodePoints).map((key) =>
+      `${JSON.stringify(key)}:${canonicalFingerprintValue(record[key], ancestors)}`
+    ).join(",")}}`;
+  } finally {
+    ancestors.delete(value);
+  }
+}
+
+function deterministicFingerprint(value: unknown) {
+  const canonical = canonicalFingerprintValue(value);
+  let first = 0x811c9dc5;
+  let second = 0x9e3779b9;
+  for (let index = 0; index < canonical.length; index += 1) {
+    const code = canonical.charCodeAt(index);
+    first = Math.imul(first ^ code, 0x01000193);
+    second = Math.imul(second ^ code, 0x85ebca6b);
+  }
+  return `${canonical.length.toString(36)}:${(first >>> 0).toString(36)}:${(second >>> 0).toString(36)}`;
+}
+
+function rotationWithoutMaterializationMetadata(
+  rotation: readonly AssignmentPlan["rotation"][number][]
+): AssignmentPlan["rotation"] {
+  return rotation.map(({ scheduleAwareMaterialization: _metadata, ...window }) => structuredClone(window));
+}
+
+function rotationContentFingerprint(rotation: readonly AssignmentPlan["rotation"][number][]) {
+  return deterministicFingerprint(rotation.map(({ scheduleAwareMaterialization: _metadata, ...window }) => window));
+}
+
+function rawRotationFromCloneSafeProvenance(
+  rotation: readonly AssignmentPlan["rotation"][number][]
+): AssignmentPlan["rotation"] | undefined {
+  const provenance = rotation.map((window) => window.scheduleAwareMaterialization);
+  if (provenance.every((entry) => entry === undefined)) return undefined;
+  if (provenance.some((entry) => entry === undefined)) {
+    throw new Error("Incomplete schedule-aware materialization provenance");
+  }
+  return provenance.map((entry) => {
+    if (entry!.version !== 1 || deterministicFingerprint(entry!.sourceWindow) !== entry!.sourceFingerprint) {
+      throw new Error("Invalid schedule-aware materialization provenance");
+    }
+    return structuredClone(entry!.sourceWindow);
+  });
+}
+
+function isScheduleAwareRotation(
+  state: AppState,
+  rotation: readonly AssignmentPlan["rotation"][number][],
+  scenario: SupportResourceScenarioEvaluation | undefined
+) {
+  const ambientContextFingerprint = deterministicFingerprint({ state, scenario });
+  const trustedMetadata = scheduleAwareRotationMetadata.get(rotation);
+  if (trustedMetadata) {
+    return trustedMetadata.ambientContextFingerprint === ambientContextFingerprint &&
+      trustedMetadata.materializedFingerprint === rotationContentFingerprint(rotation);
+  }
+  return rotation.length > 0 && rotation.every((window) => {
+    const provenance = window.scheduleAwareMaterialization;
+    if (!provenance || provenance.version !== 1 ||
+        provenance.ambientContextFingerprint !== ambientContextFingerprint ||
+        deterministicFingerprint(provenance.sourceWindow) !== provenance.sourceFingerprint) {
+      return false;
+    }
+    const { scheduleAwareMaterialization: _metadata, ...materializedWindow } = window;
+    return deterministicFingerprint(materializedWindow) === provenance.materializedWindowFingerprint;
+  });
+}
+
+function markScheduleAwareRotation(
+  rotation: AssignmentPlan["rotation"],
+  rawRotation: AssignmentPlan["rotation"],
+  contextFingerprint: string,
+  ambientContextFingerprint: string
+) {
+  for (let index = 0; index < rotation.length; index += 1) {
+    const sourceWindow = structuredClone(rawRotation[index]);
+    const materializedWindowFingerprint = deterministicFingerprint(rotation[index]);
+    rotation[index].scheduleAwareMaterialization = {
+      version: 1,
+      contextFingerprint,
+      ambientContextFingerprint,
+      sourceFingerprint: deterministicFingerprint(sourceWindow),
+      materializedWindowFingerprint,
+      sourceWindow
+    };
+  }
+  scheduleAwareRotationMetadata.set(rotation, {
+    contextFingerprint,
+    ambientContextFingerprint,
+    rawRotation: structuredClone(rawRotation),
+    materializedFingerprint: rotationContentFingerprint(rotation)
+  });
+  return rotation;
+}
+
+export function materializeScheduleAwareRotation(
+  state: AppState,
+  rotation: readonly AssignmentPlan["rotation"][number][],
+  scenario: SupportResourceScenarioEvaluation | undefined,
+  selectionContext?: AssignmentEvaluationContext
+): AssignmentPlan["rotation"] {
+  const contextFingerprint = deterministicFingerprint({ state, scenario, selectionContext });
+  const ambientContextFingerprint = deterministicFingerprint({ state, scenario });
+  const trustedMetadata = scheduleAwareRotationMetadata.get(rotation);
+  if (trustedMetadata?.contextFingerprint === contextFingerprint &&
+      trustedMetadata.materializedFingerprint === rotationContentFingerprint(rotation)) {
+    return rotation as AssignmentPlan["rotation"];
+  }
+  const rawRotation = trustedMetadata
+    ? structuredClone(trustedMetadata.rawRotation)
+    : rawRotationFromCloneSafeProvenance(rotation) ?? rotationWithoutMaterializationMetadata(rotation);
+  const windows = rawRotation.map((window) => ({ ...window, assignments: [...window.assignments] }));
+  const segments = deriveScheduleAwareWorkSegments(state.schedule, windows);
+  const segmentByIdentity = new Map(segments.map((segment) => [
+    `${segment.scheduleWindowId}\u0000${segment.operatorId}`,
+    segment
+  ]));
+  const reservedOperatorIds = new Set(scenario?.sources
+    .filter((evidence) => evidence.status === "resolved")
+    .map((evidence) => evidence.source.operatorId) ?? []);
+  const reservedFacilitySlots = scenario
+    ? maximumConcurrentAppStateSourceReservations(scenario, windows, state.schedule.cycleHours)
+    : selectionContext?.reservedFacilitySlots;
+  const windowFacilities = canonicalWindowFacilities(state, scenario);
+  const contexts = new Map(windows.map((window) => {
+    const dormitoryAssignments = implicitDormitoryResourceAssignments(
+      state,
+      window.assignments,
+      selectionContext?.reservedOperatorIds ?? reservedOperatorIds,
+      reservedFacilitySlots
+    );
+    const elapsedByOperator = new Map(window.assignments.map((assignment) => [
+      assignment.operatorId,
+      segmentByIdentity.get(`${window.shiftId}\u0000${assignment.operatorId}`)?.elapsedWorkHours ?? 0
+    ]));
+    return [window.shiftId, {
+      ...selectionContext,
+      ...scheduleWindowFixedContext(scenario, window.shiftId),
+      assignments: [...window.assignments, ...dormitoryAssignments],
+      facilities: windowFacilities,
+      roster: state.roster,
+      shiftHours: window.hours,
+      workElapsedHoursByOperator: elapsedByOperator
+    } satisfies AssignmentEvaluationContext] as const;
+  }));
+
+  for (const window of windows) {
+    const context = contexts.get(window.shiftId)!;
+    window.assignments = [...new Set(window.assignments.map((assignment) => assignment.facilityId))]
+      .sort(compareCodePoints)
+      .flatMap((facilityId) => {
+        const assignments = window.assignments.filter((assignment) => assignment.facilityId === facilityId);
+        const facility = windowFacilities.find((candidate) => candidate.id === facilityId);
+        return facility ? reevaluateFacilityTeam(assignments, facility, state, context) : assignments;
+      });
+    context.assignments = [
+      ...window.assignments,
+      ...context.assignments.filter((assignment) =>
+        !window.assignments.some((working) => working.operatorId === assignment.operatorId)
+      )
+    ];
+  }
+
+  const externalRecoveryOperatorIds = new Set(Object.entries(state.roster)
+    .filter(([, entry]) => entry.owned)
+    .map(([operatorId]) => operatorId));
+  const assignmentByIdentity = new Map(windows.flatMap((window) => window.assignments.map((assignment) => [
+    `${window.shiftId}\u0000${assignment.operatorId}`,
+    assignment
+  ] as const)));
+  const segmentsByBlock = new Map<string, ScheduleAwareWorkSegment[]>();
+  for (const segment of segments) {
+    const block = segmentsByBlock.get(segment.blockId) ?? [];
+    block.push(segment);
+    segmentsByBlock.set(segment.blockId, block);
+  }
+  for (const blockSegments of segmentsByBlock.values()) {
+    let moraleSpentBefore = 0;
+    for (const segment of [...blockSegments].sort((left, right) => left.sequenceIndex - right.sequenceIndex)) {
+      const window = windows.find((candidate) => candidate.shiftId === segment.scheduleWindowId)!;
+      const assignment = assignmentByIdentity.get(`${window.shiftId}\u0000${segment.operatorId}`);
+      if (!assignment) continue;
+      const recoveryWindow = windows.find((candidate) =>
+        !candidate.assignments.some((item) => item.operatorId === segment.operatorId)
+      );
+      const workingContext = contexts.get(window.shiftId)!;
+      const applied = applyMoraleDurationToAssignment(
+        assignment,
+        state,
+        { ...workingContext, moraleSpentBefore },
+        recoveryWindow ? contexts.get(recoveryWindow.shiftId)! : workingContext,
+        false,
+        undefined,
+        externalRecoveryOperatorIds
+      );
+      assignmentByIdentity.set(`${window.shiftId}\u0000${segment.operatorId}`, applied);
+      moraleSpentBefore = Math.min(
+        moraleCapacity,
+        moraleSpentBefore + (applied.moraleConsumptionPerHour ?? 0) * window.hours
+      );
+    }
+  }
+  return markScheduleAwareRotation(windows.map((window) => ({
+    ...window,
+    assignments: window.assignments.map((assignment) =>
+      assignmentByIdentity.get(`${window.shiftId}\u0000${assignment.operatorId}`) ?? assignment
+    )
+  })), rawRotation, contextFingerprint, ambientContextFingerprint);
+}
+
+function evaluateScheduleAwareWindowFacilityEfficiencies(
   state: AppState,
   facilityPlans: readonly FacilityPlan[],
-  rotation: readonly AssignmentPlan["rotation"][number][],
-  scenario: SupportResourceScenarioEvaluation
+  scheduleAwareRotation: readonly AssignmentPlan["rotation"][number][],
+  scenario: SupportResourceScenarioEvaluation | undefined,
+  selectionContext?: AssignmentEvaluationContext
 ): WindowFacilityEfficiencyEvaluation[] {
-  const fixedDormitoryOccupancy = scenario.fixedContext?.dormitoryOccupancy.status === "resolved"
+  const fixedDormitoryOccupancy = scenario?.fixedContext?.dormitoryOccupancy.status === "resolved"
     ? scenario.fixedContext.dormitoryOccupancy.context.amount
     : undefined;
   const reservedOperatorIds = new Set(
-    scenario.sources
+    scenario?.sources
       .filter((evidence) => evidence.status === "resolved")
-      .map((evidence) => evidence.source.operatorId)
+      .map((evidence) => evidence.source.operatorId) ?? []
   );
-  const reservedFacilitySlots = maximumConcurrentAppStateSourceReservations(
-    scenario,
-    [...rotation],
-    state.schedule.cycleHours
-  );
+  const reservedFacilitySlots = scenario
+    ? maximumConcurrentAppStateSourceReservations(
+        scenario,
+        [...scheduleAwareRotation],
+        state.schedule.cycleHours
+      )
+    : selectionContext?.reservedFacilitySlots;
 
-  return rotation.flatMap((window) => {
-    const windowSources = scenario.sources.filter(
+  return scheduleAwareRotation.flatMap((window) => {
+    const windowSources = scenario?.sources.filter(
       (evidence) => evidence.status === "resolved" && evidence.source.scheduleWindowId === window.shiftId
-    );
+    ) ?? [];
     const fixedResourceAmounts = windowSources.reduce<Record<string, number>>((amounts, evidence) => {
       amounts[evidence.source.resourceKey] =
         (amounts[evidence.source.resourceKey] ?? 0) + evidence.source.amount;
@@ -781,10 +3202,11 @@ function evaluateWindowFacilityEfficiencies(
     const implicitDormitoryAssignments = implicitDormitoryResourceAssignments(
       state,
       window.assignments,
-      reservedOperatorIds,
+      selectionContext?.reservedOperatorIds ?? reservedOperatorIds,
       reservedFacilitySlots
     );
     const context: AssignmentEvaluationContext = {
+      ...selectionContext,
       assignments: [...window.assignments, ...implicitDormitoryAssignments],
       facilities: state.facilities,
       roster: state.roster,
@@ -800,25 +3222,36 @@ function evaluateWindowFacilityEfficiencies(
         const selectedAssignments = window.assignments.filter(
           (assignment) => assignment.facilityId === plan.facility.id
         );
-        const reevaluatedAssignments = reevaluateFacilityTeam(
-          selectedAssignments,
-          plan.facility,
-          state,
-          context
-        );
         const facilityBonus =
           calculateGlobalBonus(state, plan.facility, context) +
           calculateRemoteFacilityEfficiencyBonus(plan.facility, context);
         return {
           scheduleWindowId: window.shiftId,
           facilityId: plan.facility.id,
-          additiveEfficiency: effectiveFacilityEfficiency(reevaluatedAssignments, facilityBonus),
-          provenance: "optimizer-normal-team-reevaluation-with-resolved-support-context" as const,
+          additiveEfficiency: effectiveFacilityEfficiency(selectedAssignments, facilityBonus),
+          provenance: "optimizer-normal-team-reevaluation-with-schedule-aware-contiguous-work-and-resolved-support-context" as const,
           fixedResourceAmounts: Object.freeze({ ...fixedResourceAmounts }),
           ...(fixedDormitoryOccupancy === undefined ? {} : { fixedDormitoryOccupancy })
         };
       });
   });
+}
+
+export function evaluateWindowFacilityEfficiencies(
+  state: AppState,
+  facilityPlans: readonly FacilityPlan[],
+  rotation: readonly AssignmentPlan["rotation"][number][],
+  scenario: SupportResourceScenarioEvaluation
+): WindowFacilityEfficiencyEvaluation[] {
+  const scheduleAwareRotation = isScheduleAwareRotation(state, rotation, scenario)
+    ? rotation
+    : materializeScheduleAwareRotation(state, rotation, scenario);
+  return evaluateScheduleAwareWindowFacilityEfficiencies(
+    state,
+    facilityPlans,
+    scheduleAwareRotation,
+    scenario
+  );
 }
 
 function buildFacilityPlans(
@@ -856,11 +3289,15 @@ function buildFacilityPlans(
       const candidates = findCandidates(facility, state, 0, context)
         .filter((candidate) => !unavailableOperatorIds.has(candidate.operatorId))
         .sort((a, b) => b.score - a.score);
-      const teamOptions = buildFacilityTeamOptions(
+      const teamOptions = buildFacilityTeamOptionSet(
         candidates,
         availableOrdinaryFacilitySlots(facility, selectionContext)
-      )
+      ).options
         .map((assignments) => reevaluateFacilityTeam(assignments, facility, state, context))
+        .filter((assignments) => facilityTeamMatchesSelectionSemantics(
+          assignments,
+          availableOrdinaryFacilitySlots(facility, selectionContext)
+        ))
         .sort(
           (a, b) =>
             facilityTeamSelectionScore(b, facility, state.preference, facilityBonus) -
@@ -880,47 +3317,71 @@ function buildFacilityPlans(
     usedOperatorIds: Set<string>;
     plans: FacilityPlan[];
     selectionScore: number;
+    stableSignatureParts: string[];
+    stableSignature: string;
   };
-  let searchStates: SearchState[] = [{ usedOperatorIds: new Set(), plans: [], selectionScore: 0 }];
+  let searchStates: SearchState[] = [{
+    usedOperatorIds: new Set(),
+    plans: [],
+    selectionScore: 0,
+    stableSignatureParts: [],
+    stableSignature: ""
+  }];
   for (const candidateSet of facilityCandidates) {
+    const preparedOptions = candidateSet.teamOptions.map((assignments) => {
+      const operatorIds = assignments.map((assignment) => assignment.operatorId);
+      const expectedEfficiency = effectiveFacilityEfficiency(assignments, candidateSet.facilityBonus);
+      const selectionScore = facilityTeamSelectionScore(
+        assignments,
+        candidateSet.facility,
+        state.preference,
+        candidateSet.facilityBonus
+      );
+      const stableSignatureParts = assignments.map((assignment) =>
+        `${candidateSet.facility.id}:${assignment.operatorId}:${assignment.skillId}`
+      ).sort(compareCodePoints);
+      return {
+        assignments,
+        operatorIds,
+        selectionScore,
+        stableSignatureParts,
+        plan: {
+          facility: candidateSet.facility,
+          assignments,
+          expectedEfficiency,
+          score: effectiveFacilityScore(
+            assignments,
+            candidateSet.facility,
+            state.preference,
+            candidateSet.facilityBonus
+          ),
+          alternatives: []
+        } satisfies FacilityPlan
+      };
+    });
     const nextStates: SearchState[] = [];
     for (const searchState of searchStates) {
-      for (const assignments of candidateSet.teamOptions) {
-        const operatorIds = assignments.map((assignment) => assignment.operatorId);
-        if (operatorIds.some((operatorId) => searchState.usedOperatorIds.has(operatorId))) {
+      for (const option of preparedOptions) {
+        if (option.operatorIds.some((operatorId) => searchState.usedOperatorIds.has(operatorId))) {
           continue;
         }
-        const expectedEfficiency = effectiveFacilityEfficiency(assignments, candidateSet.facilityBonus);
+        const stableSignatureParts = [
+          ...searchState.stableSignatureParts,
+          ...option.stableSignatureParts
+        ];
         nextStates.push({
-          usedOperatorIds: new Set([...searchState.usedOperatorIds, ...operatorIds]),
-          selectionScore:
-            searchState.selectionScore +
-            facilityTeamSelectionScore(
-              assignments,
-              candidateSet.facility,
-              state.preference,
-              candidateSet.facilityBonus
-            ),
-          plans: [
-            ...searchState.plans,
-            {
-              facility: candidateSet.facility,
-              assignments,
-              expectedEfficiency,
-              score: effectiveFacilityScore(
-                assignments,
-                candidateSet.facility,
-                state.preference,
-                candidateSet.facilityBonus
-              ),
-              alternatives: []
-            }
-          ]
+          usedOperatorIds: new Set([...searchState.usedOperatorIds, ...option.operatorIds]),
+          stableSignatureParts,
+          stableSignature: stableSignatureParts.join("|"),
+          selectionScore: searchState.selectionScore + option.selectionScore,
+          plans: [...searchState.plans, option.plan]
         });
       }
     }
     searchStates = nextStates
-      .sort((a, b) => b.selectionScore - a.selectionScore || assignmentStateSignature(a).localeCompare(assignmentStateSignature(b)))
+      .sort((a, b) =>
+        b.selectionScore - a.selectionScore || compareCodePoints(a.stableSignature, b.stableSignature)
+      )
       .slice(0, 128);
   }
   const bestPlans = searchStates[0]?.plans ?? [];
@@ -1081,41 +3542,421 @@ function fillerSkillScore(assignment: Assignment | undefined) {
   return assignment?.suppressesOtherFactoryEfficiency ? 0 : assignment?.score ?? 0;
 }
 
-function buildFacilityTeamOptions(candidates: Assignment[], slotCount: number) {
+const facilityTeamOptionLimit = 320;
+const facilityTeamConstructionLimit = 4096;
+const facilityTeamPartnerLimit = 4;
+const facilityTeamCacheLimit = 32;
+
+export interface FacilityTeamOptionGenerationDiagnostic {
+  optimality: "certified" | "not-certified";
+  limitation?: "candidate-generation-limited";
+  inputCandidateCount: number;
+  eligibleCandidateCount: number;
+  constructedOptionCount: number;
+  retainedOptionCount: number;
+  constructionAttempts: number;
+  cacheHit: boolean;
+}
+
+export interface FacilityTeamOptionGenerationResult {
+  options: Assignment[][];
+  diagnostic: FacilityTeamOptionGenerationDiagnostic;
+}
+
+type CachedFacilityTeamOptions = Omit<FacilityTeamOptionGenerationResult, "diagnostic"> & {
+  diagnostic: Omit<FacilityTeamOptionGenerationDiagnostic, "cacheHit">;
+};
+
+const facilityTeamOptionCache = new Map<string, CachedFacilityTeamOptions>();
+const operatorById = new Map(operators.map((operator) => [operator.id, operator]));
+
+function compareCodePoints(left: string, right: string) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function stableValueSignature(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableValueSignature).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .filter(([, item]) => item !== undefined)
+      .sort(([left], [right]) => compareCodePoints(left, right))
+      .map(([key, item]) => `${JSON.stringify(key)}:${stableValueSignature(item)}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value) ?? String(value);
+}
+
+function assignmentStableSignature(assignment: Assignment) {
+  return `${assignment.operatorId}:${assignment.skillId}`;
+}
+
+function facilityTeamStableSignature(assignments: readonly Assignment[]) {
+  return assignments.map(assignmentStableSignature).sort(compareCodePoints).join("|");
+}
+
+function compareFacilityCandidates(left: Assignment, right: Assignment) {
+  return right.score - left.score ||
+    compareCodePoints(assignmentStableSignature(left), assignmentStableSignature(right)) ||
+    compareCodePoints(stableValueSignature(left), stableValueSignature(right));
+}
+
+function compareFacilityTeams(left: readonly Assignment[], right: readonly Assignment[]) {
+  return right.reduce((sum, assignment) => sum + assignment.score, 0) -
+      left.reduce((sum, assignment) => sum + assignment.score, 0) ||
+    compareCodePoints(facilityTeamStableSignature(left), facilityTeamStableSignature(right));
+}
+
+function facilityTeamMatchesSelectionSemantics(assignments: Assignment[], slotCount: number) {
+  if (!assignments.some((assignment) => assignment.suppressesOtherFactoryEfficiency)) {
+    return true;
+  }
+  const candidates = assignments.filter((assignment) =>
+    assignment.skillId !== "skillless-prerequisite" &&
+    assignment.skillId !== "base-skillless-prerequisite"
+  );
+  const selected = selectAssignmentsForFacility(candidates.sort(compareFacilityCandidates), slotCount);
+  return facilityTeamStableSignature(selected) === facilityTeamStableSignature(assignments);
+}
+
+function facilityTeamHasValidStructure(assignments: readonly Assignment[], slotCount: number) {
+  if (slotCount <= 0 || facilitySlotOccupancy([...assignments]) !== slotCount) return false;
+  const operatorIds = assignments.map((assignment) => assignment.operatorId);
+  if (new Set(operatorIds).size !== operatorIds.length) return false;
+  const operatorIdSet = new Set(operatorIds);
+  if (assignments.some((assignment) =>
+    [...(assignment.skilllessPrerequisiteOperatorIds ?? []), ...(assignment.baseSkilllessPrerequisiteOperatorIds ?? [])]
+      .some((operatorId) => !operatorIdSet.has(operatorId))
+  )) return false;
+  if (assignments.some((assignment) =>
+    assignment.skilllessPrerequisiteFor !== undefined && !operatorIdSet.has(assignment.skilllessPrerequisiteFor) ||
+    assignment.baseSkilllessPrerequisiteFor !== undefined && !operatorIdSet.has(assignment.baseSkilllessPrerequisiteFor)
+  )) return false;
+  const stackKeys = assignments.flatMap(assignmentGlobalStackKeys);
+  return new Set(stackKeys).size === stackKeys.length;
+}
+
+export function facilityTeamEligibleForScheduleComparison(
+  rawAssignments: readonly Assignment[],
+  reevaluatedAssignments: readonly Assignment[],
+  slotCount: number
+) {
+  if (!facilityTeamHasValidStructure(rawAssignments, slotCount) ||
+      !facilityTeamHasValidStructure(reevaluatedAssignments, slotCount) ||
+      facilityTeamStableSignature(rawAssignments) !== facilityTeamStableSignature(reevaluatedAssignments)) {
+    return false;
+  }
+  const suppressingAssignments = reevaluatedAssignments.filter((assignment) =>
+    assignment.suppressesOtherFactoryEfficiency
+  );
+  if (suppressingAssignments.length <= 1) return true;
+  return reevaluatedAssignments.some((assignment) =>
+    !assignment.suppressesOtherFactoryEfficiency &&
+    Number.isFinite(assignment.factoryEfficiencySuppressionExemptEfficiency) &&
+    (assignment.factoryEfficiencySuppressionExemptEfficiency ?? 0) > 0
+  );
+}
+
+function assignmentRetentionKeys(assignment: Assignment) {
+  const keys: string[] = [];
+  const identity = assignmentStableSignature(assignment);
+  if (assignment.contextSensitive) keys.push(`context:${identity}`);
+  if (assignment.suppressesOtherFactoryEfficiency) keys.push(`suppression:${identity}`);
+  if (assignment.skilllessPrerequisiteOperatorIds?.length) {
+    keys.push(`facility-dependency:${[...assignment.skilllessPrerequisiteOperatorIds].sort(compareCodePoints).join(",")}`);
+  }
+  if (assignment.baseSkilllessPrerequisiteOperatorIds?.length) {
+    keys.push(`base-dependency:${[...assignment.baseSkilllessPrerequisiteOperatorIds].sort(compareCodePoints).join(",")}`);
+  }
+  for (const key of [...assignmentGlobalStackKeys(assignment)].sort(compareCodePoints)) {
+    keys.push(`global-stack:${key}`);
+  }
+  for (const key of [...(assignment.scalesWithFacilityStat ?? [])].sort(compareCodePoints)) {
+    keys.push(`facility-stat-consumer:${key}`);
+  }
+  for (const scaling of assignment.facilityStatScalings ?? []) {
+    keys.push(`facility-stat-scaling:${stableValueSignature(scaling)}`);
+  }
+  if ((assignment.storageLimit ?? 0) > 0) keys.push("facility-stat-provider:storageLimit");
+  if ((assignment.orderLimit ?? 0) > 0) keys.push("facility-stat-provider:orderLimit");
+  for (const affiliation of operatorById.get(assignment.operatorId)?.affiliations ?? []) {
+    keys.push(`affiliation:${affiliation}`);
+  }
+  return [...new Set(keys)].sort(compareCodePoints);
+}
+
+function teamRetentionKeys(team: readonly Assignment[]) {
+  const keys = team.flatMap(assignmentRetentionKeys);
+  const workers = team.filter(assignmentConsumesFacilitySlot);
+  if (workers.length > 1) {
+    const commonAffiliations = (operatorById.get(workers[0].operatorId)?.affiliations ?? []).filter(
+      (affiliation) => workers.every((assignment) =>
+        operatorById.get(assignment.operatorId)?.affiliations?.includes(affiliation)
+      )
+    );
+    keys.push(...commonAffiliations.map((affiliation) => `affiliation-team:${affiliation}`));
+  }
+  if (workers.filter((assignment) => assignment.suppressesOtherFactoryEfficiency).length > 1) {
+    keys.push("suppression-team");
+  }
+  const contextIdentities = workers
+    .filter((assignment) => assignment.contextSensitive)
+    .map((assignment) => assignment.skillId)
+    .sort(compareCodePoints);
+  if (contextIdentities.length > 1) {
+    keys.push(`context-mechanic-team:${contextIdentities.join(",")}`);
+  }
+  for (const statKey of ["storageLimit", "orderLimit"] as const) {
+    if (workers.some((assignment) => assignment.scalesWithFacilityStat?.includes(statKey)) &&
+        workers.filter((assignment) => (assignment[statKey] ?? 0) > 0).length >= 2) {
+      keys.push(`facility-stat-team:${statKey}:${workers.reduce(
+        (sum, assignment) => sum + (assignment[statKey] ?? 0),
+        0
+      )}`);
+    }
+  }
+  return [...new Set(keys)].sort(compareCodePoints);
+}
+
+function deepFreeze<T>(value: T): T {
+  if (value === null || typeof value !== "object" || Object.isFrozen(value)) return value;
+  for (const nestedValue of Object.values(value)) deepFreeze(nestedValue);
+  return Object.freeze(value);
+}
+
+function cacheFacilityTeamOptions(key: string, value: CachedFacilityTeamOptions) {
+  const snapshot = deepFreeze(structuredClone(value));
+  if (facilityTeamOptionCache.size >= facilityTeamCacheLimit) {
+    const oldest = facilityTeamOptionCache.keys().next().value;
+    if (oldest !== undefined) facilityTeamOptionCache.delete(oldest);
+  }
+  facilityTeamOptionCache.set(key, snapshot);
+  return snapshot;
+}
+
+function mutableFacilityTeamOptionResult(
+  snapshot: CachedFacilityTeamOptions,
+  cacheHit: boolean
+): FacilityTeamOptionGenerationResult {
+  const mutableSnapshot = structuredClone(snapshot);
+  return {
+    options: mutableSnapshot.options,
+    diagnostic: { ...mutableSnapshot.diagnostic, cacheHit }
+  };
+}
+
+export function buildFacilityTeamOptionSet(
+  candidates: Assignment[],
+  slotCount: number
+): FacilityTeamOptionGenerationResult {
   const options: Assignment[][] = [];
   const optionSignatures = new Set<string>();
-  const visitedExclusions = new Set<string>();
-  const exclusionQueue: string[][] = [[]];
-  while (exclusionQueue.length && options.length < 16 && visitedExclusions.size < 64) {
-    const exclusions = exclusionQueue.shift()!;
-    const exclusionKey = [...exclusions].sort().join("|");
-    if (visitedExclusions.has(exclusionKey)) {
-      continue;
-    }
-    visitedExclusions.add(exclusionKey);
-    const excludedOperatorIds = new Set(exclusions);
-    const assignments = selectAssignmentsForFacility(
-      candidates.filter((candidate) => !excludedOperatorIds.has(candidate.operatorId)),
-      slotCount
+  const canonicalCandidates = [...candidates]
+    .sort(compareFacilityCandidates)
+    .filter((candidate, index, all) =>
+      index === 0 || assignmentStableSignature(candidate) !== assignmentStableSignature(all[index - 1])
     );
-    const signature = assignments.map((assignment) => `${assignment.operatorId}:${assignment.skillId}`).sort().join("|");
+  const eligibleCandidates = canonicalCandidates.filter((candidate) =>
+    candidate.score > 0 ||
+    candidate.contextSensitive ||
+    candidate.suppressesOtherFactoryEfficiency ||
+    Boolean(candidate.skilllessPrerequisiteOperatorIds?.length) ||
+    Boolean(candidate.baseSkilllessPrerequisiteOperatorIds?.length) ||
+    Boolean(candidate.facilityStatScalings?.length) ||
+    (candidate.storageLimit ?? 0) > 0 ||
+    (candidate.orderLimit ?? 0) > 0
+  );
+  const cacheKey = `${slotCount}\u0001${eligibleCandidates.map(stableValueSignature).join("\u0000")}`;
+  const cached = facilityTeamOptionCache.get(cacheKey);
+  if (cached) {
+    return mutableFacilityTeamOptionResult(cached, true);
+  }
+  let constructionAttempts = 0;
+  const addOption = (assignments: Assignment[]) => {
+    constructionAttempts += 1;
+    if (constructionAttempts > facilityTeamConstructionLimit) return;
+    const signature = facilityTeamStableSignature(assignments);
     if (!optionSignatures.has(signature)) {
       optionSignatures.add(signature);
       options.push(assignments);
     }
-    for (const assignment of assignments.filter((candidate) => assignmentConsumesFacilitySlot(candidate))) {
-      exclusionQueue.push([...exclusions, assignment.operatorId]);
+  };
+  const addDirectOption = (assignments: Assignment[]) => {
+    if (facilitySlotOccupancy(assignments) > slotCount ||
+        new Set(assignments.map(({ operatorId }) => operatorId)).size !== assignments.length ||
+        assignments.some((assignment) =>
+          assignment.skilllessPrerequisiteOperatorIds?.length ||
+          assignment.baseSkilllessPrerequisiteOperatorIds?.length
+        )) return;
+    const stackKeys = assignments.flatMap(assignmentGlobalStackKeys);
+    if (new Set(stackKeys).size !== stackKeys.length) return;
+    addOption(assignments);
+  };
+
+  // The empty/minimum-conflict fallback is always present even if later families
+  // consume the construction budget.
+  addOption([]);
+
+  // Canonical suffixes and exclusions expose deep teams at bounded O(roster) calls.
+  for (let start = 0; start < eligibleCandidates.length; start += 1) {
+    const candidatesFromStart = eligibleCandidates.slice(start);
+    const selected = selectAssignmentsForFacility(candidatesFromStart, slotCount);
+    addOption(selected);
+    const selectedWorkers = selected.filter(assignmentConsumesFacilitySlot);
+    for (const worker of selectedWorkers) {
+      addOption(selectAssignmentsForFacility(
+        candidatesFromStart.filter((candidate) => candidate.operatorId !== worker.operatorId),
+        slotCount
+      ));
+    }
+    for (let left = 0; left < selectedWorkers.length; left += 1) {
+      for (let right = left + 1; right < selectedWorkers.length; right += 1) {
+        const excluded = new Set([selectedWorkers[left].operatorId, selectedWorkers[right].operatorId]);
+        addOption(selectAssignmentsForFacility(
+          candidatesFromStart.filter((candidate) => !excluded.has(candidate.operatorId)),
+          slotCount
+        ));
+      }
     }
   }
-  if (!optionSignatures.has("")) {
-    options.push([]);
+
+  const candidatesByAffiliation = new Map<string, Assignment[]>();
+  for (const candidate of eligibleCandidates) {
+    for (const affiliation of operatorById.get(candidate.operatorId)?.affiliations ?? []) {
+      const affiliated = candidatesByAffiliation.get(affiliation) ?? [];
+      affiliated.push(candidate);
+      candidatesByAffiliation.set(affiliation, affiliated);
+    }
   }
-  return options.sort(
-    (a, b) =>
-      b.reduce((sum, assignment) => sum + assignment.score, 0) -
-        a.reduce((sum, assignment) => sum + assignment.score, 0) ||
-      a.map((assignment) => assignment.operatorId).sort().join("|").localeCompare(b.map((assignment) => assignment.operatorId).sort().join("|"))
+  for (const affiliated of [...candidatesByAffiliation.entries()]
+    .sort(([left], [right]) => compareCodePoints(left, right))
+    .map(([, assignments]) => assignments)) {
+    if (affiliated.length < slotCount) continue;
+    for (let start = 0; start < affiliated.length; start += 1) {
+      addOption(selectAssignmentsForFacility(affiliated.slice(start), slotCount));
+    }
+  }
+
+  // Force every mechanic/dependency/context candidate with a bounded set of
+  // canonical partners instead of enumerating roster Cartesian triples.
+  const mechanicCandidates = eligibleCandidates.filter((candidate) =>
+    assignmentRetentionKeys(candidate).some((key) => !key.startsWith("affiliation:"))
   );
+  const topPartners = eligibleCandidates.slice(0, facilityTeamPartnerLimit);
+  for (const anchor of mechanicCandidates) {
+    const withoutAnchor = eligibleCandidates.filter((candidate) => candidate.operatorId !== anchor.operatorId);
+    addOption(selectAssignmentsForFacility([anchor, ...withoutAnchor], slotCount));
+    for (const partner of topPartners) {
+      if (partner.operatorId === anchor.operatorId) continue;
+      addOption(selectAssignmentsForFacility([
+        anchor,
+        partner,
+        ...withoutAnchor.filter((candidate) => candidate.operatorId !== partner.operatorId)
+      ], slotCount));
+      if (constructionAttempts >= facilityTeamConstructionLimit) break;
+    }
+    if (constructionAttempts >= facilityTeamConstructionLimit) break;
+  }
+
+  // A zero-score context dependency can be valuable with another context
+  // mechanic even though ordinary score ranking cannot surface the pair.
+  // Force only those bounded pairs, then fill remaining slots normally.
+  const contextCandidates = eligibleCandidates.filter((candidate) => candidate.contextSensitive);
+  for (let left = 0; left < contextCandidates.length; left += 1) {
+    for (let right = left + 1; right < contextCandidates.length; right += 1) {
+      const anchors = [contextCandidates[left], contextCandidates[right]];
+      if (anchors.every((candidate) => candidate.score > 0)) continue;
+      const anchorIds = new Set(anchors.map((candidate) => candidate.operatorId));
+      addOption(selectAssignmentsForFacility([
+        ...anchors,
+        ...eligibleCandidates.filter((candidate) => !anchorIds.has(candidate.operatorId))
+      ], slotCount));
+      if (constructionAttempts >= facilityTeamConstructionLimit) break;
+    }
+    if (constructionAttempts >= facilityTeamConstructionLimit) break;
+  }
+
+  const suppressing = eligibleCandidates.filter((candidate) => candidate.suppressesOtherFactoryEfficiency);
+  const suppressionPartners = eligibleCandidates
+    .filter((candidate) => candidate.factoryEfficiencySuppressionExemptEfficiency !== undefined)
+    .slice(0, facilityTeamPartnerLimit);
+  for (let left = 0; left < suppressing.length; left += 1) {
+    for (let right = left + 1; right < Math.min(suppressing.length, left + 1 + facilityTeamPartnerLimit); right += 1) {
+      for (const partner of suppressionPartners) {
+        addDirectOption([suppressing[left], suppressing[right], partner]);
+        if (constructionAttempts >= facilityTeamConstructionLimit) break;
+      }
+      if (constructionAttempts >= facilityTeamConstructionLimit) break;
+    }
+    if (constructionAttempts >= facilityTeamConstructionLimit) break;
+  }
+
+  for (const statKey of ["storageLimit", "orderLimit"] as const) {
+    const consumers = eligibleCandidates.filter((candidate) => candidate.scalesWithFacilityStat?.includes(statKey));
+    const providersByAmount = new Map<number, Assignment[]>();
+    for (const provider of eligibleCandidates.filter((candidate) => (candidate[statKey] ?? 0) > 0)) {
+      const amount = provider[statKey] ?? 0;
+      const representatives = [...(providersByAmount.get(amount) ?? []), provider]
+        .sort(compareFacilityCandidates)
+        .slice(0, 2);
+      providersByAmount.set(amount, representatives);
+    }
+    // Two representatives per distinct amount preserve same-amount pairs while
+    // avoiding Cartesian triples across every stat provider in the roster.
+    const providers = [...providersByAmount.entries()]
+      .sort(([left], [right]) => left - right)
+      .flatMap(([, representatives]) => representatives);
+    for (const consumer of consumers) {
+      for (let left = 0; left < providers.length; left += 1) {
+        for (let right = left + 1; right < providers.length; right += 1) {
+          addDirectOption([consumer, providers[left], providers[right]]);
+          if (constructionAttempts >= facilityTeamConstructionLimit) break;
+        }
+        if (constructionAttempts >= facilityTeamConstructionLimit) break;
+      }
+      if (constructionAttempts >= facilityTeamConstructionLimit) break;
+    }
+    if (constructionAttempts >= facilityTeamConstructionLimit) break;
+  }
+
+  const constructedOptionCount = options.length;
+  const sortedOptions = options.sort(compareFacilityTeams);
+  const retainedBySignature = new Map<string, Assignment[]>();
+  const retain = (team: Assignment[] | undefined) => {
+    if (team) retainedBySignature.set(facilityTeamStableSignature(team), team);
+  };
+  retain(sortedOptions.find((team) => team.length === 0));
+  const seenRetentionKeys = new Set<string>();
+  for (const team of sortedOptions) {
+    for (const key of teamRetentionKeys(team)) {
+      if (seenRetentionKeys.has(key)) continue;
+      seenRetentionKeys.add(key);
+      retain(team);
+    }
+  }
+  for (const team of sortedOptions) {
+    if (retainedBySignature.size >= facilityTeamOptionLimit) break;
+    retain(team);
+  }
+  const retainedOptions = [...retainedBySignature.values()].sort(compareFacilityTeams).slice(0, facilityTeamOptionLimit);
+  const heuristicOmission = slotCount > 1 && eligibleCandidates.length > slotCount;
+  const limited = heuristicOmission || constructionAttempts > facilityTeamConstructionLimit ||
+    constructedOptionCount > retainedOptions.length;
+  const diagnostic: Omit<FacilityTeamOptionGenerationDiagnostic, "cacheHit"> = {
+    optimality: limited ? "not-certified" : "certified",
+    ...(limited ? { limitation: "candidate-generation-limited" as const } : {}),
+    inputCandidateCount: candidates.length,
+    eligibleCandidateCount: eligibleCandidates.length,
+    constructedOptionCount,
+    retainedOptionCount: retainedOptions.length,
+    constructionAttempts: Math.min(constructionAttempts, facilityTeamConstructionLimit)
+  };
+  const result = { options: retainedOptions, diagnostic };
+  const snapshot = cacheFacilityTeamOptions(cacheKey, result);
+  return mutableFacilityTeamOptionResult(snapshot, false);
+}
+
+export function buildFacilityTeamOptions(candidates: Assignment[], slotCount: number) {
+  return buildFacilityTeamOptionSet(candidates, slotCount).options;
 }
 
 function reevaluateFacilityTeam(
@@ -1138,6 +3979,7 @@ function reevaluateFacilityTeam(
 
   return assignments.map((assignment) => {
     if (
+      !assignment.contextSensitive ||
       assignment.skillId === "baseline" ||
       assignment.skillId === "skillless-prerequisite" ||
       assignment.skillId === "base-skillless-prerequisite"
@@ -1149,6 +3991,11 @@ function reevaluateFacilityTeam(
     if (!operator || !rosterEntry) {
       return assignment;
     }
+    const operatorContext: AssignmentEvaluationContext = {
+      ...tentativeContext,
+      workElapsedHours: tentativeContext.workElapsedHoursByOperator?.get(assignment.operatorId) ??
+        tentativeContext.workElapsedHours
+    };
     const reevaluated = bestSkillForFacility(
       operator,
       rosterEntry,
@@ -1156,17 +4003,19 @@ function reevaluateFacilityTeam(
       state.preference,
       0,
       state.language,
-      tentativeContext
+      operatorContext
     );
-    return reevaluated.find((candidate) => candidate.skillId === assignment.skillId) ?? reevaluated[0] ?? assignment;
+    const selected = reevaluated.find((candidate) => candidate.skillId === assignment.skillId) ?? reevaluated[0] ?? assignment;
+    return {
+      ...selected,
+      ...(assignment.skilllessPrerequisiteOperatorIds?.length
+        ? { skilllessPrerequisiteOperatorIds: assignment.skilllessPrerequisiteOperatorIds }
+        : {}),
+      ...(assignment.baseSkilllessPrerequisiteOperatorIds?.length
+        ? { baseSkilllessPrerequisiteOperatorIds: assignment.baseSkilllessPrerequisiteOperatorIds }
+        : {})
+    };
   });
-}
-
-function assignmentStateSignature(state: { plans: FacilityPlan[] }) {
-  return state.plans
-    .flatMap((plan) => plan.assignments.map((assignment) => `${plan.facility.id}:${assignment.operatorId}:${assignment.skillId}`))
-    .sort()
-    .join("|");
 }
 
 export function attachRotationAlternatives(state: AppState, facilityPlans: FacilityPlan[]): FacilityPlan[] {
@@ -1515,6 +4364,8 @@ export function findCandidates(
     facilities: context?.facilities ?? state.facilities,
     roster: context?.roster ?? state.roster,
     shiftHours: context?.shiftHours ?? optimizerShiftHours(state),
+    workElapsedHours: context?.workElapsedHours,
+    moraleSpentBefore: context?.moraleSpentBefore,
     fixedResourceAmounts: context?.fixedResourceAmounts,
     fixedDormitoryOccupancy: context?.fixedDormitoryOccupancy,
     excludedOrdinaryResourceOperatorIds: context?.excludedOrdinaryResourceOperatorIds
@@ -1591,7 +4442,11 @@ function bestSkillForFacility(
           ? averageOrderStateCount(effect, operator, facility, context)
           : effectScalingMultiplier(effect, operator, elite, facility, context));
       const conditionalBonus = effectConditionalBonus(effect, operator, facility, context);
-      const modeledEfficiency = averageEffectEfficiency(effect, context?.shiftHours ?? 12);
+      const modeledEfficiency = averageEffectEfficiency(
+        effect,
+        context?.shiftHours ?? 12,
+        context?.workElapsedHours ?? 0
+      );
       const globalEffectEfficiency = (effect.baseEfficiency ?? 0) + modeledEfficiency * scalingMultiplier;
       const rawEfficiency = (effect.baseEfficiency ?? 0) + modeledEfficiency * scalingMultiplier + conditionalBonus;
       const externalGlobalEffect = isExternalGlobalEffect(effect, facility);
@@ -1643,6 +4498,13 @@ function bestSkillForFacility(
               ? globalEffectEfficiency * globalEffectScoreMultiplier
               : scoredEfficiency * productMultiplier * facilityWeight(facility),
           efficiency: variantEffectiveEfficiency,
+          ...(
+            effect.scaling || effect.resourceEffects?.length || effect.conditionalBonuses?.length ||
+              effect.timeCurve || effect.moraleCurve ||
+            effect.conditions?.length || effect.facilityCountBonuses?.length
+              ? { contextSensitive: true }
+              : {}
+          ),
           storageLimit,
           orderLimit,
           ...(effect.tradingOrderEffects?.length ? { tradingOrderEffects: effect.tradingOrderEffects } : {}),
@@ -1816,7 +4678,9 @@ function applyMoraleDurationToAssignment(
   context: AssignmentEvaluationContext,
   recoveryWorkingContext: AssignmentEvaluationContext,
   moraleExchangeApplied = false,
-  moraleExchangeSourceOperatorId?: string
+  moraleExchangeSourceOperatorId?: string,
+  excludedRecoveryOperatorIds?: ReadonlySet<string>,
+  skipRecoveryEvaluation = false
 ) {
   const facility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
   if (!facility || assignment.doesNotConsumeFacilitySlot) {
@@ -1902,35 +4766,47 @@ function applyMoraleDurationToAssignment(
 
   consumptionPerHour = Math.max(consumptionPerHour, 0);
   const shiftHours = context.shiftHours ?? 12;
-  const moraleSpent = Math.min(consumptionPerHour * shiftHours, moraleCapacity);
-  const dormitoryRecoveryPerHour = bestDormitoryRecoveryPerHour(
-    assignment.operatorId,
-    state,
-    recoveryWorkingContext,
-    moraleCapacity - moraleSpent
-  );
-  const recoveryProvenance = bestDormitoryRecoveryProvenance(
-    assignment.operatorId,
-    state,
-    recoveryWorkingContext,
-    moraleExchangeSourceOperatorId
-  );
+  const moraleSpentBefore = Math.min(context.moraleSpentBefore ?? 0, moraleCapacity);
+  const moraleSpent = Math.min(moraleSpentBefore + consumptionPerHour * shiftHours, moraleCapacity);
   const moraleAdjustedEfficiency =
     assignment.efficiency +
     (assignment.moraleEfficiencyCurves ?? []).reduce(
       (sum, curve) =>
         sum +
-        averageMoraleCurveEfficiency(curve, shiftHours, consumptionPerHour) -
+        averageMoraleCurveSegmentEfficiency(curve, shiftHours, consumptionPerHour, moraleSpentBefore) -
         curve.baselineEfficiency,
       0
     );
+  if (skipRecoveryEvaluation) {
+    return {
+      ...assignment,
+      efficiency: moraleAdjustedEfficiency,
+      moraleConsumptionPerHour: consumptionPerHour
+    };
+  }
+  const dormitoryRecoveryPerHour = bestDormitoryRecoveryPerHour(
+    assignment.operatorId,
+    state,
+    recoveryWorkingContext,
+    moraleCapacity - moraleSpent,
+    excludedRecoveryOperatorIds
+  );
+  const recoveryProvenance = bestDormitoryRecoveryProvenance(
+    assignment.operatorId,
+    state,
+    recoveryWorkingContext,
+    moraleExchangeSourceOperatorId,
+    excludedRecoveryOperatorIds
+  );
   return {
     ...assignment,
     efficiency: moraleAdjustedEfficiency,
     moraleConsumptionPerHour: consumptionPerHour,
     dormitoryRecoveryPerHour,
     recoveryProvenance,
-    shiftUptime: consumptionPerHour === 0 ? 1 : Math.min(moraleCapacity / consumptionPerHour / shiftHours, 1),
+    shiftUptime: consumptionPerHour === 0
+      ? 1
+      : Math.min(Math.max(0, moraleCapacity - moraleSpentBefore) / consumptionPerHour / shiftHours, 1),
     fatigueHours: consumptionPerHour === 0 ? Number.POSITIVE_INFINITY : moraleCapacity / consumptionPerHour,
     recoveryHours: moraleExchangeApplied ? 0 : moraleSpent / dormitoryRecoveryPerHour,
     ...(moraleExchangeApplied ? {
@@ -1944,7 +4820,8 @@ export function bestDormitoryRecoveryProvenance(
   targetOperatorId: string,
   state: AppState,
   workingContext: AssignmentEvaluationContext,
-  exchangeSourceOperatorId?: string
+  exchangeSourceOperatorId?: string,
+  excludedRecoveryOperatorIds?: ReadonlySet<string>
 ): NonNullable<Assignment["recoveryProvenance"]> {
   const thresholds = new Set<number>();
   for (const operator of operators) {
@@ -1962,12 +4839,18 @@ export function bestDormitoryRecoveryProvenance(
   const sortedThresholds = [...thresholds]
     .filter((threshold) => threshold > 0 && threshold < moraleCapacity)
     .sort((left, right) => left - right);
-  const baseProfile = calculateDormitoryRecovery(targetOperatorId, state, workingContext, moraleCapacity);
+  const baseProfile = calculateDormitoryRecovery(
+    targetOperatorId, state, workingContext, moraleCapacity, excludedRecoveryOperatorIds
+  );
   const sourcesByKey = new Map(baseProfile.sources.map((source) => [`${source.operatorId}:${source.allocation}`, source]));
   const conditionalModifiers = sortedThresholds
     .flatMap((moraleAtMost) => {
-      const atThreshold = calculateDormitoryRecovery(targetOperatorId, state, workingContext, moraleAtMost);
-      const aboveThreshold = calculateDormitoryRecovery(targetOperatorId, state, workingContext, moraleAtMost + 1e-9);
+      const atThreshold = calculateDormitoryRecovery(
+        targetOperatorId, state, workingContext, moraleAtMost, excludedRecoveryOperatorIds
+      );
+      const aboveThreshold = calculateDormitoryRecovery(
+        targetOperatorId, state, workingContext, moraleAtMost + 1e-9, excludedRecoveryOperatorIds
+      );
       const additionalRatePerHour = atThreshold.ratePerHour - aboveThreshold.ratePerHour;
       if (additionalRatePerHour <= 1e-12) return [];
       const aboveAmounts = new Map(aboveThreshold.components.map((component) => [component.key, component.amount]));
@@ -1986,7 +4869,9 @@ export function bestDormitoryRecoveryProvenance(
       sources: Object.freeze([...baseProfile.sources])
     },
     ...sortedThresholds.map((moraleAtMost, index) => {
-      const profile = calculateDormitoryRecovery(targetOperatorId, state, workingContext, moraleAtMost);
+      const profile = calculateDormitoryRecovery(
+        targetOperatorId, state, workingContext, moraleAtMost, excludedRecoveryOperatorIds
+      );
       return {
         moraleAbove: sortedThresholds[index - 1] ?? 0,
         moraleAtMost,
@@ -2040,7 +4925,8 @@ function calculateDormitoryRecovery(
   targetOperatorId: string,
   state: AppState,
   workingContext: AssignmentEvaluationContext,
-  targetMorale: number
+  targetMorale: number,
+  excludedRecoveryOperatorIds?: ReadonlySet<string>
 ): DormitoryRecoveryCalculation {
   const workingOperatorIds = new Set(workingContext.assignments.map((assignment) => assignment.operatorId));
   const dormitory =
@@ -2055,7 +4941,9 @@ function calculateDormitoryRecovery(
   const singleCandidates: RecoveryComponent[] = [];
   for (const operator of operators) {
     const rosterEntry = state.roster[operator.id];
-    if (!rosterEntry?.owned || (workingOperatorIds.has(operator.id) && operator.id !== targetOperatorId)) continue;
+    if (!rosterEntry?.owned ||
+        (excludedRecoveryOperatorIds?.has(operator.id) && operator.id !== targetOperatorId) ||
+        (workingOperatorIds.has(operator.id) && operator.id !== targetOperatorId)) continue;
     const requiredIds = activeBaseSkills(operator, rosterEntry.elite, rosterEntry.level)
       .flatMap((skill) => skill.effects)
       .flatMap((effect) => effect.moraleEffects ?? [])
@@ -2182,9 +5070,12 @@ export function bestDormitoryRecoveryPerHour(
   targetOperatorId: string,
   state: AppState,
   workingContext: AssignmentEvaluationContext,
-  targetMorale = 0
+  targetMorale = 0,
+  excludedRecoveryOperatorIds?: ReadonlySet<string>
 ) {
-  return calculateDormitoryRecovery(targetOperatorId, state, workingContext, targetMorale).ratePerHour;
+  return calculateDormitoryRecovery(
+    targetOperatorId, state, workingContext, targetMorale, excludedRecoveryOperatorIds
+  ).ratePerHour;
 }
 
 function recoveryEffectMatchesTarget(
@@ -2283,6 +5174,7 @@ function aggregateOperatorAssignments(
       aggregateTradingScore -
       isolatedTradingScore,
     efficiency: aggregateEfficiency,
+    contextSensitive: assignments.some((assignment) => assignment.contextSensitive) || undefined,
     storageLimit: aggregateFacilityLimit(assignments, "storageLimit"),
     orderLimit: aggregateFacilityLimit(assignments, "orderLimit"),
     tradingOrderEffects,
@@ -2413,7 +5305,12 @@ function activeRemoteFacilityEfficiencyBonuses(
   return activeBaseSkills(operator, elite, context?.roster?.[operator.id]?.level ?? 1)
     .flatMap((skill) => skill.effects.map((effect) => ({ skill, effect })))
     .filter(({ effect }) => !effect.ignoredForOptimization)
-    .filter(({ effect }) => effectMatchesFacility(effect, facility) && effectConditionsSatisfied(effect, operator, facility, context))
+    .filter(({ effect }) => effectMatchesFacility(effect, facility))
+    .filter(({ effect }) => effectConditionsSatisfied(effect, operator, facility, context) ||
+      (effect.conditions ?? []).every((condition) =>
+        conditionsSatisfied([condition], operator, facility, context) ||
+        (condition.type === "facilityAffiliation" && condition.facility !== facility.type)
+      ))
     .flatMap(({ skill, effect }) => remoteFacilityEfficiencyBonusesForEffect(operator, skill, effect, elite, facility, context));
 }
 
@@ -3753,8 +6650,10 @@ function remoteFacilityEfficiencyScore(
       context.facilities
         .filter((facility) => facility.type !== "dormitory" && facility.type === bonus.facility && (!bonus.product || facility.product === bonus.product))
         .reduce(
-          (facilitySum, facility) =>
-            facilitySum + remoteFacilityEfficiencyBonusAmount(bonus, facility, context) * productWeight(facility.product, preference) * facilityWeight(facility),
+          (facilitySum, facility) => {
+            const activeAmount = remoteFacilityEfficiencyBonusAmount(bonus, facility, context);
+            return facilitySum + activeAmount * productWeight(facility.product, preference) * facilityWeight(facility);
+          },
           0
         )
     );
@@ -3858,6 +6757,37 @@ function productWeight(product: ProductType, preference: OptimizationPreference)
     return (preference.gold + preference.battleRecord + preference.lmd) / 3;
   }
   return 0.2;
+}
+
+export function evaluateExactWindowFacilityObjective(input: {
+  schedule: AppState["schedule"];
+  facilities: readonly FacilitySlot[];
+  preference: OptimizationPreference;
+  evaluations: readonly WindowFacilityEfficiencyEvaluation[];
+}): number | undefined {
+  if (!Number.isFinite(input.schedule.cycleHours) || input.schedule.cycleHours <= 0) return undefined;
+  const profileScale = Math.max(
+    input.preference.gold,
+    input.preference.battleRecord,
+    input.preference.lmd
+  );
+  if (!Number.isFinite(profileScale) || profileScale <= 0) return undefined;
+  let value = 0;
+  for (const evaluation of input.evaluations) {
+    const facility = input.facilities.find((candidate) => candidate.id === evaluation.facilityId);
+    const window = input.schedule.shifts.find((candidate) => candidate.id === evaluation.scheduleWindowId);
+    if (!facility || !window || !Number.isFinite(evaluation.additiveEfficiency) ||
+      evaluation.provenance !== "optimizer-normal-team-reevaluation-with-schedule-aware-contiguous-work-and-resolved-support-context") {
+      return undefined;
+    }
+    const durationHours = window.endHour - window.startHour;
+    if (!Number.isFinite(durationHours) || durationHours <= 0) return undefined;
+    const weight = productWeight(facility.product, input.preference);
+    if (!Number.isFinite(weight) || weight < 0) return undefined;
+    value += (1 + evaluation.additiveEfficiency) * weight / profileScale *
+      durationHours / input.schedule.cycleHours;
+  }
+  return Number.isFinite(value) ? value : undefined;
 }
 
 function facilityWeight(facility: FacilitySlot): number {

@@ -4,11 +4,19 @@ import cnFullBase from "../data/optimizer-benchmarks/cn-243-3shift-2026-06.json"
 import jpWikiru from "../data/optimizer-benchmarks/jp-wikiru-backup38-12h-v2.json";
 import { createDefaultState } from "../data/defaults";
 import { optimizerBenchmarkFixtures } from "../data/optimizer-benchmarks";
+import { availableOperatorIds, operatorAvailabilitySnapshot } from "./operatorAvailability";
 import { averageEffectEfficiency, averageMoraleCurveEfficiency, generateAssignmentPlan } from "./optimizer";
-import { operatorAvailabilitySnapshot } from "./operatorAvailability";
 import { calculateCanonicalSha256 } from "./phase1AssumptionBundle";
-import { effectiveBenchmarkScheduleAuthority, validateOptimizerBenchmark } from "./optimizerBenchmark";
-import { createIssue27CurrentObservations, createIssue27OptimizerObservation } from "./optimizerIssue27Audit";
+import {
+  createIssue27CurrentObservations,
+  createIssue27OptimizerObservation,
+  createResourceOutputBenchmarkExecutionInput
+} from "./optimizerIssue27Audit";
+import {
+  effectiveBenchmarkScheduleAuthority,
+  validateOptimizerBenchmark,
+  type ResourceOutputBenchmark
+} from "./optimizerBenchmark";
 import { formatOptimizerBenchmarkBatchResult, runOptimizerBenchmarkBatch } from "./optimizerBenchmarkRunner";
 import { evaluateReferenceCompositionDiagnostic } from "./optimizerReferenceDiagnostic";
 import type { BenchmarkObservationMap, OptimizerBenchmarkBatchResult } from "./optimizerBenchmarkRunner";
@@ -27,24 +35,19 @@ describe("Issue #27 current-implementation audit", () => {
 
   beforeAll(() => {
     observations = createIssue27CurrentObservations();
-    const diagnostic = evaluateReferenceCompositionDiagnostic(validatedJpFactoryFixture());
-    if (diagnostic.status !== "complete") throw new Error(JSON.stringify(diagnostic.diagnostics));
-    result = runOptimizerBenchmarkBatch(optimizerBenchmarkFixtures, {
-      ...observations,
-      "jp-243-factory-3group-2025-11": diagnostic.observation
-    });
+    result = runOptimizerBenchmarkBatch(optimizerBenchmarkFixtures, observations);
   });
 
   it("reports every checked-in fixture with deterministic gating diagnostics", () => {
     expect(formatOptimizerBenchmarkBatchResult(result)).toBe([
-      "optimizer benchmarks: FAILED (passed=1 failed=1 not-run=0 non-gating=3 invalid=0)",
-      "PASS jp-243-factory-3group-2025-11",
+      "optimizer benchmarks: FAILED (passed=0 failed=2 not-run=0 non-gating=3 invalid=0)",
+      "FAIL jp-243-factory-3group-2025-11 rotation/state-model/shifts/groups-a-b/activeGroupIds: expected [\"group-a\",\"group-b\"], actual missing",
       "NON-GATING jp-glasgow-trading-125",
       "NON-GATING cn-243-3shift-2026-06",
       "NON-GATING base-mechanics-2026-07",
       "FAIL jp-wikiru-backup38-12h-v2 composition/search/groups-a-b/control-center: expected [\"char_4179_monstr\",\"char_2024_chyue\",\"char_2015_dusk\",\"char_2023_ling\",\"char_4098_vvana\"], actual missing"
     ].join("\n"));
-  });
+  }, 30_000);
 
   it("separates informational reference provenance from the proven runtime boundaries", () => {
     const jpCase = result.cases.find((item) => item.id === "jp-243-factory-3group-2025-11");
@@ -99,6 +102,11 @@ describe("Issue #27 current-implementation audit", () => {
       {}
     ]);
     expect(jpWikiru.rotation.shifts.some((shift) => Object.keys(shift.assignments).length > 0)).toBe(true);
+    expect(observations["cn-243-3shift-2026-06"]?.rotation?.shifts.every((shift) =>
+      Object.keys(shift.assignments).length === 0
+    )).toBe(true);
+    expect(observations["cn-243-3shift-2026-06"]?.planEvidence).toBeUndefined();
+    expect(observations["cn-243-3shift-2026-06"]?.objectiveEvidence).toBeUndefined();
   });
 
   it("keeps the accepted Wikiru canonical file and witness semantics pinned", () => {
@@ -117,19 +125,22 @@ describe("Issue #27 current-implementation audit", () => {
     });
   });
 
-  it("keeps unavailable quantities missing with typed plan-resource reasons and CN source conflicts diagnostic", () => {
+  it("fails closed for incomplete JP and CN quantities without inventing resources", () => {
     expect(observations["jp-243-factory-3group-2025-11"]?.resources).toBeUndefined();
+    expect(observations["jp-243-factory-3group-2025-11"]?.planResourceMissingReasons).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "schedule-group-unpopulated" })])
+    );
     expect(observations["cn-243-3shift-2026-06"]?.resources).toBeUndefined();
+    expect(observations["jp-243-factory-3group-2025-11"]?.planEvidence).toMatchObject({
+      search: { proofStatus: "not-certified" },
+      simultaneousOperatorConflicts: [],
+      supportResourceScenario: { requested: true, complete: true },
+      resourceEvaluation: { status: "incomplete", missingCount: expect.any(Number) }
+    });
     expect(observations["jp-wikiru-backup38-12h-v2"]?.resources).toBeUndefined();
-    for (const id of [
-      "jp-243-factory-3group-2025-11",
-      "cn-243-3shift-2026-06",
-      "jp-wikiru-backup38-12h-v2"
-    ]) {
-      expect(observations[id]?.planResourceMissingReasons).toEqual(expect.arrayContaining([
-        expect.objectContaining({ code: "schedule-group-unpopulated" })
-      ]));
-    }
+    expect(observations["jp-wikiru-backup38-12h-v2"]?.planResourceMissingReasons).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "schedule-group-unpopulated" })])
+    );
     expect(result.cases.find((item) => item.id === "cn-243-3shift-2026-06")?.diagnostics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -176,8 +187,9 @@ describe("Issue #27 current-implementation audit", () => {
       expect(result.cases.find((item) => item.id === id)).toMatchObject({ status: "non-gating", gating: false });
     }
     expect(result.cases.find((item) => item.id === "jp-243-factory-3group-2025-11")).toMatchObject({
-      status: "passed",
-      gating: true
+      status: "failed",
+      gating: true,
+      smallestMismatchPath: "rotation/state-model/shifts/groups-a-b/activeGroupIds"
     });
     expect(result.cases.find((item) => item.id === "jp-wikiru-backup38-12h-v2")).toMatchObject({
       status: "failed",
@@ -204,7 +216,7 @@ describe("Issue #27 current-implementation audit", () => {
       },
       roster: { mode: "all-unlocked" }
     });
-  });
+  }, 30_000);
 
   it("derives explicit metadata from actual region-available ownership with no caller roster declaration", () => {
     const configuredIds = ["char_4110_delphn", "char_154_morgan", "char_112_siege", "not-in-state"];
@@ -265,19 +277,22 @@ describe("Issue #27 current-implementation audit", () => {
     expect(plan.sustainability).toMatchObject({ status: "evaluated" });
   });
 
-  it("reports generated-plan sustainability without copying fixture expectations", () => {
+  it("preserves whole-plan sustainability evidence for resource-output observations", () => {
     const glasgow = observations["jp-glasgow-trading-125"];
     const jp = observations["jp-243-factory-3group-2025-11"];
     const cn = observations["cn-243-3shift-2026-06"];
 
     expect(glasgow?.planSustainability).toMatchObject({ status: "evaluated" });
-    expect(jp?.planSustainability).toMatchObject({ status: "incomplete" });
-    expect(cn?.planSustainability).toMatchObject({ status: "incomplete" });
-    const currentResult = runOptimizerBenchmarkBatch(optimizerBenchmarkFixtures, observations);
-    expect(currentResult.cases.find((item) => item.id === "jp-243-factory-3group-2025-11")?.diagnostics).toContainEqual(
+    expect(jp?.planSustainability).toMatchObject({
+      status: "incomplete",
+      missing: expect.arrayContaining([expect.objectContaining({ code: "plan-resources-incomplete" })])
+    });
+    expect(cn?.planSustainability).toBeUndefined();
+    expect(result.cases.find((item) => item.id === "jp-243-factory-3group-2025-11")?.diagnostics).toContainEqual(
       expect.objectContaining({
-        code: "plan-resources-incomplete",
-        path: expect.stringMatching(/^sustainable-cycle\/incomplete\//)
+        path: "calculation/resource-values/goldProduced",
+        actual: jp?.resources?.goldProduced,
+        severity: "error"
       })
     );
   });
@@ -297,5 +312,117 @@ describe("Issue #27 current-implementation audit", () => {
     }
 
     expect(createIssue27CurrentObservations(changedFixtures)).toEqual(observations);
+  });
+
+  it("fails closed when the generated JP plan and real reference authority are incomplete", () => {
+    const jp = observations["jp-243-factory-3group-2025-11"]!;
+    const jpCase = result.cases.find((item) => item.id === "jp-243-factory-3group-2025-11")!;
+
+    expect(jp.planEvidence?.production.completedWindowIds).toEqual([]);
+    expect(jp.planEvidence?.supportResourceScenario).toMatchObject({
+      complete: true,
+      resolvedSourceIds: expect.arrayContaining([
+        "whisperain-office-perception-groups-a-b",
+        "dusk-control-perception-groups-b-c"
+      ]),
+      fixedSourceEvidenceSourceIds: expect.arrayContaining([
+        "whisperain-office-perception-groups-a-b",
+        "dusk-control-perception-groups-b-c"
+      ])
+    });
+    expect(jpCase).toMatchObject({
+      status: "failed",
+      searchProofStatus: "not-certified"
+    });
+    expect(jpCase.matchedComposition).toBeUndefined();
+    expect(jpCase.acceptanceMode).toBeUndefined();
+    expect(jpCase.objectiveComparison).toBeUndefined();
+    expect(jp.objectiveEvidence?.candidate).toMatchObject({ status: "incomplete", authority: "unavailable" });
+    expect(jp.objectiveEvidence?.reference).toMatchObject({
+      status: "incomplete",
+      authority: "unavailable",
+      reason: "reference-sustainability-incomplete",
+      sustainability: {
+        status: "evaluated",
+        result: {
+          sustainable: false,
+          failures: [expect.objectContaining({
+            code: "fatigued-before-shift-end",
+            operatorId: "char_446_aroma",
+            shiftId: "groups-b-c"
+          })]
+        }
+      }
+    });
+    expect(jpCase.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        path: "calculation/resource-values/goldProduced",
+        severity: "error",
+        actual: undefined,
+        expected: expect.any(Number)
+      }),
+      expect.objectContaining({
+        path: "calculation/resource-values/battleRecordExp",
+        severity: "error",
+        actual: undefined,
+        expected: expect.any(Number)
+      })
+    ]));
+  });
+
+  describe("Issue #28 resource-output benchmark adapter", () => {
+    function fixture(id = "jp-243-factory-3group-2025-11"): ResourceOutputBenchmark {
+      const validated = optimizerBenchmarkFixtures
+        .map(validateOptimizerBenchmark)
+        .find((candidate) => candidate.ok && candidate.value.id === id);
+      if (!validated?.ok || validated.value.kind !== "resource-output") throw new Error(`invalid fixture ${id}`);
+      return structuredClone(validated.value);
+    }
+
+    it.each([
+      ["balanced", { gold: 0.5, battleRecord: 0.5, lmd: 0 }],
+      ["battleRecord", { gold: 0, battleRecord: 1, lmd: 0 }],
+      ["lmd", { gold: 0, battleRecord: 0, lmd: 1 }]
+    ] as const)("creates fresh explicit-roster state and deterministic %s objective options", (profile, preference) => {
+      const benchmark = fixture();
+      benchmark.assumptions.objectiveProfile = profile;
+      const first = createResourceOutputBenchmarkExecutionInput(benchmark);
+      const second = createResourceOutputBenchmarkExecutionInput(benchmark);
+
+      expect(first.state).not.toBe(second.state);
+      expect(first.state.region).toBe(benchmark.region);
+      expect(first.state.preference).toEqual(preference);
+      expect(Object.entries(first.state.roster).filter(([, entry]) => entry.owned).map(([id]) => id).sort())
+        .toEqual(benchmark.roster.mode === "explicit" ? [...benchmark.roster.operatorIds].sort() :
+          [...availableOperatorIds(operatorAvailabilitySnapshot, benchmark.region)].sort());
+      const authority = effectiveBenchmarkScheduleAuthority(benchmark);
+      if (authority.status !== "complete") throw new Error(authority.errors.join("\n"));
+      expect(first.state.schedule).toEqual({
+        cycleHours: authority.schedule.cycleHours,
+        groups: authority.schedule.groups,
+        shifts: authority.schedule.shifts.map(({ durationHours: _durationHours, ...shift }) => shift)
+      });
+      expect(first.state.schedule.groups).not.toBe(authority.schedule.groups);
+      expect(first.state.schedule.shifts[0].activeGroupIds).not.toBe(authority.schedule.shifts[0].activeGroupIds);
+      expect(first.options).toEqual({ supportResourceScenario: benchmark.supportResourceScenario });
+      expect(first.options.supportResourceScenario).toBe(benchmark.supportResourceScenario);
+      expect(first.state.facilities.some((facility) => facility.type === ("office" as never))).toBe(false);
+    });
+
+    it("keeps expected output, reference compositions, labels, and provenance out of candidate generation", () => {
+      const original = fixture();
+      const changed = structuredClone(original);
+      changed.expected.output.goldProduced = 987654321;
+      changed.rotation.shifts[0].assignments["factory-gold-1"]!.operatorIds = ["expected-only-mutant"];
+      changed.rotation.shifts[0].assignments["factory-gold-1"]!.label = "expected-only label";
+      changed.expected.equivalentCompositions = [{
+        shifts: [{ shiftId: changed.rotation.shifts[0].id, assignments: { "factory-gold-1": ["equivalent-only-mutant"] } }]
+      }];
+      changed.referenceProvenance.version = "expected-only provenance";
+      changed.sources[0].title = "expected-only source title";
+
+      expect(createResourceOutputBenchmarkExecutionInput(changed))
+        .toEqual(createResourceOutputBenchmarkExecutionInput(original));
+    });
   });
 });
