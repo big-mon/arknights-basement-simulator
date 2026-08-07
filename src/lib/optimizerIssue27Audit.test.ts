@@ -4,7 +4,8 @@ import cnFullBase from "../data/optimizer-benchmarks/cn-243-3shift-2026-06.json"
 import { createDefaultState } from "../data/defaults";
 import { optimizerBenchmarkFixtures } from "../data/optimizer-benchmarks";
 import { averageEffectEfficiency, generateAssignmentPlan } from "./optimizer";
-import { createIssue27CurrentObservations } from "./optimizerIssue27Audit";
+import { operatorAvailabilitySnapshot } from "./operatorAvailability";
+import { createIssue27CurrentObservations, createIssue27OptimizerObservation } from "./optimizerIssue27Audit";
 import { formatOptimizerBenchmarkBatchResult, runOptimizerBenchmarkBatch } from "./optimizerBenchmarkRunner";
 import type { BenchmarkObservationMap, OptimizerBenchmarkBatchResult } from "./optimizerBenchmarkRunner";
 
@@ -19,11 +20,12 @@ describe("Issue #27 current-implementation audit", () => {
 
   it("reports every checked-in fixture with deterministic gating diagnostics", () => {
     expect(formatOptimizerBenchmarkBatchResult(result)).toBe([
-      "optimizer benchmarks: FAILED (passed=1 failed=2 not-run=0 non-gating=1 invalid=0)",
-      "FAIL jp-243-factory-3group-2025-11 rotation/state-model/cycleHours: expected 36, actual 24",
+      "optimizer benchmarks: FAILED (passed=0 failed=1 not-run=0 non-gating=4 invalid=0)",
+      "NON-GATING jp-243-factory-3group-2025-11",
       "NON-GATING jp-glasgow-trading-125",
-      "FAIL cn-243-3shift-2026-06 rotation/state-model/shifts/current-window-1/unexpected: expected absent, actual present",
-      "PASS base-mechanics-2026-07"
+      "NON-GATING cn-243-3shift-2026-06",
+      "NON-GATING base-mechanics-2026-07",
+      "FAIL jp-wikiru-backup38-12h-v2 rotation/state-model/cycleHours: expected 36, actual 24"
     ].join("\n"));
   });
 
@@ -60,11 +62,16 @@ describe("Issue #27 current-implementation audit", () => {
       shifts: [{ id: "current-window-1", durationHours: 12 }, { id: "current-window-2", durationHours: 12 }]
     });
     expect(observations["cn-243-3shift-2026-06"]?.rotation?.shifts).toHaveLength(2);
+    expect(observations["jp-wikiru-backup38-12h-v2"]?.rotation).toMatchObject({
+      cycleHours: 24,
+      shifts: [{ id: "current-window-1", durationHours: 12 }, { id: "current-window-2", durationHours: 12 }]
+    });
   });
 
   it("keeps unavailable quantities missing and label-only compositions unproved", () => {
     expect(observations["jp-243-factory-3group-2025-11"]?.resources).toBeUndefined();
     expect(observations["cn-243-3shift-2026-06"]?.resources).toBeUndefined();
+    expect(observations["jp-wikiru-backup38-12h-v2"]?.resources).toBeUndefined();
     expect(result.cases.find((item) => item.id === "cn-243-3shift-2026-06")?.diagnostics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -77,12 +84,65 @@ describe("Issue #27 current-implementation audit", () => {
     );
   });
 
-  it("propagates AppState region through the audit's normal plan path", () => {
-    const state = createDefaultState();
+  it("keeps disputed and formula-only references diagnostic while the accepted contract gates", () => {
+    for (const id of [
+      "jp-243-factory-3group-2025-11",
+      "jp-glasgow-trading-125",
+      "cn-243-3shift-2026-06",
+      "base-mechanics-2026-07"
+    ]) {
+      expect(result.cases.find((item) => item.id === id)).toMatchObject({ status: "non-gating", gating: false });
+    }
+    expect(result.cases.find((item) => item.id === "jp-wikiru-backup38-12h-v2")).toMatchObject({
+      status: "failed",
+      gating: true,
+      smallestMismatchPath: "rotation/state-model/cycleHours"
+    });
+  });
 
-    expect(state.region).toBe("JP");
-    expect(observations["jp-243-factory-3group-2025-11"]?.metadata.region).toBe("JP");
-    expect(observations["cn-243-3shift-2026-06"]?.metadata.region).toBe("CN");
+  it("derives all-unlocked metadata and provenance from the state snapshot consumed by the plan", () => {
+    const jp = createIssue27OptimizerObservation("JP");
+    const cn = createIssue27OptimizerObservation("CN");
+
+    expect(jp.metadata).toEqual({
+      region: "JP",
+      runtimeDataProvenance: {
+        operatorAvailabilitySourceCommit: operatorAvailabilitySnapshot.regions.JP.source.commit
+      },
+      roster: { mode: "all-unlocked" }
+    });
+    expect(cn.metadata).toEqual({
+      region: "CN",
+      runtimeDataProvenance: {
+        operatorAvailabilitySourceCommit: operatorAvailabilitySnapshot.regions.CN.source.commit
+      },
+      roster: { mode: "all-unlocked" }
+    });
+  });
+
+  it("derives explicit metadata from actual region-available ownership with no caller roster declaration", () => {
+    const configuredIds = ["char_4110_delphn", "char_154_morgan", "char_112_siege", "not-in-state"];
+    const expectedIds = operatorAvailabilitySnapshot.regions.JP.operatorIds.filter((operatorId) =>
+      configuredIds.includes(operatorId)
+    );
+    const createWithIgnoredDeclaration = createIssue27OptimizerObservation as unknown as (
+      region: "JP",
+      operatorIds: readonly string[],
+      ignoredRosterDeclaration: unknown
+    ) => BenchmarkObservationMap[string];
+    const observation = createWithIgnoredDeclaration("JP", configuredIds, {
+      mode: "all-unlocked",
+      operatorIds: ["caller-cannot-declare-metadata"]
+    });
+
+    expect(createIssue27OptimizerObservation).toHaveLength(2);
+    expect(observation?.metadata).toEqual({
+      region: "JP",
+      runtimeDataProvenance: {
+        operatorAvailabilitySourceCommit: operatorAvailabilitySnapshot.regions.JP.source.commit
+      },
+      roster: { mode: "explicit", operatorIds: expectedIds }
+    });
   });
 
   it("confirms optimizer morale/time averaging still truncates fractional hours", () => {

@@ -14,19 +14,18 @@ import {
   type BenchmarkObservationMap,
   type OptimizerBenchmarkBatchResult
 } from "./optimizerBenchmarkRunner";
-import { createResourceLedger } from "./resourceLedger";
 import { evaluateSustainableCycle, type SustainableCycleInput } from "./sustainableCycleEvaluator";
 import { simulateTradingPostDrones24h } from "./tradingPostDrones";
+import { validateOptimizerBenchmark } from "./optimizerBenchmark";
 import type { Assignment, AppState } from "../types";
-
-const emptyLedger = () => createResourceLedger();
 
 function emptyCycle(overrides: Partial<SustainableCycleInput> = {}): SustainableCycleInput {
   return {
     shifts: [
-      { id: "first", startHour: 0, endHour: 12, assignments: [], resourceLedger: emptyLedger() },
-      { id: "second", startHour: 12, endHour: 24, assignments: [], resourceLedger: emptyLedger() }
+      { id: "first", startHour: 0, endHour: 12, assignments: [], resourceContributions: [] },
+      { id: "second", startHour: 12, endHour: 24, assignments: [], resourceContributions: [] }
     ],
+    startingDrones: 0,
     initialMorale: {},
     recoveryPlacements: [],
     startingGold: 0,
@@ -75,9 +74,12 @@ function createMechanicsObservation(): BenchmarkObservation {
     facility: { kind: "tradingPost", level: 3, orderType: "normalLmd" }
   });
   const drones = simulateTradingPostDrones24h({
-    initialDrones: 1,
+    initialDrones: 0,
     powerPlantSkillIncrements: [],
-    allocations: [{ targetFacilityId: "trading-1", drones: 1 }],
+    allocations: [
+      { slot: 0, targetFacilityId: "trading-1", drones: 1 },
+      { slot: 1, targetFacilityId: "trading-1", drones: 0 }
+    ],
     baseContext: createMaxLevel243BenchmarkContext()
   });
   const probability = (goldAmount: number) =>
@@ -123,23 +125,46 @@ function createOwnedRegionalState(
 ): AppState {
   const state = createDefaultState();
   state.region = region;
-  const ownedIds = new Set(explicitOperatorIds ?? availableOperatorIds(operatorAvailabilitySnapshot, region));
-  for (const [operatorId, entry] of Object.entries(state.roster)) entry.owned = ownedIds.has(operatorId);
+  const regionAvailableIds = availableOperatorIds(operatorAvailabilitySnapshot, state.region);
+  const requestedIds = new Set(explicitOperatorIds ?? regionAvailableIds);
+  for (const entry of Object.values(state.roster)) entry.owned = false;
+  for (const operatorId of regionAvailableIds) {
+    if (!requestedIds.has(operatorId)) continue;
+    const entry = state.roster[operatorId];
+    if (entry) {
+      entry.owned = true;
+    } else {
+      // Availability can lead the lightweight operator catalog. Keeping the ID in
+      // AppState makes ownership metadata exact; the optimizer still ignores IDs
+      // that have no operator record when it consumes this same state.
+      state.roster[operatorId] = {
+        owned: true,
+        elite: 0,
+        level: 1,
+        potential: 1,
+        moduleEnabled: false
+      };
+    }
+  }
   return state;
 }
 
-function createOptimizerObservation(
+export function createIssue27OptimizerObservation(
   region: OperatorAvailabilityRegion,
-  roster: BenchmarkObservation["metadata"]["roster"],
   explicitOperatorIds?: readonly string[]
 ): BenchmarkObservation {
   const state = createOwnedRegionalState(region, explicitOperatorIds);
+  const regionSnapshot = operatorAvailabilitySnapshot.regions[state.region];
+  const actualOwnedOperatorIds = regionSnapshot.operatorIds.filter((operatorId) => state.roster[operatorId]?.owned);
+  const roster: NonNullable<BenchmarkObservation["metadata"]["roster"]> =
+    actualOwnedOperatorIds.length === regionSnapshot.operatorIds.length
+      ? { mode: "all-unlocked" }
+      : { mode: "explicit", operatorIds: actualOwnedOperatorIds };
   const plan = generateAssignmentPlan(state);
-  const source = operatorAvailabilitySnapshot.regions[region].source;
   const observation: BenchmarkObservation = {
     metadata: {
       region: state.region,
-      runtimeDataProvenance: { operatorAvailabilitySourceCommit: source.commit },
+      runtimeDataProvenance: { operatorAvailabilitySourceCommit: regionSnapshot.source.commit },
       roster
     },
     rotation: {
@@ -158,15 +183,28 @@ function createOptimizerObservation(
 
 export function createIssue27CurrentObservations(): BenchmarkObservationMap {
   const glasgowIds = ["char_4110_delphn", "char_154_morgan", "char_112_siege"] as const;
+  const phase1Candidate = optimizerBenchmarkFixtures.find((fixture) =>
+    (fixture as { id?: string }).id === "jp-wikiru-backup38-12h-v2"
+  );
+  const phase1Validation = validateOptimizerBenchmark(phase1Candidate);
+  if (!phase1Validation.ok) {
+    throw new Error("jp-wikiru-backup38-12h-v2 must retain its explicit regional roster");
+  }
+  const phase1Fixture = phase1Validation.value;
+  if (
+    phase1Fixture.id !== "jp-wikiru-backup38-12h-v2" ||
+    phase1Fixture.kind !== "resource-output" ||
+    phase1Fixture.roster.mode !== "explicit"
+  ) {
+    throw new Error("jp-wikiru-backup38-12h-v2 must retain its explicit regional roster");
+  }
+  const phase1OperatorIds = phase1Fixture.roster.operatorIds;
   return {
     "base-mechanics-2026-07": createMechanicsObservation(),
-    "jp-243-factory-3group-2025-11": createOptimizerObservation("JP", { mode: "all-unlocked" }),
-    "jp-glasgow-trading-125": createOptimizerObservation(
-      "JP",
-      { mode: "explicit", operatorIds: [...glasgowIds] },
-      glasgowIds
-    ),
-    "cn-243-3shift-2026-06": createOptimizerObservation("CN", { mode: "all-unlocked" })
+    "jp-243-factory-3group-2025-11": createIssue27OptimizerObservation("JP"),
+    "jp-glasgow-trading-125": createIssue27OptimizerObservation("JP", glasgowIds),
+    "cn-243-3shift-2026-06": createIssue27OptimizerObservation("CN"),
+    "jp-wikiru-backup38-12h-v2": createIssue27OptimizerObservation(phase1Fixture.region, phase1OperatorIds)
   };
 }
 

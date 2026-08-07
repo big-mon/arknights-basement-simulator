@@ -92,6 +92,42 @@ function sameStringSet(expected: readonly string[], actual: readonly string[]): 
     expected.every((value) => actual.includes(value));
 }
 
+/**
+ * Stable mismatch precedence, independent of fixture and observation declaration order:
+ * reference provenance; runtime region, availability commit, roster mode, roster IDs;
+ * rotation cycle, then shift state; composition search; skill interpretation;
+ * calculation; and finally every other path. Paths are lexical within each tier.
+ */
+function stableMismatchPathRank(path: string): number {
+  if (path.startsWith("metadata/reference-provenance/")) return 0;
+  if (path === "metadata/runtime-data-provenance/region") return 1;
+  if (path === "metadata/runtime-data-provenance/operatorAvailabilitySourceCommit") return 2;
+  if (path === "metadata/runtime-data-provenance/roster/mode") return 3;
+  if (path === "metadata/runtime-data-provenance/roster/operatorIds") return 4;
+  if (path === "rotation/state-model/cycleHours") return 5;
+  if (path.startsWith("rotation/state-model/shifts/")) return 6;
+  if (path.startsWith("composition/search/")) return 7;
+  if (path.startsWith("skill-interpretation/")) return 8;
+  if (path.startsWith("calculation/")) return 9;
+  return 10;
+}
+
+function compareStableMismatchPaths(left: BenchmarkDiagnostic, right: BenchmarkDiagnostic): number {
+  const rankDifference = stableMismatchPathRank(left.path) - stableMismatchPathRank(right.path);
+  if (rankDifference !== 0) return rankDifference;
+  if (left.path < right.path) return -1;
+  if (left.path > right.path) return 1;
+  return 0;
+}
+
+function smallestMismatch(diagnostics: readonly BenchmarkDiagnostic[]): BenchmarkDiagnostic | undefined {
+  return diagnostics
+    .filter((diagnostic) => diagnostic.severity === "error")
+    .reduce<BenchmarkDiagnostic | undefined>((smallest, diagnostic) =>
+      smallest === undefined || compareStableMismatchPaths(diagnostic, smallest) < 0 ? diagnostic : smallest
+    , undefined);
+}
+
 function describeValue(value: unknown): string {
   if (value === undefined) return "missing";
   if (typeof value === "string") return value;
@@ -213,12 +249,26 @@ function candidateMatches(
   actualShifts: NonNullable<BenchmarkObservation["rotation"]>["shifts"] | undefined
 ): boolean {
   if (!actualShifts) return false;
+  const candidateShiftCounts = new Map<string, number>();
+  const actualShiftCounts = new Map<string, number>();
+  for (const shift of candidate) {
+    candidateShiftCounts.set(shift.shiftId, (candidateShiftCounts.get(shift.shiftId) ?? 0) + 1);
+  }
+  for (const shift of actualShifts) {
+    actualShiftCounts.set(shift.id, (actualShiftCounts.get(shift.id) ?? 0) + 1);
+  }
+  if (candidateShiftCounts.size !== candidate.length || actualShiftCounts.size !== actualShifts.length) return false;
+  if (!sameStringSet([...candidateShiftCounts.keys()], [...actualShiftCounts.keys()])) return false;
+
   return candidate.every((expectedShift) => {
-    const actualShift = actualShifts.find((shift) => shift.id === expectedShift.shiftId);
-    return actualShift !== undefined && Object.entries(expectedShift.assignments).every(([facilityId, expectedIds]) => {
-      const actualIds = actualShift.assignments[facilityId];
-      return Array.isArray(actualIds) && sameStringSet(expectedIds, actualIds);
-    });
+    const actualShift = actualShifts.find((shift) => shift.id === expectedShift.shiftId)!;
+    const expectedFacilityIds = Object.keys(expectedShift.assignments);
+    const actualFacilityIds = Object.keys(actualShift.assignments);
+    return sameStringSet(expectedFacilityIds, actualFacilityIds) &&
+      Object.entries(expectedShift.assignments).every(([facilityId, expectedIds]) => {
+        const actualIds = actualShift.assignments[facilityId];
+        return Array.isArray(actualIds) && sameStringSet(expectedIds, actualIds);
+      });
   });
 }
 
@@ -278,14 +328,16 @@ function compareRotationAndComposition(
   for (const expectedShift of fixture.rotation.shifts) {
     const actualShift = actualShiftById.get(expectedShift.id);
     const actualShiftCount = actualShiftCounts.get(expectedShift.id) ?? 0;
-    addComparison(
-      diagnostics,
-      `rotation/state-model/shifts/${expectedShift.id}`,
-      "state-model",
-      "present",
-      actualShiftCount > 1 ? "duplicate" : actualShift ? "present" : "missing",
-      actualShiftCount === 1
-    );
+    if (actualShiftCount <= 1) {
+      addComparison(
+        diagnostics,
+        `rotation/state-model/shifts/${expectedShift.id}`,
+        "state-model",
+        "present",
+        actualShift ? "present" : "missing",
+        actualShiftCount === 1
+      );
+    }
     if (actualShift) {
       addComparison(
         diagnostics,
@@ -327,6 +379,22 @@ function compareRotationAndComposition(
         actualIds,
         Array.isArray(actualIds) && sameStringSet(expectedIds, actualIds)
       );
+    }
+  }
+  const primaryShiftById = new Map(primary.shifts.map((shift) => [shift.shiftId, shift] as const));
+  for (const [shiftId, actualShift] of actualShiftById) {
+    const expectedFacilityIds = new Set(Object.keys(primaryShiftById.get(shiftId)?.assignments ?? {}));
+    for (const facilityId of Object.keys(actualShift.assignments)) {
+      if (!expectedFacilityIds.has(facilityId)) {
+        addComparison(
+          diagnostics,
+          `composition/search/${shiftId}/${facilityId}/unexpected`,
+          "search",
+          "absent",
+          "present",
+          false
+        );
+      }
     }
   }
   return undefined;
@@ -516,8 +584,9 @@ export function runOptimizerBenchmarkBatch(
     compareInterpretations(observation, diagnostics);
     compareCalculations(fixture, observation, diagnostics);
     applyProvenCauses(observation, diagnostics);
+    diagnostics.sort(compareStableMismatchPaths);
 
-    const firstFailure = diagnostics.find((diagnostic) => diagnostic.severity === "error");
+    const firstFailure = smallestMismatch(diagnostics);
     return {
       id: fixture.id,
       status: gating ? (firstFailure ? "failed" : "passed") : "non-gating",
@@ -551,7 +620,7 @@ export function formatOptimizerBenchmarkBatchResult(result: OptimizerBenchmarkBa
     if (item.status === "passed") return `PASS ${item.id}`;
     if (item.status === "non-gating") return `NON-GATING ${item.id}`;
     if (item.status === "not-run") return `NOT-RUN ${item.id} observation: benchmark observation is missing`;
-    const diagnostic = item.diagnostics.find((entry) => entry.severity === "error");
+    const diagnostic = smallestMismatch(item.diagnostics);
     return `${item.status === "invalid" ? "INVALID" : "FAIL"} ${item.id} ${diagnostic?.path ?? "unknown"}: ${diagnostic?.message ?? "unknown failure"}`;
   });
   return [summary, ...lines].join("\n");
