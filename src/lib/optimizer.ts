@@ -1,6 +1,11 @@
 import { operators } from "../data/defaults";
 import { clampEliteForOperator } from "./elite";
 import { localizeText } from "./localization";
+import {
+  createRegionallyAvailableState,
+  isOperatorAvailable,
+  operatorAvailabilitySnapshot
+} from "./operatorAvailability";
 import type {
   AppState,
   Assignment,
@@ -147,6 +152,7 @@ function averageMoraleCurveEfficiency(
 }
 
 export function generateAssignmentPlan(state: AppState): AssignmentPlan {
+  state = createRegionallyAvailableState(state, operatorAvailabilitySnapshot, state.region);
   const enabledFacilities = state.facilities.filter((facility) => facility.type !== "dormitory");
   let facilityPlans = buildFacilityPlans(state, enabledFacilities, []);
 
@@ -799,7 +805,7 @@ export function findCandidates(
   return operators
     .flatMap((operator) => {
       const rosterEntry = state.roster[operator.id];
-      if (!rosterEntry?.owned) {
+      if (!rosterEntry?.owned || !isOperatorAvailable(operatorAvailabilitySnapshot, state.region, operator.id)) {
         return [];
       }
 

@@ -1,0 +1,2631 @@
+{
+  "packetId": "wikiru-backup38-12h-v2",
+  "confidence": "corroborated",
+  "evaluationWindow": {
+    "hours": 24,
+    "shiftIds": [
+      "groups-a-b",
+      "groups-b-c"
+    ],
+    "start": {
+      "mode": "source-relative",
+      "shiftId": "groups-a-b"
+    }
+  },
+  "fullRotationShiftOrder": [
+    "groups-a-b",
+    "groups-b-c",
+    "groups-c-a"
+  ],
+  "shift3ResourceContribution": null,
+  "shifts": [
+    {
+      "shiftId": "groups-a-b",
+      "hours": 12,
+      "gold": {
+        "produced": 46.7,
+        "consumed": 69.672105208756,
+        "net": -22.972105208756,
+        "starting": 200.0,
+        "ending": 177.027894791244
+      },
+      "battleRecordExp": 16700.0,
+      "lmd": {
+        "natural": 30296.68413254989,
+        "drone": 6491.150442477876,
+        "total": 36787.834575027766
+      },
+      "drones": {
+        "generated": 195.6,
+        "starting": 0.0,
+        "used": 195.6,
+        "ending": 0.0,
+        "destination": "trading-post-1"
+      },
+      "trace": {
+        "globalFactoryEfficiency": 0.02,
+        "goldTeamEfficiencies": [
+          1.4,
+          1.23
+        ],
+        "battleRecordTeamEfficiencies": [
+          1.1,
+          1.035
+        ],
+        "tradingPostEfficiencies": [
+          1.32,
+          0.9
+        ]
+      }
+    },
+    {
+      "shiftId": "groups-b-c",
+      "hours": 12,
+      "gold": {
+        "produced": 44.483333333333,
+        "consumed": 53.68083404049,
+        "net": -9.197500707156,
+        "starting": 177.027894791244,
+        "ending": 167.830394084088
+      },
+      "battleRecordExp": 17520.0,
+      "lmd": {
+        "natural": 24969.8690750394,
+        "drone": 5095.890410958904,
+        "total": 30065.759485998307
+      },
+      "drones": {
+        "generated": 192.0,
+        "starting": 0.0,
+        "used": 192.0,
+        "ending": 0.0,
+        "destination": "trading-post-1"
+      },
+      "trace": {
+        "globalFactoryEfficiency": 0.03,
+        "goldTeamEfficiencies": [
+          1.23,
+          1.158333333333
+        ],
+        "battleRecordTeamEfficiencies": [
+          1.06,
+          1.26
+        ],
+        "tradingPostEfficiencies": [
+          0.97,
+          1.42
+        ]
+      }
+    }
+  ],
+  "totals24h": {
+    "goldProduced": 91.183333333333,
+    "goldConsumed": 123.352939249246,
+    "goldNet": -32.169605915912,
+    "battleRecordExp": 34220.0,
+    "naturalLmd": 55266.55320758929,
+    "droneLmd": 11587.04085343678,
+    "lmd": 66853.59406102607,
+    "dronesGenerated": 387.6,
+    "dronesStarting": 0.0,
+    "dronesUsed": 387.6,
+    "dronesEnding": 0.0,
+    "goldStarting": 200.0,
+    "goldEnding": 167.830394084088
+  },
+  "sustainability36h": {
+    "cycleHours": 36,
+    "slotLevelAbstraction": true,
+    "actorCount": 51,
+    "actors": {
+      "char_002_amiya": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": 0.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "idle",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": 0.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "support",
+            "activeHours": 12.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 1
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": 0.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "idle",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_010_chen": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "reception",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "reception",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 1
+          }
+        }
+      ],
+      "char_1011_lava2": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "power-plant-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 2
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "power-plant-2",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_1019_siege2": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 1
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-1",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_1027_greyy2": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "power-plant-3",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 3
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "power-plant-3",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_1039_thorn2": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 2
+          }
+        }
+      ],
+      "char_1044_hsgma2": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": 0.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "idle",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 3.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 3
+          }
+        }
+      ],
+      "char_1050_chen3": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "reception",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 4
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "reception",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_107_liskam": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "power-plant-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "power-plant-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 4
+          }
+        }
+      ],
+      "char_112_siege": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 2
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-1",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_154_morgan": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 3
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-1",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_159_peacok": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 5
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-2",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_190_clour": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 5
+          }
+        }
+      ],
+      "char_2014_nian": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": 0.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "idle",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": 0.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "support",
+            "activeHours": 12.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 1
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": 0.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "idle",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_2015_dusk": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 2
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_2023_ling": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "exchange-support",
+            "role": "target",
+            "counterparty": "char_300_phenxi",
+            "capacityId": "morale-exchange-1"
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_2024_chyue": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 3
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_214_kafka": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 1
+          }
+        }
+      ],
+      "char_237_gravel": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 2
+          }
+        }
+      ],
+      "char_241_panda": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 4
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-2",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_243_waaifu": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 4
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-1",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_253_greyy": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": 0.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "idle",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "power-plant-3",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 3.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 3
+          }
+        }
+      ],
+      "char_254_vodfox": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 4
+          }
+        }
+      ],
+      "char_300_phenxi": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": 0.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "idle",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": -24.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "exchange-support",
+            "role": "source",
+            "counterparty": "char_2023_ling",
+            "capacityId": "morale-exchange-1"
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 5
+          }
+        }
+      ],
+      "char_308_swire": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": 0.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "idle",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 3.0,
+            "dormitoryId": "dormitory-3",
+            "slot": 1
+          }
+        }
+      ],
+      "char_332_archet": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 5
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-2",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_336_folivo": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-3",
+            "slot": 2
+          }
+        }
+      ],
+      "char_338_iris": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": 0.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "support",
+            "activeHours": 12.0,
+            "dormitoryId": "dormitory-1",
+            "slot": 5
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": 0.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "support",
+            "activeHours": 12.0,
+            "dormitoryId": "dormitory-3",
+            "slot": 1
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": 0.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "support",
+            "activeHours": 12.0,
+            "dormitoryId": "dormitory-3",
+            "slot": 3
+          }
+        }
+      ],
+      "char_377_gdglow": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 1
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "power-plant-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "power-plant-1",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_385_finlpp": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-3",
+            "slot": 2
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-2",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_391_rosmon": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 2
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-1",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_400_weedy": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-3",
+            "slot": 3
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-2",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_4032_provs": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-3",
+            "slot": 4
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-2",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_4047_pianst": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": 0.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "support",
+            "activeHours": 12.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 3
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": 0.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "support",
+            "activeHours": 12.0,
+            "dormitoryId": "dormitory-3",
+            "slot": 5
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": 0.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "support",
+            "activeHours": 12.0,
+            "dormitoryId": "dormitory-3",
+            "slot": 4
+          }
+        }
+      ],
+      "char_4054_malist": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-4",
+            "slot": 1
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-2",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_4087_ines": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 4
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "reception",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "reception",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_4098_vvana": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-3",
+            "slot": 5
+          }
+        }
+      ],
+      "char_4106_bryota": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-4",
+            "slot": 1
+          }
+        }
+      ],
+      "char_4110_delphn": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": 0.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "idle",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 3.0,
+            "dormitoryId": "dormitory-4",
+            "slot": 2
+          }
+        }
+      ],
+      "char_416_zumama": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-4",
+            "slot": 2
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-2",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_4179_monstr": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-4",
+            "slot": 3
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_420_flamtl": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-2",
+            "slot": 5
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "control-center",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_430_fartth": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-3",
+            "slot": 1
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-1",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_431_ashlok": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-3",
+            "slot": 2
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-1",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_436_whispr": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": 0.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "idle",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "office",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 3.0,
+            "dormitoryId": "dormitory-4",
+            "slot": 3
+          }
+        }
+      ],
+      "char_446_aroma": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-3",
+            "slot": 3
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-gold-1",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_455_nothin": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-4",
+            "slot": 4
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-2",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_473_mberry": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "office",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-4",
+            "slot": 5
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "office",
+            "activeHours": 12.0
+          }
+        }
+      ],
+      "char_485_pallas": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-4",
+            "slot": 4
+          }
+        }
+      ],
+      "char_486_takila": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "trading-post-1",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-4",
+            "slot": 5
+          }
+        }
+      ],
+      "char_496_wildmn": [
+        {
+          "shiftId": "groups-a-b",
+          "startMorale": 0.0,
+          "signedDelta": 24.0,
+          "endMorale": 24.0,
+          "activity": {
+            "mode": "ordinary-recovery",
+            "activeHours": 6.0,
+            "dormitoryId": "dormitory-3",
+            "slot": 4
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startMorale": 24.0,
+          "signedDelta": -12.0,
+          "endMorale": 12.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-2",
+            "activeHours": 12.0
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startMorale": 12.0,
+          "signedDelta": -12.0,
+          "endMorale": 0.0,
+          "activity": {
+            "mode": "work",
+            "facilityId": "factory-battle-record-1",
+            "activeHours": 12.0
+          }
+        }
+      ]
+    },
+    "dormitoryOccupancy": [
+      {
+        "shiftId": "groups-a-b",
+        "ordinaryRecoveryOccupied": 12,
+        "supportOccupied": 2,
+        "occupied": 14,
+        "capacity": 20,
+        "dormitories": [
+          {
+            "dormitoryId": "dormitory-1",
+            "ordinaryRecoveryOccupied": 4,
+            "supportOccupied": 1,
+            "occupied": 5,
+            "capacity": 5
+          },
+          {
+            "dormitoryId": "dormitory-2",
+            "ordinaryRecoveryOccupied": 4,
+            "supportOccupied": 1,
+            "occupied": 5,
+            "capacity": 5
+          },
+          {
+            "dormitoryId": "dormitory-3",
+            "ordinaryRecoveryOccupied": 4,
+            "supportOccupied": 0,
+            "occupied": 4,
+            "capacity": 5
+          },
+          {
+            "dormitoryId": "dormitory-4",
+            "ordinaryRecoveryOccupied": 0,
+            "supportOccupied": 0,
+            "occupied": 0,
+            "capacity": 5
+          }
+        ]
+      },
+      {
+        "shiftId": "groups-b-c",
+        "ordinaryRecoveryOccupied": 16,
+        "supportOccupied": 4,
+        "occupied": 20,
+        "capacity": 20,
+        "dormitories": [
+          {
+            "dormitoryId": "dormitory-1",
+            "ordinaryRecoveryOccupied": 4,
+            "supportOccupied": 1,
+            "occupied": 5,
+            "capacity": 5
+          },
+          {
+            "dormitoryId": "dormitory-2",
+            "ordinaryRecoveryOccupied": 4,
+            "supportOccupied": 1,
+            "occupied": 5,
+            "capacity": 5
+          },
+          {
+            "dormitoryId": "dormitory-3",
+            "ordinaryRecoveryOccupied": 3,
+            "supportOccupied": 2,
+            "occupied": 5,
+            "capacity": 5
+          },
+          {
+            "dormitoryId": "dormitory-4",
+            "ordinaryRecoveryOccupied": 5,
+            "supportOccupied": 0,
+            "occupied": 5,
+            "capacity": 5
+          }
+        ]
+      },
+      {
+        "shiftId": "groups-c-a",
+        "ordinaryRecoveryOccupied": 18,
+        "supportOccupied": 2,
+        "occupied": 20,
+        "capacity": 20,
+        "dormitories": [
+          {
+            "dormitoryId": "dormitory-1",
+            "ordinaryRecoveryOccupied": 5,
+            "supportOccupied": 0,
+            "occupied": 5,
+            "capacity": 5
+          },
+          {
+            "dormitoryId": "dormitory-2",
+            "ordinaryRecoveryOccupied": 5,
+            "supportOccupied": 0,
+            "occupied": 5,
+            "capacity": 5
+          },
+          {
+            "dormitoryId": "dormitory-3",
+            "ordinaryRecoveryOccupied": 3,
+            "supportOccupied": 2,
+            "occupied": 5,
+            "capacity": 5
+          },
+          {
+            "dormitoryId": "dormitory-4",
+            "ordinaryRecoveryOccupied": 5,
+            "supportOccupied": 0,
+            "occupied": 5,
+            "capacity": 5
+          }
+        ]
+      }
+    ],
+    "exchangeSupportOccupancy": [
+      {
+        "shiftId": "groups-a-b",
+        "pairsOccupied": 0,
+        "pairCapacity": 1,
+        "actorsOccupied": 0
+      },
+      {
+        "shiftId": "groups-b-c",
+        "pairsOccupied": 1,
+        "pairCapacity": 1,
+        "actorsOccupied": 2
+      },
+      {
+        "shiftId": "groups-c-a",
+        "pairsOccupied": 0,
+        "pairCapacity": 1,
+        "actorsOccupied": 0
+      }
+    ],
+    "returnsToInitialState": true,
+    "resourceLedger": {
+      "purpose": "sustainability-only",
+      "cycleHours": 36,
+      "initial": {
+        "gold": 200.0,
+        "drones": 0.0
+      },
+      "shiftBoundaries": [
+        {
+          "shiftId": "groups-a-b",
+          "startHour": 0,
+          "endHour": 12
+        },
+        {
+          "shiftId": "groups-b-c",
+          "startHour": 12,
+          "endHour": 24
+        },
+        {
+          "shiftId": "groups-c-a",
+          "startHour": 24,
+          "endHour": 36
+        }
+      ],
+      "entries": [
+        {
+          "shiftId": "groups-a-b",
+          "hours": 12,
+          "gold": {
+            "produced": 46.7,
+            "consumed": 69.672105208756,
+            "net": -22.972105208756,
+            "starting": 200.0,
+            "ending": 177.027894791244
+          },
+          "battleRecordExp": 16700.0,
+          "lmd": {
+            "natural": 30296.68413254989,
+            "drone": 6491.150442477876,
+            "total": 36787.834575027766
+          },
+          "drones": {
+            "generated": 195.6,
+            "starting": 0.0,
+            "used": 195.6,
+            "ending": 0.0,
+            "destination": "trading-post-1"
+          },
+          "trace": {
+            "globalFactoryEfficiency": 0.02,
+            "goldTeamEfficiencies": [
+              1.4,
+              1.23
+            ],
+            "battleRecordTeamEfficiencies": [
+              1.1,
+              1.035
+            ],
+            "tradingPostEfficiencies": [
+              1.32,
+              0.9
+            ]
+          }
+        },
+        {
+          "shiftId": "groups-b-c",
+          "hours": 12,
+          "gold": {
+            "produced": 44.483333333333,
+            "consumed": 53.68083404049,
+            "net": -9.197500707156,
+            "starting": 177.027894791244,
+            "ending": 167.830394084088
+          },
+          "battleRecordExp": 17520.0,
+          "lmd": {
+            "natural": 24969.8690750394,
+            "drone": 5095.890410958904,
+            "total": 30065.759485998307
+          },
+          "drones": {
+            "generated": 192.0,
+            "starting": 0.0,
+            "used": 192.0,
+            "ending": 0.0,
+            "destination": "trading-post-1"
+          },
+          "trace": {
+            "globalFactoryEfficiency": 0.03,
+            "goldTeamEfficiencies": [
+              1.23,
+              1.158333333333
+            ],
+            "battleRecordTeamEfficiencies": [
+              1.06,
+              1.26
+            ],
+            "tradingPostEfficiencies": [
+              0.97,
+              1.42
+            ]
+          }
+        },
+        {
+          "shiftId": "groups-c-a",
+          "hours": 12,
+          "gold": {
+            "produced": 44.983333333333,
+            "consumed": 65.481415929204,
+            "net": -20.49808259587,
+            "starting": 167.830394084088,
+            "ending": 147.332311488218
+          },
+          "battleRecordExp": 16760.0,
+          "lmd": {
+            "natural": 28557.52212389381,
+            "drone": 4183.185840707965,
+            "total": 32740.707964601774
+          },
+          "drones": {
+            "generated": 195.6,
+            "starting": 0.0,
+            "used": 195.6,
+            "ending": 0.0,
+            "destination": "trading-post-1"
+          },
+          "trace": {
+            "globalFactoryEfficiency": 0.02,
+            "goldTeamEfficiencies": [
+              1.058333333333,
+              1.4
+            ],
+            "battleRecordTeamEfficiencies": [
+              1.05,
+              1.1
+            ],
+            "tradingPostEfficiencies": [
+              1.15,
+              1.2
+            ]
+          }
+        }
+      ],
+      "final": {
+        "gold": 147.332311488218,
+        "drones": 0.0
+      },
+      "returnsToInitialDrones": true
+    }
+  },
+  "trace": {
+    "numericRuleOrigins": {
+      "wikiruCapturedEfficiencies": {
+        "source": "inputs/wikiru-backup38-20260806.html",
+        "values": {
+          "battleA": 1.1,
+          "battleB24Average": 1.0475,
+          "battleCShift1": 1.26,
+          "battleCShift2": 1.05,
+          "goldA": 1.4,
+          "goldB": 1.23,
+          "shamare": 0.9,
+          "glasgowShift1": 1.35,
+          "glasgowShift2": 1.15,
+          "tradingControl": 0.07
+        }
+      },
+      "battleRecordGroupB": {
+        "source": "inputs/jp-game-data-extract-v1.json",
+        "buffIds": [
+          "manu_formula_spd[000]",
+          "manu_prod_spd_variable[000]",
+          "manu_prod_limit&cost[0000]",
+          "manu_prod_limit&cost[003]",
+          "manu_formula_limit[0000]",
+          "manu_prod_spd_addition[041]"
+        ],
+        "pallasEfficiency": 0.25,
+        "storageIncreases": [
+          8.0,
+          8.0,
+          12.0
+        ],
+        "vermeilEfficiencyPerStorage": 0.02,
+        "vermeilEfficiency": 0.56,
+        "sceneHourlyEfficiencies": [
+          0.15,
+          0.17,
+          0.19,
+          0.21,
+          0.23,
+          0.25,
+          0.25,
+          0.25,
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ],
+        "sceneCap": 0.25
+      },
+      "controlCenterFactoryEfficiency": {
+        "groups-a-b": {
+          "operatorId": "char_4179_monstr",
+          "buffId": "control_prod_spd[1000]",
+          "efficiency": 0.02
+        },
+        "groups-b-c": {
+          "operatorId": "char_1044_hsgma2",
+          "buffId": "control_token_prod_spd3[000]",
+          "efficiency": 0.03
+        },
+        "groups-c-a": {
+          "operatorId": "char_4179_monstr",
+          "buffId": "control_prod_spd[1000]",
+          "efficiency": 0.02
+        }
+      },
+      "tradingRules": {
+        "source": "inputs/jp-game-data-extract-v1.json",
+        "proviso": {
+          "buffIds": [
+            "trade_ord_law[000]",
+            "trade_ord_against[010]"
+          ],
+          "breachThresholdGold": 4.0,
+          "breachAdditionalGold": 2.0
+        },
+        "tequila": {
+          "buffIds": [
+            "trade_ord_long[010]"
+          ],
+          "minimumExclusiveGold": 3.0,
+          "bonusLmd": 500.0
+        }
+      },
+      "powerPlantDroneRecovery": {
+        "source": "inputs/jp-game-data-extract-v1.json",
+        "shifts": {
+          "groups-a-b": [
+            {
+              "operatorId": "char_1011_lava2",
+              "buffId": "power_rec_spd[022]",
+              "kind": "direct",
+              "efficiency": 0.2
+            },
+            {
+              "operatorId": "char_107_liskam",
+              "buffId": "power_rec_spd[021]",
+              "kind": "direct",
+              "efficiency": 0.2
+            },
+            {
+              "operatorId": "char_1027_greyy2",
+              "buffId": "power_rec_drone[000]",
+              "kind": "drone-cap-scaling",
+              "capPerStep": 10.0,
+              "efficiencyPerStep": 0.01,
+              "maximum": 0.25,
+              "efficiency": 0.23
+            }
+          ],
+          "groups-b-c": [
+            {
+              "operatorId": "char_107_liskam",
+              "buffId": "power_rec_spd[021]",
+              "kind": "direct",
+              "efficiency": 0.2
+            },
+            {
+              "operatorId": "char_377_gdglow",
+              "buffId": "power_rec_spd[023]",
+              "kind": "direct",
+              "efficiency": 0.2
+            },
+            {
+              "operatorId": "char_253_greyy",
+              "buffId": "power_rec_spd[020]",
+              "kind": "direct",
+              "efficiency": 0.2
+            }
+          ],
+          "groups-c-a": [
+            {
+              "operatorId": "char_377_gdglow",
+              "buffId": "power_rec_spd[023]",
+              "kind": "direct",
+              "efficiency": 0.2
+            },
+            {
+              "operatorId": "char_1011_lava2",
+              "buffId": "power_rec_spd[022]",
+              "kind": "direct",
+              "efficiency": 0.2
+            },
+            {
+              "operatorId": "char_1027_greyy2",
+              "buffId": "power_rec_drone[000]",
+              "kind": "drone-cap-scaling",
+              "capPerStep": 10.0,
+              "efficiencyPerStep": 0.01,
+              "maximum": 0.25,
+              "efficiency": 0.23
+            }
+          ]
+        }
+      },
+      "shamareKafkaTequilaHighValueOrder": {
+        "sourcePath": "jp/gamedata/excel/building_data.json",
+        "extractPath": "inputs/jp-game-data-extract-v1.json",
+        "operatorId": "char_214_kafka",
+        "teamOperatorIds": [
+          "char_254_vodfox",
+          "char_214_kafka",
+          "char_486_takila"
+        ],
+        "evaluationShiftIds": [
+          "groups-a-b",
+          "groups-b-c"
+        ],
+        "unlockedBuffId": "trade_ord_wt&cost[011]",
+        "unlockedRowIdentity": "/chars/char_214_kafka/buffChar/0/buffData/1",
+        "unlockCondition": {
+          "phase": "PHASE_2",
+          "level": 1
+        },
+        "ticketNamedParallelDefinitionBuffId": "trade_ord_wt&cost[010]",
+        "ticketNamedParallelDefinitionRowIdentity": "/buffs/trade_ord_wt&cost[010]",
+        "descriptionSemantic": "上昇",
+        "derivedCanonicalLevel": "increased",
+        "bundleAvailability": [
+          "scope.effectLevels",
+          "primary.targetDistributions",
+          "primary.warmupHours"
+        ]
+      }
+    },
+    "cyclicElapsedWorkPhase": {
+      "shiftOrder": [
+        "groups-a-b",
+        "groups-b-c",
+        "groups-c-a"
+      ],
+      "continuousWorkSlotsPerGroup": 2,
+      "groups": {
+        "A": [
+          {
+            "shiftId": "groups-a-b",
+            "slotOrdinal": 2,
+            "source": "inputs/wikiru-backup38-20260806.html",
+            "elapsedWorkInterval": [
+              12.0,
+              24.0
+            ],
+            "sourceSegments": [
+              {
+                "elapsedWorkInterval": [
+                  0.0,
+                  16.0
+                ],
+                "efficiency": 1.2
+              },
+              {
+                "elapsedWorkInterval": [
+                  16.0,
+                  24.0
+                ],
+                "efficiency": 1.38
+              }
+            ],
+            "overlapSegments": [
+              {
+                "elapsedWorkInterval": [
+                  12.0,
+                  16.0
+                ],
+                "durationHours": 4.0,
+                "efficiency": 1.2
+              },
+              {
+                "elapsedWorkInterval": [
+                  16.0,
+                  24.0
+                ],
+                "durationHours": 8.0,
+                "efficiency": 1.38
+              }
+            ],
+            "equation": "(4.0h*1.2+8.0h*1.38)/12.0h",
+            "effectiveEfficiency": 1.32
+          },
+          {
+            "shiftId": "groups-c-a",
+            "slotOrdinal": 1,
+            "source": "inputs/wikiru-backup38-20260806.html",
+            "elapsedWorkInterval": [
+              0.0,
+              12.0
+            ],
+            "sourceSegments": [
+              {
+                "elapsedWorkInterval": [
+                  0.0,
+                  16.0
+                ],
+                "efficiency": 1.2
+              },
+              {
+                "elapsedWorkInterval": [
+                  16.0,
+                  24.0
+                ],
+                "efficiency": 1.38
+              }
+            ],
+            "overlapSegments": [
+              {
+                "elapsedWorkInterval": [
+                  0.0,
+                  12.0
+                ],
+                "durationHours": 12.0,
+                "efficiency": 1.2
+              }
+            ],
+            "equation": "(12.0h*1.2)/12.0h",
+            "effectiveEfficiency": 1.2
+          }
+        ],
+        "B": [
+          {
+            "shiftId": "groups-a-b",
+            "slotOrdinal": 1,
+            "elapsedWorkInterval": [
+              0,
+              12
+            ],
+            "teams": [
+              "gold-metalwork",
+              "battle-record-scene",
+              "shamare-kafka-tequila"
+            ]
+          },
+          {
+            "shiftId": "groups-b-c",
+            "slotOrdinal": 2,
+            "elapsedWorkInterval": [
+              12,
+              24
+            ],
+            "teams": [
+              "gold-metalwork",
+              "battle-record-scene",
+              "shamare-kafka-tequila"
+            ]
+          }
+        ],
+        "C": [
+          {
+            "shiftId": "groups-b-c",
+            "slotOrdinal": 1,
+            "elapsedWorkInterval": [
+              0,
+              12
+            ],
+            "teams": [
+              "perception",
+              "glasgow",
+              "red-pine"
+            ]
+          },
+          {
+            "shiftId": "groups-c-a",
+            "slotOrdinal": 2,
+            "elapsedWorkInterval": [
+              12,
+              24
+            ],
+            "teams": [
+              "perception",
+              "glasgow",
+              "red-pine"
+            ]
+          }
+        ]
+      }
+    },
+    "perceptionElapsedWorkCompromise": {
+      "confidence": "corroborated",
+      "sourceRosterGroupCSecondWorkSlot": {
+        "shiftId": "groups-c-a",
+        "elapsedWorkInterval": [
+          12,
+          24
+        ]
+      },
+      "approvedBundleActiveShiftInput": {
+        "shiftId": "groups-c-a",
+        "elapsedWorkHours": 12
+      },
+      "resourceCalculationAuthority": "approved bundle v2 field, not operational cyclic phase"
+    },
+    "perceptionDormitoryOccupancyWitness": {
+      "purpose": "concrete dormitory occupancy witness for bundle Perception Information active-shift inputs",
+      "supportOnlyHelperIds": [
+        "char_002_amiya",
+        "char_2014_nian"
+      ]
+    }
+  },
+  "primaryAssumptions": {
+    "initialGold": 200,
+    "initialGoldRationale": "fixed round operational inventory, selected before calculation and sufficient for every checked prefix",
+    "droneAllocation": "all available drones in each cycle work slot to trading-post-1; shift3 is sustainability-only",
+    "deterministicPhase1Approximations": [
+      {
+        "id": "segment-average-high-value-order-distribution",
+        "confidence": "corroborated",
+        "explanation": "each 12-hour slot uses subsegment/piecewise expected throughput and its segment-average high-value-order distribution rather than event-level orders"
+      },
+      {
+        "id": "slot-level-drone-batch-to-trading-post-1",
+        "confidence": "corroborated",
+        "explanation": "each shift's continuously generated drones are represented as a slot-level batch allocated to trading-post-1"
+      },
+      {
+        "id": "slot-normalized-perception-elapsed-work",
+        "confidence": "corroborated",
+        "explanation": "source roster group C is operationally in cyclic slot [12,24) during groups-c-a, while approved bundle v2 intentionally supplies slot-normalized elapsedWorkHours=12 to both active group C shifts; resource computation uses the bundle field"
+      }
+    ]
+  },
+  "diagnosticOnlySensitivity": {
+    "authority": "diagnostic-only-never-pass-fail",
+    "perceptionGroupEfficiency": {
+      "perceptionInfo10": 1.058333333333,
+      "perceptionInfo20": 1.158333333333
+    },
+    "highValueAverageProgress": {
+      "8h": 0.6875,
+      "12h": 0.791666666667,
+      "16h": 0.84375
+    }
+  }
+}

@@ -1,0 +1,1924 @@
+{
+  "contractVersion": "phase1-pass-fail-v1",
+  "kind": "resource-output",
+  "scope": "full-base",
+  "id": "jp-wikiru-backup38-12h-v2",
+  "region": "JP",
+  "referenceProvenance": {
+    "version": "Wikiru backup 38 (2025-11-02 18:43:20 +0900), snapshot 33b7f7d08f5249b0d93efad441ef1dd7ec95d7e5939fdda7e02c9625d9cb45a8",
+    "observedAt": "2026-08-06"
+  },
+  "runtimeDataProvenance": {
+    "operatorAvailabilitySourceCommit": "7faf192d15eeac8b236c561a1938679f4642279e"
+  },
+  "confidence": "corroborated",
+  "sources": [
+    {
+      "url": "https://arknights.wikiru.jp/?SandBox%2F%E5%9F%BA%E5%9C%B0%E3%82%B7%E3%83%95%E3%83%88%EF%BC%881%E6%97%A52%E5%9B%9E%E5%85%A5%E6%9B%BF%EF%BC%89",
+      "contentSha256": "33b7f7d08f5249b0d93efad441ef1dd7ec95d7e5939fdda7e02c9625d9cb45a8",
+      "title": "Wikiru backup 38 composition snapshot",
+      "accessedAt": "2026-08-06",
+      "language": "ja",
+      "role": "composition",
+      "notes": "Local snapshot: docs/benchmarks/evidence/wikiru-backup38-12h-v2/inputs/wikiru-backup38-20260806.html; composition SHA-256 e50cbc4e5110af168ca145075d2da711109bf01d394fc6786c338b8781240a7a."
+    },
+    {
+      "url": "https://github.com/ArknightsAssets/ArknightsGamedata/blob/7faf192d15eeac8b236c561a1938679f4642279e/jp/gamedata/excel/character_table.json",
+      "contentSha256": "e5db4e916181700195397e67bf5fafd9897ebdd8961b6702a17985b8c61f463d",
+      "title": "JP character table at 7faf192d",
+      "accessedAt": "2026-08-06",
+      "language": "ja",
+      "role": "primary-text",
+      "notes": "JP canonical rows; packet extract SHA-256 af44f691c7708fa7f2e024df47d4a9fa05610d62f95e60ba9c2c3e40a840b923.",
+      "immutableUrl": "https://github.com/ArknightsAssets/ArknightsGamedata/blob/7faf192d15eeac8b236c561a1938679f4642279e/jp/gamedata/excel/character_table.json"
+    },
+    {
+      "url": "https://github.com/ArknightsAssets/ArknightsGamedata/blob/7faf192d15eeac8b236c561a1938679f4642279e/jp/gamedata/excel/building_data.json",
+      "contentSha256": "162f838e5e1cdd10cda98cd77ae9fc68931c48d8c3230952cdcce8670ebda6da",
+      "title": "JP building data at 7faf192d",
+      "accessedAt": "2026-08-06",
+      "language": "ja",
+      "role": "formula",
+      "notes": "Pinned primary game-data formula rows.",
+      "immutableUrl": "https://github.com/ArknightsAssets/ArknightsGamedata/blob/7faf192d15eeac8b236c561a1938679f4642279e/jp/gamedata/excel/building_data.json"
+    },
+    {
+      "url": "https://github.com/big-mon/arknights-basement-simulator/blob/codex/pr37-review-fixes/src/data/phase1-project-assumption-bundle-v2.json",
+      "contentSha256": "8a8e03596fda0f77cf4169914126a48d3abd8d27e1518a4d76fce4e374567edf",
+      "title": "Phase 1 project assumption bundle v2",
+      "accessedAt": "2026-08-06",
+      "language": "ja",
+      "role": "formula",
+      "notes": "Canonical content SHA-256 5aca766b23d7eabfbb924d460b878d07351c5377ec0007ee12194de7fe1565ba; local packet copy under inputs."
+    },
+    {
+      "url": "https://github.com/big-mon/arknights-basement-simulator/blob/codex/pr37-review-fixes/docs/benchmarks/evidence/wikiru-backup38-12h-v2/output.json",
+      "contentSha256": "ca24367c26aec53981b046abb01743708c3d0fb0e1d05ad6544288f86082613d",
+      "title": "Wikiru backup 38 v2 reproduced output",
+      "accessedAt": "2026-08-06",
+      "language": "ja",
+      "role": "throughput",
+      "notes": "Offline 24-hour output and 36-hour ledger; manifest SHA-256 63df946eb2b65270e4a2185285974d377fc18dbf139f0a8da2cf05931ab63da6."
+    }
+  ],
+  "assumptions": {
+    "layout": "243",
+    "drones": "trading-post-1",
+    "facilityProducts": [
+      "gold",
+      "battleRecord"
+    ],
+    "objectiveProfile": "balanced",
+    "initialMorale": 24,
+    "initialDrones": 0,
+    "initialGold": 200,
+    "assumptionBundle": {
+      "id": "arknights-basement.phase1-project-assumptions",
+      "version": 2,
+      "contentSha256": "5aca766b23d7eabfbb924d460b878d07351c5377ec0007ee12194de7fe1565ba",
+      "allowedAssumptionIds": [
+        "phase1.high-value-order-probability.v1",
+        "phase1.perception-information-factory-efficiency.v1",
+        "phase1.signed-equivalent-morale-delta.v1"
+      ]
+    },
+    "notes": [
+      "Packet output SHA-256 ca24367c26aec53981b046abb01743708c3d0fb0e1d05ad6544288f86082613d; manifest SHA-256 63df946eb2b65270e4a2185285974d377fc18dbf139f0a8da2cf05931ab63da6; composition SHA-256 e50cbc4e5110af168ca145075d2da711109bf01d394fc6786c338b8781240a7a.",
+      "Expected sums only groups-a-b and groups-b-c; groups-c-a is a 36-hour sustainability witness and is excluded.",
+      "Natural LMD 55266.55320758929 plus drone LMD 11587.04085343678 equals total LMD 66853.59406102607; natural LMD is notes-only because the strict schema has no naturalLmd field.",
+      "Packet support dormitory occupants map to strict recovery with zero delta at morale cap 24 to 24, never fake work; packet activeHours 3 or 6 derives equivalent recovery while strict durationHours remains 12.",
+      "Per-shift droneGoldConsumed is packet drone LMD divided by pinned 500 LMD per gold and rounded to the packet 12-decimal convention, without calibration."
+    ]
+  },
+  "roster": {
+    "mode": "explicit",
+    "operatorIds": [
+      "char_002_amiya",
+      "char_010_chen",
+      "char_1011_lava2",
+      "char_1019_siege2",
+      "char_1027_greyy2",
+      "char_1039_thorn2",
+      "char_1044_hsgma2",
+      "char_1050_chen3",
+      "char_107_liskam",
+      "char_112_siege",
+      "char_154_morgan",
+      "char_159_peacok",
+      "char_190_clour",
+      "char_2014_nian",
+      "char_2015_dusk",
+      "char_2023_ling",
+      "char_2024_chyue",
+      "char_214_kafka",
+      "char_237_gravel",
+      "char_241_panda",
+      "char_243_waaifu",
+      "char_253_greyy",
+      "char_254_vodfox",
+      "char_300_phenxi",
+      "char_308_swire",
+      "char_332_archet",
+      "char_336_folivo",
+      "char_338_iris",
+      "char_377_gdglow",
+      "char_385_finlpp",
+      "char_391_rosmon",
+      "char_400_weedy",
+      "char_4032_provs",
+      "char_4047_pianst",
+      "char_4054_malist",
+      "char_4087_ines",
+      "char_4098_vvana",
+      "char_4106_bryota",
+      "char_4110_delphn",
+      "char_416_zumama",
+      "char_4179_monstr",
+      "char_420_flamtl",
+      "char_430_fartth",
+      "char_431_ashlok",
+      "char_436_whispr",
+      "char_446_aroma",
+      "char_455_nothin",
+      "char_473_mberry",
+      "char_485_pallas",
+      "char_486_takila",
+      "char_496_wildmn"
+    ]
+  },
+  "evaluationWindow": {
+    "start": {
+      "mode": "source-relative",
+      "sourceIndex": 0,
+      "shiftId": "groups-a-b"
+    },
+    "durationHours": 24,
+    "shiftHours": 12,
+    "workSlotCount": 2,
+    "workerGroupCount": 3,
+    "shiftIds": [
+      "groups-a-b",
+      "groups-b-c"
+    ]
+  },
+  "rotation": {
+    "cycleHours": 36,
+    "moraleCap": 24,
+    "fullCycleOperatorIds": [
+      "char_002_amiya",
+      "char_010_chen",
+      "char_1011_lava2",
+      "char_1019_siege2",
+      "char_1027_greyy2",
+      "char_1039_thorn2",
+      "char_1044_hsgma2",
+      "char_1050_chen3",
+      "char_107_liskam",
+      "char_112_siege",
+      "char_154_morgan",
+      "char_159_peacok",
+      "char_190_clour",
+      "char_2014_nian",
+      "char_2015_dusk",
+      "char_2023_ling",
+      "char_2024_chyue",
+      "char_214_kafka",
+      "char_237_gravel",
+      "char_241_panda",
+      "char_243_waaifu",
+      "char_253_greyy",
+      "char_254_vodfox",
+      "char_300_phenxi",
+      "char_308_swire",
+      "char_332_archet",
+      "char_336_folivo",
+      "char_338_iris",
+      "char_377_gdglow",
+      "char_385_finlpp",
+      "char_391_rosmon",
+      "char_400_weedy",
+      "char_4032_provs",
+      "char_4047_pianst",
+      "char_4054_malist",
+      "char_4087_ines",
+      "char_4098_vvana",
+      "char_4106_bryota",
+      "char_4110_delphn",
+      "char_416_zumama",
+      "char_4179_monstr",
+      "char_420_flamtl",
+      "char_430_fartth",
+      "char_431_ashlok",
+      "char_436_whispr",
+      "char_446_aroma",
+      "char_455_nothin",
+      "char_473_mberry",
+      "char_485_pallas",
+      "char_486_takila",
+      "char_496_wildmn"
+    ],
+    "facilities": [
+      {
+        "id": "trading-post-1",
+        "type": "tradingPost",
+        "product": "lmd",
+        "level": 3,
+        "capacity": 3
+      },
+      {
+        "id": "trading-post-2",
+        "type": "tradingPost",
+        "product": "lmd",
+        "level": 3,
+        "capacity": 3
+      },
+      {
+        "id": "factory-gold-1",
+        "type": "factory",
+        "product": "gold",
+        "level": 3,
+        "capacity": 3
+      },
+      {
+        "id": "factory-gold-2",
+        "type": "factory",
+        "product": "gold",
+        "level": 3,
+        "capacity": 3
+      },
+      {
+        "id": "factory-battle-record-1",
+        "type": "factory",
+        "product": "battleRecord",
+        "level": 3,
+        "capacity": 3
+      },
+      {
+        "id": "factory-battle-record-2",
+        "type": "factory",
+        "product": "battleRecord",
+        "level": 3,
+        "capacity": 3
+      },
+      {
+        "id": "power-plant-1",
+        "type": "powerPlant",
+        "level": 3,
+        "capacity": 1
+      },
+      {
+        "id": "power-plant-2",
+        "type": "powerPlant",
+        "level": 3,
+        "capacity": 1
+      },
+      {
+        "id": "power-plant-3",
+        "type": "powerPlant",
+        "level": 3,
+        "capacity": 1
+      },
+      {
+        "id": "control-center",
+        "type": "controlCenter",
+        "level": 5,
+        "capacity": 5
+      },
+      {
+        "id": "reception",
+        "type": "reception",
+        "level": 3,
+        "capacity": 2
+      },
+      {
+        "id": "office",
+        "type": "office",
+        "level": 3,
+        "capacity": 1
+      }
+    ],
+    "supportDependencies": [],
+    "supportContexts": [
+      {
+        "id": "dormitory-1",
+        "type": "dormitory",
+        "activity": "recovery",
+        "level": 5,
+        "capacity": 5
+      },
+      {
+        "id": "dormitory-2",
+        "type": "dormitory",
+        "activity": "recovery",
+        "level": 5,
+        "capacity": 5
+      },
+      {
+        "id": "dormitory-3",
+        "type": "dormitory",
+        "activity": "recovery",
+        "level": 5,
+        "capacity": 5
+      },
+      {
+        "id": "dormitory-4",
+        "type": "dormitory",
+        "activity": "recovery",
+        "level": 5,
+        "capacity": 5
+      },
+      {
+        "id": "morale-exchange-1",
+        "type": "operator-support",
+        "activity": "exchange-support",
+        "capacity": 1
+      }
+    ],
+    "workerGroupCount": 3,
+    "compositionSourceIndex": 0,
+    "fullCycleSourceIndex": 0,
+    "goldInventory": {
+      "initial": 200,
+      "final": 147.332311488218,
+      "boundaryPolicy": "carryover"
+    },
+    "droneInventory": {
+      "initial": 0,
+      "final": 0,
+      "boundaryPolicy": "return-to-initial"
+    },
+    "shifts": [
+      {
+        "id": "groups-a-b",
+        "durationHours": 12,
+        "workerGroupIds": [
+          "group-a",
+          "group-b"
+        ],
+        "factoryProducts": {
+          "gold": 2,
+          "battleRecord": 2
+        },
+        "assignments": {
+          "control-center": {
+            "operatorIds": [
+              "char_4179_monstr",
+              "char_2024_chyue",
+              "char_2015_dusk",
+              "char_2023_ling",
+              "char_4098_vvana"
+            ]
+          },
+          "reception": {
+            "operatorIds": [
+              "char_1050_chen3",
+              "char_010_chen"
+            ]
+          },
+          "factory-battle-record-1": {
+            "operatorIds": [
+              "char_241_panda",
+              "char_159_peacok",
+              "char_4054_malist"
+            ]
+          },
+          "factory-battle-record-2": {
+            "operatorIds": [
+              "char_485_pallas",
+              "char_336_folivo",
+              "char_190_clour"
+            ]
+          },
+          "factory-gold-1": {
+            "operatorIds": [
+              "char_385_finlpp",
+              "char_400_weedy",
+              "char_416_zumama"
+            ]
+          },
+          "factory-gold-2": {
+            "operatorIds": [
+              "char_4106_bryota",
+              "char_237_gravel",
+              "char_1039_thorn2"
+            ]
+          },
+          "trading-post-1": {
+            "operatorIds": [
+              "char_4032_provs",
+              "char_332_archet",
+              "char_455_nothin"
+            ]
+          },
+          "trading-post-2": {
+            "operatorIds": [
+              "char_254_vodfox",
+              "char_214_kafka",
+              "char_486_takila"
+            ]
+          },
+          "power-plant-1": {
+            "operatorIds": [
+              "char_1011_lava2"
+            ]
+          },
+          "power-plant-2": {
+            "operatorIds": [
+              "char_107_liskam"
+            ]
+          },
+          "power-plant-3": {
+            "operatorIds": [
+              "char_1027_greyy2"
+            ]
+          },
+          "office": {
+            "operatorIds": [
+              "char_473_mberry"
+            ]
+          }
+        },
+        "operatorStates": [
+          {
+            "operatorId": "char_002_amiya",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_010_chen",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_1011_lava2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_1019_siege2",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_1027_greyy2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_1039_thorn2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_1044_hsgma2",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_1050_chen3",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_107_liskam",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_112_siege",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_154_morgan",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_159_peacok",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_190_clour",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_2014_nian",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_2015_dusk",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_2023_ling",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_2024_chyue",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_214_kafka",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_237_gravel",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_241_panda",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_243_waaifu",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_253_greyy",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_254_vodfox",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_300_phenxi",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_308_swire",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_332_archet",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_336_folivo",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_338_iris",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_377_gdglow",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_385_finlpp",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_391_rosmon",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_400_weedy",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_4032_provs",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_4047_pianst",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_4054_malist",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_4087_ines",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_4098_vvana",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_4106_bryota",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_4110_delphn",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_416_zumama",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_4179_monstr",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_420_flamtl",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_430_fartth",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_431_ashlok",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_436_whispr",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_446_aroma",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_455_nothin",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_473_mberry",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_485_pallas",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_486_takila",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_496_wildmn",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          }
+        ],
+        "resources": {
+          "goldProduced": 46.7,
+          "goldConsumed": 69.672105208756,
+          "battleRecordExp": 16700.0,
+          "lmd": 36787.834575027766,
+          "dronesGenerated": 195.6,
+          "dronesUsed": 195.6,
+          "droneLmd": 6491.150442477876,
+          "droneGoldConsumed": 12.982300884956,
+          "droneDestination": "trading-post-1",
+          "goldInventoryStart": 200.0,
+          "goldInventoryEnd": 177.027894791244,
+          "droneInventoryStart": 0.0,
+          "droneInventoryEnd": 0.0
+        }
+      },
+      {
+        "id": "groups-b-c",
+        "durationHours": 12,
+        "workerGroupIds": [
+          "group-b",
+          "group-c"
+        ],
+        "factoryProducts": {
+          "gold": 2,
+          "battleRecord": 2
+        },
+        "assignments": {
+          "control-center": {
+            "operatorIds": [
+              "char_1044_hsgma2",
+              "char_420_flamtl",
+              "char_4110_delphn",
+              "char_308_swire",
+              "char_4098_vvana"
+            ]
+          },
+          "reception": {
+            "operatorIds": [
+              "char_010_chen",
+              "char_4087_ines"
+            ]
+          },
+          "factory-battle-record-1": {
+            "operatorIds": [
+              "char_485_pallas",
+              "char_336_folivo",
+              "char_190_clour"
+            ]
+          },
+          "factory-battle-record-2": {
+            "operatorIds": [
+              "char_431_ashlok",
+              "char_496_wildmn",
+              "char_430_fartth"
+            ]
+          },
+          "factory-gold-1": {
+            "operatorIds": [
+              "char_4106_bryota",
+              "char_237_gravel",
+              "char_1039_thorn2"
+            ]
+          },
+          "factory-gold-2": {
+            "operatorIds": [
+              "char_446_aroma",
+              "char_243_waaifu",
+              "char_391_rosmon"
+            ]
+          },
+          "trading-post-1": {
+            "operatorIds": [
+              "char_254_vodfox",
+              "char_214_kafka",
+              "char_486_takila"
+            ]
+          },
+          "trading-post-2": {
+            "operatorIds": [
+              "char_112_siege",
+              "char_154_morgan",
+              "char_1019_siege2"
+            ]
+          },
+          "power-plant-1": {
+            "operatorIds": [
+              "char_107_liskam"
+            ]
+          },
+          "power-plant-2": {
+            "operatorIds": [
+              "char_377_gdglow"
+            ]
+          },
+          "power-plant-3": {
+            "operatorIds": [
+              "char_253_greyy"
+            ]
+          },
+          "office": {
+            "operatorIds": [
+              "char_436_whispr"
+            ]
+          }
+        },
+        "operatorStates": [
+          {
+            "operatorId": "char_002_amiya",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_010_chen",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_1011_lava2",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_1019_siege2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_1027_greyy2",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_1039_thorn2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_1044_hsgma2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_1050_chen3",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_107_liskam",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_112_siege",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_154_morgan",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_159_peacok",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_190_clour",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_2014_nian",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_2015_dusk",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_2023_ling",
+            "activity": "exchange-support",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_2024_chyue",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_214_kafka",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_237_gravel",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_241_panda",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_243_waaifu",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_253_greyy",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_254_vodfox",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_300_phenxi",
+            "activity": "exchange-support",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -24.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_308_swire",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_332_archet",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_336_folivo",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_338_iris",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_377_gdglow",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_385_finlpp",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_391_rosmon",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_400_weedy",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_4032_provs",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_4047_pianst",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_4054_malist",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_4087_ines",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_4098_vvana",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_4106_bryota",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_4110_delphn",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_416_zumama",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_4179_monstr",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_420_flamtl",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_430_fartth",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_431_ashlok",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_436_whispr",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_446_aroma",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_455_nothin",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_473_mberry",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_485_pallas",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_486_takila",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_496_wildmn",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          }
+        ],
+        "resources": {
+          "goldProduced": 44.483333333333,
+          "goldConsumed": 53.68083404049,
+          "battleRecordExp": 17520.0,
+          "lmd": 30065.759485998307,
+          "dronesGenerated": 192.0,
+          "dronesUsed": 192.0,
+          "droneLmd": 5095.890410958904,
+          "droneGoldConsumed": 10.191780821918,
+          "droneDestination": "trading-post-1",
+          "goldInventoryStart": 177.027894791244,
+          "goldInventoryEnd": 167.830394084088,
+          "droneInventoryStart": 0.0,
+          "droneInventoryEnd": 0.0
+        }
+      },
+      {
+        "id": "groups-c-a",
+        "durationHours": 12,
+        "workerGroupIds": [
+          "group-c",
+          "group-a"
+        ],
+        "factoryProducts": {
+          "gold": 2,
+          "battleRecord": 2
+        },
+        "assignments": {
+          "control-center": {
+            "operatorIds": [
+              "char_4179_monstr",
+              "char_420_flamtl",
+              "char_2024_chyue",
+              "char_2015_dusk",
+              "char_2023_ling"
+            ]
+          },
+          "reception": {
+            "operatorIds": [
+              "char_4087_ines",
+              "char_1050_chen3"
+            ]
+          },
+          "factory-battle-record-1": {
+            "operatorIds": [
+              "char_431_ashlok",
+              "char_496_wildmn",
+              "char_430_fartth"
+            ]
+          },
+          "factory-battle-record-2": {
+            "operatorIds": [
+              "char_241_panda",
+              "char_159_peacok",
+              "char_4054_malist"
+            ]
+          },
+          "factory-gold-1": {
+            "operatorIds": [
+              "char_446_aroma",
+              "char_243_waaifu",
+              "char_391_rosmon"
+            ]
+          },
+          "factory-gold-2": {
+            "operatorIds": [
+              "char_385_finlpp",
+              "char_400_weedy",
+              "char_416_zumama"
+            ]
+          },
+          "trading-post-1": {
+            "operatorIds": [
+              "char_112_siege",
+              "char_154_morgan",
+              "char_1019_siege2"
+            ]
+          },
+          "trading-post-2": {
+            "operatorIds": [
+              "char_4032_provs",
+              "char_332_archet",
+              "char_455_nothin"
+            ]
+          },
+          "power-plant-1": {
+            "operatorIds": [
+              "char_377_gdglow"
+            ]
+          },
+          "power-plant-2": {
+            "operatorIds": [
+              "char_1011_lava2"
+            ]
+          },
+          "power-plant-3": {
+            "operatorIds": [
+              "char_1027_greyy2"
+            ]
+          },
+          "office": {
+            "operatorIds": [
+              "char_473_mberry"
+            ]
+          }
+        },
+        "operatorStates": [
+          {
+            "operatorId": "char_002_amiya",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_010_chen",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_1011_lava2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_1019_siege2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_1027_greyy2",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_1039_thorn2",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_1044_hsgma2",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_1050_chen3",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_107_liskam",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_112_siege",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_154_morgan",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_159_peacok",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_190_clour",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_2014_nian",
+            "activity": "idle",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_2015_dusk",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_2023_ling",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_2024_chyue",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_214_kafka",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_237_gravel",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_241_panda",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_243_waaifu",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_253_greyy",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_254_vodfox",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_300_phenxi",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_308_swire",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_332_archet",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_336_folivo",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_338_iris",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_377_gdglow",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_385_finlpp",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_391_rosmon",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_400_weedy",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_4032_provs",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_4047_pianst",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": 0.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_4054_malist",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_4087_ines",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_4098_vvana",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_4106_bryota",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_4110_delphn",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_416_zumama",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_4179_monstr",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_420_flamtl",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_430_fartth",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_431_ashlok",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_436_whispr",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_446_aroma",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          },
+          {
+            "operatorId": "char_455_nothin",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_473_mberry",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 24.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 12.0
+          },
+          {
+            "operatorId": "char_485_pallas",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_486_takila",
+            "activity": "recovery",
+            "durationHours": 12,
+            "moraleStart": 0.0,
+            "moraleDelta": 24.0,
+            "moraleEnd": 24.0
+          },
+          {
+            "operatorId": "char_496_wildmn",
+            "activity": "work",
+            "durationHours": 12,
+            "moraleStart": 12.0,
+            "moraleDelta": -12.0,
+            "moraleEnd": 0.0
+          }
+        ],
+        "resources": {
+          "goldProduced": 44.983333333333,
+          "goldConsumed": 65.481415929204,
+          "battleRecordExp": 16760.0,
+          "lmd": 32740.707964601774,
+          "dronesGenerated": 195.6,
+          "dronesUsed": 195.6,
+          "droneLmd": 4183.185840707965,
+          "droneGoldConsumed": 8.366371681416,
+          "droneDestination": "trading-post-1",
+          "goldInventoryStart": 167.830394084088,
+          "goldInventoryEnd": 147.332311488218,
+          "droneInventoryStart": 0.0,
+          "droneInventoryEnd": 0.0
+        }
+      }
+    ]
+  },
+  "expected": {
+    "outputBasis": "concrete-24-hour-window",
+    "output": {
+      "goldProduced": 91.183333333333,
+      "goldConsumed": 123.352939249246,
+      "goldNetChange": -32.169605915912,
+      "battleRecordExp": 34220,
+      "lmd": 66853.59406102607,
+      "dronesGenerated": 387.6,
+      "dronesUsed": 387.6,
+      "droneLmd": 11587.04085343678,
+      "droneGoldConsumed": 23.174081706874
+    },
+    "formulas": [
+      "expected = groups-a-b + groups-b-c only; groups-c-a is excluded",
+      "naturalLmd 55266.55320758929 + droneLmd 11587.04085343678 = lmd 66853.59406102607",
+      "droneGoldConsumed = 12.982300884956 + 10.191780821918 = 23.174081706874"
+    ],
+    "tolerance": {
+      "type": "absolute",
+      "value": 0
+    }
+  }
+}

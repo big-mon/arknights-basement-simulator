@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "packetId": "wikiru-backup38-12h-v2",
+  "confidence": "corroborated",
+  "source": {
+    "url": "https://arknights.wikiru.jp/?SandBox%2F%E5%9F%BA%E5%9C%B0%E3%82%B7%E3%83%95%E3%83%88%EF%BC%881%E6%97%A52%E5%9B%9E%E5%85%A5%E6%9B%BF%EF%BC%89",
+    "backup": 38,
+    "backupTimestamp": "2025-11-02 18:43:20 +0900",
+    "referenceDate": "2026-08-06",
+    "snapshotSha256": "33b7f7d08f5249b0d93efad441ef1dd7ec95d7e5939fdda7e02c9625d9cb45a8"
+  },
+  "jpGameData": {
+    "repository": "ArknightsAssets/ArknightsGamedata",
+    "commit": "7faf192d15eeac8b236c561a1938679f4642279e",
+    "characterTablePath": "jp/gamedata/excel/character_table.json",
+    "characterTableFullBlobContentSha256": "e5db4e916181700195397e67bf5fafd9897ebdd8961b6702a17985b8c61f463d",
+    "buildingDataPath": "jp/gamedata/excel/building_data.json",
+    "buildingDataFullBlobContentSha256": "162f838e5e1cdd10cda98cd77ae9fc68931c48d8c3230952cdcce8670ebda6da",
+    "extractSha256": "af44f691c7708fa7f2e024df47d4a9fa05610d62f95e60ba9c2c3e40a840b923"
+  },
+  "assumptionBundle": {
+    "id": "arknights-basement.phase1-project-assumptions",
+    "version": 2,
+    "contentSha256": "5aca766b23d7eabfbb924d460b878d07351c5377ec0007ee12194de7fe1565ba",
+    "allowedAssumptionIds": [
+      "phase1.high-value-order-probability.v1",
+      "phase1.perception-information-factory-efficiency.v1",
+      "phase1.signed-equivalent-morale-delta.v1"
+    ]
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 6950,
+      "sha256": "ddcb64f1135996cb8b78bae2da7fc5bcd304d3ae60782a17580667d749ce3faa"
+    },
+    {
+      "path": "composition.json",
+      "bytes": 4508,
+      "sha256": "e50cbc4e5110af168ca145075d2da711109bf01d394fc6786c338b8781240a7a"
+    },
+    {
+      "path": "extract-jp-game-data.py",
+      "bytes": 6118,
+      "sha256": "b3022ec6d22014245607f18014dd02e3bfed570d0626637476f3b5a477805d37"
+    },
+    {
+      "path": "reproduce.py",
+      "bytes": 71524,
+      "sha256": "e9446b76403828ded264dcf4dca193d9b83968aabcc477cacf8ba4c89cf3b1ae"
+    },
+    {
+      "path": "wikiru-primary-extract-v1.json",
+      "bytes": 23838,
+      "sha256": "81925830d2e1573d23631d7e4b764e5e48222a16a7255a5ad25d83828bd601f9"
+    },
+    {
+      "path": "inputs/base-mechanics-2026-07.json",
+      "bytes": 4220,
+      "sha256": "b046b63ff91ba0374a913146e3195a8f892ceb26520453375fd16440932defdf"
+    },
+    {
+      "path": "inputs/jp-game-data-extract-v1.json",
+      "bytes": 26661,
+      "sha256": "af44f691c7708fa7f2e024df47d4a9fa05610d62f95e60ba9c2c3e40a840b923"
+    },
+    {
+      "path": "inputs/phase1-project-assumption-bundle-v2.json",
+      "bytes": 10385,
+      "sha256": "8a8e03596fda0f77cf4169914126a48d3abd8d27e1518a4d76fce4e374567edf"
+    },
+    {
+      "path": "inputs/wikiru-backup38-20260806.html",
+      "bytes": 380486,
+      "sha256": "33b7f7d08f5249b0d93efad441ef1dd7ec95d7e5939fdda7e02c9625d9cb45a8"
+    },
+    {
+      "path": "output.json",
+      "bytes": 68747,
+      "sha256": "ca24367c26aec53981b046abb01743708c3d0fb0e1d05ad6544288f86082613d"
+    }
+  ]
+}

@@ -1,8 +1,10 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { buildOperatorAvailabilitySnapshot } from "./operator-availability.mjs";
 
 const root = process.cwd();
 const outputPath = path.join(root, "src", "data", "operators.json");
+const availabilityOutputPath = path.join(root, "src", "data", "operator-availability-v1.json");
 const nameOverridesPath = path.join(root, "src", "data", "operator-name-overrides.json");
 const baseSkillOverridesPath = path.join(root, "src", "data", "base-skill-overrides.json");
 const baseSkillLocalizationOverridesPath = path.join(root, "src", "data", "base-skill-localization-overrides.json");
@@ -10,21 +12,31 @@ const baseSkillLocalizationFallbacksPath = path.join(root, "src", "data", "base-
 const sources = {
   zh: {
     characters:
-      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/character_table.json",
+      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/81c6d458a1778a9ba878a95c4e6fe48fb4254041/zh_CN/gamedata/excel/character_table.json",
     building:
-      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/building_data.json"
+      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/81c6d458a1778a9ba878a95c4e6fe48fb4254041/zh_CN/gamedata/excel/building_data.json",
+    availabilitySource: {
+      url: "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/81c6d458a1778a9ba878a95c4e6fe48fb4254041/zh_CN/gamedata/excel/character_table.json",
+      commit: "81c6d458a1778a9ba878a95c4e6fe48fb4254041",
+      observedAt: "2026-08-01T11:32:07Z"
+    }
   },
   ja: {
     characters:
-      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/ja_JP/gamedata/excel/character_table.json",
+      "https://raw.githubusercontent.com/ArknightsAssets/ArknightsGamedata/7faf192d15eeac8b236c561a1938679f4642279e/jp/gamedata/excel/character_table.json",
     building:
-      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/ja_JP/gamedata/excel/building_data.json"
+      "https://raw.githubusercontent.com/ArknightsAssets/ArknightsGamedata/7faf192d15eeac8b236c561a1938679f4642279e/jp/gamedata/excel/building_data.json",
+    availabilitySource: {
+      url: "https://raw.githubusercontent.com/ArknightsAssets/ArknightsGamedata/7faf192d15eeac8b236c561a1938679f4642279e/jp/gamedata/excel/character_table.json",
+      commit: "7faf192d15eeac8b236c561a1938679f4642279e",
+      observedAt: "2026-08-01T09:36:58Z"
+    }
   },
   en: {
     characters:
-      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/en_US/gamedata/excel/character_table.json",
+      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/57010cb5b2afea112cae57daa756b58676ba6850/en_US/gamedata/excel/character_table.json",
     building:
-      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/en_US/gamedata/excel/building_data.json"
+      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/57010cb5b2afea112cae57daa756b58676ba6850/en_US/gamedata/excel/building_data.json"
   }
 };
 
@@ -609,11 +621,15 @@ function applyBaseSkillOverrides(operators, overrides) {
         }
         return { ...effect, ...patch };
       });
+      const addedEffects = structuredClone(skillOverride.addEffects ?? []).map((effect) => ({
+        ...effect,
+        hiddenFromUi: effect.hiddenFromUi ?? true
+      }));
 
       return {
         ...skill,
         ...structuredClone(skillOverride.patch ?? {}),
-        effects: [...effects, ...structuredClone(skillOverride.addEffects ?? [])]
+        effects: [...effects, ...addedEffects]
       };
     });
     const addAffiliations = operatorOverride.addAffiliations ?? [];
@@ -832,7 +848,15 @@ const operators = normalize(
   await loadBaseSkillLocalizationOverrides(),
   await loadBaseSkillLocalizationFallbacks()
 );
+const availabilitySnapshot = buildOperatorAvailabilitySnapshot({
+  regions: {
+    JP: { characterTable: languages.ja.characters, source: sources.ja.availabilitySource },
+    CN: { characterTable: languages.zh.characters, source: sources.zh.availabilitySource }
+  }
+});
 
 await mkdir(path.dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(operators, null, 2)}\n`, "utf8");
+await writeFile(availabilityOutputPath, `${JSON.stringify(availabilitySnapshot, null, 2)}\n`, "utf8");
 console.log(`Imported ${operators.length} operators into ${outputPath}`);
+console.log(`Imported regional availability into ${availabilityOutputPath}`);

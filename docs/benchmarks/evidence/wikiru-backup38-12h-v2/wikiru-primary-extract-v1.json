@@ -1,0 +1,800 @@
+{
+  "schemaVersion": 1,
+  "tableHeader": [
+    "配置場所",
+    "シフト1",
+    "シフト2",
+    "シフト3"
+  ],
+  "colorGroupMapping": {
+    "#99ffff": "A",
+    "#ff99ff": "B",
+    "#ffff99": "C",
+    "#cccccc": "support"
+  },
+  "rows": [
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-a-b",
+      "sourceName": "Mon3tr",
+      "operatorId": "char_4179_monstr",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-b-c",
+      "sourceName": "斬業ホシグマ",
+      "operatorId": "char_1044_hsgma2",
+      "sourceColor": "background-color:#cccccc;",
+      "groupId": "support"
+    },
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-c-a",
+      "sourceName": "Mon3tr",
+      "operatorId": "char_4179_monstr",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-a-b",
+      "sourceName": "チョンユエ",
+      "operatorId": "char_2024_chyue",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-b-c",
+      "sourceName": "フレイムテイル",
+      "operatorId": "char_420_flamtl",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-c-a",
+      "sourceName": "フレイムテイル",
+      "operatorId": "char_420_flamtl",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-a-b",
+      "sourceName": "シー",
+      "operatorId": "char_2015_dusk",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-b-c",
+      "sourceName": "デルフィーン",
+      "operatorId": "char_4110_delphn",
+      "sourceColor": "background-color:#cccccc;",
+      "groupId": "support"
+    },
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-c-a",
+      "sourceName": "チョンユエ",
+      "operatorId": "char_2024_chyue",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-a-b",
+      "sourceName": "リィン",
+      "operatorId": "char_2023_ling",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-b-c",
+      "sourceName": "スワイヤー",
+      "operatorId": "char_308_swire",
+      "sourceColor": "background-color:#cccccc;",
+      "groupId": "support"
+    },
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-c-a",
+      "sourceName": "シー",
+      "operatorId": "char_2015_dusk",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-a-b",
+      "sourceName": "ヴィヴィアナ",
+      "operatorId": "char_4098_vvana",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-b-c",
+      "sourceName": "ヴィヴィアナ",
+      "operatorId": "char_4098_vvana",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "制御中枢",
+      "facilityId": "control-center",
+      "shiftId": "groups-c-a",
+      "sourceName": "リィン",
+      "operatorId": "char_2023_ling",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "応接室",
+      "facilityId": "reception",
+      "shiftId": "groups-a-b",
+      "sourceName": "赤刃明霄チェン",
+      "operatorId": "char_1050_chen3",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "応接室",
+      "facilityId": "reception",
+      "shiftId": "groups-b-c",
+      "sourceName": "チェン",
+      "operatorId": "char_010_chen",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "応接室",
+      "facilityId": "reception",
+      "shiftId": "groups-c-a",
+      "sourceName": "イネス",
+      "operatorId": "char_4087_ines",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "応接室",
+      "facilityId": "reception",
+      "shiftId": "groups-a-b",
+      "sourceName": "チェン",
+      "operatorId": "char_010_chen",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "応接室",
+      "facilityId": "reception",
+      "shiftId": "groups-b-c",
+      "sourceName": "イネス",
+      "operatorId": "char_4087_ines",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "応接室",
+      "facilityId": "reception",
+      "shiftId": "groups-c-a",
+      "sourceName": "赤刃明霄チェン",
+      "operatorId": "char_1050_chen3",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "記録製造1",
+      "facilityId": "factory-battle-record-1",
+      "shiftId": "groups-a-b",
+      "sourceName": "エフイーター",
+      "operatorId": "char_241_panda",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "記録製造1",
+      "facilityId": "factory-battle-record-1",
+      "shiftId": "groups-b-c",
+      "sourceName": "パラス",
+      "operatorId": "char_485_pallas",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "記録製造1",
+      "facilityId": "factory-battle-record-1",
+      "shiftId": "groups-c-a",
+      "sourceName": "アッシュロック",
+      "operatorId": "char_431_ashlok",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "記録製造1",
+      "facilityId": "factory-battle-record-1",
+      "shiftId": "groups-a-b",
+      "sourceName": "コンビクション",
+      "operatorId": "char_159_peacok",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "記録製造1",
+      "facilityId": "factory-battle-record-1",
+      "shiftId": "groups-b-c",
+      "sourceName": "シーン",
+      "operatorId": "char_336_folivo",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "記録製造1",
+      "facilityId": "factory-battle-record-1",
+      "shiftId": "groups-c-a",
+      "sourceName": "ワイルドメイン",
+      "operatorId": "char_496_wildmn",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "記録製造1",
+      "facilityId": "factory-battle-record-1",
+      "shiftId": "groups-a-b",
+      "sourceName": "ミニマリスト",
+      "operatorId": "char_4054_malist",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "記録製造1",
+      "facilityId": "factory-battle-record-1",
+      "shiftId": "groups-b-c",
+      "sourceName": "ヴァーミル",
+      "operatorId": "char_190_clour",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "記録製造1",
+      "facilityId": "factory-battle-record-1",
+      "shiftId": "groups-c-a",
+      "sourceName": "ファートゥース",
+      "operatorId": "char_430_fartth",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "記録製造2",
+      "facilityId": "factory-battle-record-2",
+      "shiftId": "groups-a-b",
+      "sourceName": "パラス",
+      "operatorId": "char_485_pallas",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "記録製造2",
+      "facilityId": "factory-battle-record-2",
+      "shiftId": "groups-b-c",
+      "sourceName": "アッシュロック",
+      "operatorId": "char_431_ashlok",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "記録製造2",
+      "facilityId": "factory-battle-record-2",
+      "shiftId": "groups-c-a",
+      "sourceName": "エフイーター",
+      "operatorId": "char_241_panda",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "記録製造2",
+      "facilityId": "factory-battle-record-2",
+      "shiftId": "groups-a-b",
+      "sourceName": "シーン",
+      "operatorId": "char_336_folivo",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "記録製造2",
+      "facilityId": "factory-battle-record-2",
+      "shiftId": "groups-b-c",
+      "sourceName": "ワイルドメイン",
+      "operatorId": "char_496_wildmn",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "記録製造2",
+      "facilityId": "factory-battle-record-2",
+      "shiftId": "groups-c-a",
+      "sourceName": "コンビクション",
+      "operatorId": "char_159_peacok",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "記録製造2",
+      "facilityId": "factory-battle-record-2",
+      "shiftId": "groups-a-b",
+      "sourceName": "ヴァーミル",
+      "operatorId": "char_190_clour",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "記録製造2",
+      "facilityId": "factory-battle-record-2",
+      "shiftId": "groups-b-c",
+      "sourceName": "ファートゥース",
+      "operatorId": "char_430_fartth",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "記録製造2",
+      "facilityId": "factory-battle-record-2",
+      "shiftId": "groups-c-a",
+      "sourceName": "ミニマリスト",
+      "operatorId": "char_4054_malist",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "純金製造1",
+      "facilityId": "factory-gold-1",
+      "shiftId": "groups-a-b",
+      "sourceName": "セイリュウ",
+      "operatorId": "char_385_finlpp",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "純金製造1",
+      "facilityId": "factory-gold-1",
+      "shiftId": "groups-b-c",
+      "sourceName": "ブライオファイタ",
+      "operatorId": "char_4106_bryota",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "純金製造1",
+      "facilityId": "factory-gold-1",
+      "shiftId": "groups-c-a",
+      "sourceName": "アロマ",
+      "operatorId": "char_446_aroma",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "純金製造1",
+      "facilityId": "factory-gold-1",
+      "shiftId": "groups-a-b",
+      "sourceName": "ウィーディ",
+      "operatorId": "char_400_weedy",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "純金製造1",
+      "facilityId": "factory-gold-1",
+      "shiftId": "groups-b-c",
+      "sourceName": "グラベル",
+      "operatorId": "char_237_gravel",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "純金製造1",
+      "facilityId": "factory-gold-1",
+      "shiftId": "groups-c-a",
+      "sourceName": "ワイフー",
+      "operatorId": "char_243_waaifu",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "純金製造1",
+      "facilityId": "factory-gold-1",
+      "shiftId": "groups-a-b",
+      "sourceName": "ユーネクテス",
+      "operatorId": "char_416_zumama",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "純金製造1",
+      "facilityId": "factory-gold-1",
+      "shiftId": "groups-b-c",
+      "sourceName": "引星ソーンズ",
+      "operatorId": "char_1039_thorn2",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "純金製造1",
+      "facilityId": "factory-gold-1",
+      "shiftId": "groups-c-a",
+      "sourceName": "ロスモンティス",
+      "operatorId": "char_391_rosmon",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "純金製造2",
+      "facilityId": "factory-gold-2",
+      "shiftId": "groups-a-b",
+      "sourceName": "ブライオファイタ",
+      "operatorId": "char_4106_bryota",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "純金製造2",
+      "facilityId": "factory-gold-2",
+      "shiftId": "groups-b-c",
+      "sourceName": "アロマ",
+      "operatorId": "char_446_aroma",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "純金製造2",
+      "facilityId": "factory-gold-2",
+      "shiftId": "groups-c-a",
+      "sourceName": "セイリュウ",
+      "operatorId": "char_385_finlpp",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "純金製造2",
+      "facilityId": "factory-gold-2",
+      "shiftId": "groups-a-b",
+      "sourceName": "グラベル",
+      "operatorId": "char_237_gravel",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "純金製造2",
+      "facilityId": "factory-gold-2",
+      "shiftId": "groups-b-c",
+      "sourceName": "ワイフー",
+      "operatorId": "char_243_waaifu",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "純金製造2",
+      "facilityId": "factory-gold-2",
+      "shiftId": "groups-c-a",
+      "sourceName": "ウィーディ",
+      "operatorId": "char_400_weedy",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "純金製造2",
+      "facilityId": "factory-gold-2",
+      "shiftId": "groups-a-b",
+      "sourceName": "引星ソーンズ",
+      "operatorId": "char_1039_thorn2",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "純金製造2",
+      "facilityId": "factory-gold-2",
+      "shiftId": "groups-b-c",
+      "sourceName": "ロスモンティス",
+      "operatorId": "char_391_rosmon",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "純金製造2",
+      "facilityId": "factory-gold-2",
+      "shiftId": "groups-c-a",
+      "sourceName": "ユーネクテス",
+      "operatorId": "char_416_zumama",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "貿易所1",
+      "facilityId": "trading-post-1",
+      "shiftId": "groups-a-b",
+      "sourceName": "プロヴァイゾ",
+      "operatorId": "char_4032_provs",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "貿易所1",
+      "facilityId": "trading-post-1",
+      "shiftId": "groups-b-c",
+      "sourceName": "シャマレ",
+      "operatorId": "char_254_vodfox",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "貿易所1",
+      "facilityId": "trading-post-1",
+      "shiftId": "groups-c-a",
+      "sourceName": "シージ",
+      "operatorId": "char_112_siege",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "貿易所1",
+      "facilityId": "trading-post-1",
+      "shiftId": "groups-a-b",
+      "sourceName": "アルケット",
+      "operatorId": "char_332_archet",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "貿易所1",
+      "facilityId": "trading-post-1",
+      "shiftId": "groups-b-c",
+      "sourceName": "カフカ",
+      "operatorId": "char_214_kafka",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "貿易所1",
+      "facilityId": "trading-post-1",
+      "shiftId": "groups-c-a",
+      "sourceName": "モーガン",
+      "operatorId": "char_154_morgan",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "貿易所1",
+      "facilityId": "trading-post-1",
+      "shiftId": "groups-a-b",
+      "sourceName": "ウユウ",
+      "operatorId": "char_455_nothin",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "貿易所1",
+      "facilityId": "trading-post-1",
+      "shiftId": "groups-b-c",
+      "sourceName": "テキーラ",
+      "operatorId": "char_486_takila",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "貿易所1",
+      "facilityId": "trading-post-1",
+      "shiftId": "groups-c-a",
+      "sourceName": "ヴィーナ・ヴィクトリア",
+      "operatorId": "char_1019_siege2",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "貿易所2",
+      "facilityId": "trading-post-2",
+      "shiftId": "groups-a-b",
+      "sourceName": "シャマレ",
+      "operatorId": "char_254_vodfox",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "貿易所2",
+      "facilityId": "trading-post-2",
+      "shiftId": "groups-b-c",
+      "sourceName": "シージ",
+      "operatorId": "char_112_siege",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "貿易所2",
+      "facilityId": "trading-post-2",
+      "shiftId": "groups-c-a",
+      "sourceName": "プロヴァイゾ",
+      "operatorId": "char_4032_provs",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "貿易所2",
+      "facilityId": "trading-post-2",
+      "shiftId": "groups-a-b",
+      "sourceName": "カフカ",
+      "operatorId": "char_214_kafka",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "貿易所2",
+      "facilityId": "trading-post-2",
+      "shiftId": "groups-b-c",
+      "sourceName": "モーガン",
+      "operatorId": "char_154_morgan",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "貿易所2",
+      "facilityId": "trading-post-2",
+      "shiftId": "groups-c-a",
+      "sourceName": "アルケット",
+      "operatorId": "char_332_archet",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "貿易所2",
+      "facilityId": "trading-post-2",
+      "shiftId": "groups-a-b",
+      "sourceName": "テキーラ",
+      "operatorId": "char_486_takila",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "貿易所2",
+      "facilityId": "trading-post-2",
+      "shiftId": "groups-b-c",
+      "sourceName": "ヴィーナ・ヴィクトリア",
+      "operatorId": "char_1019_siege2",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "貿易所2",
+      "facilityId": "trading-post-2",
+      "shiftId": "groups-c-a",
+      "sourceName": "ウユウ",
+      "operatorId": "char_455_nothin",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "発電所1",
+      "facilityId": "power-plant-1",
+      "shiftId": "groups-a-b",
+      "sourceName": "炎獄ラヴァ",
+      "operatorId": "char_1011_lava2",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "発電所1",
+      "facilityId": "power-plant-1",
+      "shiftId": "groups-b-c",
+      "sourceName": "リスカム",
+      "operatorId": "char_107_liskam",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "発電所1",
+      "facilityId": "power-plant-1",
+      "shiftId": "groups-c-a",
+      "sourceName": "ゴールデングロー",
+      "operatorId": "char_377_gdglow",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "発電所2",
+      "facilityId": "power-plant-2",
+      "shiftId": "groups-a-b",
+      "sourceName": "リスカム",
+      "operatorId": "char_107_liskam",
+      "sourceColor": "background-color:#ff99ff;",
+      "groupId": "B"
+    },
+    {
+      "facilityLabel": "発電所2",
+      "facilityId": "power-plant-2",
+      "shiftId": "groups-b-c",
+      "sourceName": "ゴールデングロー",
+      "operatorId": "char_377_gdglow",
+      "sourceColor": "background-color:#ffff99;",
+      "groupId": "C"
+    },
+    {
+      "facilityLabel": "発電所2",
+      "facilityId": "power-plant-2",
+      "shiftId": "groups-c-a",
+      "sourceName": "炎獄ラヴァ",
+      "operatorId": "char_1011_lava2",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "発電所3",
+      "facilityId": "power-plant-3",
+      "shiftId": "groups-a-b",
+      "sourceName": "承曦グレイ",
+      "operatorId": "char_1027_greyy2",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "発電所3",
+      "facilityId": "power-plant-3",
+      "shiftId": "groups-b-c",
+      "sourceName": "グレイ",
+      "operatorId": "char_253_greyy",
+      "sourceColor": "background-color:#cccccc;",
+      "groupId": "support"
+    },
+    {
+      "facilityLabel": "発電所3",
+      "facilityId": "power-plant-3",
+      "shiftId": "groups-c-a",
+      "sourceName": "承曦グレイ",
+      "operatorId": "char_1027_greyy2",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "事務室",
+      "facilityId": "office",
+      "shiftId": "groups-a-b",
+      "sourceName": "マルベリー",
+      "operatorId": "char_473_mberry",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    },
+    {
+      "facilityLabel": "事務室",
+      "facilityId": "office",
+      "shiftId": "groups-b-c",
+      "sourceName": "ウィスパーレイン",
+      "operatorId": "char_436_whispr",
+      "sourceColor": "background-color:#cccccc;",
+      "groupId": "support"
+    },
+    {
+      "facilityLabel": "事務室",
+      "facilityId": "office",
+      "shiftId": "groups-c-a",
+      "sourceName": "マルベリー",
+      "operatorId": "char_473_mberry",
+      "sourceColor": "background-color:#99ffff;",
+      "groupId": "A"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 # Localization sources
 
-- Official Japanese and English game data: `Kengxxiao/ArknightsGameData_YoStar`
+- Japanese game data: `ArknightsAssets/ArknightsGamedata` (`jp/gamedata/excel`)
+- Official English game data: `Kengxxiao/ArknightsGameData_YoStar`
 - Official Chinese game data: `Kengxxiao/ArknightsGameData`
 - English translations for content not yet present in the global data: Arknights Terra Wiki (`arknights.wiki.gg`)
 - Japanese base-skill names and descriptions missing from the official game-data mirror: Arknights Strategy Wiki (`arknights.wikiru.jp`)
