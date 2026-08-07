@@ -1,6 +1,5 @@
 import type { AppRegion, Operator, Roster } from "../types";
 import availabilityData from "../data/operator-availability-v1.json";
-import operatorsData from "../data/operators.json";
 
 export type OperatorAvailabilityRegion = AppRegion;
 
@@ -26,6 +25,7 @@ export type OperatorAvailabilityValidationResult =
   | { ok: false; errors: string[] };
 
 const supportedRegions = ["JP", "CN"] as const;
+const operatorIdPattern = /^char_\d+_[a-z0-9]+$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -54,10 +54,7 @@ function isIsoTimestamp(value: unknown): value is string {
   return timestamp.toISOString() === canonicalValue;
 }
 
-export function validateOperatorAvailabilitySnapshot(
-  input: unknown,
-  catalogOperatorIds: readonly string[]
-): OperatorAvailabilityValidationResult {
+export function validateOperatorAvailabilitySnapshot(input: unknown): OperatorAvailabilityValidationResult {
   if (!isRecord(input)) return { ok: false, errors: ["availability snapshot must be an object"] };
 
   const errors: string[] = [];
@@ -73,7 +70,6 @@ export function validateOperatorAvailabilitySnapshot(
     }
   }
 
-  const catalogIdSet = new Set(catalogOperatorIds);
   for (const region of supportedRegions) {
     const entry = input.regions[region];
     if (!isRecord(entry)) {
@@ -93,18 +89,27 @@ export function validateOperatorAvailabilitySnapshot(
       }
     }
 
-    if (!Array.isArray(entry.operatorIds) || !entry.operatorIds.every(isNonEmptyString)) {
-      errors.push(`regions.${region}.operatorIds must be an array of non-empty strings`);
+    if (!Array.isArray(entry.operatorIds)) {
+      errors.push(`regions.${region}.operatorIds must be an array`);
       continue;
     }
 
     const seen = new Set<string>();
+    let previousOperatorId: string | undefined;
     for (const operatorId of entry.operatorIds) {
+      if (!isNonEmptyString(operatorId)) {
+        errors.push(`regions.${region}.operatorIds must contain only non-empty strings`);
+        continue;
+      }
+      if (!operatorIdPattern.test(operatorId)) {
+        errors.push(`regions.${region}.operatorIds contains malformed operator ID ${operatorId}`);
+      }
       if (seen.has(operatorId)) errors.push(`regions.${region}.operatorIds contains duplicate operator ID ${operatorId}`);
       seen.add(operatorId);
-      if (!catalogIdSet.has(operatorId)) {
-        errors.push(`regions.${region}.operatorIds contains unknown operator ID ${operatorId}`);
+      if (previousOperatorId !== undefined && operatorId <= previousOperatorId) {
+        errors.push(`regions.${region}.operatorIds must be in strict ascending order`);
       }
+      previousOperatorId = operatorId;
     }
   }
 
@@ -113,10 +118,7 @@ export function validateOperatorAvailabilitySnapshot(
     : { ok: false, errors };
 }
 
-const checkedInSnapshot = validateOperatorAvailabilitySnapshot(
-  availabilityData,
-  operatorsData.map((operator) => operator.id)
-);
+const checkedInSnapshot = validateOperatorAvailabilitySnapshot(availabilityData);
 
 if (!checkedInSnapshot.ok) {
   throw new Error(`Invalid checked-in operator availability snapshot:\n${checkedInSnapshot.errors.join("\n")}`);

@@ -10,7 +10,7 @@
   "runtimeDataProvenance": {
     "operatorAvailabilitySourceCommit": "81c6d458a1778a9ba878a95c4e6fe48fb4254041"
   },
-  "confidence": "corroborated",
+  "confidence": "disputed",
   "sources": [
     {
       "url": "https://github.com/Hnsr0327/arknights-base-simulation/tree/d374e1513a90adb45cb37259047e5db02db8ac1d",

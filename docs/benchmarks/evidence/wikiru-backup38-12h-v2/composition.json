@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "layout": "243",
+  "shiftOrder": [
+    "groups-a-b",
+    "groups-b-c",
+    "groups-c-a"
+  ],
+  "shiftHours": 12,
+  "cycleHours": 36,
+  "facilityProducts": {
+    "factory-gold-1": "gold",
+    "factory-gold-2": "gold",
+    "factory-battle-record-1": "battleRecord",
+    "factory-battle-record-2": "battleRecord"
+  },
+  "shifts": [
+    {
+      "id": "groups-a-b",
+      "hours": 12,
+      "facilities": {
+        "control-center": [
+          "char_4179_monstr",
+          "char_2024_chyue",
+          "char_2015_dusk",
+          "char_2023_ling",
+          "char_4098_vvana"
+        ],
+        "reception": [
+          "char_1050_chen3",
+          "char_010_chen"
+        ],
+        "factory-battle-record-1": [
+          "char_241_panda",
+          "char_159_peacok",
+          "char_4054_malist"
+        ],
+        "factory-battle-record-2": [
+          "char_485_pallas",
+          "char_336_folivo",
+          "char_190_clour"
+        ],
+        "factory-gold-1": [
+          "char_385_finlpp",
+          "char_400_weedy",
+          "char_416_zumama"
+        ],
+        "factory-gold-2": [
+          "char_4106_bryota",
+          "char_237_gravel",
+          "char_1039_thorn2"
+        ],
+        "trading-post-1": [
+          "char_4032_provs",
+          "char_332_archet",
+          "char_455_nothin"
+        ],
+        "trading-post-2": [
+          "char_254_vodfox",
+          "char_214_kafka",
+          "char_486_takila"
+        ],
+        "power-plant-1": [
+          "char_1011_lava2"
+        ],
+        "power-plant-2": [
+          "char_107_liskam"
+        ],
+        "power-plant-3": [
+          "char_1027_greyy2"
+        ],
+        "office": [
+          "char_473_mberry"
+        ]
+      }
+    },
+    {
+      "id": "groups-b-c",
+      "hours": 12,
+      "facilities": {
+        "control-center": [
+          "char_1044_hsgma2",
+          "char_420_flamtl",
+          "char_4110_delphn",
+          "char_308_swire",
+          "char_4098_vvana"
+        ],
+        "reception": [
+          "char_010_chen",
+          "char_4087_ines"
+        ],
+        "factory-battle-record-1": [
+          "char_485_pallas",
+          "char_336_folivo",
+          "char_190_clour"
+        ],
+        "factory-battle-record-2": [
+          "char_431_ashlok",
+          "char_496_wildmn",
+          "char_430_fartth"
+        ],
+        "factory-gold-1": [
+          "char_4106_bryota",
+          "char_237_gravel",
+          "char_1039_thorn2"
+        ],
+        "factory-gold-2": [
+          "char_446_aroma",
+          "char_243_waaifu",
+          "char_391_rosmon"
+        ],
+        "trading-post-1": [
+          "char_254_vodfox",
+          "char_214_kafka",
+          "char_486_takila"
+        ],
+        "trading-post-2": [
+          "char_112_siege",
+          "char_154_morgan",
+          "char_1019_siege2"
+        ],
+        "power-plant-1": [
+          "char_107_liskam"
+        ],
+        "power-plant-2": [
+          "char_377_gdglow"
+        ],
+        "power-plant-3": [
+          "char_253_greyy"
+        ],
+        "office": [
+          "char_436_whispr"
+        ]
+      }
+    },
+    {
+      "id": "groups-c-a",
+      "hours": 12,
+      "facilities": {
+        "control-center": [
+          "char_4179_monstr",
+          "char_420_flamtl",
+          "char_2024_chyue",
+          "char_2015_dusk",
+          "char_2023_ling"
+        ],
+        "reception": [
+          "char_4087_ines",
+          "char_1050_chen3"
+        ],
+        "factory-battle-record-1": [
+          "char_431_ashlok",
+          "char_496_wildmn",
+          "char_430_fartth"
+        ],
+        "factory-battle-record-2": [
+          "char_241_panda",
+          "char_159_peacok",
+          "char_4054_malist"
+        ],
+        "factory-gold-1": [
+          "char_446_aroma",
+          "char_243_waaifu",
+          "char_391_rosmon"
+        ],
+        "factory-gold-2": [
+          "char_385_finlpp",
+          "char_400_weedy",
+          "char_416_zumama"
+        ],
+        "trading-post-1": [
+          "char_112_siege",
+          "char_154_morgan",
+          "char_1019_siege2"
+        ],
+        "trading-post-2": [
+          "char_4032_provs",
+          "char_332_archet",
+          "char_455_nothin"
+        ],
+        "power-plant-1": [
+          "char_377_gdglow"
+        ],
+        "power-plant-2": [
+          "char_1011_lava2"
+        ],
+        "power-plant-3": [
+          "char_1027_greyy2"
+        ],
+        "office": [
+          "char_473_mberry"
+        ]
+      }
+    }
+  ]
+}

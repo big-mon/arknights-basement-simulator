@@ -1,0 +1,949 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "ArknightsAssets/ArknightsGamedata",
+    "commit": "7faf192d15eeac8b236c561a1938679f4642279e",
+    "characterTable": {
+      "path": "jp/gamedata/excel/character_table.json",
+      "fullBlobContentSha256": "e5db4e916181700195397e67bf5fafd9897ebdd8961b6702a17985b8c61f463d"
+    },
+    "buildingData": {
+      "path": "jp/gamedata/excel/building_data.json",
+      "fullBlobContentSha256": "162f838e5e1cdd10cda98cd77ae9fc68931c48d8c3230952cdcce8670ebda6da"
+    }
+  },
+  "rowIdentity": {
+    "characterTable": [
+      "/char_002_amiya",
+      "/char_010_chen",
+      "/char_107_liskam",
+      "/char_112_siege",
+      "/char_154_morgan",
+      "/char_159_peacok",
+      "/char_190_clour",
+      "/char_2014_nian",
+      "/char_2015_dusk",
+      "/char_2023_ling",
+      "/char_2024_chyue",
+      "/char_214_kafka",
+      "/char_237_gravel",
+      "/char_241_panda",
+      "/char_243_waaifu",
+      "/char_253_greyy",
+      "/char_254_vodfox",
+      "/char_300_phenxi",
+      "/char_308_swire",
+      "/char_332_archet",
+      "/char_336_folivo",
+      "/char_338_iris",
+      "/char_377_gdglow",
+      "/char_385_finlpp",
+      "/char_391_rosmon",
+      "/char_400_weedy",
+      "/char_4032_provs",
+      "/char_4047_pianst",
+      "/char_4054_malist",
+      "/char_4087_ines",
+      "/char_4098_vvana",
+      "/char_4106_bryota",
+      "/char_4110_delphn",
+      "/char_416_zumama",
+      "/char_4179_monstr",
+      "/char_420_flamtl",
+      "/char_430_fartth",
+      "/char_431_ashlok",
+      "/char_436_whispr",
+      "/char_446_aroma",
+      "/char_455_nothin",
+      "/char_473_mberry",
+      "/char_485_pallas",
+      "/char_486_takila",
+      "/char_496_wildmn",
+      "/char_1011_lava2",
+      "/char_1019_siege2",
+      "/char_1027_greyy2",
+      "/char_1039_thorn2",
+      "/char_1044_hsgma2",
+      "/char_1050_chen3"
+    ],
+    "buildingChars": [
+      "/chars/char_214_kafka",
+      "/chars/char_190_clour",
+      "/chars/char_253_greyy",
+      "/chars/char_336_folivo",
+      "/chars/char_377_gdglow",
+      "/chars/char_4032_provs",
+      "/chars/char_4179_monstr",
+      "/chars/char_485_pallas",
+      "/chars/char_486_takila",
+      "/chars/char_1011_lava2",
+      "/chars/char_1027_greyy2",
+      "/chars/char_1044_hsgma2",
+      "/chars/char_107_liskam"
+    ],
+    "buildingBuffs": [
+      "/buffs/control_prod_spd[1000]",
+      "/buffs/control_token_prod_spd3[000]",
+      "/buffs/manu_formula_limit[0000]",
+      "/buffs/manu_formula_spd[000]",
+      "/buffs/manu_prod_limit&cost[0000]",
+      "/buffs/manu_prod_limit&cost[003]",
+      "/buffs/manu_prod_spd_addition[041]",
+      "/buffs/manu_prod_spd_variable[000]",
+      "/buffs/power_rec_drone[000]",
+      "/buffs/power_rec_spd[020]",
+      "/buffs/power_rec_spd[021]",
+      "/buffs/power_rec_spd[022]",
+      "/buffs/power_rec_spd[023]",
+      "/buffs/trade_ord_against[010]",
+      "/buffs/trade_ord_law[000]",
+      "/buffs/trade_ord_long[010]",
+      "/buffs/trade_ord_wt&cost[010]",
+      "/buffs/trade_ord_wt&cost[011]"
+    ],
+    "kafkaE2UnlockedBuffReference": "/chars/char_214_kafka/buffChar/0/buffData/1"
+  },
+  "characters": {
+    "char_002_amiya": {
+      "name": "アーミヤ",
+      "profession": "CASTER",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_010_chen": {
+      "name": "チェン",
+      "profession": "WARRIOR",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_107_liskam": {
+      "name": "リスカム",
+      "profession": "TANK",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_112_siege": {
+      "name": "シージ",
+      "profession": "PIONEER",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_154_morgan": {
+      "name": "モーガン",
+      "profession": "WARRIOR",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_159_peacok": {
+      "name": "コンビクション",
+      "profession": "WARRIOR",
+      "rarity": "TIER_4",
+      "isNotObtainable": false
+    },
+    "char_190_clour": {
+      "name": "ヴァーミル",
+      "profession": "SNIPER",
+      "rarity": "TIER_4",
+      "isNotObtainable": false
+    },
+    "char_2014_nian": {
+      "name": "ニェン",
+      "profession": "TANK",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_2015_dusk": {
+      "name": "シー",
+      "profession": "CASTER",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_2023_ling": {
+      "name": "リィン",
+      "profession": "SUPPORT",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_2024_chyue": {
+      "name": "チョンユエ",
+      "profession": "WARRIOR",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_214_kafka": {
+      "name": "カフカ",
+      "profession": "SPECIAL",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_237_gravel": {
+      "name": "グラベル",
+      "profession": "SPECIAL",
+      "rarity": "TIER_4",
+      "isNotObtainable": false
+    },
+    "char_241_panda": {
+      "name": "エフイーター",
+      "profession": "SPECIAL",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_243_waaifu": {
+      "name": "ワイフー",
+      "profession": "SPECIAL",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_253_greyy": {
+      "name": "グレイ",
+      "profession": "CASTER",
+      "rarity": "TIER_4",
+      "isNotObtainable": false
+    },
+    "char_254_vodfox": {
+      "name": "シャマレ",
+      "profession": "SUPPORT",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_300_phenxi": {
+      "name": "フィアメッタ",
+      "profession": "SNIPER",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_308_swire": {
+      "name": "スワイヤー",
+      "profession": "WARRIOR",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_332_archet": {
+      "name": "アルケット",
+      "profession": "SNIPER",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_336_folivo": {
+      "name": "シーン",
+      "profession": "SUPPORT",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_338_iris": {
+      "name": "アイリス",
+      "profession": "CASTER",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_377_gdglow": {
+      "name": "ゴールデングロー",
+      "profession": "CASTER",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_385_finlpp": {
+      "name": "セイリュウ",
+      "profession": "MEDIC",
+      "rarity": "TIER_4",
+      "isNotObtainable": false
+    },
+    "char_391_rosmon": {
+      "name": "ロスモンティス",
+      "profession": "SNIPER",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_400_weedy": {
+      "name": "ウィーディ",
+      "profession": "SPECIAL",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_4032_provs": {
+      "name": "プロヴァイゾ",
+      "profession": "SUPPORT",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_4047_pianst": {
+      "name": "ツェルニー",
+      "profession": "TANK",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_4054_malist": {
+      "name": "ミニマリスト",
+      "profession": "CASTER",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_4087_ines": {
+      "name": "イネス",
+      "profession": "PIONEER",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_4098_vvana": {
+      "name": "ヴィヴィアナ",
+      "profession": "WARRIOR",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_4106_bryota": {
+      "name": "ブライオファイタ",
+      "profession": "WARRIOR",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_4110_delphn": {
+      "name": "デルフィーン",
+      "profession": "CASTER",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_416_zumama": {
+      "name": "ユーネクテス",
+      "profession": "TANK",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_4179_monstr": {
+      "name": "Mon3tr",
+      "profession": "MEDIC",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_420_flamtl": {
+      "name": "フレイムテイル",
+      "profession": "PIONEER",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_430_fartth": {
+      "name": "ファートゥース",
+      "profession": "SNIPER",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_431_ashlok": {
+      "name": "アッシュロック",
+      "profession": "TANK",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_436_whispr": {
+      "name": "ウィスパーレイン",
+      "profession": "MEDIC",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_446_aroma": {
+      "name": "アロマ",
+      "profession": "CASTER",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_455_nothin": {
+      "name": "ウユウ",
+      "profession": "SPECIAL",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_473_mberry": {
+      "name": "マルベリー",
+      "profession": "MEDIC",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_485_pallas": {
+      "name": "パラス",
+      "profession": "WARRIOR",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_486_takila": {
+      "name": "テキーラ",
+      "profession": "WARRIOR",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_496_wildmn": {
+      "name": "ワイルドメイン",
+      "profession": "PIONEER",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_1011_lava2": {
+      "name": "炎獄ラヴァ",
+      "profession": "CASTER",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_1019_siege2": {
+      "name": "ヴィーナ・ヴィクトリア",
+      "profession": "WARRIOR",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_1027_greyy2": {
+      "name": "承曦グレイ",
+      "profession": "SNIPER",
+      "rarity": "TIER_5",
+      "isNotObtainable": false
+    },
+    "char_1039_thorn2": {
+      "name": "引星ソーンズ",
+      "profession": "SPECIAL",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_1044_hsgma2": {
+      "name": "斬業ホシグマ",
+      "profession": "TANK",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    },
+    "char_1050_chen3": {
+      "name": "赤刃明霄チェン",
+      "profession": "WARRIOR",
+      "rarity": "TIER_6",
+      "isNotObtainable": false
+    }
+  },
+  "buildingChars": {
+    "char_214_kafka": {
+      "charId": "char_214_kafka",
+      "maxManpower": 8640000,
+      "buffChar": [
+        {
+          "buffData": [
+            {
+              "buffId": "trade_ord_wt&cost[011]",
+              "cond": {
+                "phase": "PHASE_2",
+                "level": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "char_190_clour": {
+      "charId": "char_190_clour",
+      "maxManpower": 8640000,
+      "buffChar": [
+        {
+          "buffData": [
+            {
+              "buffId": "manu_prod_limit&cost[0000]",
+              "cond": {
+                "phase": "PHASE_0",
+                "level": 1
+              }
+            },
+            {
+              "buffId": "manu_prod_spd_variable[000]",
+              "cond": {
+                "phase": "PHASE_1",
+                "level": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "char_253_greyy": {
+      "charId": "char_253_greyy",
+      "maxManpower": 8640000,
+      "buffChar": [
+        {
+          "buffData": [
+            {
+              "buffId": "power_rec_spd[020]",
+              "cond": {
+                "phase": "PHASE_0",
+                "level": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "char_336_folivo": {
+      "charId": "char_336_folivo",
+      "maxManpower": 8640000,
+      "buffChar": [
+        {
+          "buffData": [
+            {
+              "buffId": "manu_prod_spd_addition[041]",
+              "cond": {
+                "phase": "PHASE_0",
+                "level": 1
+              }
+            },
+            {
+              "buffId": "manu_formula_limit[0000]",
+              "cond": {
+                "phase": "PHASE_2",
+                "level": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "char_377_gdglow": {
+      "charId": "char_377_gdglow",
+      "maxManpower": 8640000,
+      "buffChar": [
+        {
+          "buffData": [
+            {
+              "buffId": "power_rec_spd[023]",
+              "cond": {
+                "phase": "PHASE_2",
+                "level": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "char_4032_provs": {
+      "charId": "char_4032_provs",
+      "maxManpower": 8640000,
+      "buffChar": [
+        {
+          "buffData": [
+            {
+              "buffId": "trade_ord_law[000]",
+              "cond": {
+                "phase": "PHASE_0",
+                "level": 1
+              }
+            },
+            {
+              "buffId": "trade_ord_against[010]",
+              "cond": {
+                "phase": "PHASE_2",
+                "level": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "char_4179_monstr": {
+      "charId": "char_4179_monstr",
+      "maxManpower": 8640000,
+      "buffChar": [
+        {
+          "buffData": [
+            {
+              "buffId": "control_prod_spd[1000]",
+              "cond": {
+                "phase": "PHASE_2",
+                "level": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "char_485_pallas": {
+      "charId": "char_485_pallas",
+      "maxManpower": 8640000,
+      "buffChar": [
+        {
+          "buffData": [
+            {
+              "buffId": "manu_prod_limit&cost[003]",
+              "cond": {
+                "phase": "PHASE_0",
+                "level": 1
+              }
+            },
+            {
+              "buffId": "manu_formula_spd[000]",
+              "cond": {
+                "phase": "PHASE_2",
+                "level": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "char_486_takila": {
+      "charId": "char_486_takila",
+      "maxManpower": 8640000,
+      "buffChar": [
+        {
+          "buffData": [
+            {
+              "buffId": "trade_ord_long[010]",
+              "cond": {
+                "phase": "PHASE_2",
+                "level": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "char_1011_lava2": {
+      "charId": "char_1011_lava2",
+      "maxManpower": 8640000,
+      "buffChar": [
+        {
+          "buffData": [
+            {
+              "buffId": "power_rec_spd[022]",
+              "cond": {
+                "phase": "PHASE_2",
+                "level": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "char_1027_greyy2": {
+      "charId": "char_1027_greyy2",
+      "maxManpower": 8640000,
+      "buffChar": [
+        {
+          "buffData": [
+            {
+              "buffId": "power_rec_drone[000]",
+              "cond": {
+                "phase": "PHASE_0",
+                "level": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "char_1044_hsgma2": {
+      "charId": "char_1044_hsgma2",
+      "maxManpower": 8640000,
+      "buffChar": [
+        {
+          "buffData": [
+            {
+              "buffId": "control_token_prod_spd3[000]",
+              "cond": {
+                "phase": "PHASE_2",
+                "level": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "char_107_liskam": {
+      "charId": "char_107_liskam",
+      "maxManpower": 8640000,
+      "buffChar": [
+        {
+          "buffData": [
+            {
+              "buffId": "power_rec_spd[021]",
+              "cond": {
+                "phase": "PHASE_2",
+                "level": 1
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "buildingBuffs": {
+    "control_prod_spd[1000]": {
+      "buffId": "control_prod_spd[1000]",
+      "buffName": "最高権限",
+      "buffIcon": "control",
+      "skillIcon": "bskill_ctrl_p_spd",
+      "sortId": 1603,
+      "buffColor": "#005752",
+      "textColor": "#ffffff",
+      "buffCategory": "FUNCTION",
+      "roomType": "CONTROL",
+      "description": "制御中枢配置時、全製造所の製造効率<@cc.vup>+2%</>（同種の効果は高いほうのみ適用）",
+      "efficiency": 0,
+      "targetGroupSortId": 0,
+      "targets": {}
+    },
+    "control_token_prod_spd3[000]": {
+      "buffId": "control_token_prod_spd3[000]",
+      "buffName": "同僚との絆",
+      "buffIcon": "control",
+      "skillIcon": "bskill_token_prod_spd3_lungmenguard",
+      "sortId": 1612,
+      "buffColor": "#005752",
+      "textColor": "#ffffff",
+      "buffCategory": "FUNCTION",
+      "roomType": "CONTROL",
+      "description": "<$cc.g.lgd><@cc.kw>龍門近衛局</></>所属オペレーターと共に制御中枢に配置時、全製造所の製造効率<@cc.vup>+3%</>（同種の効果は高いほうのみ適用）",
+      "efficiency": 0,
+      "targetGroupSortId": 0,
+      "targets": {}
+    },
+    "manu_formula_limit[0000]": {
+      "buffId": "manu_formula_limit[0000]",
+      "buffName": "映像編集α",
+      "buffIcon": "manufacture",
+      "skillIcon": "bskill_man_exp&limit1",
+      "sortId": 3301,
+      "buffColor": "#ffd800",
+      "textColor": "#333333",
+      "buffCategory": "OUTPUT",
+      "roomType": "MANUFACTURE",
+      "description": "製造所で<@cc.kw>作戦記録</>を製造時、保管上限<@cc.vup>+12</>",
+      "efficiency": 0,
+      "targetGroupSortId": 2,
+      "targets": [
+        "F_EXP"
+      ]
+    },
+    "manu_formula_spd[000]": {
+      "buffId": "manu_formula_spd[000]",
+      "buffName": "制勝の秘策",
+      "buffIcon": "manufacture",
+      "skillIcon": "bskill_man_exp1",
+      "sortId": 3801,
+      "buffColor": "#ffd800",
+      "textColor": "#333333",
+      "buffCategory": "OUTPUT",
+      "roomType": "MANUFACTURE",
+      "description": "製造所配置時、<@cc.kw>作戦記録</>製造の製造効率<@cc.vup>+25%</>",
+      "efficiency": 25,
+      "targetGroupSortId": 2,
+      "targets": [
+        "F_EXP"
+      ]
+    },
+    "manu_prod_limit&cost[0000]": {
+      "buffId": "manu_prod_limit&cost[0000]",
+      "buffName": "ウェストピッカー",
+      "buffIcon": "manufacture",
+      "skillIcon": "bskill_man_limit&cost1",
+      "sortId": 3202,
+      "buffColor": "#ffd800",
+      "textColor": "#333333",
+      "buffCategory": "OUTPUT",
+      "roomType": "MANUFACTURE",
+      "description": "製造所配置時、保管上限<@cc.vup>+8</>、1時間ごとの体力消費量<@cc.vup>-0.25</>",
+      "efficiency": 0,
+      "targetGroupSortId": 4,
+      "targets": {}
+    },
+    "manu_prod_limit&cost[003]": {
+      "buffId": "manu_prod_limit&cost[003]",
+      "buffName": "叡智の境界",
+      "buffIcon": "manufacture",
+      "skillIcon": "bskill_man_limit&cost1",
+      "sortId": 3205,
+      "buffColor": "#ffd800",
+      "textColor": "#333333",
+      "buffCategory": "OUTPUT",
+      "roomType": "MANUFACTURE",
+      "description": "製造所配置時、保管上限<@cc.vup>+8</>、1時間ごとの体力消費量<@cc.vup>-0.25</>",
+      "efficiency": 0,
+      "targetGroupSortId": 4,
+      "targets": {}
+    },
+    "manu_prod_spd_addition[041]": {
+      "buffId": "manu_prod_spd_addition[041]",
+      "buffName": "タイムラプス",
+      "buffIcon": "manufacture",
+      "skillIcon": "bskill_man_spd_add2",
+      "sortId": 3536,
+      "buffColor": "#ffd800",
+      "textColor": "#333333",
+      "buffCategory": "OUTPUT",
+      "roomType": "MANUFACTURE",
+      "description": "製造所配置時、最初の1時間製造効率<@cc.vup>+15%</>、その後まで1時間ごと更に<@cc.vup>+2%</>、最終的に<@cc.vup>+25%</>になる",
+      "efficiency": 15,
+      "targetGroupSortId": 0,
+      "targets": [
+        "F_GOLD",
+        "F_EXP",
+        "F_DIAMOND"
+      ]
+    },
+    "manu_prod_spd_variable[000]": {
+      "buffId": "manu_prod_spd_variable[000]",
+      "buffName": "再利用",
+      "buffIcon": "manufacture",
+      "skillIcon": "bskill_man_spd_variable11",
+      "sortId": 3202,
+      "buffColor": "#ffd800",
+      "textColor": "#333333",
+      "buffCategory": "OUTPUT",
+      "roomType": "MANUFACTURE",
+      "description": "製造所配置時、保管上限1上昇につき、製造効率<@cc.vup>+2%</>",
+      "efficiency": 0,
+      "targetGroupSortId": 0,
+      "targets": [
+        "F_GOLD",
+        "F_EXP",
+        "F_DIAMOND"
+      ]
+    },
+    "power_rec_drone[000]": {
+      "buffId": "power_rec_drone[000]",
+      "buffName": "配電工事",
+      "buffIcon": "power",
+      "skillIcon": "bskill_pow_drone",
+      "sortId": 2001,
+      "buffColor": "#8fc31f",
+      "textColor": "#ffffff",
+      "buffCategory": "OUTPUT",
+      "roomType": "POWER",
+      "description": "発電所配置時、ドローンの上限数<@cc.vup>10</>につき、ドローンの回復速度<@cc.vup>+1%</>（最大<@cc.vup>+25%</>まで）",
+      "efficiency": 0,
+      "targetGroupSortId": 0,
+      "targets": {}
+    },
+    "power_rec_spd[020]": {
+      "buffId": "power_rec_spd[020]",
+      "buffName": "静電場",
+      "buffIcon": "power",
+      "skillIcon": "bskill_pow_spd3",
+      "sortId": 2301,
+      "buffColor": "#8fc31f",
+      "textColor": "#ffffff",
+      "buffCategory": "OUTPUT",
+      "roomType": "POWER",
+      "description": "発電所配置時、ドローンの回復速度<@cc.vup>+20%</>",
+      "efficiency": 20,
+      "targetGroupSortId": 0,
+      "targets": {}
+    },
+    "power_rec_spd[021]": {
+      "buffId": "power_rec_spd[021]",
+      "buffName": "電弧放電β",
+      "buffIcon": "power",
+      "skillIcon": "bskill_pow_spd3",
+      "sortId": 2303,
+      "buffColor": "#8fc31f",
+      "textColor": "#ffffff",
+      "buffCategory": "OUTPUT",
+      "roomType": "POWER",
+      "description": "発電所配置時、ドローンの回復速度<@cc.vup>+20%</>",
+      "efficiency": 20,
+      "targetGroupSortId": 0,
+      "targets": {}
+    },
+    "power_rec_spd[022]": {
+      "buffId": "power_rec_spd[022]",
+      "buffName": "火力発電γ",
+      "buffIcon": "power",
+      "skillIcon": "bskill_pow_spd3",
+      "sortId": 2302,
+      "buffColor": "#8fc31f",
+      "textColor": "#ffffff",
+      "buffCategory": "OUTPUT",
+      "roomType": "POWER",
+      "description": "発電所配置時、ドローンの回復速度<@cc.vup>+20%</>",
+      "efficiency": 20,
+      "targetGroupSortId": 0,
+      "targets": {}
+    },
+    "power_rec_spd[023]": {
+      "buffId": "power_rec_spd[023]",
+      "buffName": "放電",
+      "buffIcon": "power",
+      "skillIcon": "bskill_pow_spd3",
+      "sortId": 2303,
+      "buffColor": "#8fc31f",
+      "textColor": "#ffffff",
+      "buffCategory": "OUTPUT",
+      "roomType": "POWER",
+      "description": "発電所配置時、ドローンの回復速度<@cc.vup>+20%</>",
+      "efficiency": 20,
+      "targetGroupSortId": 0,
+      "targets": {}
+    },
+    "trade_ord_against[010]": {
+      "buffId": "trade_ord_against[010]",
+      "buffName": "違約金請求β",
+      "buffIcon": "trading",
+      "skillIcon": "bskill_tra_against2",
+      "sortId": 4005,
+      "buffColor": "#0075a9",
+      "textColor": "#ffffff",
+      "buffCategory": "OUTPUT",
+      "roomType": "TRADING",
+      "description": "貿易所配置時、次に受注する<@cc.kw>金属オーダー</>が<@cc.kw>違約オーダー</>ならば、<@cc.kw>純金</>の納品数が<@cc.vup>+2</>追加される",
+      "efficiency": 0,
+      "targetGroupSortId": 0,
+      "targets": {}
+    },
+    "trade_ord_law[000]": {
+      "buffId": "trade_ord_law[000]",
+      "buffName": "契約法",
+      "buffIcon": "trading",
+      "skillIcon": "bskill_tra_law",
+      "sortId": 4005,
+      "buffColor": "#0075a9",
+      "textColor": "#ffffff",
+      "buffCategory": "OUTPUT",
+      "roomType": "TRADING",
+      "description": "貿易所配置時、次に受注する<@cc.kw>金属オーダー</>の納品数が<@cc.kw>4</>を下回るならば、<@cc.kw>違約オーダー</>と見なす",
+      "efficiency": 0,
+      "targetGroupSortId": 0,
+      "targets": {}
+    },
+    "trade_ord_long[010]": {
+      "buffId": "trade_ord_long[010]",
+      "buffName": "資金運用β",
+      "buffIcon": "trading",
+      "skillIcon": "bskill_tra_long2",
+      "sortId": 4003,
+      "buffColor": "#0075a9",
+      "textColor": "#ffffff",
+      "buffCategory": "OUTPUT",
+      "roomType": "TRADING",
+      "description": "貿易所配置時、次に受注する<@cc.kw>金属オーダー</>の納品数が<@cc.kw>3</>を上回るならば（違約オーダーは金属オーダーと見なされない）、当該オーダーの報酬金額が<@cc.kw>+500</>追加され、1時間ごとの体力消費量<@cc.vup>-0.25</>",
+      "efficiency": 0,
+      "targetGroupSortId": 0,
+      "targets": {}
+    },
+    "trade_ord_wt&cost[010]": {
+      "buffId": "trade_ord_wt&cost[010]",
+      "buffName": "裁縫β",
+      "buffIcon": "trading",
+      "skillIcon": "bskill_tra_wt&cost2",
+      "sortId": 4005,
+      "buffColor": "#0075a9",
+      "textColor": "#ffffff",
+      "buffCategory": "OUTPUT",
+      "roomType": "TRADING",
+      "description": "貿易所配置時、配置貿易所の<@cc.kw>高価値な金属オーダー</>の獲得率が<@cc.kw>上昇</>（勤務時間が確率に影響する）、1時間ごとの体力消費量<@cc.vup>-0.25</>",
+      "efficiency": 0,
+      "targetGroupSortId": 0,
+      "targets": {}
+    },
+    "trade_ord_wt&cost[011]": {
+      "buffId": "trade_ord_wt&cost[011]",
+      "buffName": "手芸β",
+      "buffIcon": "trading",
+      "skillIcon": "bskill_tra_wt&cost2",
+      "sortId": 4005,
+      "buffColor": "#0075a9",
+      "textColor": "#ffffff",
+      "buffCategory": "OUTPUT",
+      "roomType": "TRADING",
+      "description": "貿易所配置時、配置貿易所の<@cc.kw>高価値な金属オーダー</>の獲得率が<@cc.kw>上昇</>（勤務時間が確率に影響する）、1時間ごとの体力消費量<@cc.vup>-0.25</>",
+      "efficiency": 0,
+      "targetGroupSortId": 0,
+      "targets": {}
+    }
+  }
+}

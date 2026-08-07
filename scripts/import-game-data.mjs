@@ -34,9 +34,9 @@ const sources = {
   },
   en: {
     characters:
-      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/en_US/gamedata/excel/character_table.json",
+      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/57010cb5b2afea112cae57daa756b58676ba6850/en_US/gamedata/excel/character_table.json",
     building:
-      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/en_US/gamedata/excel/building_data.json"
+      "https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/57010cb5b2afea112cae57daa756b58676ba6850/en_US/gamedata/excel/building_data.json"
   }
 };
 
@@ -621,11 +621,15 @@ function applyBaseSkillOverrides(operators, overrides) {
         }
         return { ...effect, ...patch };
       });
+      const addedEffects = structuredClone(skillOverride.addEffects ?? []).map((effect) => ({
+        ...effect,
+        hiddenFromUi: effect.hiddenFromUi ?? true
+      }));
 
       return {
         ...skill,
         ...structuredClone(skillOverride.patch ?? {}),
-        effects: [...effects, ...structuredClone(skillOverride.addEffects ?? [])]
+        effects: [...effects, ...addedEffects]
       };
     });
     const addAffiliations = operatorOverride.addAffiliations ?? [];
@@ -845,7 +849,6 @@ const operators = normalize(
   await loadBaseSkillLocalizationFallbacks()
 );
 const availabilitySnapshot = buildOperatorAvailabilitySnapshot({
-  catalogOperatorIds: operators.map((operator) => operator.id),
   regions: {
     JP: { characterTable: languages.ja.characters, source: sources.ja.availabilitySource },
     CN: { characterTable: languages.zh.characters, source: sources.zh.availabilitySource }

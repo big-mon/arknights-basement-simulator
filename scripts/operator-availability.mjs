@@ -1,9 +1,28 @@
-export function extractAvailableOperatorIds(characterTable, catalogOperatorIds) {
-  const tableOperatorIds = new Set(Object.keys(characterTable ?? {}));
-  return catalogOperatorIds.filter((operatorId) => tableOperatorIds.has(operatorId));
+const playableProfessions = new Set([
+  "PIONEER",
+  "WARRIOR",
+  "TANK",
+  "SNIPER",
+  "CASTER",
+  "MEDIC",
+  "SUPPORT",
+  "SPECIAL"
+]);
+
+export function extractAvailableOperatorIds(characterTable) {
+  return Object.entries(characterTable ?? {})
+    .filter(([operatorId, character]) =>
+      operatorId.startsWith("char_") &&
+      typeof character?.name === "string" &&
+      character.name.trim().length > 0 &&
+      character.isNotObtainable === false &&
+      playableProfessions.has(character.profession)
+    )
+    .map(([operatorId]) => operatorId)
+    .sort();
 }
 
-export function buildOperatorAvailabilitySnapshot({ catalogOperatorIds, regions }) {
+export function buildOperatorAvailabilitySnapshot({ regions }) {
   return {
     schemaVersion: 1,
     regions: Object.fromEntries(
@@ -11,7 +30,7 @@ export function buildOperatorAvailabilitySnapshot({ catalogOperatorIds, regions 
         region,
         {
           source: { ...regions[region].source },
-          operatorIds: extractAvailableOperatorIds(regions[region].characterTable, catalogOperatorIds)
+          operatorIds: extractAvailableOperatorIds(regions[region].characterTable)
         }
       ])
     )

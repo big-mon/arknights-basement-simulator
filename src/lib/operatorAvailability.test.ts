@@ -23,16 +23,59 @@ const cnOnlyOperatorIds = [
   "char_4228_closur"
 ] as const;
 
+const newlyPinnedCnOnlyOperatorIds = [
+  "char_1015_aglna2",
+  "char_4229_aphris",
+  "char_4230_mcnist",
+  "char_4235_thumpy",
+  "char_4236_tmslot",
+  "char_4237_jcinta"
+] as const;
+
 const catalogOperatorIds = operators.map((operator) => operator.id);
 
 describe("checked-in operator availability snapshot", () => {
   it("keeps the pinned JP and CN availability sets separate", () => {
-    expect(availableOperatorIds(operatorAvailabilitySnapshot, "JP")).toHaveLength(314);
-    expect(availableOperatorIds(operatorAvailabilitySnapshot, "CN")).toHaveLength(324);
+    expect(availableOperatorIds(operatorAvailabilitySnapshot, "JP")).toHaveLength(405);
+    expect(availableOperatorIds(operatorAvailabilitySnapshot, "CN")).toHaveLength(425);
     expect(availableOperators(operatorAvailabilitySnapshot, "JP", operators)).toHaveLength(314);
   });
 
+  it("intersects authoritative availability with the supplied modeled operators", () => {
+    const suppliedOperators = [
+      { id: "char_002_amiya", modeled: true },
+      { id: "char_1052_kalts2", modeled: true }
+    ];
+
+    expect(availableOperators(operatorAvailabilitySnapshot, "JP", suppliedOperators)).toEqual([
+      suppliedOperators[0]
+    ]);
+  });
+
+  it.each(["char_2014_nian", "char_436_whispr", "char_473_mberry"])(
+    "includes source-authoritative JP operator %s even when absent from the optimizer catalog",
+    (operatorId) => {
+      expect(catalogOperatorIds).not.toContain(operatorId);
+      expect(isOperatorAvailable(operatorAvailabilitySnapshot, "JP", operatorId)).toBe(true);
+    }
+  );
+
+  it("keeps each region bounded by its pinned character table and sorted by ID", () => {
+    const jpIds = availableOperatorIds(operatorAvailabilitySnapshot, "JP");
+    const cnIds = availableOperatorIds(operatorAvailabilitySnapshot, "CN");
+
+    expect(jpIds).toEqual([...jpIds].sort());
+    expect(cnIds).toEqual([...cnIds].sort());
+    expect(jpIds).not.toContain("char_1052_kalts2");
+    expect(cnIds).toContain("char_1052_kalts2");
+  });
+
   it.each(cnOnlyOperatorIds)("marks %s as CN-only", (operatorId) => {
+    expect(isOperatorAvailable(operatorAvailabilitySnapshot, "JP", operatorId)).toBe(false);
+    expect(isOperatorAvailable(operatorAvailabilitySnapshot, "CN", operatorId)).toBe(true);
+  });
+
+  it.each(newlyPinnedCnOnlyOperatorIds)("includes newly pinned CN-only operator %s", (operatorId) => {
     expect(isOperatorAvailable(operatorAvailabilitySnapshot, "JP", operatorId)).toBe(false);
     expect(isOperatorAvailable(operatorAvailabilitySnapshot, "CN", operatorId)).toBe(true);
   });
@@ -77,19 +120,57 @@ describe("regional benchmark views", () => {
 });
 
 describe("validateOperatorAvailabilitySnapshot", () => {
-  it("rejects an availability ID absent from the checked-in catalog", () => {
-    const malformed = structuredClone(operatorAvailabilitySnapshot) as any;
-    malformed.regions.JP.operatorIds.push("char_unknown");
+  it("accepts a structurally valid source-authoritative ID without an optimizer catalog", () => {
+    const snapshot = structuredClone(operatorAvailabilitySnapshot) as any;
+    const sourceAuthoritativeId = "char_9999_source";
+    expect(catalogOperatorIds).not.toContain(sourceAuthoritativeId);
+    snapshot.regions.JP.operatorIds.push(sourceAuthoritativeId);
+    snapshot.regions.JP.operatorIds.sort();
 
-    const result = validateOperatorAvailabilitySnapshot(malformed, catalogOperatorIds);
+    expect(validateOperatorAvailabilitySnapshot(snapshot)).toEqual({ ok: true, value: snapshot });
+  });
+
+  it("rejects a malformed operator ID", () => {
+    const malformed = structuredClone(operatorAvailabilitySnapshot) as any;
+    malformed.regions.JP.operatorIds[0] = "operator_002_amiya";
+
+    const result = validateOperatorAvailabilitySnapshot(malformed);
 
     expect(result.ok).toBe(false);
-    expect(result.ok ? [] : result.errors).toContain("regions.JP.operatorIds contains unknown operator ID char_unknown");
+    expect(result.ok ? [] : result.errors).toContain(
+      "regions.JP.operatorIds contains malformed operator ID operator_002_amiya"
+    );
+  });
+
+  it("rejects a duplicate operator ID", () => {
+    const malformed = structuredClone(operatorAvailabilitySnapshot) as any;
+    malformed.regions.JP.operatorIds.splice(1, 0, malformed.regions.JP.operatorIds[0]);
+
+    const result = validateOperatorAvailabilitySnapshot(malformed);
+
+    expect(result.ok).toBe(false);
+    expect(result.ok ? [] : result.errors).toContain(
+      `regions.JP.operatorIds contains duplicate operator ID ${malformed.regions.JP.operatorIds[0]}`
+    );
+  });
+
+  it("rejects operator IDs that are not in strict ascending order", () => {
+    const malformed = structuredClone(operatorAvailabilitySnapshot) as any;
+    [malformed.regions.JP.operatorIds[0], malformed.regions.JP.operatorIds[1]] = [
+      malformed.regions.JP.operatorIds[1],
+      malformed.regions.JP.operatorIds[0]
+    ];
+
+    const result = validateOperatorAvailabilitySnapshot(malformed);
+
+    expect(result.ok).toBe(false);
+    expect(result.ok ? [] : result.errors).toContain(
+      "regions.JP.operatorIds must be in strict ascending order"
+    );
   });
 
   it.each([
     ["unknown region", (snapshot: any) => { snapshot.regions.KR = structuredClone(snapshot.regions.JP); }],
-    ["duplicate ID", (snapshot: any) => { snapshot.regions.JP.operatorIds.push(snapshot.regions.JP.operatorIds[0]); }],
     ["invalid URL", (snapshot: any) => { snapshot.regions.JP.source.url = "not-a-url"; }],
     ["missing commit", (snapshot: any) => { delete snapshot.regions.JP.source.commit; }],
     ["invalid observed timestamp", (snapshot: any) => { snapshot.regions.JP.source.observedAt = "2026-08-01"; }]
@@ -97,6 +178,6 @@ describe("validateOperatorAvailabilitySnapshot", () => {
     const malformed = structuredClone(operatorAvailabilitySnapshot) as any;
     mutate(malformed);
 
-    expect(validateOperatorAvailabilitySnapshot(malformed, catalogOperatorIds).ok).toBe(false);
+    expect(validateOperatorAvailabilitySnapshot(malformed).ok).toBe(false);
   });
 });

@@ -13,23 +13,23 @@
 
 1. JP/CNの公開「1日2回入替」資料は、単純な2グループ交代ではなく、3グループを順番に循環させる構成を採用している。
 2. 現行アプリは2グループしか生成しない。この差はスキル計算以前にローテーション構造が理論編成と一致しない原因になり得る。
-3. JP資料から、製造所の3グループ36時間周期について、ドローンを除外した24時間平均を再現できた。
+3. JP資料から、製造所の3グループ36時間周期について、ドローンを除外した24時間平均を研究・参照値として再現できた。ただし、編成と24時間出力を示す2ページはいずれも同じ日本語Wikiサイトに属し、独立した裏付けではない。
    - 純金: 91.7893333333個/24h
    - 作戦記録: 33,613.3333333 EXP/24h
-4. CNの公開243編成を独立シミュレーターで再実行し、3交代・ドローン貿易所投入の24時間平均を再現できた。
+4. CNの公開243編成をその編成を収録するシミュレーターで評価し、3交代・ドローン貿易所投入の24時間平均を研究・参照値として算出できた。
    - 純金: 92.1333333333個/24h
    - 作戦記録: 27,700 EXP/24h
    - 龍門幣: 55,862 LMD/24h
-5. CN値はソルバー自身のモデルから得た再現値であり、ゲーム内実測との独立照合は未完了である。`confirmed` ではなく `corroborated` として扱う。
+5. CN値はソルバー自身のモデルから得た値である。別のCN資料は機構とモデル化手法の参考にはなるが、このfixtureの編成または24時間出力を独立に再現しておらず、文書化されたゲーム内観測も未完了である。このため `disputed` として扱い、合否判定には使用しない。
 6. JP資料はドローンを純金製造へ投入する前提で、Phase 1仕様は貿易所投入固定である。JPの龍門幣をPhase 1の合格値として固定してはならない。
 
 ## 根拠の信頼度
 
 | ID | 地域 | 内容 | 信頼度 | 採否 |
 |---|---|---|---|---|
-| `jp-243-factory-3group-2025-11` | JP | 3グループ製造編成と施設効率から導出した24時間平均 | `corroborated` | 製造所fixtureに採用可能 |
+| `jp-243-factory-3group-2025-11` | JP | 3グループ製造編成と施設効率から導出した24時間平均 | `disputed` | 研究・参照専用。合否判定には使用不可 |
 | `jp-243-trading-3group-2025-11` | JP | 俗世之憂、グラスゴー、シャマレ組 | `disputed` | スキル単体・チームfixtureのみ。全体LMD合否には未採用 |
-| `cn-243-3shift-2026-06` | CN | 3交代編成を独立シミュレーターで評価した資源別24時間平均 | `corroborated` | CN副基準として採用可能 |
+| `cn-243-3shift-2026-06` | CN | 3交代編成を収録元シミュレーターで評価した資源別24時間平均 | `disputed` | 研究・参照専用。合否判定には使用不可 |
 | `base-mechanics-2026-07` | 共通 | 製造時間、注文分布、体力、宿舎、ドローン定数 | `corroborated` | 式fixtureに採用可能。PRTS直接再確認を要する |
 
 ## ソース
@@ -71,7 +71,7 @@
   - ドローン上限は235。
   - 243は貿易所2・製造所4・発電所3の一般的構成。
 
-### S4: CN 243編成と独立シミュレーター
+### S4: CN 243編成と収録元シミュレーター
 
 - Repository: https://github.com/Hnsr0327/arknights-base-simulation
 - 固定コミット: https://github.com/Hnsr0327/arknights-base-simulation/tree/d374e1513a90adb45cb37259047e5db02db8ac1d
@@ -80,7 +80,7 @@
 - 元資料: 2026-06「泡影苍霆」逻辑元基建一图流 #2
 - 言語: 中国語
 - 参照日: 2026-08-04
-- 役割: CN編成、機構定数、資源別生産量の独立再計算
+- 役割: CN編成、機構定数、資源別生産量のモデル計算
 - 実行条件:
   - 243
   - ログイン時刻 00:00 / 08:00 / 16:00
@@ -110,6 +110,7 @@
   - ドローン上限、投入、資源コスト、反復日閉包をモデル化する。
   - 外部資料にはURL、参照日、ゲーム版、構造化結論、検証状態を持たせる。
   - `sample_243_gold_record.json` は `global_optimality_proven: false`、`single-day snapshot` であり、今回の理論正解には使用しない。
+  - この資料は機構とモデル化手法の独立した参考になるが、S4のfixtureと同一の編成または資源別24時間出力を再現していないため、composition/outputの裏付けには数えない。
 
 ### S6: PRTS機構ページ
 
@@ -170,7 +171,7 @@ S1が示す3チームの平均表記効率:
 期待値:
 
 - `battleRecordExp = 33613.3333333333`
-- 信頼度: `corroborated`
+- 信頼度: `disputed`
 
 ### 純金2室
 
@@ -197,7 +198,9 @@ S1が示す3チームの平均表記効率:
 期待値:
 
 - `goldProduced = 91.7893333333333`
-- 信頼度: `corroborated`
+- 信頼度: `disputed`
+
+編成、スキル条件、計算過程を保存した研究・参照データとしては有用だが、S1とS2は同じ日本語Wikiサイト内のページであり、独立した相互確認にはならない。昇格には、一次ゲームデータ、または別運営主体の資料・実測のいずれかで、実際の3グループ編成と上記の純金・作戦記録24時間値の両方を独立に確認する必要がある。それまでは合否判定に使用しない。
 
 ## JP貿易所の単体基準
 
@@ -248,7 +251,9 @@ lmd = (57363 + 53011 + 57212) / 3
 - `lmd = 55862`
 - `drones = trading`
 - 許容差: 外部モデル値に対して±1%
-- 信頼度: `corroborated`
+- 信頼度: `disputed`
+
+S4は編成と計算済み出力を保存する研究・参照データとして有用であり、S5は機構とモデル化手法の検討に有用である。しかしS5はこのfixtureの編成または上記の24時間出力を独立に再現せず、ゲーム内観測も未完了である。昇格には、一次ゲームデータまたはS4から独立した資料・実測により、実際の3交代編成と純金・作戦記録・龍門幣の24時間値をともに確認する必要がある。それまでは合否判定に使用しない。
 
 ## 判明した仕様差・リスク
 
@@ -320,3 +325,14 @@ JP/CNの地域利用可能性を基準ケースに必須とする。S1の未実�
 - runner observationも同じフィールド名を使う。独立したreference版を観測できない場合はreference診断をinformationalにし、runtime commitで代用しない。
 - `base-mechanics-2026-07` はrosterを実行しない式fixtureなので、runtime boundaryを作らない。
 - 旧`version.gameDataVersion`は二つの意味を区別できないため、暗黙migrationせずvalidation errorにする。
+
+### #50 Wikiru backup 38 evidence packet
+
+- packet: `docs/benchmarks/evidence/wikiru-backup38-12h-v2/`
+- 固定snapshot: backup 38（2025-11-02 18:43:20 +0900）、参照日2026-08-06、SHA-256 `33b7f7d08f5249b0d93efad441ef1dd7ec95d7e5939fdda7e02c9625d9cb45a8`
+- 順序付き全循環: `groups-a-b`、`groups-b-c`、`groups-c-a`（各12時間）。24時間資源評価は先頭2枠だけで、shift 3資源値は独立した36時間sustainability ledgerだけに保存する。
+- 知覚情報製造組: bundle v2はproduction group Cであり、`groups-a-b`は非稼働、`groups-b-c`は`perceptionInfo` 20と`elapsedWorkHours` 12、`groups-c-a`は`perceptionInfo` 10とslot-normalized `elapsedWorkHours` 12を持つ。運用上の循環group C第2枠`[12,24)`は別の概念であり、authoritative bundle inputを変更しない。
+- 各評価shiftで利用可能な全ドローンを`trading-post-1`へ投入する。
+- confidence: `corroborated`
+- verifier: packet rootを引数に取るstdlib-only offline reproducer。固定HTMLから87 assignmentを再抽出し、29 active slots/shift、施設容量、JP canonical ID、24時間resource ledger、36時間actor state closure、manifest/checksumをfail closedで検査する。
+- 数値規則はpinned JP game-dataの結果寄与buff description/fieldから機械抽出し、sustainabilityは各shiftの4宿舎×5 concrete slot、mode別morale delta、1組限定の相互exchangeを保存outputと再生成outputの双方で検査する。

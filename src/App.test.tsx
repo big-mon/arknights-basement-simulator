@@ -7,6 +7,7 @@ import baseSkillLocalizationFallbacks from "./data/base-skill-localization-fallb
 import { createDefaultState, operators } from "./data/defaults";
 import { productLabels } from "./i18n";
 import { localizeText } from "./lib/localization";
+import { availableOperators, isOperatorAvailable, operatorAvailabilitySnapshot } from "./lib/operatorAvailability";
 import { maxImportJsonBytes } from "./lib/storage";
 import type { Assignment, AssignmentPlan, FacilityPlan } from "./types";
 
@@ -40,6 +41,15 @@ const radian = operators.find((operator) => operator.id === "char_4195_radian")!
 const xiangPerfumer = operators.find((operator) => operator.id === "char_1022_flwr2")!;
 const wang = operators.find((operator) => operator.id === "char_2027_wang")!;
 const wisadel = operators.find((operator) => operator.id === "char_1035_wisdel")!;
+const flametail = operators.find((operator) => operator.id === "char_420_flamtl")!;
+const newlyPinnedCnOnlyOperatorIds = [
+  "char_1015_aglna2",
+  "char_4229_aphris",
+  "char_4230_mcnist",
+  "char_4235_thumpy",
+  "char_4236_tmslot",
+  "char_4237_jcinta"
+] as const;
 const levelLockedOperator = operators.find((operator) => operator.skills.some((skill) => skill.unlockLevel > 1))!;
 const missingEnglishSkillOperator = operators.find((operator) =>
   operator.skills.some((skill) => !skill.name.en || skill.effects.some((effect) => !effect.description.en))
@@ -164,8 +174,8 @@ describe("App", () => {
   });
 
   it("supplements missing Japanese operator names", () => {
-    expect(operators.filter((operator) => !operator.name.ja)).toHaveLength(0);
-    expect(operators.filter((operator) => !operator.name.en)).toHaveLength(0);
+    const jpOperators = availableOperators(operatorAvailabilitySnapshot, "JP", operators);
+    expect(jpOperators.filter((operator) => !operator.name.ja)).toHaveLength(0);
     expect(makiri.name.ja).toBe("マツキリ");
     expect(haruka.name.ja).toBe("ハルカ");
     expect(mantra.name.ja).toBe("マントラ");
@@ -191,8 +201,19 @@ describe("App", () => {
     expect(wang.name.ja).toBe("ウァン");
   });
 
+  it.each(newlyPinnedCnOnlyOperatorIds)("keeps CN-only operator %s on unverified zh fallback", (operatorId) => {
+    const operator = operators.find((candidate) => candidate.id === operatorId)!;
+
+    expect(isOperatorAvailable(operatorAvailabilitySnapshot, "CN", operatorId)).toBe(true);
+    expect(isOperatorAvailable(operatorAvailabilitySnapshot, "JP", operatorId)).toBe(false);
+    expect(operator.name.zh).toBeTruthy();
+    expect(operator.name.ja).toBeUndefined();
+    expect(operator.skills.every((skill) => skill.name.zh && skill.effects.every((effect) => effect.description.zh))).toBe(true);
+  });
+
   it("includes Japanese names and descriptions for every visible base skill", () => {
-    const missingJapanese = operators.flatMap((operator) =>
+    const jpOperators = availableOperators(operatorAvailabilitySnapshot, "JP", operators);
+    const missingJapanese = jpOperators.flatMap((operator) =>
       operator.skills.flatMap((skill) => [
         ...(!skill.name.ja ? [`${operator.id}:${skill.id}:name`] : []),
         ...skill.effects
@@ -399,6 +420,13 @@ describe("App", () => {
 
     expect(within(wisadelCard).getAllByText(/イネスが応接室に配置されているとき/)).toHaveLength(2);
     expect(within(wisadelCard).queryByText(/if Ines is assigned to the Reception Room/)).not.toBeInTheDocument();
+  });
+
+  it("marks Flametail's calculation-only gold split as hidden from the UI", () => {
+    const skill = flametail.skills.find((candidate) => candidate.id === "control_mp_psk[000]")!;
+    const goldSplit = skill.effects.find((effect) => effect.product === "gold")!;
+
+    expect(goldSplit.hiddenFromUi).toBe(true);
   });
 
   it("filters the owned roster with profession and rarity radio options", async () => {
