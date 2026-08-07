@@ -119,29 +119,61 @@ interface RecoveryEvent {
   applyExchangeAtStart?: boolean;
 }
 
+interface RecoveryIntervalProof {
+  operatorId: string;
+  intervalStartHour: number;
+  intervalEndHour: number;
+  endMorale: number;
+  phaseTimingAssumesFullBlockStart: boolean;
+}
+
+interface RecoveryBuildResult {
+  events: RecoveryEvent[];
+  intervalProofs: RecoveryIntervalProof[];
+}
+
 function rateAt(assignment: Assignment, morale: number): number {
   const provenance = assignment.recoveryProvenance!;
+  const phase = provenance.phases?.find((candidate) =>
+    morale >= candidate.moraleAbove - 1e-12 &&
+    (morale < candidate.moraleAtMost - 1e-12 || candidate.moraleAtMost >= moraleCap - 1e-12)
+  );
+  if (phase) return phase.recoveryRatePerHour;
   return provenance.baseRecoveryRatePerHour + provenance.conditionalModifiers
     .filter((modifier) => morale < modifier.moraleAtMost - 1e-12)
     .reduce((total, modifier) => total + modifier.additionalRatePerHour, 0);
 }
 
-function requiredRecoveryHours(assignment: Assignment, moraleDebt: number): number {
-  if (assignment.moraleExchangeApplied) return 0;
-  let morale = Math.max(0, moraleCap - moraleDebt);
-  let hours = 0;
-  while (morale < moraleCap - 1e-12) {
-    const thresholds = assignment.recoveryProvenance!.conditionalModifiers
-      .map((modifier) => modifier.moraleAtMost)
-      .filter((threshold) => threshold > morale + 1e-12)
-      .sort((left, right) => left - right);
-    const boundary = Math.min(moraleCap, thresholds[0] ?? moraleCap);
-    const rate = rateAt(assignment, morale);
-    if (!(rate > 0) || !Number.isFinite(rate)) return Number.POSITIVE_INFINITY;
-    hours += (boundary - morale) / rate;
-    morale = boundary;
-  }
-  return hours;
+function sourcesAt(assignment: Assignment, morale: number) {
+  const provenance = assignment.recoveryProvenance!;
+  return provenance.phases?.find((candidate) =>
+    morale >= candidate.moraleAbove - 1e-12 &&
+    (morale < candidate.moraleAtMost - 1e-12 || candidate.moraleAtMost >= moraleCap - 1e-12)
+  )?.sources ?? provenance.sources;
+}
+
+function recoveryBoundaryAt(assignment: Assignment, morale: number): number {
+  const phase = assignment.recoveryProvenance!.phases?.find((candidate) =>
+    morale >= candidate.moraleAbove - 1e-12 &&
+    (morale < candidate.moraleAtMost - 1e-12 || candidate.moraleAtMost >= moraleCap - 1e-12)
+  );
+  if (phase) return phase.moraleAtMost;
+  return assignment.recoveryProvenance!.conditionalModifiers
+    .map((modifier) => modifier.moraleAtMost)
+    .filter((threshold) => threshold > morale + 1e-12)
+    .sort((left, right) => left - right)[0] ?? moraleCap;
+}
+
+function phaseHelpers(assignment: Assignment, operatorId: string, morale: number) {
+  const sources = sourcesAt(assignment, morale);
+  return {
+    helperIds: [...new Set(sources
+      .filter((source) => source.occupiesDormitorySlot && source.operatorId !== operatorId)
+      .map((source) => source.operatorId))].sort(),
+    exclusiveHelperIds: [...new Set(sources
+      .filter((source) => source.occupiesDormitorySlot && source.allocation === "single-other-exclusive")
+      .map((source) => source.operatorId))].sort()
+  };
 }
 
 function cyclicIdleSegments(occurrences: readonly WorkOccurrence[], index: number, cycleHours: number): Array<[number, number]> {
@@ -154,7 +186,7 @@ function cyclicIdleSegments(occurrences: readonly WorkOccurrence[], index: numbe
   return result;
 }
 
-function buildRecoveryEvents(works: readonly WorkOccurrence[], cycleHours: number): RecoveryEvent[] {
+function buildRecoveryEvents(works: readonly WorkOccurrence[], cycleHours: number): RecoveryBuildResult {
   const byOperator = new Map<string, WorkOccurrence[]>();
   for (const occurrence of works) {
     const operatorWorks = byOperator.get(occurrence.assignment.operatorId) ?? [];
@@ -162,6 +194,7 @@ function buildRecoveryEvents(works: readonly WorkOccurrence[], cycleHours: numbe
     byOperator.set(occurrence.assignment.operatorId, operatorWorks);
   }
   const events: RecoveryEvent[] = [];
+  const intervalProofs: RecoveryIntervalProof[] = [];
   for (const [operatorId, operatorWorks] of [...byOperator].sort(([left], [right]) => left.localeCompare(right))) {
     operatorWorks.sort((left, right) => left.startHour - right.startHour || left.shiftIndex - right.shiftIndex);
     const idleAfter = operatorWorks.map((_, index) => cyclicIdleSegments(operatorWorks, index, cycleHours));
@@ -178,43 +211,61 @@ function buildRecoveryEvents(works: readonly WorkOccurrence[], cycleHours: numbe
         if (occurrenceIndex === terminalIndex) break;
         occurrenceIndex = (occurrenceIndex + 1) % operatorWorks.length;
       }
-      let remaining = work.assignment.moraleExchangeApplied
-        ? idle.reduce((total, [start, end]) => total + end - start, 0)
-        : requiredRecoveryHours(work.assignment, moraleDebt);
       const exchangeSourceId = work.assignment.moraleExchangeApplied
         ? work.assignment.moraleExchangeSourceOperatorId
         : undefined;
       let exchangePending = Boolean(exchangeSourceId);
+      let morale = Math.max(0, moraleCap - moraleDebt);
       for (const [start, end] of idle) {
-        if (remaining <= 1e-12) break;
-        const duration = Math.min(end - start, remaining);
-        if (duration <= 1e-12) continue;
-        const helperIds = work.assignment.recoveryProvenance!.sources
-          .filter((source) => source.occupiesDormitorySlot && source.operatorId !== operatorId)
-          .map((source) => source.operatorId);
-        const exclusiveHelperIds = work.assignment.recoveryProvenance!.sources
-          .filter((source) => source.occupiesDormitorySlot && source.allocation === "single-other-exclusive")
-          .map((source) => source.operatorId);
-        if (exchangeSourceId && exchangeSourceId !== operatorId) helperIds.push(exchangeSourceId);
-        events.push({
-          operatorId,
-          startHour: start,
-          endHour: start + duration,
-          groupKey: work.groupIds.join("+"),
-          assignment: work.assignment,
-          helperIds: [...new Set(helperIds)].sort(),
-          exclusiveHelperIds: [...new Set(exclusiveHelperIds)].sort(),
-          ...(exchangeSourceId ? { exchangeSourceId } : {}),
-          ...(exchangePending ? { applyExchangeAtStart: true } : {})
-        });
-        exchangePending = false;
-        remaining -= duration;
+        let cursor = start;
+        while (cursor < end - 1e-12 && (work.assignment.moraleExchangeApplied || morale < moraleCap - 1e-12)) {
+          const rate = rateAt(work.assignment, morale);
+          const boundary = Math.min(moraleCap, recoveryBoundaryAt(work.assignment, morale));
+          const durationToBoundary = rate > 0 && Number.isFinite(rate)
+            ? (boundary - morale) / rate
+            : Number.POSITIVE_INFINITY;
+          const duration = work.assignment.moraleExchangeApplied
+            ? end - cursor
+            : Math.min(end - cursor, durationToBoundary);
+          if (duration <= 1e-12) break;
+          const { helperIds, exclusiveHelperIds } = phaseHelpers(work.assignment, operatorId, morale);
+          if (exchangeSourceId && exchangeSourceId !== operatorId) helperIds.push(exchangeSourceId);
+          events.push({
+            operatorId,
+            startHour: cursor,
+            endHour: cursor + duration,
+            groupKey: work.groupIds.join("+"),
+            assignment: work.assignment,
+            helperIds: [...new Set(helperIds)].sort(),
+            exclusiveHelperIds,
+            ...(exchangeSourceId ? { exchangeSourceId } : {}),
+            ...(exchangePending ? { applyExchangeAtStart: true } : {})
+          });
+          exchangePending = false;
+          cursor += duration;
+          if (work.assignment.moraleExchangeApplied) {
+            morale = moraleCap;
+            break;
+          }
+          if (!(rate > 0) || !Number.isFinite(rate)) break;
+          morale = Math.min(boundary, morale + rate * duration);
+        }
       }
+      intervalProofs.push({
+        operatorId,
+        intervalStartHour: idle[0][0],
+        intervalEndHour: idle[idle.length - 1][1],
+        endMorale: morale,
+        phaseTimingAssumesFullBlockStart: (work.assignment.recoveryProvenance?.phases?.length ?? 0) > 1
+      });
     });
   }
-  return events.sort((left, right) =>
-    left.startHour - right.startHour || left.groupKey.localeCompare(right.groupKey) || left.operatorId.localeCompare(right.operatorId)
-  );
+  return {
+    events: events.sort((left, right) =>
+      left.startHour - right.startHour || left.groupKey.localeCompare(right.groupKey) || left.operatorId.localeCompare(right.operatorId)
+    ),
+    intervalProofs
+  };
 }
 
 function intervalsOverlap(leftStart: number, leftEnd: number, rightStart: number, rightEnd: number): boolean {
@@ -560,7 +611,8 @@ function evaluateInternal({ plan, layout }: PlanSustainabilityEvaluationInput): 
     message: "Per-shift natural ledgers and proportional drone shares do not aggregate to plan.resources.cycleLedger"
   }]);
 
-  const recoveryEvents = buildRecoveryEvents(works, plan.schedule.cycleHours);
+  const recoveryBuild = buildRecoveryEvents(works, plan.schedule.cycleHours);
+  const recoveryEvents = recoveryBuild.events;
   for (const event of recoveryEvents) {
     const overlappingSource = event.helperIds.find((helperId) => works.some((work) =>
       work.assignment.operatorId === helperId && intervalsOverlap(event.startHour, event.endHour, work.startHour, work.endHour)
@@ -604,6 +656,16 @@ function evaluateInternal({ plan, layout }: PlanSustainabilityEvaluationInput): 
     code: "morale-fixed-point-not-converged",
     path: "morale/fixed-point",
     message: `Morale fixed point did not converge within ${fixedPointIterationLimit} iterations`
+  }]);
+
+  const unprovenRecoveryInterval = recoveryBuild.intervalProofs.find((proof) =>
+    proof.phaseTimingAssumesFullBlockStart && proof.endMorale < moraleCap - fixedPointTolerance
+  );
+  if (unprovenRecoveryInterval) return incomplete([{
+    code: "recovery-phase-timing-unproven",
+    path: `morale/recovery-interval/${unprovenRecoveryInterval.operatorId}/${unprovenRecoveryInterval.intervalStartHour}-${unprovenRecoveryInterval.intervalEndHour}`,
+    message: `Recovery interval does not restore ${unprovenRecoveryInterval.operatorId} to full morale before the next work block, so conditional phase timing is unproven`,
+    operatorId: unprovenRecoveryInterval.operatorId
   }]);
 
   const authoritativeInput: SustainableCycleInput = { ...inputBase, initialMorale: candidate };

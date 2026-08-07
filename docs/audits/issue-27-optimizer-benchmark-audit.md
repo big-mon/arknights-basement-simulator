@@ -94,6 +94,8 @@ complete planでは各windowのselected facility teamを`simulateFacilityProduct
 
 連続勤務はcycle boundaryをまたぐ場合もpositive idle gap単位のcyclic blockとして扱う。直前gap以降の各window固有のmorale消費を合算し、gap直前のterminal occurrenceの回復provenanceだけで回復を配置する。positive idle gapがないfull-cycle勤務には回復を捏造せず、fixed-point開始moraleが0の勤務はhour 0の`fatigued-before-shift-end`を保持する。linear/cyclic blockのfull-morale交換はblock後にexactly onceである。
 
+条件回復provenanceはfull-morale profileと各閾値phaseのexact selected sources/rateを分離する。回復配置を閾値到達時刻で分割し、source、required helper、single-other exclusivityを実際に寄与する区間だけ予約する。phase timingが各work blockの満体力開始を前提にする場合は、各内部回復intervalが次block前に満体力へ戻ることをproof metadataで確認し、戻らないときは`recovery-phase-timing-unproven`として推測せずincompleteにする。cycle boundaryで分割されたidleは単一intervalとして判定し、有効なfull-morale交換は満回復として扱う。
+
 runnerは`sustainable-cycle/...` diagnosticsをplanのactual result/reasonsから構築する。five-fixture gate model、Wikiru 36h witness、CN 57 source IDs / 55 comparable IDsを変更しない。sustainability evidenceが既存composition mismatchより先に成立しないため、accepted Wikiruのfirst mismatchは`composition/search/groups-a-b/control-center`のままである。
 
 ## Remaining blockers

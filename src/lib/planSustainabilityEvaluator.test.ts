@@ -22,6 +22,30 @@ const threeShiftSchedule: ScheduleState = {
   ]
 };
 
+const internalRecoveryGapSchedule: ScheduleState = {
+  cycleHours: 24,
+  groups: [{ id: "A" }, { id: "B" }],
+  shifts: [
+    { id: "work-1", startHour: 0, endHour: 8, activeGroupIds: ["A"], recoveryGroupIds: [] },
+    { id: "short-recovery", startHour: 8, endHour: 10, activeGroupIds: ["B"], recoveryGroupIds: ["A"] },
+    { id: "work-2a", startHour: 10, endHour: 14, activeGroupIds: ["A"], recoveryGroupIds: [] },
+    { id: "work-2b", startHour: 14, endHour: 18, activeGroupIds: ["A", "B"], recoveryGroupIds: [] },
+    { id: "helper-work", startHour: 18, endHour: 22, activeGroupIds: ["B"], recoveryGroupIds: ["A"] },
+    { id: "cycle-close", startHour: 22, endHour: 24, activeGroupIds: ["B"], recoveryGroupIds: ["A"] }
+  ]
+};
+
+const fullyRecoveredBlocksSchedule: ScheduleState = {
+  cycleHours: 24,
+  groups: [{ id: "A" }, { id: "B" }],
+  shifts: [
+    { id: "work-1", startHour: 0, endHour: 8, activeGroupIds: ["A"], recoveryGroupIds: [] },
+    { id: "recovery-1", startHour: 8, endHour: 12, activeGroupIds: ["B"], recoveryGroupIds: ["A"] },
+    { id: "work-2", startHour: 12, endHour: 20, activeGroupIds: ["A"], recoveryGroupIds: [] },
+    { id: "recovery-2", startHour: 20, endHour: 24, activeGroupIds: ["B"], recoveryGroupIds: ["A"] }
+  ]
+};
+
 function assignment(operatorId: string, facilityId = "factory-1", overrides: Partial<Assignment> = {}): Assignment {
   return {
     facilityId,
@@ -172,6 +196,45 @@ function planFor(
 
 function evaluate(plan: AssignmentPlan, layout: BaseLayout = "243") {
   return evaluatePlanSustainability({ plan, layout });
+}
+
+type RecoverySourceFixture = NonNullable<Assignment["recoveryProvenance"]>["sources"][number];
+
+function recoverySource(
+  operatorId: string,
+  allocation: RecoverySourceFixture["allocation"] = "room-shareable",
+  occupiesDormitorySlot = true
+): RecoverySourceFixture {
+  return {
+    operatorId,
+    role: "recovery-source",
+    allocation,
+    occupiesDormitorySlot,
+    ownedAtEvaluation: true
+  };
+}
+
+function thresholdSwitchProvenance(
+  lowSources: readonly RecoverySourceFixture[],
+  highSources: readonly RecoverySourceFixture[],
+  lowRate = 4,
+  highRate = 2
+): NonNullable<Assignment["recoveryProvenance"]> {
+  return {
+    baseRecoveryRatePerHour: highRate,
+    conditionalModifiers: [{
+      moraleAtMost: 20,
+      additionalRatePerHour: lowRate - highRate,
+      sourceOperatorIds: lowSources.map((source) => source.operatorId)
+    }],
+    // Reproduces the review finding's current optimizer output: the legacy top-level
+    // field is a union, while phases state the exact intended composition.
+    sources: [...highSources, ...lowSources],
+    phases: [
+      { moraleAbove: 20, moraleAtMost: 24, recoveryRatePerHour: highRate, sources: highSources },
+      { moraleAbove: 0, moraleAtMost: 20, recoveryRatePerHour: lowRate, sources: lowSources }
+    ]
+  };
 }
 
 describe("assignment plan sustainability adapter", () => {
@@ -346,7 +409,76 @@ describe("assignment plan sustainability adapter", () => {
     }));
   });
 
+  it("allocates threshold-selected sources only in their active recovery phases at the 4x5 boundary", () => {
+    const lowSource = recoverySource("low-phase-helper");
+    const highSource = recoverySource("high-phase-helper");
+    const lowRequiredHelper: RecoverySourceFixture = {
+      operatorId: "low-required-helper",
+      role: "required-helper",
+      allocation: "required-helper",
+      occupiesDormitorySlot: true,
+      ownedAtEvaluation: true
+    };
+    const phaseTarget = assignment("phase-target", "factory-1", {
+      recoveryProvenance: thresholdSwitchProvenance([lowSource, lowRequiredHelper], [highSource])
+    });
+    const boundaryFillers = Array.from({ length: 17 }, (_, index) => assignment(`boundary-${String(index).padStart(2, "0")}`));
+
+    const result = evaluate(planFor(twoShiftSchedule, [[phaseTarget, ...boundaryFillers], []]));
+
+    expect(result.status).toBe("evaluated");
+    if (result.status !== "evaluated") return;
+    expect(result.input.recoveryPlacements.filter((placement) => placement.operatorId === "phase-target")).toEqual([
+      expect.objectContaining({ startHour: 12, endHour: 16 })
+    ]);
+    expect(result.input.recoveryPlacements.filter((placement) => placement.operatorId === "low-phase-helper")).toEqual([
+      expect.objectContaining({ startHour: 12, endHour: 14 })
+    ]);
+    expect(result.input.recoveryPlacements.filter((placement) => placement.operatorId === "high-phase-helper")).toEqual([
+      expect.objectContaining({ startHour: 14, endHour: 16 })
+    ]);
+    expect(result.input.recoveryPlacements.filter((placement) => placement.operatorId === "low-required-helper")).toEqual([
+      expect.objectContaining({ startHour: 12, endHour: 14 })
+    ]);
+    expect(result.result.failures).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "dormitory-overflow" })
+    ]));
+  });
+
+  it("shares a single-other source across non-overlapping morale phases but rejects overlapping active phases", () => {
+    const exclusive = recoverySource("phase-exclusive", "single-other-exclusive");
+    const passiveLow = recoverySource("passive-low", "self-no-slot", false);
+    const passiveHigh = recoverySource("passive-high", "self-no-slot", false);
+    const highExclusive = assignment("high-exclusive-target", "factory-1", {
+      recoveryProvenance: thresholdSwitchProvenance([passiveLow], [exclusive])
+    });
+    const lowExclusive = assignment("low-exclusive-target", "factory-1", {
+      recoveryProvenance: thresholdSwitchProvenance([exclusive], [passiveHigh])
+    });
+
+    const nonOverlapping = evaluate(planFor(twoShiftSchedule, [[highExclusive, lowExclusive], []]));
+    const overlappingLowExclusive = assignment("overlapping-low-exclusive", "factory-1", {
+      recoveryProvenance: thresholdSwitchProvenance([exclusive], [passiveHigh], 2, 1)
+    });
+    const overlapping = evaluate(planFor(twoShiftSchedule, [[highExclusive, overlappingLowExclusive], []]));
+
+    expect(nonOverlapping.status).toBe("evaluated");
+    if (nonOverlapping.status === "evaluated") {
+      expect(nonOverlapping.input.recoveryPlacements.filter((placement) => placement.operatorId === "phase-exclusive")).toEqual([
+        expect.objectContaining({ startHour: 12, endHour: 16 })
+      ]);
+    }
+    expect(overlapping).toMatchObject({
+      status: "incomplete",
+      missing: [expect.objectContaining({
+        code: "recovery-allocation-unavailable",
+        sourceOperatorId: "phase-exclusive"
+      })]
+    });
+  });
+
   it("applies one exchange at the first cyclic idle segment after middle-shift work", () => {
+    const exchangeSource = recoverySource("fiammetta", "exchange");
     const exchangeTarget = assignment("exchange-target", "factory-1", {
       recoveryHours: 0,
       moraleExchangeApplied: true,
@@ -354,10 +486,11 @@ describe("assignment plan sustainability adapter", () => {
       recoveryProvenance: {
         baseRecoveryRatePerHour: 4,
         conditionalModifiers: [],
-        sources: [{
-          operatorId: "fiammetta", role: "recovery-source", allocation: "exchange",
-          occupiesDormitorySlot: true, ownedAtEvaluation: true
-        }]
+        sources: [exchangeSource],
+        phases: [
+          { moraleAbove: 12, moraleAtMost: 24, recoveryRatePerHour: 4, sources: [exchangeSource] },
+          { moraleAbove: 0, moraleAtMost: 12, recoveryRatePerHour: 4, sources: [exchangeSource] }
+        ]
       }
     });
     const result = evaluate(planFor(threeShiftSchedule, [
@@ -380,6 +513,28 @@ describe("assignment plan sustainability adapter", () => {
     expect(result.result.exchanges.filter((exchange) => exchange.targetOperatorId === "exchange-target")).toEqual([
       expect.objectContaining({ hour: 16, sourceOperatorId: "fiammetta" })
     ]);
+  });
+
+  it("treats split cyclic idle segments as one recovery interval for phase timing proof", () => {
+    const cyclicWorker = assignment("cyclic-conditional-worker", "factory-1", {
+      recoveryProvenance: thresholdSwitchProvenance(
+        [recoverySource("low-phase-helper")],
+        [recoverySource("high-phase-helper")],
+        0.5,
+        0.5
+      )
+    });
+
+    const result = evaluate(planFor(threeShiftSchedule, [
+      [assignment("first-worker")],
+      [cyclicWorker],
+      [assignment("last-worker")]
+    ], { resources: completeResourcesWithoutGoldConsumption(threeShiftSchedule) }));
+
+    expect(result.status).toBe("evaluated");
+    if (result.status !== "evaluated") return;
+    expect(result.convergence.initialMorale["cyclic-conditional-worker"]).toBeCloseTo(20, 9);
+    expect(result.result.sustainable).toBe(true);
   });
 
   it("applies the exchange at hour zero when work ends at the cycle boundary", () => {
@@ -480,7 +635,10 @@ describe("assignment plan sustainability adapter", () => {
   });
 
   it("does not synthesize recovery for a full-cycle worker with no positive idle gap", () => {
-    const worker = assignment("full-cycle-worker", "factory-1", { moraleConsumptionPerHour: 2 });
+    const worker = assignment("full-cycle-worker", "factory-1", {
+      moraleConsumptionPerHour: 2,
+      recoveryProvenance: thresholdSwitchProvenance([], [], 3, 2)
+    });
 
     const result = evaluate(planFor(threeShiftSchedule, [[worker], [worker], [worker]], {
       resources: completeResourcesWithoutGoldConsumption(threeShiftSchedule)
@@ -739,6 +897,89 @@ describe("assignment plan sustainability adapter", () => {
     expect(result.result.failures).toEqual(expect.arrayContaining([
       expect.objectContaining({ code: "fatigued-before-shift-end", operatorId: "worker" })
     ]));
+  });
+
+  it("returns typed incomplete when fixed-point morale would shift conditional phase timings", () => {
+    const slowConditional = assignment("conditional-worker", "factory-1", {
+      recoveryProvenance: thresholdSwitchProvenance([], [], 1, 0.5)
+    });
+
+    const result = evaluate(planFor(twoShiftSchedule, [[slowConditional], []]));
+
+    expect(result).toMatchObject({
+      status: "incomplete",
+      missing: [expect.objectContaining({
+        code: "recovery-phase-timing-unproven",
+        operatorId: "conditional-worker"
+      })]
+    });
+    expect(result).not.toHaveProperty("result");
+  });
+
+  it("rejects conditional phase timing when an internal recovery gap does not restore full morale even though the cycle closes at full", () => {
+    const lowHelper = recoverySource("low-phase-helper");
+    const highHelper = recoverySource("high-phase-helper");
+    const conditionalWorker = assignment("conditional-worker", "factory-1", {
+      recoveryProvenance: {
+        baseRecoveryRatePerHour: 2,
+        conditionalModifiers: [{ moraleAtMost: 16, additionalRatePerHour: 1, sourceOperatorIds: [lowHelper.operatorId] }],
+        sources: [highHelper, lowHelper],
+        phases: [
+          { moraleAbove: 16, moraleAtMost: 24, recoveryRatePerHour: 2, sources: [highHelper] },
+          { moraleAbove: 0, moraleAtMost: 16, recoveryRatePerHour: 3, sources: [lowHelper] }
+        ]
+      }
+    });
+    const helperTarget = assignment("helper-target", "factory-2", {
+      recoveryProvenance: {
+        baseRecoveryRatePerHour: 4,
+        conditionalModifiers: [],
+        sources: [recoverySource("conditional-worker")]
+      }
+    });
+    const plan = planFor(internalRecoveryGapSchedule, [
+      [conditionalWorker],
+      [],
+      [conditionalWorker],
+      [conditionalWorker, helperTarget],
+      [helperTarget],
+      []
+    ], { resources: completeResourcesWithoutGoldConsumption(internalRecoveryGapSchedule) });
+
+    const result = evaluate(plan);
+
+    expect(result).not.toMatchObject({ status: "evaluated", result: { sustainable: true } });
+    expect(result).toMatchObject({
+      status: "incomplete",
+      missing: [expect.objectContaining({
+        code: "recovery-phase-timing-unproven",
+        operatorId: "conditional-worker"
+      })]
+    });
+    expect(result).not.toHaveProperty("result");
+  });
+
+  it("keeps conditional multi-block plans evaluated when every recovery interval restores full morale", () => {
+    const conditionalWorker = assignment("conditional-worker", "factory-1", {
+      recoveryProvenance: thresholdSwitchProvenance(
+        [recoverySource("low-phase-helper")],
+        [recoverySource("high-phase-helper")],
+        3,
+        2
+      )
+    });
+
+    const result = evaluate(planFor(fullyRecoveredBlocksSchedule, [
+      [conditionalWorker],
+      [],
+      [conditionalWorker],
+      []
+    ], { resources: completeResourcesWithoutGoldConsumption(fullyRecoveredBlocksSchedule) }));
+
+    expect(result.status).toBe("evaluated");
+    if (result.status !== "evaluated") return;
+    expect(result.convergence.initialMorale["conditional-worker"]).toBeCloseTo(24, 9);
+    expect(result.result.sustainable).toBe(true);
   });
 
   it("returns incomplete for unsupported layout and for an exchange with no source provenance", () => {

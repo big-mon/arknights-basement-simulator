@@ -1450,10 +1450,12 @@ export function bestDormitoryRecoveryProvenance(
       }
     }
   }
+  const sortedThresholds = [...thresholds]
+    .filter((threshold) => threshold > 0 && threshold < moraleCapacity)
+    .sort((left, right) => left - right);
   const baseProfile = calculateDormitoryRecovery(targetOperatorId, state, workingContext, moraleCapacity);
   const sourcesByKey = new Map(baseProfile.sources.map((source) => [`${source.operatorId}:${source.allocation}`, source]));
-  const conditionalModifiers = [...thresholds]
-    .sort((left, right) => left - right)
+  const conditionalModifiers = sortedThresholds
     .flatMap((moraleAtMost) => {
       const atThreshold = calculateDormitoryRecovery(targetOperatorId, state, workingContext, moraleAtMost);
       const aboveThreshold = calculateDormitoryRecovery(targetOperatorId, state, workingContext, moraleAtMost + 1e-9);
@@ -1465,9 +1467,25 @@ export function bestDormitoryRecoveryProvenance(
         .map((component) => component.operatorId)
         .filter((operatorId, index, all) => all.indexOf(operatorId) === index)
         .sort();
-      for (const source of atThreshold.sources) sourcesByKey.set(`${source.operatorId}:${source.allocation}`, source);
       return [{ moraleAtMost, additionalRatePerHour, sourceOperatorIds: Object.freeze(modifierSourceIds) }];
     });
+  const phases = [
+    {
+      moraleAbove: sortedThresholds.at(-1) ?? 0,
+      moraleAtMost: moraleCapacity,
+      recoveryRatePerHour: baseProfile.ratePerHour,
+      sources: Object.freeze([...baseProfile.sources])
+    },
+    ...sortedThresholds.map((moraleAtMost, index) => {
+      const profile = calculateDormitoryRecovery(targetOperatorId, state, workingContext, moraleAtMost);
+      return {
+        moraleAbove: sortedThresholds[index - 1] ?? 0,
+        moraleAtMost,
+        recoveryRatePerHour: profile.ratePerHour,
+        sources: Object.freeze([...profile.sources])
+      };
+    }).reverse()
+  ];
   if (exchangeSourceOperatorId) sourcesByKey.set(`${exchangeSourceOperatorId}:exchange`, Object.freeze({
     operatorId: exchangeSourceOperatorId,
     role: "recovery-source" as const,
@@ -1481,7 +1499,8 @@ export function bestDormitoryRecoveryProvenance(
   return Object.freeze({
     baseRecoveryRatePerHour: baseProfile.ratePerHour,
     conditionalModifiers: Object.freeze(conditionalModifiers.map((modifier) => Object.freeze(modifier))),
-    sources: Object.freeze(sources)
+    sources: Object.freeze(sources),
+    phases: Object.freeze(phases.map((phase) => Object.freeze(phase)))
   });
 }
 

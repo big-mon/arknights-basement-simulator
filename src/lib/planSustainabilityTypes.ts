@@ -12,6 +12,7 @@ export type PlanSustainabilityMissingCode =
   | "morale-exchange-source-unavailable"
   | "morale-exchange-source-not-owned"
   | "recovery-allocation-unavailable"
+  | "recovery-phase-timing-unproven"
   | "drone-resource-timing-unrepresentable"
   | "resource-ledger-aggregate-mismatch"
   | "morale-fixed-point-not-converged"
