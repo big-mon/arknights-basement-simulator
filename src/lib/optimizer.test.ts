@@ -8,6 +8,7 @@ import {
   averageEffectEfficiency,
   averageMoraleCurveEfficiency,
   bestDormitoryRecoveryPerHour,
+  bestDormitoryRecoveryProvenance,
   conditionsSatisfied,
   findCandidates,
   generateAssignmentPlan,
@@ -1218,6 +1219,101 @@ describe("optimizer", () => {
 
     expect(bestDormitoryRecoveryPerHour(fang.id, state, context, 20)).toBeCloseTo(4.25);
     expect(bestDormitoryRecoveryPerHour(fang.id, state, context, 21)).toBeCloseTo(4.15);
+
+    expect(bestDormitoryRecoveryProvenance(fang.id, state, context)).toEqual(expect.objectContaining({
+      baseRecoveryRatePerHour: expect.any(Number),
+      conditionalModifiers: expect.arrayContaining([
+        expect.objectContaining({ moraleAtMost: 20, additionalRatePerHour: expect.any(Number) })
+      ]),
+      sources: expect.arrayContaining([
+        expect.objectContaining({ operatorId: perfumerDistilled.id, occupiesDormitorySlot: true, ownedAtEvaluation: true })
+      ])
+    }));
+  });
+
+  it("records the exact selected recovery-source composition on each morale phase", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) entry.owned = false;
+    ownOperators(state, [fang.id, perfumerDistilled.id, ambriel.id]);
+    state.roster[perfumerDistilled.id].elite = 2;
+    state.roster[perfumerDistilled.id].level = 1;
+    state.roster[ambriel.id].elite = 0;
+    state.roster[ambriel.id].level = 1;
+    const context = { facilities: state.facilities, assignments: [], roster: state.roster, shiftHours: 12 };
+
+    const provenance = bestDormitoryRecoveryProvenance(fang.id, state, context);
+    const phases = (provenance as typeof provenance & {
+      phases: readonly {
+        moraleAbove: number;
+        moraleAtMost: number;
+        recoveryRatePerHour: number;
+        sources: readonly { operatorId: string }[];
+      }[];
+    }).phases;
+
+    expect(provenance.sources.map((source) => source.operatorId)).toEqual([ambriel.id]);
+    expect(phases).toEqual([
+      expect.objectContaining({
+        moraleAbove: 20,
+        moraleAtMost: 24,
+        recoveryRatePerHour: 4.2,
+        sources: [expect.objectContaining({ operatorId: ambriel.id })]
+      }),
+      expect.objectContaining({
+        moraleAbove: 0,
+        moraleAtMost: 20,
+        recoveryRatePerHour: 4.25,
+        sources: [expect.objectContaining({ operatorId: perfumerDistilled.id })]
+      })
+    ]);
+  });
+
+  it("selects one deterministic owned source when strongest room recovery is tied", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) entry.owned = false;
+    const roomSourceA = operators.find((operator) => operator.id === "char_302_glaze")!;
+    const roomSourceB = operators.find((operator) => operator.id === "char_501_durin")!;
+    ownOperators(state, [fang.id, roomSourceA.id, roomSourceB.id]);
+    for (const source of [roomSourceA, roomSourceB]) {
+      state.roster[source.id].elite = 0;
+      state.roster[source.id].level = 1;
+    }
+    const context = { facilities: state.facilities, assignments: [], roster: state.roster, shiftHours: 12 };
+
+    const provenance = bestDormitoryRecoveryProvenance(fang.id, state, context);
+
+    expect(bestDormitoryRecoveryPerHour(fang.id, state, context, 24)).toBeCloseTo(4.2);
+    expect(provenance.baseRecoveryRatePerHour).toBeCloseTo(4.2);
+    expect(provenance.sources).toEqual([
+      expect.objectContaining({
+        operatorId: roomSourceA.id,
+        allocation: "room-shareable",
+        occupiesDormitorySlot: true,
+        ownedAtEvaluation: true
+      })
+    ]);
+  });
+
+  it("selects one deterministic owned source when strongest single-other recovery is tied", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) entry.owned = false;
+    const sourceA = operators.find((operator) => operator.id === "char_120_hibisc")!;
+    const sourceB = operators.find((operator) => operator.id === "char_212_ansel")!;
+    ownOperators(state, [fang.id, sourceA.id, sourceB.id]);
+    const context = { facilities: state.facilities, assignments: [], roster: state.roster, shiftHours: 12 };
+
+    const provenance = bestDormitoryRecoveryProvenance(fang.id, state, context);
+
+    expect(bestDormitoryRecoveryPerHour(fang.id, state, context, 24)).toBeCloseTo(4.55);
+    expect(provenance.baseRecoveryRatePerHour).toBeCloseTo(4.55);
+    expect(provenance.sources).toEqual([
+      expect.objectContaining({
+        operatorId: sourceA.id,
+        allocation: "single-other-exclusive",
+        occupiesDormitorySlot: true,
+        ownedAtEvaluation: true
+      })
+    ]);
   });
 
   it("uses one full-morale Fiammetta swap per recovery shift", () => {
@@ -1254,6 +1350,9 @@ describe("optimizer", () => {
       })
     ).toHaveLength(1);
     expect(activeAssignments.find((assignment) => assignment.moraleExchangeApplied)?.recoveryHours).toBe(0);
+    expect(activeAssignments.find((assignment) => assignment.moraleExchangeApplied)).toEqual(expect.objectContaining({
+      moraleExchangeSourceOperatorId: fiammetta.id
+    }));
   });
 
   it("does not use Fiammetta as a full-morale swap source after she worked the shift", () => {

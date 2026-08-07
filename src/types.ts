@@ -1,4 +1,5 @@
 import type { PlanResourceEvaluation } from "./lib/planResourceTypes";
+import type { PlanSustainabilityEvaluation } from "./lib/planSustainabilityTypes";
 
 export type FacilityType = "factory" | "trading" | "power" | "control" | "dormitory" | "reception";
 
@@ -260,6 +261,41 @@ export interface AppState {
   preference: OptimizationPreference;
 }
 
+export interface RecoverySourceProvenance {
+  operatorId: string;
+  role: "recovery-source" | "required-helper";
+  allocation:
+    | "self-no-slot"
+    | "room-shareable"
+    | "single-other-exclusive"
+    | "cross-dormitory-working"
+    | "required-helper"
+    | "exchange";
+  occupiesDormitorySlot: boolean;
+  ownedAtEvaluation: boolean;
+}
+
+export interface RecoverySourcePhase {
+  /** Ascending recovery uses this phase from moraleAbove until moraleAtMost. */
+  moraleAbove: number;
+  moraleAtMost: number;
+  recoveryRatePerHour: number;
+  sources: readonly Readonly<RecoverySourceProvenance>[];
+}
+
+export interface RecoveryProvenance {
+  baseRecoveryRatePerHour: number;
+  conditionalModifiers: readonly Readonly<{
+    moraleAtMost: number;
+    additionalRatePerHour: number;
+    sourceOperatorIds: readonly string[];
+  }>[];
+  /** Exact full-morale source profile. Kept as the legacy source entry point. */
+  sources: readonly Readonly<RecoverySourceProvenance>[];
+  /** Exact selected profile for every morale interval; absent only on legacy fixtures. */
+  phases?: readonly Readonly<RecoverySourcePhase>[];
+}
+
 export interface Assignment {
   facilityId: string;
   operatorId: string;
@@ -311,8 +347,11 @@ export interface Assignment {
   fatigueHours: number;
   recoveryHours: number;
   moraleExchangeApplied?: boolean;
+  moraleExchangeSourceOperatorId?: string;
   moraleConsumptionPerHour?: number;
   dormitoryRecoveryPerHour?: number;
+  recoveryProvenance?: Readonly<RecoveryProvenance>;
+  postZeroOutputModeled?: boolean;
   shiftUptime?: number;
   moraleEfficiencyCurves?: Array<{
     baselineEfficiency: number;
@@ -362,5 +401,6 @@ export interface AssignmentPlan {
   rotation: RotationWindow[];
   diagnostics: AssignmentPlanDiagnostic[];
   resources: PlanResourceEvaluation;
+  sustainability: PlanSustainabilityEvaluation;
   warnings: string[];
 }

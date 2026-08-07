@@ -228,7 +228,7 @@ describe("Issue #27 current-implementation audit", () => {
     }, 2.5, 1)).toBeCloseTo((0.3 * 2 + 0.2 * 0.5) / 2.5);
   });
 
-  it("exposes typed plan quantities without adding sustainable-cycle results", () => {
+  it("exposes typed plan quantities and an integrated sustainable-cycle result", () => {
     const plan = generateAssignmentPlan(createDefaultState());
 
     expect(plan.resources).toMatchObject({
@@ -239,7 +239,23 @@ describe("Issue #27 current-implementation audit", () => {
       }
     });
     expect(plan.resources.per24Ledger).toBeDefined();
-    expect(plan).not.toHaveProperty("sustainableCycle");
+    expect(plan.sustainability).toMatchObject({ status: "evaluated" });
+  });
+
+  it("reports generated-plan sustainability without copying fixture expectations", () => {
+    const glasgow = observations["jp-glasgow-trading-125"];
+    const jp = observations["jp-243-factory-3group-2025-11"];
+    const cn = observations["cn-243-3shift-2026-06"];
+
+    expect(glasgow?.planSustainability).toMatchObject({ status: "evaluated" });
+    expect(jp?.planSustainability).toMatchObject({ status: "incomplete" });
+    expect(cn?.planSustainability).toMatchObject({ status: "incomplete" });
+    expect(result.cases.find((item) => item.id === "jp-243-factory-3group-2025-11")?.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "plan-resources-incomplete",
+        path: expect.stringMatching(/^sustainable-cycle\/incomplete\//)
+      })
+    );
   });
 
   it("does not let fixture expected-output changes alter generated-plan observations", () => {

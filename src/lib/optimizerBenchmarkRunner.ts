@@ -12,6 +12,8 @@ import {
   type ResourceOutputBenchmark
 } from "./optimizerBenchmark";
 import type { PlanResourceMissingReason } from "./planResourceTypes";
+import type { CycleFailure } from "./sustainableCycleEvaluator";
+import type { PlanSustainabilityMissingReason } from "./planSustainabilityTypes";
 
 export type BenchmarkDiagnosticCategory =
   | "source-data"
@@ -47,6 +49,9 @@ export interface BenchmarkObservation {
   };
   resources?: BenchmarkResourceOutput;
   planResourceMissingReasons?: readonly Readonly<PlanResourceMissingReason>[];
+  planSustainability?:
+    | { status: "evaluated"; sustainable: boolean; failures: readonly Readonly<CycleFailure>[] }
+    | { status: "incomplete"; missing: readonly Readonly<PlanSustainabilityMissingReason>[] };
   formulaValues?: Record<string, number>;
   interpretedEffects?: Array<{ id: string; expected: number; actual: number }>;
   provenCauses?: Array<{
@@ -117,6 +122,9 @@ export interface BenchmarkDiagnostic {
   effectIndex?: number;
   effectType?: PlanResourceMissingReason["effectType"];
   effectKind?: PlanResourceMissingReason["effectKind"];
+  shiftId?: string;
+  groupId?: string;
+  sourceOperatorId?: string;
 }
 
 export interface OptimizerBenchmarkCaseResult {
@@ -676,6 +684,39 @@ function compareCalculations(
       ...(reason.effectType ? { effectType: reason.effectType } : {}),
       ...(reason.effectKind ? { effectKind: reason.effectKind } : {})
     });
+  }
+
+  if (observation.planSustainability?.status === "incomplete") {
+    for (const reason of observation.planSustainability.missing) {
+      diagnostics.push({
+        code: reason.code,
+        path: `sustainable-cycle/incomplete/${reason.path}`,
+        category: "state-model",
+        severity: "error",
+        certainty: "proven",
+        message: reason.message,
+        ...(reason.operatorId ? { operatorId: reason.operatorId } : {}),
+        ...(reason.sourceOperatorId ? { sourceOperatorId: reason.sourceOperatorId } : {}),
+        ...(reason.facilityId ? { facilityId: reason.facilityId } : {}),
+        ...(reason.shiftId ? { shiftId: reason.shiftId } : {}),
+        ...(reason.groupId ? { groupId: reason.groupId } : {})
+      });
+    }
+  } else if (observation.planSustainability?.status === "evaluated") {
+    for (const failure of observation.planSustainability.failures) {
+      const hour = failure.hour === undefined ? "none" : String(failure.hour);
+      diagnostics.push({
+        code: failure.code,
+        path: `sustainable-cycle/failures/${failure.category}/${failure.code}/shift/${failure.shiftId ?? "none"}/operator/${failure.operatorId ?? "none"}/hour/${hour}`,
+        category: failure.category === "overlap" || failure.category === "dormitory" ? "state-model" : "calculation",
+        severity: "error",
+        certainty: "proven",
+        message: failure.message,
+        ...(failure.operatorId ? { operatorId: failure.operatorId } : {}),
+        ...(failure.facilityId ? { facilityId: failure.facilityId } : {}),
+        ...(failure.shiftId ? { shiftId: failure.shiftId } : {})
+      });
+    }
   }
 
   for (const [resource, expected] of Object.entries(fixture.expected.output) as Array<[BenchmarkResourceName, number]>) {

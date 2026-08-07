@@ -7,6 +7,7 @@ import {
   operatorAvailabilitySnapshot
 } from "./operatorAvailability";
 import { evaluatePlanResources } from "./planResourceEvaluator";
+import { evaluatePlanSustainability } from "./planSustainabilityEvaluator";
 import { normalizeSchedule, scheduleEpsilonHours } from "./schedule";
 import type {
   AppState,
@@ -360,9 +361,11 @@ export function generateAssignmentPlan(state: AppState): AssignmentPlan {
     diagnostics: rotationResult.diagnostics,
     warnings
   };
+  const resources = evaluatePlanResources(plan);
+  const planWithResources = { ...plan, resources };
   return {
-    ...plan,
-    resources: evaluatePlanResources(plan)
+    ...planWithResources,
+    sustainability: evaluatePlanSustainability({ plan: planWithResources, layout: state.layout })
   };
 }
 
@@ -1216,15 +1219,16 @@ function applyMoraleDurations(state: AppState, facilityPlans: FacilityPlan[]) {
   });
   const activeContext = createContext(activeSourceAssignments);
   const alternativeContext = createContext(alternativeSourceAssignments);
-  const activeMoraleExchangeTarget = selectMoraleExchangeTarget(state, activeSourceAssignments, alternativeContext);
-  const alternativeMoraleExchangeTarget = selectMoraleExchangeTarget(state, alternativeSourceAssignments, activeContext);
+  const activeMoraleExchange = selectMoraleExchangeTarget(state, activeSourceAssignments, alternativeContext);
+  const alternativeMoraleExchange = selectMoraleExchangeTarget(state, alternativeSourceAssignments, activeContext);
   const activeAssignments = activeSourceAssignments.map((assignment) =>
     applyMoraleDurationToAssignment(
       assignment,
       state,
       activeContext,
       alternativeContext,
-      assignment.operatorId === activeMoraleExchangeTarget
+      assignment.operatorId === activeMoraleExchange?.targetOperatorId,
+      activeMoraleExchange?.sourceOperatorId
     )
   );
   const alternativeAssignments = alternativeSourceAssignments.map((assignment) =>
@@ -1233,7 +1237,8 @@ function applyMoraleDurations(state: AppState, facilityPlans: FacilityPlan[]) {
       state,
       alternativeContext,
       activeContext,
-      assignment.operatorId === alternativeMoraleExchangeTarget
+      assignment.operatorId === alternativeMoraleExchange?.targetOperatorId,
+      alternativeMoraleExchange?.sourceOperatorId
     )
   );
   const activeByIdentity = new Map(activeAssignments.map((assignment) => [assignmentIdentity(assignment), assignment]));
@@ -1273,7 +1278,8 @@ function selectMoraleExchangeTarget(
 ) {
   const workingOperatorIds = new Set(workingContext.assignments.map((assignment) => assignment.operatorId));
   const recoveringOperatorIds = new Set(recoveringAssignments.map((assignment) => assignment.operatorId));
-  const exchangeAvailable = operators.some((operator) => {
+  const exchangeSource = operators
+    .filter((operator) => {
     const rosterEntry = state.roster[operator.id];
     return (
       rosterEntry?.owned &&
@@ -1284,13 +1290,15 @@ function selectMoraleExchangeTarget(
         skill.effects.some((effect) => effect.facility === "dormitory" && effect.moraleExchange?.target === "previous")
       )
     );
-  });
-  if (!exchangeAvailable) {
+    })
+    .sort((left, right) => left.id.localeCompare(right.id))[0];
+  if (!exchangeSource) {
     return undefined;
   }
-  return recoveringAssignments
+  const targetOperatorId = recoveringAssignments
     .filter((assignment) => !assignment.doesNotConsumeFacilitySlot && !workingOperatorIds.has(assignment.operatorId))
     .sort((a, b) => b.score - a.score || a.operatorId.localeCompare(b.operatorId))[0]?.operatorId;
+  return targetOperatorId ? { targetOperatorId, sourceOperatorId: exchangeSource.id } : undefined;
 }
 
 function applyMoraleDurationToAssignment(
@@ -1298,7 +1306,8 @@ function applyMoraleDurationToAssignment(
   state: AppState,
   context: AssignmentEvaluationContext,
   recoveryWorkingContext: AssignmentEvaluationContext,
-  moraleExchangeApplied = false
+  moraleExchangeApplied = false,
+  moraleExchangeSourceOperatorId?: string
 ) {
   const facility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
   if (!facility || assignment.doesNotConsumeFacilitySlot) {
@@ -1391,6 +1400,12 @@ function applyMoraleDurationToAssignment(
     recoveryWorkingContext,
     moraleCapacity - moraleSpent
   );
+  const recoveryProvenance = bestDormitoryRecoveryProvenance(
+    assignment.operatorId,
+    state,
+    recoveryWorkingContext,
+    moraleExchangeSourceOperatorId
+  );
   const moraleAdjustedEfficiency =
     assignment.efficiency +
     (assignment.moraleEfficiencyCurves ?? []).reduce(
@@ -1405,10 +1420,252 @@ function applyMoraleDurationToAssignment(
     efficiency: moraleAdjustedEfficiency,
     moraleConsumptionPerHour: consumptionPerHour,
     dormitoryRecoveryPerHour,
+    recoveryProvenance,
     shiftUptime: consumptionPerHour === 0 ? 1 : Math.min(moraleCapacity / consumptionPerHour / shiftHours, 1),
     fatigueHours: consumptionPerHour === 0 ? Number.POSITIVE_INFINITY : moraleCapacity / consumptionPerHour,
     recoveryHours: moraleExchangeApplied ? 0 : moraleSpent / dormitoryRecoveryPerHour,
-    ...(moraleExchangeApplied ? { moraleExchangeApplied: true } : {})
+    ...(moraleExchangeApplied ? {
+      moraleExchangeApplied: true,
+      moraleExchangeSourceOperatorId
+    } : {})
+  };
+}
+
+export function bestDormitoryRecoveryProvenance(
+  targetOperatorId: string,
+  state: AppState,
+  workingContext: AssignmentEvaluationContext,
+  exchangeSourceOperatorId?: string
+): NonNullable<Assignment["recoveryProvenance"]> {
+  const thresholds = new Set<number>();
+  for (const operator of operators) {
+    const rosterEntry = state.roster[operator.id];
+    if (!rosterEntry?.owned) continue;
+    for (const skill of activeBaseSkills(operator, rosterEntry.elite, rosterEntry.level)) {
+      for (const effect of skill.effects) {
+        for (const moraleEffect of effect.moraleEffects ?? []) {
+          if (moraleEffect.type !== "recovery") continue;
+          if (moraleEffect.targetMoraleAtMost !== undefined) thresholds.add(moraleEffect.targetMoraleAtMost);
+        }
+      }
+    }
+  }
+  const sortedThresholds = [...thresholds]
+    .filter((threshold) => threshold > 0 && threshold < moraleCapacity)
+    .sort((left, right) => left - right);
+  const baseProfile = calculateDormitoryRecovery(targetOperatorId, state, workingContext, moraleCapacity);
+  const sourcesByKey = new Map(baseProfile.sources.map((source) => [`${source.operatorId}:${source.allocation}`, source]));
+  const conditionalModifiers = sortedThresholds
+    .flatMap((moraleAtMost) => {
+      const atThreshold = calculateDormitoryRecovery(targetOperatorId, state, workingContext, moraleAtMost);
+      const aboveThreshold = calculateDormitoryRecovery(targetOperatorId, state, workingContext, moraleAtMost + 1e-9);
+      const additionalRatePerHour = atThreshold.ratePerHour - aboveThreshold.ratePerHour;
+      if (additionalRatePerHour <= 1e-12) return [];
+      const aboveAmounts = new Map(aboveThreshold.components.map((component) => [component.key, component.amount]));
+      const modifierSourceIds = atThreshold.components
+        .filter((component) => component.amount - (aboveAmounts.get(component.key) ?? 0) > 1e-12)
+        .map((component) => component.operatorId)
+        .filter((operatorId, index, all) => all.indexOf(operatorId) === index)
+        .sort();
+      return [{ moraleAtMost, additionalRatePerHour, sourceOperatorIds: Object.freeze(modifierSourceIds) }];
+    });
+  const phases = [
+    {
+      moraleAbove: sortedThresholds.at(-1) ?? 0,
+      moraleAtMost: moraleCapacity,
+      recoveryRatePerHour: baseProfile.ratePerHour,
+      sources: Object.freeze([...baseProfile.sources])
+    },
+    ...sortedThresholds.map((moraleAtMost, index) => {
+      const profile = calculateDormitoryRecovery(targetOperatorId, state, workingContext, moraleAtMost);
+      return {
+        moraleAbove: sortedThresholds[index - 1] ?? 0,
+        moraleAtMost,
+        recoveryRatePerHour: profile.ratePerHour,
+        sources: Object.freeze([...profile.sources])
+      };
+    }).reverse()
+  ];
+  if (exchangeSourceOperatorId) sourcesByKey.set(`${exchangeSourceOperatorId}:exchange`, Object.freeze({
+    operatorId: exchangeSourceOperatorId,
+    role: "recovery-source" as const,
+    allocation: "exchange" as const,
+    occupiesDormitorySlot: true,
+    ownedAtEvaluation: Boolean(state.roster[exchangeSourceOperatorId]?.owned)
+  }));
+  const sources = [...sourcesByKey.values()].sort((left, right) =>
+    left.operatorId.localeCompare(right.operatorId) || left.allocation.localeCompare(right.allocation)
+  );
+  return Object.freeze({
+    baseRecoveryRatePerHour: baseProfile.ratePerHour,
+    conditionalModifiers: Object.freeze(conditionalModifiers.map((modifier) => Object.freeze(modifier))),
+    sources: Object.freeze(sources),
+    phases: Object.freeze(phases.map((phase) => Object.freeze(phase)))
+  });
+}
+
+type RecoveryAllocation = NonNullable<Assignment["recoveryProvenance"]>["sources"][number]["allocation"];
+type RecoverySource = NonNullable<Assignment["recoveryProvenance"]>["sources"][number];
+
+interface RecoveryComponent {
+  key: string;
+  operatorId: string;
+  amount: number;
+  allocation: RecoveryAllocation;
+  requiredHelperIds: string[];
+}
+
+interface DormitoryRecoveryCalculation {
+  ratePerHour: number;
+  components: RecoveryComponent[];
+  sources: RecoverySource[];
+}
+
+function chooseStrongestRecovery(components: RecoveryComponent[]): RecoveryComponent | undefined {
+  return components
+    .filter((component) => component.amount > 1e-12)
+    .sort((left, right) => right.amount - left.amount || left.operatorId.localeCompare(right.operatorId) || left.key.localeCompare(right.key))[0];
+}
+
+function calculateDormitoryRecovery(
+  targetOperatorId: string,
+  state: AppState,
+  workingContext: AssignmentEvaluationContext,
+  targetMorale: number
+): DormitoryRecoveryCalculation {
+  const workingOperatorIds = new Set(workingContext.assignments.map((assignment) => assignment.operatorId));
+  const dormitory =
+    state.facilities.find((facility) => facility.type === "dormitory") ??
+    ({ id: "dormitory-recovery", type: "dormitory", name: "Dormitory", slotCount: 5, product: "morale" } satisfies FacilitySlot);
+  const targetOperator = operators.find((operator) => operator.id === targetOperatorId);
+  const targetRosterEntry = targetOperator ? state.roster[targetOperatorId] : undefined;
+  if (!targetOperator || !targetRosterEntry) return { ratePerHour: maxDormitoryRecoveryPerHour, components: [], sources: [] };
+
+  const selfCandidates: RecoveryComponent[] = [];
+  const roomCandidates: RecoveryComponent[] = [];
+  const singleCandidates: RecoveryComponent[] = [];
+  for (const operator of operators) {
+    const rosterEntry = state.roster[operator.id];
+    if (!rosterEntry?.owned || (workingOperatorIds.has(operator.id) && operator.id !== targetOperatorId)) continue;
+    const requiredIds = activeBaseSkills(operator, rosterEntry.elite, rosterEntry.level)
+      .flatMap((skill) => skill.effects)
+      .flatMap((effect) => effect.moraleEffects ?? [])
+      .flatMap((moraleEffect) => moraleEffect.requiresDormitoryOperatorIds ?? [])
+      .filter((operatorId, index, all) => all.indexOf(operatorId) === index)
+      .sort();
+    const requiredAssignments = requiredIds.flatMap((operatorId) => {
+      if (!state.roster[operatorId]?.owned || workingOperatorIds.has(operatorId) || operatorId === operator.id || operatorId === targetOperatorId) return [];
+      return [{
+        facilityId: dormitory.id,
+        operatorId,
+        skillId: "dormitory-required",
+        score: 0,
+        efficiency: 0,
+        fatigueHours: 0,
+        recoveryHours: 0,
+        reason: "Dormitory required operator"
+      } satisfies Assignment];
+    });
+    const dormContext: AssignmentEvaluationContext = {
+      ...workingContext,
+      assignments: [
+        ...workingContext.assignments,
+        {
+          facilityId: dormitory.id, operatorId: operator.id, skillId: "dormitory-manager", score: 0,
+          efficiency: 0, fatigueHours: 0, recoveryHours: 0, reason: "Dormitory manager"
+        },
+        ...(operator.id === targetOperatorId ? [] : [{
+          facilityId: dormitory.id, operatorId: targetOperatorId, skillId: "dormitory-target", score: 0,
+          efficiency: 0, fatigueHours: 0, recoveryHours: 0, reason: "Dormitory target"
+        } satisfies Assignment]),
+        ...requiredAssignments
+      ],
+      facilities: state.facilities.some((facility) => facility.id === dormitory.id) ? state.facilities : [...state.facilities, dormitory]
+    };
+    const matches = activeMoraleEffects(operator, rosterEntry, dormitory, dormContext).flatMap((entry, index) => {
+      const amount = entry.moraleEffect.amount * effectScalingMultiplier(
+        entry.effect, operator, clampEliteForOperator(operator, rosterEntry.elite), dormitory, dormContext
+      );
+      if (entry.moraleEffect.type !== "recovery" ||
+          !recoveryEffectMatchesTarget(entry.moraleEffect, targetOperator, targetMorale, dormitory.id, dormContext)) return [];
+      return [{ entry, amount, index }];
+    });
+    const helpersFor = (entries: typeof matches) => entries
+      .flatMap(({ entry }) => entry.moraleEffect.requiresDormitoryOperatorIds ?? [])
+      .filter((operatorId) => requiredAssignments.some((assignment) => assignment.operatorId === operatorId))
+      .filter((operatorId, index, all) => all.indexOf(operatorId) === index)
+      .sort();
+    const selfEntries = matches.filter(({ entry }) => operator.id === targetOperatorId && entry.moraleEffect.target === "self");
+    const self = selfEntries.sort((left, right) => right.amount - left.amount || left.index - right.index)[0];
+    if (self && self.amount > 1e-12) selfCandidates.push({
+      key: `self:${operator.id}`, operatorId: operator.id, amount: self.amount,
+      allocation: "self-no-slot", requiredHelperIds: helpersFor([self])
+    });
+    const roomEntries = matches.filter(({ entry }) => entry.moraleEffect.target === "room");
+    const roomBase = roomEntries.filter(({ entry }) => !entry.moraleEffect.stacksWithBase)
+      .sort((left, right) => right.amount - left.amount || left.index - right.index)[0];
+    const roomBonuses = roomEntries.filter(({ entry }) => entry.moraleEffect.stacksWithBase);
+    const roomAmount = (roomBase?.amount ?? 0) + roomBonuses.reduce((sum, item) => sum + item.amount, 0);
+    if (roomAmount > 1e-12) roomCandidates.push({
+      key: `room:${operator.id}`, operatorId: operator.id, amount: roomAmount,
+      allocation: "room-shareable", requiredHelperIds: helpersFor([...(roomBase ? [roomBase] : []), ...roomBonuses])
+    });
+    const singleEntries = matches.filter(({ entry }) =>
+      operator.id !== targetOperatorId && (entry.moraleEffect.target === "other" || entry.moraleEffect.target === "singleOther")
+    );
+    const singleBase = singleEntries.filter(({ entry }) => !entry.moraleEffect.stacksWithBase)
+      .sort((left, right) => right.amount - left.amount || left.index - right.index)[0];
+    const singleBonuses = singleEntries.filter(({ entry }) => entry.moraleEffect.stacksWithBase);
+    const singleAmount = (singleBase?.amount ?? 0) + singleBonuses.reduce((sum, item) => sum + item.amount, 0);
+    if (singleAmount > 1e-12) singleCandidates.push({
+      key: `single:${operator.id}`, operatorId: operator.id, amount: singleAmount,
+      allocation: "single-other-exclusive", requiredHelperIds: helpersFor([...(singleBase ? [singleBase] : []), ...singleBonuses])
+    });
+  }
+
+  const selected = [chooseStrongestRecovery(selfCandidates), chooseStrongestRecovery(roomCandidates), chooseStrongestRecovery(singleCandidates)]
+    .filter((component): component is RecoveryComponent => Boolean(component));
+  const crossCandidates: RecoveryComponent[] = [];
+  for (const sourceAssignment of workingContext.assignments) {
+    const sourceFacility = state.facilities.find((facility) => facility.id === sourceAssignment.facilityId);
+    const sourceOperator = operators.find((operator) => operator.id === sourceAssignment.operatorId);
+    const rosterEntry = sourceOperator ? state.roster[sourceOperator.id] : undefined;
+    if (!sourceFacility || !sourceOperator || !rosterEntry) continue;
+    for (const entry of activeMoraleEffects(sourceOperator, rosterEntry, sourceFacility, workingContext)) {
+      if (entry.moraleEffect.type === "recovery" && entry.moraleEffect.target === "dormitories") crossCandidates.push({
+        key: `cross:${sourceOperator.id}`, operatorId: sourceOperator.id, amount: entry.moraleEffect.amount,
+        allocation: "cross-dormitory-working", requiredHelperIds: []
+      });
+    }
+  }
+  const cross = chooseStrongestRecovery(crossCandidates);
+  if (cross) selected.push(cross);
+
+  const sourcesByKey = new Map<string, RecoverySource>();
+  for (const component of selected) {
+    const occupiesDormitorySlot = component.allocation !== "self-no-slot" && component.allocation !== "cross-dormitory-working" &&
+      component.operatorId !== targetOperatorId && !workingOperatorIds.has(component.operatorId);
+    sourcesByKey.set(`${component.operatorId}:${component.allocation}`, Object.freeze({
+      operatorId: component.operatorId,
+      role: "recovery-source" as const,
+      allocation: component.allocation,
+      occupiesDormitorySlot,
+      ownedAtEvaluation: Boolean(state.roster[component.operatorId]?.owned)
+    }));
+    for (const helperId of component.requiredHelperIds) sourcesByKey.set(`${helperId}:required-helper`, Object.freeze({
+      operatorId: helperId,
+      role: "required-helper" as const,
+      allocation: "required-helper" as const,
+      occupiesDormitorySlot: true,
+      ownedAtEvaluation: Boolean(state.roster[helperId]?.owned)
+    }));
+  }
+  return {
+    ratePerHour: maxDormitoryRecoveryPerHour + selected.reduce((sum, component) => sum + component.amount, 0),
+    components: selected,
+    sources: [...sourcesByKey.values()].sort((left, right) =>
+      left.operatorId.localeCompare(right.operatorId) || left.allocation.localeCompare(right.allocation)
+    )
   };
 }
 
@@ -1418,162 +1675,7 @@ export function bestDormitoryRecoveryPerHour(
   workingContext: AssignmentEvaluationContext,
   targetMorale = 0
 ) {
-  const workingOperatorIds = new Set(workingContext.assignments.map((assignment) => assignment.operatorId));
-  const dormitory =
-    state.facilities.find((facility) => facility.type === "dormitory") ??
-    ({ id: "dormitory-recovery", type: "dormitory", name: "Dormitory", slotCount: 5, product: "morale" } satisfies FacilitySlot);
-  const targetOperator = operators.find((operator) => operator.id === targetOperatorId);
-  const targetRosterEntry = targetOperator ? state.roster[targetOperatorId] : undefined;
-  let selfRecovery = 0;
-  let strongestRoomRecovery = 0;
-  let strongestSingleRecovery = 0;
-
-  for (const operator of operators) {
-    const rosterEntry = state.roster[operator.id];
-    if (!rosterEntry?.owned || (workingOperatorIds.has(operator.id) && operator.id !== targetOperatorId)) {
-      continue;
-    }
-    const hasDormitoryRecoveryEffect = operator.skills.some((skill) =>
-      skill.effects.some(
-        (effect) =>
-          effect.facility === "dormitory" &&
-          effect.moraleEffects?.some((moraleEffect) => moraleEffect.type === "recovery")
-      )
-    );
-    if (!hasDormitoryRecoveryEffect) {
-      continue;
-    }
-    const requiredDormitoryOperatorIds = operator.skills.some((skill) =>
-      skill.effects.some((effect) =>
-        effect.moraleEffects?.some((moraleEffect) => Boolean(moraleEffect.requiresDormitoryOperatorIds?.length))
-      )
-    )
-      ? activeBaseSkills(operator, rosterEntry.elite, rosterEntry.level)
-          .flatMap((skill) => skill.effects)
-          .flatMap((effect) => effect.moraleEffects ?? [])
-          .flatMap((moraleEffect) => moraleEffect.requiresDormitoryOperatorIds ?? [])
-      : [];
-    const requiredAssignments = requiredDormitoryOperatorIds.flatMap((operatorId) => {
-      const requiredRosterEntry = state.roster[operatorId];
-      if (
-        !requiredRosterEntry?.owned ||
-        workingOperatorIds.has(operatorId) ||
-        operatorId === operator.id ||
-        operatorId === targetOperatorId
-      ) {
-        return [];
-      }
-      return [
-        {
-          facilityId: dormitory.id,
-          operatorId,
-          skillId: "dormitory-required",
-          score: 0,
-          efficiency: 0,
-          fatigueHours: 0,
-          recoveryHours: 0,
-          reason: "Dormitory required operator"
-        } satisfies Assignment
-      ];
-    });
-    const dormAssignments: Assignment[] = [
-      ...workingContext.assignments,
-      {
-        facilityId: dormitory.id,
-        operatorId: operator.id,
-        skillId: "dormitory-manager",
-        score: 0,
-        efficiency: 0,
-        fatigueHours: 0,
-        recoveryHours: 0,
-        reason: "Dormitory manager"
-      },
-      ...(operator.id === targetOperatorId
-        ? []
-        : [
-            {
-              facilityId: dormitory.id,
-              operatorId: targetOperatorId,
-              skillId: "dormitory-target",
-              score: 0,
-              efficiency: 0,
-              fatigueHours: 0,
-              recoveryHours: 0,
-              reason: "Dormitory target"
-            } satisfies Assignment
-          ]),
-      ...requiredAssignments
-    ];
-    const dormContext: AssignmentEvaluationContext = {
-      ...workingContext,
-      assignments: dormAssignments,
-      facilities: state.facilities.some((facility) => facility.id === dormitory.id)
-        ? state.facilities
-        : [...state.facilities, dormitory]
-    };
-    let operatorRoomBase = 0;
-    let operatorRoomBonus = 0;
-    let operatorSingleBase = 0;
-    let operatorSingleBonus = 0;
-    for (const entry of activeMoraleEffects(operator, rosterEntry, dormitory, dormContext)) {
-      const multiplier = effectScalingMultiplier(
-        entry.effect,
-        operator,
-        clampEliteForOperator(operator, rosterEntry.elite),
-        dormitory,
-        dormContext
-      );
-      const amount = entry.moraleEffect.amount * multiplier;
-      if (
-        entry.moraleEffect.type !== "recovery" ||
-        !recoveryEffectMatchesTarget(entry.moraleEffect, targetOperator, targetMorale, dormitory.id, dormContext)
-      ) {
-        continue;
-      }
-      if (operator.id === targetOperatorId && entry.moraleEffect.target === "self") {
-        selfRecovery = Math.max(selfRecovery, amount);
-      }
-      if (entry.moraleEffect.target === "room") {
-        if (entry.moraleEffect.stacksWithBase) {
-          operatorRoomBonus += amount;
-        } else {
-          operatorRoomBase = Math.max(operatorRoomBase, amount);
-        }
-      }
-      if (
-        operator.id !== targetOperatorId &&
-        (entry.moraleEffect.target === "other" || entry.moraleEffect.target === "singleOther")
-      ) {
-        if (entry.moraleEffect.stacksWithBase) {
-          operatorSingleBonus += amount;
-        } else {
-          operatorSingleBase = Math.max(operatorSingleBase, amount);
-        }
-      }
-    }
-    strongestRoomRecovery = Math.max(strongestRoomRecovery, operatorRoomBase + operatorRoomBonus);
-    strongestSingleRecovery = Math.max(strongestSingleRecovery, operatorSingleBase + operatorSingleBonus);
-  }
-
-  let crossDormitoryRecovery = 0;
-  for (const sourceAssignment of workingContext.assignments) {
-    const sourceFacility = state.facilities.find((facility) => facility.id === sourceAssignment.facilityId);
-    const sourceOperator = operators.find((operator) => operator.id === sourceAssignment.operatorId);
-    const rosterEntry = sourceOperator ? state.roster[sourceOperator.id] : undefined;
-    if (!sourceFacility || !sourceOperator || !rosterEntry) {
-      continue;
-    }
-    for (const entry of activeMoraleEffects(sourceOperator, rosterEntry, sourceFacility, workingContext)) {
-      if (entry.moraleEffect.type === "recovery" && entry.moraleEffect.target === "dormitories") {
-        crossDormitoryRecovery = Math.max(crossDormitoryRecovery, entry.moraleEffect.amount);
-      }
-    }
-  }
-
-  if (!targetOperator || !targetRosterEntry) {
-    return maxDormitoryRecoveryPerHour;
-  }
-  return maxDormitoryRecoveryPerHour + selfRecovery + strongestRoomRecovery + strongestSingleRecovery + crossDormitoryRecovery;
+  return calculateDormitoryRecovery(targetOperatorId, state, workingContext, targetMorale).ratePerHour;
 }
 
 function recoveryEffectMatchesTarget(
