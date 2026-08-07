@@ -132,6 +132,24 @@ function completeResources(schedule: ScheduleState) {
   };
 }
 
+function completeResourcesWithoutGoldConsumption(schedule: ScheduleState) {
+  const resources = completeResources(schedule);
+  const dronePer24 = createResourceLedger({ dronesGenerated: 10, dronesUsed: 10 });
+  const natural = aggregateResourceLedgers(resources.windows.flatMap((window) =>
+    window.facilities.map((facility) => facility.ledger)
+  ));
+  const cycleLedger = aggregateResourceLedgers([
+    natural,
+    scaleResourceLedger(dronePer24, schedule.cycleHours / 24)
+  ]);
+  return {
+    ...resources,
+    drone: { ...resources.drone, per24Ledger: dronePer24 },
+    cycleLedger,
+    per24Ledger: scaleResourceLedger(cycleLedger, 24 / schedule.cycleHours)
+  };
+}
+
 function planFor(
   schedule: ScheduleState,
   assignmentsByShift: readonly (readonly Assignment[])[],
@@ -393,6 +411,120 @@ describe("assignment plan sustainability adapter", () => {
     ]);
     expect(result.result.exchanges.filter((exchange) => exchange.targetOperatorId === "exchange-target")).toEqual([
       expect.objectContaining({ hour: 0, sourceOperatorId: "fiammetta" })
+    ]);
+  });
+
+  it("accumulates both contiguous first and middle shifts into the terminal recovery window", () => {
+    const first = assignment("contiguous-worker", "factory-1", {
+      recoveryProvenance: { baseRecoveryRatePerHour: 1, conditionalModifiers: [], sources: [] }
+    });
+    const middle = assignment("contiguous-worker", "factory-1", {
+      recoveryProvenance: { baseRecoveryRatePerHour: 4, conditionalModifiers: [], sources: [] }
+    });
+
+    const result = evaluate(planFor(threeShiftSchedule, [
+      [first],
+      [middle],
+      [assignment("last-worker")]
+    ]));
+
+    expect(result.status).toBe("evaluated");
+    if (result.status !== "evaluated") return;
+    expect(result.input.recoveryPlacements.filter((placement) => placement.operatorId === "contiguous-worker")).toEqual([
+      expect.objectContaining({ startHour: 16, endHour: 20, recoveryRatePerHour: 4 })
+    ]);
+  });
+
+  it("accumulates a cyclic last-and-first work block and starts recovery after the first shift", () => {
+    const first = assignment("cyclic-worker", "factory-1", {
+      recoveryProvenance: { baseRecoveryRatePerHour: 4, conditionalModifiers: [], sources: [] }
+    });
+    const last = assignment("cyclic-worker", "factory-1", {
+      recoveryProvenance: { baseRecoveryRatePerHour: 1, conditionalModifiers: [], sources: [] }
+    });
+
+    const result = evaluate(planFor(threeShiftSchedule, [
+      [first],
+      [assignment("middle-worker")],
+      [last]
+    ]));
+
+    expect(result.status).toBe("evaluated");
+    if (result.status !== "evaluated") return;
+    expect(result.input.recoveryPlacements.filter((placement) => placement.operatorId === "cyclic-worker")).toEqual([
+      expect.objectContaining({ startHour: 8, endHour: 12, recoveryRatePerHour: 4 })
+    ]);
+  });
+
+  it("sums each contiguous occurrence's actual morale consumption before terminal-context recovery", () => {
+    const first = assignment("mixed-rate-worker", "factory-1", {
+      moraleConsumptionPerHour: 0.5,
+      recoveryProvenance: { baseRecoveryRatePerHour: 1, conditionalModifiers: [], sources: [] }
+    });
+    const middle = assignment("mixed-rate-worker", "factory-1", {
+      moraleConsumptionPerHour: 1,
+      recoveryProvenance: { baseRecoveryRatePerHour: 2, conditionalModifiers: [], sources: [] }
+    });
+
+    const result = evaluate(planFor(threeShiftSchedule, [
+      [first],
+      [middle],
+      [assignment("last-worker")]
+    ]));
+
+    expect(result.status).toBe("evaluated");
+    if (result.status !== "evaluated") return;
+    expect(result.input.recoveryPlacements.filter((placement) => placement.operatorId === "mixed-rate-worker")).toEqual([
+      expect.objectContaining({ startHour: 16, endHour: 22, recoveryRatePerHour: 2 })
+    ]);
+  });
+
+  it("does not synthesize recovery for a full-cycle worker with no positive idle gap", () => {
+    const worker = assignment("full-cycle-worker", "factory-1", { moraleConsumptionPerHour: 2 });
+
+    const result = evaluate(planFor(threeShiftSchedule, [[worker], [worker], [worker]], {
+      resources: completeResourcesWithoutGoldConsumption(threeShiftSchedule)
+    }));
+
+    expect(result.status).toBe("evaluated");
+    if (result.status !== "evaluated") return;
+    expect(result.input.recoveryPlacements.filter((placement) => placement.operatorId === "full-cycle-worker")).toEqual([]);
+    expect(result.result.sustainable).toBe(false);
+    expect(result.result.failures).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: "fatigued-before-shift-end", operatorId: "full-cycle-worker", hour: 0 })
+    ]));
+  });
+
+  it.each([
+    { name: "linear", assignments: ["target", "target", "other"], recoveryStart: 16 },
+    { name: "cyclic", assignments: ["target", "other", "target"], recoveryStart: 8 }
+  ])("applies Fiammetta exactly once after a $name contiguous block", ({ assignments, recoveryStart }) => {
+    const exchangeTarget = assignment("target", "factory-1", {
+      recoveryHours: 0,
+      moraleExchangeApplied: true,
+      moraleExchangeSourceOperatorId: "fiammetta",
+      recoveryProvenance: {
+        baseRecoveryRatePerHour: 4,
+        conditionalModifiers: [],
+        sources: [{
+          operatorId: "fiammetta", role: "recovery-source", allocation: "exchange",
+          occupiesDormitorySlot: true, ownedAtEvaluation: true
+        }]
+      }
+    });
+    const windows = assignments.map((operatorId) => [operatorId === "target" ? exchangeTarget : assignment("other")]);
+
+    const result = evaluate(planFor(threeShiftSchedule, windows));
+
+    expect(result.status).toBe("evaluated");
+    if (result.status !== "evaluated") return;
+    expect(result.input.recoveryPlacements.filter((placement) =>
+      placement.operatorId === "target" && placement.moraleExchange
+    ).map((placement) => placement.moraleExchange)).toEqual([
+      { atHour: recoveryStart, sourceOperatorId: "fiammetta" }
+    ]);
+    expect(result.result.exchanges.filter((exchange) => exchange.targetOperatorId === "target")).toEqual([
+      expect.objectContaining({ hour: recoveryStart, sourceOperatorId: "fiammetta" })
     ]);
   });
 

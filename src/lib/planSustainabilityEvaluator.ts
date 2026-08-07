@@ -126,10 +126,9 @@ function rateAt(assignment: Assignment, morale: number): number {
     .reduce((total, modifier) => total + modifier.additionalRatePerHour, 0);
 }
 
-function requiredRecoveryHours(assignment: Assignment, workHours: number): number {
+function requiredRecoveryHours(assignment: Assignment, moraleDebt: number): number {
   if (assignment.moraleExchangeApplied) return 0;
-  const consumption = assignment.moraleConsumptionPerHour!;
-  let morale = Math.max(0, moraleCap - consumption * workHours);
+  let morale = Math.max(0, moraleCap - moraleDebt);
   let hours = 0;
   while (morale < moraleCap - 1e-12) {
     const thresholds = assignment.recoveryProvenance!.conditionalModifiers
@@ -165,11 +164,23 @@ function buildRecoveryEvents(works: readonly WorkOccurrence[], cycleHours: numbe
   const events: RecoveryEvent[] = [];
   for (const [operatorId, operatorWorks] of [...byOperator].sort(([left], [right]) => left.localeCompare(right))) {
     operatorWorks.sort((left, right) => left.startHour - right.startHour || left.shiftIndex - right.shiftIndex);
-    operatorWorks.forEach((work, index) => {
-      const idle = cyclicIdleSegments(operatorWorks, index, cycleHours);
+    const idleAfter = operatorWorks.map((_, index) => cyclicIdleSegments(operatorWorks, index, cycleHours));
+    const terminalIndexes = idleAfter.flatMap((idle, index) => idle.length > 0 ? [index] : []);
+    terminalIndexes.forEach((terminalIndex, blockIndex) => {
+      const work = operatorWorks[terminalIndex];
+      const idle = idleAfter[terminalIndex];
+      const previousTerminalIndex = terminalIndexes[(blockIndex + terminalIndexes.length - 1) % terminalIndexes.length];
+      let moraleDebt = 0;
+      let occurrenceIndex = (previousTerminalIndex + 1) % operatorWorks.length;
+      while (true) {
+        const occurrence = operatorWorks[occurrenceIndex];
+        moraleDebt += occurrence.assignment.moraleConsumptionPerHour! * (occurrence.endHour - occurrence.startHour);
+        if (occurrenceIndex === terminalIndex) break;
+        occurrenceIndex = (occurrenceIndex + 1) % operatorWorks.length;
+      }
       let remaining = work.assignment.moraleExchangeApplied
         ? idle.reduce((total, [start, end]) => total + end - start, 0)
-        : requiredRecoveryHours(work.assignment, work.endHour - work.startHour);
+        : requiredRecoveryHours(work.assignment, moraleDebt);
       const exchangeSourceId = work.assignment.moraleExchangeApplied
         ? work.assignment.moraleExchangeSourceOperatorId
         : undefined;

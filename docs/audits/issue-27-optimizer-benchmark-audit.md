@@ -92,6 +92,8 @@ complete planでは各windowのselected facility teamを`simulateFacilityProduct
 
 最大レベル243 context（4宿舎×5枠）で、条件回復source provenance、full-morale交換source、interval-aware dormitory packing、gold prefix、cycle closureを評価する。開始純金はAppStateに在庫authorityがないため0とし、underflowを隠さない。初期morale位相はbounded successive-cycle fixed pointで求め、評価不能・未収束・資源aggregate不一致はstable typed reasonになる。3 groupsへ2-shift tupleを流用せず、未生成groupを含むJP/CN planは正直に`incomplete`を維持する。
 
+連続勤務はcycle boundaryをまたぐ場合もpositive idle gap単位のcyclic blockとして扱う。直前gap以降の各window固有のmorale消費を合算し、gap直前のterminal occurrenceの回復provenanceだけで回復を配置する。positive idle gapがないfull-cycle勤務には回復を捏造せず、fixed-point開始moraleが0の勤務はhour 0の`fatigued-before-shift-end`を保持する。linear/cyclic blockのfull-morale交換はblock後にexactly onceである。
+
 runnerは`sustainable-cycle/...` diagnosticsをplanのactual result/reasonsから構築する。five-fixture gate model、Wikiru 36h witness、CN 57 source IDs / 55 comparable IDsを変更しない。sustainability evidenceが既存composition mismatchより先に成立しないため、accepted Wikiruのfirst mismatchは`composition/search/groups-a-b/control-center`のままである。
 
 ## Remaining blockers

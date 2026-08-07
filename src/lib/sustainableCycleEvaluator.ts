@@ -646,6 +646,16 @@ function simulateInterval(
       const consumption = work.assignment.moraleConsumptionPerHour ?? verifiedConsumptionRate;
       const availableDuration = intervalEnd - cursor;
       if (state.morale <= calculationEpsilon) {
+        const key = `${work.shift.id}\u0000${operatorId}`;
+        if (cursor < work.shift.endHour - calculationEpsilon && !fatigueKeys.has(key)) {
+          fatigueKeys.add(key);
+          failures.push(failure("morale", "fatigued-before-shift-end", `operator ${operatorId} has zero morale before shift ${work.shift.id} ends`, {
+            operatorId,
+            facilityId: work.assignment.facilityId,
+            shiftId: work.shift.id,
+            hour: cursor
+          }));
+        }
         pushSegment(state, {
           startHour: cursor,
           endHour: intervalEnd,
