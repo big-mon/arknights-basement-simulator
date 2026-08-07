@@ -43,12 +43,16 @@
     ]
   },
   "roster": { "mode": "all-unlocked" },
-  "rotation": {
+  "schedule": {
     "cycleHours": 36,
+    "groups": [{ "id": "A" }, { "id": "B" }, { "id": "C" }],
     "shifts": [
       {
         "id": "groups-a-b",
-        "durationHours": 12,
+        "startHour": 0,
+        "endHour": 12,
+        "activeGroupIds": ["A", "B"],
+        "recoveryGroupIds": ["C"],
         "assignments": {
           "factory-battle-record-1": {
             "label": "FEater + Conviction + Minimalist (+110%)",
@@ -81,7 +85,10 @@
       },
       {
         "id": "groups-b-c",
-        "durationHours": 12,
+        "startHour": 12,
+        "endHour": 24,
+        "activeGroupIds": ["B", "C"],
+        "recoveryGroupIds": ["A"],
         "assignments": {
           "factory-battle-record-1": {
             "label": "Flametail-linked Pinus Sylvestris team (+115.5%)",
@@ -118,7 +125,10 @@
       },
       {
         "id": "groups-c-a",
-        "durationHours": 12,
+        "startHour": 24,
+        "endHour": 36,
+        "activeGroupIds": ["C", "A"],
+        "recoveryGroupIds": ["B"],
         "assignments": {
           "factory-battle-record-1": {
             "label": "Pallas + Scene + Vermeil (+104.75%)",

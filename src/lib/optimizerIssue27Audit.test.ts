@@ -1,10 +1,12 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import jpFactory from "../data/optimizer-benchmarks/jp-243-factory-3group-2025-11.json";
 import cnFullBase from "../data/optimizer-benchmarks/cn-243-3shift-2026-06.json";
+import jpWikiru from "../data/optimizer-benchmarks/jp-wikiru-backup38-12h-v2.json";
 import { createDefaultState } from "../data/defaults";
 import { optimizerBenchmarkFixtures } from "../data/optimizer-benchmarks";
 import { averageEffectEfficiency, generateAssignmentPlan } from "./optimizer";
 import { operatorAvailabilitySnapshot } from "./operatorAvailability";
+import { calculateCanonicalSha256 } from "./phase1AssumptionBundle";
 import { createIssue27CurrentObservations, createIssue27OptimizerObservation } from "./optimizerIssue27Audit";
 import { formatOptimizerBenchmarkBatchResult, runOptimizerBenchmarkBatch } from "./optimizerBenchmarkRunner";
 import type { BenchmarkObservationMap, OptimizerBenchmarkBatchResult } from "./optimizerBenchmarkRunner";
@@ -25,7 +27,7 @@ describe("Issue #27 current-implementation audit", () => {
       "NON-GATING jp-glasgow-trading-125",
       "NON-GATING cn-243-3shift-2026-06",
       "NON-GATING base-mechanics-2026-07",
-      "FAIL jp-wikiru-backup38-12h-v2 rotation/state-model/cycleHours: expected 36, actual 24"
+      "FAIL jp-wikiru-backup38-12h-v2 composition/search/groups-a-b/control-center: expected [\"char_4179_monstr\",\"char_2024_chyue\",\"char_2015_dusk\",\"char_2023_ling\",\"char_4098_vvana\"], actual missing"
     ].join("\n"));
   });
 
@@ -54,17 +56,44 @@ describe("Issue #27 current-implementation audit", () => {
     }));
   });
 
-  it("locks the smallest reproducible 3-group versus 2-window state mismatch", () => {
-    expect(jpFactory.rotation.shifts).toHaveLength(3);
-    expect(cnFullBase.rotation.shifts).toHaveLength(3);
+  it("derives the accepted Wikiru schedule while leaving composition search unresolved", () => {
+    expect(jpFactory.schedule.shifts).toHaveLength(3);
+    expect(cnFullBase.schedule.shifts).toHaveLength(3);
     expect(observations["jp-243-factory-3group-2025-11"]?.rotation).toMatchObject({
-      cycleHours: 24,
-      shifts: [{ id: "current-window-1", durationHours: 12 }, { id: "current-window-2", durationHours: 12 }]
+      cycleHours: 36,
+      shifts: [{ id: "groups-a-b", durationHours: 12 }, { id: "groups-b-c", durationHours: 12 }, { id: "groups-c-a", durationHours: 12 }]
     });
-    expect(observations["cn-243-3shift-2026-06"]?.rotation?.shifts).toHaveLength(2);
+    expect(observations["cn-243-3shift-2026-06"]?.rotation?.shifts).toHaveLength(3);
+    expect(observations["jp-wikiru-backup38-12h-v2"]?.metadata.roster).toEqual(jpWikiru.roster);
     expect(observations["jp-wikiru-backup38-12h-v2"]?.rotation).toMatchObject({
-      cycleHours: 24,
-      shifts: [{ id: "current-window-1", durationHours: 12 }, { id: "current-window-2", durationHours: 12 }]
+      cycleHours: 36,
+      shifts: [
+        { id: "groups-a-b", durationHours: 12, startHour: 0, endHour: 12, activeGroupIds: ["group-a", "group-b"], recoveryGroupIds: ["group-c"] },
+        { id: "groups-b-c", durationHours: 12, startHour: 12, endHour: 24, activeGroupIds: ["group-b", "group-c"], recoveryGroupIds: ["group-a"] },
+        { id: "groups-c-a", durationHours: 12, startHour: 24, endHour: 36, activeGroupIds: ["group-a", "group-c"], recoveryGroupIds: ["group-b"] }
+      ]
+    });
+    expect(observations["jp-wikiru-backup38-12h-v2"]?.rotation?.shifts.map((shift) => shift.assignments)).toEqual([
+      {},
+      {},
+      {}
+    ]);
+    expect(jpWikiru.rotation.shifts.some((shift) => Object.keys(shift.assignments).length > 0)).toBe(true);
+  });
+
+  it("keeps the accepted Wikiru canonical file and witness semantics pinned", () => {
+    expect("schedule" in jpWikiru).toBe(false);
+    expect(calculateCanonicalSha256(jpWikiru)).toBe(
+      "a9f1f69b2bceff6896cc2bdcfaa61b88d648548fb21729a9a3ec19afae96f8b5"
+    );
+    expect(jpWikiru.rotation).toMatchObject({
+      cycleHours: 36,
+      workerGroupCount: 3,
+      shifts: [
+        { id: "groups-a-b", durationHours: 12, workerGroupIds: ["group-a", "group-b"] },
+        { id: "groups-b-c", durationHours: 12, workerGroupIds: ["group-b", "group-c"] },
+        { id: "groups-c-a", durationHours: 12, workerGroupIds: ["group-c", "group-a"] }
+      ]
     });
   });
 
@@ -80,7 +109,7 @@ describe("Issue #27 current-implementation audit", () => {
           message: "source-only operator is excluded from runnable composition matching"
         }),
         expect.objectContaining({
-          path: "reference/conflict/rotation.shifts.durationHours",
+          path: "reference/conflict/schedule.shifts.durationHours",
           severity: "info",
           expected: "12 hours per queue",
           actual: "8 hours per shift"
@@ -105,7 +134,7 @@ describe("Issue #27 current-implementation audit", () => {
     expect(result.cases.find((item) => item.id === "jp-wikiru-backup38-12h-v2")).toMatchObject({
       status: "failed",
       gating: true,
-      smallestMismatchPath: "rotation/state-model/cycleHours"
+      smallestMismatchPath: "composition/search/groups-a-b/control-center"
     });
   });
 

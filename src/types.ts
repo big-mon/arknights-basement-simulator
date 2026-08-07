@@ -8,6 +8,24 @@ export type BaseLayout = "243" | "153";
 
 export type RotationCount = 2;
 
+export interface ScheduleGroup {
+  id: string;
+}
+
+export interface ScheduleShift {
+  id: string;
+  startHour: number;
+  endHour: number;
+  activeGroupIds: string[];
+  recoveryGroupIds: string[];
+}
+
+export interface ScheduleState {
+  cycleHours: number;
+  groups: ScheduleGroup[];
+  shifts: ScheduleShift[];
+}
+
 export type LanguageCode = "ja" | "zh" | "en";
 
 export type AppRegion = "JP" | "CN";
@@ -234,7 +252,7 @@ export interface AppState {
   language: LanguageCode;
   region: AppRegion;
   layout: BaseLayout;
-  rotationCount: RotationCount;
+  schedule: ScheduleState;
   roster: Roster;
   facilities: FacilitySlot[];
   preference: OptimizationPreference;
@@ -316,8 +334,21 @@ export interface FacilityPlan {
 export interface RotationWindow {
   label: string;
   hours: number;
+  shiftId: string;
+  startHour: number;
+  endHour: number;
+  activeGroupIds: string[];
+  recoveryGroupIds: string[];
+  incompleteGroupIds: string[];
   assignments: Assignment[];
   recovery: Assignment[];
+}
+
+export interface AssignmentPlanDiagnostic {
+  code: "schedule-group-unpopulated";
+  message: string;
+  groupId: string;
+  shiftId: string;
 }
 
 export interface AssignmentPlan {
@@ -325,6 +356,8 @@ export interface AssignmentPlan {
   totalScore: number;
   dailyValue: number;
   facilityPlans: FacilityPlan[];
+  schedule: ScheduleState;
   rotation: RotationWindow[];
+  diagnostics: AssignmentPlanDiagnostic[];
   warnings: string[];
 }

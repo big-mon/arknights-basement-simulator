@@ -2334,10 +2334,293 @@ describe("optimizer", () => {
     ownBaselineRoster(state);
     const plan = generateAssignmentPlan(state);
 
-    expect(state.rotationCount).toBe(2);
+    expect(state.schedule.shifts).toHaveLength(2);
     expect(plan.rotation).toHaveLength(2);
     expect(plan.rotation[0].assignments.length).toBeGreaterThan(0);
     expect(plan.rotation[1].recovery.length).toBeGreaterThan(0);
+    expect(plan.schedule).toEqual(state.schedule);
+    expect(plan.rotation.map((window) => ({
+      shiftId: window.shiftId,
+      startHour: window.startHour,
+      endHour: window.endHour,
+      activeGroupIds: window.activeGroupIds,
+      recoveryGroupIds: window.recoveryGroupIds
+    }))).toEqual([
+      { shiftId: "shift-a", startHour: 0, endHour: 12, activeGroupIds: ["group-a"], recoveryGroupIds: ["group-b"] },
+      { shiftId: "shift-b", startHour: 12, endHour: 24, activeGroupIds: ["group-b"], recoveryGroupIds: ["group-a"] }
+    ]);
+  });
+
+  it("maps rotation populations by chronological stable group IDs instead of group declaration order", () => {
+    const state = createDefaultState();
+    ownBaselineRoster(state);
+    state.schedule = {
+      cycleHours: 24,
+      groups: [{ id: "middle-unpopulated" }, { id: "zeta-active" }, { id: "alpha-alternative" }],
+      shifts: [
+        {
+          id: "early",
+          startHour: 0,
+          endHour: 8,
+          activeGroupIds: ["zeta-active"],
+          recoveryGroupIds: ["alpha-alternative", "middle-unpopulated"]
+        },
+        {
+          id: "middle",
+          startHour: 8,
+          endHour: 16,
+          activeGroupIds: ["alpha-alternative"],
+          recoveryGroupIds: ["zeta-active", "middle-unpopulated"]
+        },
+        {
+          id: "late",
+          startHour: 16,
+          endHour: 24,
+          activeGroupIds: ["middle-unpopulated"],
+          recoveryGroupIds: ["zeta-active", "alpha-alternative"]
+        }
+      ]
+    };
+    const reversedGroupsState = structuredClone(state);
+    reversedGroupsState.schedule.groups.reverse();
+
+    const plan = generateAssignmentPlan(state);
+    const reversedGroupsPlan = generateAssignmentPlan(reversedGroupsState);
+    const rotationByShiftId = (candidatePlan: ReturnType<typeof generateAssignmentPlan>) =>
+      Object.fromEntries(
+        candidatePlan.rotation.map((window) => [
+          window.shiftId,
+          {
+            assignments: window.assignments.map((assignment) => assignment.operatorId),
+            recovery: window.recovery.map((assignment) => assignment.operatorId),
+            incompleteGroupIds: [...window.incompleteGroupIds].sort()
+          }
+        ])
+      );
+    const diagnosticsByShiftAndGroup = (candidatePlan: ReturnType<typeof generateAssignmentPlan>) =>
+      candidatePlan.diagnostics
+        .map(({ code, groupId, shiftId }) => `${shiftId}:${groupId}:${code}`)
+        .sort();
+    const activeAssignmentIds = plan.facilityPlans
+      .flatMap((facilityPlan) => facilityPlan.assignments)
+      .filter((assignment) => assignment.fatigueHours > 0)
+      .map((assignment) => assignment.operatorId);
+    const alternativeAssignmentIds = plan.facilityPlans
+      .flatMap((facilityPlan) => facilityPlan.alternatives)
+      .filter((assignment) => assignment.fatigueHours > 0)
+      .map((assignment) => assignment.operatorId);
+
+    expect(activeAssignmentIds.length).toBeGreaterThan(0);
+    expect(alternativeAssignmentIds.length).toBeGreaterThan(0);
+    expect(rotationByShiftId(reversedGroupsPlan)).toEqual(rotationByShiftId(plan));
+    expect(diagnosticsByShiftAndGroup(reversedGroupsPlan)).toEqual(diagnosticsByShiftAndGroup(plan));
+    expect(rotationByShiftId(plan)).toEqual({
+      early: {
+        assignments: activeAssignmentIds,
+        recovery: alternativeAssignmentIds,
+        incompleteGroupIds: []
+      },
+      middle: {
+        assignments: alternativeAssignmentIds,
+        recovery: activeAssignmentIds,
+        incompleteGroupIds: []
+      },
+      late: {
+        assignments: [],
+        recovery: [...alternativeAssignmentIds, ...activeAssignmentIds],
+        incompleteGroupIds: ["middle-unpopulated"]
+      }
+    });
+    expect(diagnosticsByShiftAndGroup(plan)).toEqual([
+      "late:middle-unpopulated:schedule-group-unpopulated"
+    ]);
+  });
+
+  it("keeps multi-group rotation outcomes stable when active and recovery ID arrays are permuted", () => {
+    const state = createDefaultState();
+    ownBaselineRoster(state);
+    state.schedule = {
+      cycleHours: 24,
+      groups: [{ id: "delta" }, { id: "alpha" }, { id: "gamma" }, { id: "beta" }],
+      shifts: [
+        {
+          id: "first",
+          startHour: 0,
+          endHour: 12,
+          activeGroupIds: ["delta", "beta"],
+          recoveryGroupIds: ["gamma", "alpha"]
+        },
+        {
+          id: "second",
+          startHour: 12,
+          endHour: 24,
+          activeGroupIds: ["gamma", "alpha"],
+          recoveryGroupIds: ["delta", "beta"]
+        }
+      ]
+    };
+    const activeIdsPermutedState = structuredClone(state);
+    activeIdsPermutedState.schedule.shifts.forEach((shift) => shift.activeGroupIds.reverse());
+    const recoveryIdsPermutedState = structuredClone(state);
+    recoveryIdsPermutedState.schedule.shifts.forEach((shift) => shift.recoveryGroupIds.reverse());
+
+    const outcomeByShiftAndGroup = (candidateState: typeof state) => {
+      const plan = generateAssignmentPlan(candidateState);
+      return {
+        rotation: plan.rotation
+          .flatMap((window) => [
+            ...window.activeGroupIds.map((groupId) => ({
+              shiftId: window.shiftId,
+              groupId,
+              mode: "active",
+              assignmentIds: window.assignments.map((assignment) => assignment.operatorId),
+              incomplete: window.incompleteGroupIds.includes(groupId)
+            })),
+            ...window.recoveryGroupIds.map((groupId) => ({
+              shiftId: window.shiftId,
+              groupId,
+              mode: "recovery",
+              assignmentIds: window.recovery.map((assignment) => assignment.operatorId),
+              incomplete: false
+            }))
+          ])
+          .sort((left, right) =>
+            `${left.shiftId}:${left.mode}:${left.groupId}`.localeCompare(`${right.shiftId}:${right.mode}:${right.groupId}`)
+          ),
+        diagnostics: plan.diagnostics
+          .map(({ code, groupId, shiftId }) => `${shiftId}:${groupId}:${code}`)
+          .sort()
+      };
+    };
+    const baselineOutcome = outcomeByShiftAndGroup(state);
+
+    expect(outcomeByShiftAndGroup(activeIdsPermutedState)).toEqual(baselineOutcome);
+    expect(outcomeByShiftAndGroup(recoveryIdsPermutedState)).toEqual(baselineOutcome);
+    expect(baselineOutcome.rotation.every((entry) => entry.assignmentIds.length === 0)).toBe(true);
+    expect(baselineOutcome.diagnostics).toEqual([
+      "first:beta:schedule-group-unpopulated",
+      "first:delta:schedule-group-unpopulated",
+      "second:alpha:schedule-group-unpopulated",
+      "second:gamma:schedule-group-unpopulated"
+    ]);
+  });
+
+  it("uses one canonical schedule surface across every optimizer result", () => {
+    const state = createDefaultState();
+    ownBaselineRoster(state);
+    state.schedule = {
+      cycleHours: 24,
+      groups: [{ id: "zeta" }, { id: "alpha" }, { id: "omega" }, { id: "middle-unpopulated" }],
+      shifts: [
+        {
+          id: "late",
+          startHour: 15,
+          endHour: 24,
+          activeGroupIds: ["zeta", "middle-unpopulated"],
+          recoveryGroupIds: ["omega", "alpha"]
+        },
+        {
+          id: "early",
+          startHour: 0,
+          endHour: 6,
+          activeGroupIds: ["zeta", "alpha"],
+          recoveryGroupIds: ["omega", "middle-unpopulated"]
+        },
+        {
+          id: "middle",
+          startHour: 6,
+          endHour: 15,
+          activeGroupIds: ["middle-unpopulated", "omega"],
+          recoveryGroupIds: ["zeta", "alpha"]
+        }
+      ]
+    };
+    const permutations = [state, structuredClone(state), structuredClone(state), structuredClone(state)];
+    permutations[1].schedule.groups.reverse();
+    permutations[2].schedule.shifts.reverse();
+    permutations[3].schedule.groups.reverse();
+    permutations[3].schedule.shifts.reverse();
+    for (const candidate of permutations.slice(1)) {
+      candidate.schedule.shifts.forEach((shift) => {
+        shift.activeGroupIds.reverse();
+        shift.recoveryGroupIds.reverse();
+      });
+    }
+    const withoutGeneratedAt = (candidateState: typeof state) => {
+      const { generatedAt: _generatedAt, ...plan } = generateAssignmentPlan(candidateState);
+      return plan;
+    };
+    const canonicalPlan = withoutGeneratedAt(state);
+
+    for (const candidate of permutations.slice(1)) {
+      expect(withoutGeneratedAt(candidate)).toEqual(canonicalPlan);
+    }
+    expect(canonicalPlan.schedule).toEqual({
+      cycleHours: 24,
+      groups: [{ id: "alpha" }, { id: "middle-unpopulated" }, { id: "omega" }, { id: "zeta" }],
+      shifts: [
+        {
+          id: "early",
+          startHour: 0,
+          endHour: 6,
+          activeGroupIds: ["alpha", "zeta"],
+          recoveryGroupIds: ["middle-unpopulated", "omega"]
+        },
+        {
+          id: "middle",
+          startHour: 6,
+          endHour: 15,
+          activeGroupIds: ["middle-unpopulated", "omega"],
+          recoveryGroupIds: ["alpha", "zeta"]
+        },
+        {
+          id: "late",
+          startHour: 15,
+          endHour: 24,
+          activeGroupIds: ["middle-unpopulated", "zeta"],
+          recoveryGroupIds: ["alpha", "omega"]
+        }
+      ]
+    });
+    expect(canonicalPlan.rotation.map((window) => window.label)).toEqual([
+      "1回目ローテーション",
+      "2回目ローテーション",
+      "3回目ローテーション"
+    ]);
+    expect(canonicalPlan.rotation.flatMap((window) => window.incompleteGroupIds)).toEqual([
+      "alpha",
+      "zeta",
+      "middle-unpopulated",
+      "omega",
+      "middle-unpopulated",
+      "zeta"
+    ]);
+  });
+
+  it("fails closed before exposing any plan for an invalid schedule", () => {
+    const state = createDefaultState();
+    state.schedule.shifts[0].activeGroupIds = ["missing"];
+
+    expect(() => generateAssignmentPlan(state)).toThrowError(RangeError);
+  });
+
+  it("preserves unpopulated schedule groups as incomplete windows without cloning assignments", () => {
+    const state = createDefaultState();
+    state.roster[operators[0].id].owned = true;
+    state.schedule = {
+      cycleHours: 24,
+      groups: [{ id: "A" }, { id: "B" }, { id: "C" }],
+      shifts: [
+        { id: "one", startHour: 0, endHour: 8, activeGroupIds: ["A"], recoveryGroupIds: ["B", "C"] },
+        { id: "two", startHour: 8, endHour: 16, activeGroupIds: ["B"], recoveryGroupIds: ["A", "C"] },
+        { id: "three", startHour: 16, endHour: 24, activeGroupIds: ["C"], recoveryGroupIds: ["A", "B"] }
+      ]
+    };
+
+    const plan = generateAssignmentPlan(state);
+    expect(plan.rotation).toHaveLength(3);
+    expect(plan.rotation[2]).toMatchObject({ shiftId: "three", assignments: [], incompleteGroupIds: ["C"] });
+    expect(plan.diagnostics).toContainEqual(expect.objectContaining({ code: "schedule-group-unpopulated", groupId: "C", shiftId: "three" }));
   });
 
   it("keeps facility assignments stable when the facility list order changes", () => {
@@ -2449,7 +2732,6 @@ describe("optimizer", () => {
     state.roster.char_002_amiya.elite = 2;
     state.language = "en";
     state.layout = "153";
-    state.rotationCount = 2;
     state.region = "CN";
     state.facilities = createFacilitiesForLayout("153", state.facilities);
 
@@ -2459,7 +2741,7 @@ describe("optimizer", () => {
     expect(restored.roster.char_002_amiya.elite).toBe(2);
     expect(restored.language).toBe("en");
     expect(restored.layout).toBe("153");
-    expect(restored.rotationCount).toBe(2);
+    expect(restored.schedule).toEqual(state.schedule);
     expect(restored.region).toBe("CN");
     expect(restored.facilities).toHaveLength(state.facilities.length);
   });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { optimizerBenchmarkFixtures } from "../data/optimizer-benchmarks";
 import {
+  effectiveBenchmarkScheduleAuthority,
   validateOptimizerBenchmark,
   type OptimizerBenchmark,
   type ResourceOutputBenchmark
@@ -109,6 +110,13 @@ function gatingFixture(id: string): ResourceOutputBenchmark {
 }
 
 function savedReferenceObservation(fixture: ResourceOutputBenchmark): BenchmarkObservation {
+  const allWorkerGroupIds = [...new Set(
+    fixture.rotation.shifts.flatMap((shift) => shift.workerGroupIds ?? [])
+  )];
+  const hasCompleteRotationWitness =
+    fixture.rotation.workerGroupCount === allWorkerGroupIds.length &&
+    fixture.rotation.shifts.every((shift) => (shift.workerGroupIds?.length ?? 0) > 0);
+  let boundary = 0;
   return {
     metadata: {
       region: fixture.region,
@@ -121,6 +129,16 @@ function savedReferenceObservation(fixture: ResourceOutputBenchmark): BenchmarkO
       shifts: fixture.rotation.shifts.map((shift) => ({
         id: shift.id,
         durationHours: shift.durationHours,
+        ...(hasCompleteRotationWitness ? (() => {
+          const startHour = boundary;
+          boundary += shift.durationHours;
+          return {
+            startHour,
+            endHour: boundary,
+            activeGroupIds: [...shift.workerGroupIds!],
+            recoveryGroupIds: allWorkerGroupIds.filter((groupId) => !shift.workerGroupIds!.includes(groupId))
+          };
+        })() : {}),
         assignments: Object.fromEntries(Object.entries(shift.assignments).flatMap(([facilityId, assignment]) =>
           assignment.operatorIds ? [[facilityId, [...assignment.operatorIds]]] : []
         ))
@@ -172,6 +190,164 @@ describe("runOptimizerBenchmarkBatch", () => {
       severity: "info",
       category: "search"
     }));
+  });
+
+  it("matches schedule boundaries and groups by stable shift ID rather than array position", () => {
+    const fixture = resourceFixture("JP") as Record<string, any>;
+    const [operatorA, operatorB] = genericOperatorIds("JP");
+    delete fixture.rotation;
+    fixture.schedule = {
+      cycleHours: 24,
+      groups: [{ id: "group-a" }, { id: "group-b" }],
+      shifts: [
+        { id: "day", startHour: 0, endHour: 12, activeGroupIds: ["group-a"], recoveryGroupIds: ["group-b"], assignments: { "trading-1": { operatorIds: [operatorA, operatorB] } } },
+        { id: "night", startHour: 12, endHour: 24, activeGroupIds: ["group-b"], recoveryGroupIds: ["group-a"], assignments: { "trading-1": { operatorIds: [operatorA, operatorB] } } }
+      ]
+    };
+    const scheduledObservation = observation("JP", {
+      rotation: {
+        cycleHours: 24,
+        shifts: [
+          { id: "night", durationHours: 12, startHour: 12, endHour: 24, activeGroupIds: ["group-b"], recoveryGroupIds: ["group-a"], assignments: { "trading-1": [operatorB, operatorA] } },
+          { id: "day", durationHours: 12, startHour: 0, endHour: 12, activeGroupIds: ["group-a"], recoveryGroupIds: ["group-b"], assignments: { "trading-1": [operatorA, operatorB] } }
+        ]
+      }
+    });
+
+    const matched = runOptimizerBenchmarkBatch([fixture], { "runner-case": scheduledObservation });
+    expect(matched.cases[0]).toMatchObject({ status: "non-gating", matchedComposition: "primary" });
+    expect(matched.cases[0].diagnostics.filter((item) => item.severity === "error")).toHaveLength(0);
+
+    scheduledObservation.rotation!.shifts[1].activeGroupIds = ["group-b"];
+    const mismatched = runOptimizerBenchmarkBatch([fixture], { "runner-case": scheduledObservation });
+    expect(mismatched.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "rotation/state-model/shifts/day/activeGroupIds",
+      severity: "error"
+    }));
+    expect(mismatched.cases[0].matchedComposition).toBeUndefined();
+  });
+
+  it("rejects wrong group identity for the accepted Wikiru rotation witness", () => {
+    const exactExceptGroups = savedReferenceObservation(checkedGatingFixture);
+    let startHour = 0;
+    exactExceptGroups.rotation!.shifts = exactExceptGroups.rotation!.shifts.map((shift) => {
+      const endHour = startHour + shift.durationHours;
+      const observedShift = {
+        ...shift,
+        startHour,
+        endHour,
+        activeGroupIds: ["WRONG"],
+        recoveryGroupIds: ["ALSO-WRONG"]
+      };
+      startHour = endHour;
+      return observedShift;
+    });
+
+    const result = runOptimizerBenchmarkBatch(
+      [checkedGatingFixture],
+      { [checkedGatingFixture.id]: exactExceptGroups }
+    );
+
+    expect(result.cases[0]).toMatchObject({ status: "failed", gating: true });
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "rotation/state-model/shifts/groups-a-b/activeGroupIds",
+      severity: "error"
+    }));
+    expect(result.cases[0].matchedComposition).toBeUndefined();
+  });
+
+  it.each([
+    {
+      name: "a wrong boundary",
+      mutate: (observation: BenchmarkObservation) => {
+        observation.rotation!.shifts[0].endHour = 11;
+      },
+      path: "rotation/state-model/shifts/groups-a-b/endHour"
+    },
+    {
+      name: "missing group arrays",
+      mutate: (observation: BenchmarkObservation) => {
+        delete observation.rotation!.shifts[0].activeGroupIds;
+        delete observation.rotation!.shifts[0].recoveryGroupIds;
+      },
+      path: "rotation/state-model/shifts/groups-a-b/activeGroupIds"
+    },
+    {
+      name: "a duplicate active group ID",
+      mutate: (observation: BenchmarkObservation) => {
+        observation.rotation!.shifts[0].activeGroupIds = ["group-a", "group-a"];
+      },
+      path: "rotation/state-model/shifts/groups-a-b/activeGroupIds"
+    }
+  ])("rejects $name against the accepted Wikiru schedule identity", ({ mutate, path }) => {
+    const current = savedReferenceObservation(checkedGatingFixture);
+    mutate(current);
+
+    const result = runOptimizerBenchmarkBatch(
+      [checkedGatingFixture],
+      { [checkedGatingFixture.id]: current }
+    );
+
+    expect(result.cases[0]).toMatchObject({ status: "failed", gating: true });
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path,
+      category: "state-model",
+      severity: "error"
+    }));
+    expect(result.cases[0].matchedComposition).toBeUndefined();
+  });
+
+  it("passes the exact derived 36-hour Wikiru schedule identity and composition", () => {
+    const exact = savedReferenceObservation(checkedGatingFixture);
+
+    expect(exact.rotation).toMatchObject({
+      cycleHours: 36,
+      shifts: [
+        { id: "groups-a-b", durationHours: 12, startHour: 0, endHour: 12, activeGroupIds: ["group-a", "group-b"], recoveryGroupIds: ["group-c"] },
+        { id: "groups-b-c", durationHours: 12, startHour: 12, endHour: 24, activeGroupIds: ["group-b", "group-c"], recoveryGroupIds: ["group-a"] },
+        { id: "groups-c-a", durationHours: 12, startHour: 24, endHour: 36, activeGroupIds: ["group-c", "group-a"], recoveryGroupIds: ["group-b"] }
+      ]
+    });
+
+    const result = runOptimizerBenchmarkBatch(
+      [checkedGatingFixture],
+      { [checkedGatingFixture.id]: exact }
+    );
+
+    expect(result.cases[0]).toMatchObject({
+      status: "passed",
+      gating: true,
+      matchedComposition: "primary"
+    });
+    expect(result.cases[0].diagnostics.filter((item) => item.severity === "error")).toHaveLength(0);
+  });
+
+  it("fails closed when a pass/fail rotation witness has incomplete schedule authority", () => {
+    const fixture = gatingFixture("runner-incomplete-schedule-authority");
+    for (const shift of fixture.rotation.shifts) {
+      shift.workerGroupIds = shift.workerGroupIds?.map((groupId) =>
+        groupId === "group-a" ? "not stable" : groupId
+      );
+    }
+    const current = savedReferenceObservation(fixture);
+
+    const result = runOptimizerBenchmarkBatch([fixture], { [fixture.id]: current });
+
+    expect(validateOptimizerBenchmark(fixture)).toEqual(expect.objectContaining({ ok: true }));
+    expect(result.cases[0]).toMatchObject({
+      status: "failed",
+      gating: true,
+      smallestMismatchPath: "rotation/state-model/schedule-authority"
+    });
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "rotation/state-model/schedule-authority",
+      category: "state-model",
+      severity: "error",
+      actual: expect.arrayContaining([
+        "rotation.shifts[0].workerGroupIds[0] must be a stable ID"
+      ])
+    }));
+    expect(result.cases[0].matchedComposition).toBeUndefined();
   });
 
   it("does not report a composition match for a source-only unknown operator", () => {
@@ -1093,13 +1269,29 @@ describe("runOptimizerBenchmarkBatch", () => {
             formulaValues: Object.fromEntries(fixture.formulas.map((formula) => [formula.id, formula.expectedValue]))
           }];
         }
+        const authority = effectiveBenchmarkScheduleAuthority(fixture);
+        const fixtureShifts = fixture.schedule?.shifts ?? fixture.rotation.shifts;
+        const identityByShiftId = new Map(
+          authority.status === "complete"
+            ? authority.schedule.shifts.map((shift) => [shift.id, shift] as const)
+            : []
+        );
         return [fixture.id, {
           metadata,
           rotation: {
-            cycleHours: fixture.rotation.cycleHours,
-            shifts: fixture.rotation.shifts.map((shift) => ({
+            cycleHours: authority.status === "complete"
+              ? authority.schedule.cycleHours
+              : fixture.rotation.cycleHours,
+            shifts: fixtureShifts.map((shift) => ({
               id: shift.id,
-              durationHours: shift.durationHours,
+              durationHours: identityByShiftId.get(shift.id)?.durationHours ??
+                ("durationHours" in shift ? shift.durationHours : shift.endHour - shift.startHour),
+              ...(identityByShiftId.has(shift.id) ? {
+                startHour: identityByShiftId.get(shift.id)!.startHour,
+                endHour: identityByShiftId.get(shift.id)!.endHour,
+                activeGroupIds: [...identityByShiftId.get(shift.id)!.activeGroupIds],
+                recoveryGroupIds: [...identityByShiftId.get(shift.id)!.recoveryGroupIds]
+              } : {}),
               assignments: Object.fromEntries(Object.entries(shift.assignments).flatMap(([facilityId, assignment]) =>
                 assignment.operatorIds ? [[facilityId, [...assignment.operatorIds]]] : []
               )),

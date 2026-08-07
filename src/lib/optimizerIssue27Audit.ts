@@ -16,14 +16,22 @@ import {
 } from "./optimizerBenchmarkRunner";
 import { evaluateSustainableCycle, type SustainableCycleInput } from "./sustainableCycleEvaluator";
 import { simulateTradingPostDrones24h } from "./tradingPostDrones";
-import { validateOptimizerBenchmark } from "./optimizerBenchmark";
-import type { Assignment, AppState } from "../types";
+import {
+  effectiveBenchmarkScheduleAuthority,
+  validateOptimizerBenchmark,
+  type ResourceOutputBenchmark
+} from "./optimizerBenchmark";
+import type { Assignment, AppState, ScheduleState } from "../types";
+
+const acceptedWikiruFixtureId = "jp-wikiru-backup38-12h-v2";
 
 function emptyCycle(overrides: Partial<SustainableCycleInput> = {}): SustainableCycleInput {
+  const schedule = createDefaultState().schedule;
   return {
+    schedule,
     shifts: [
-      { id: "first", startHour: 0, endHour: 12, assignments: [], resourceContributions: [] },
-      { id: "second", startHour: 12, endHour: 24, assignments: [], resourceContributions: [] }
+      { id: "shift-a", startHour: 0, endHour: 12, groupIds: ["group-a"], assignments: [], resourceContributions: [] },
+      { id: "shift-b", startHour: 12, endHour: 24, groupIds: ["group-b"], assignments: [], resourceContributions: [] }
     ],
     startingDrones: 0,
     initialMorale: {},
@@ -153,7 +161,16 @@ export function createIssue27OptimizerObservation(
   region: OperatorAvailabilityRegion,
   explicitOperatorIds?: readonly string[]
 ): BenchmarkObservation {
+  return createIssue27OptimizerObservationForSchedule(region, explicitOperatorIds);
+}
+
+function createIssue27OptimizerObservationForSchedule(
+  region: OperatorAvailabilityRegion,
+  explicitOperatorIds?: readonly string[],
+  schedule?: ScheduleState
+): BenchmarkObservation {
   const state = createOwnedRegionalState(region, explicitOperatorIds);
+  if (schedule) state.schedule = structuredClone(schedule);
   const regionSnapshot = operatorAvailabilitySnapshot.regions[state.region];
   const actualOwnedOperatorIds = regionSnapshot.operatorIds.filter((operatorId) => state.roster[operatorId]?.owned);
   const roster: NonNullable<BenchmarkObservation["metadata"]["roster"]> =
@@ -168,10 +185,14 @@ export function createIssue27OptimizerObservation(
       roster
     },
     rotation: {
-      cycleHours: plan.rotation.reduce((total, window) => total + window.hours, 0),
-      shifts: plan.rotation.map((window, index) => ({
-        id: `current-window-${index + 1}`,
+      cycleHours: plan.schedule.cycleHours,
+      shifts: plan.rotation.map((window) => ({
+        id: window.shiftId,
         durationHours: window.hours,
+        startHour: window.startHour,
+        endHour: window.endHour,
+        activeGroupIds: [...window.activeGroupIds],
+        recoveryGroupIds: [...window.recoveryGroupIds],
         assignments: assignmentsByFacility(window.assignments)
       }))
     }
@@ -184,7 +205,7 @@ export function createIssue27OptimizerObservation(
 export function createIssue27CurrentObservations(): BenchmarkObservationMap {
   const glasgowIds = ["char_4110_delphn", "char_154_morgan", "char_112_siege"] as const;
   const phase1Candidate = optimizerBenchmarkFixtures.find((fixture) =>
-    (fixture as { id?: string }).id === "jp-wikiru-backup38-12h-v2"
+    (fixture as { id?: string }).id === acceptedWikiruFixtureId
   );
   const phase1Validation = validateOptimizerBenchmark(phase1Candidate);
   if (!phase1Validation.ok) {
@@ -192,20 +213,59 @@ export function createIssue27CurrentObservations(): BenchmarkObservationMap {
   }
   const phase1Fixture = phase1Validation.value;
   if (
-    phase1Fixture.id !== "jp-wikiru-backup38-12h-v2" ||
+    phase1Fixture.id !== acceptedWikiruFixtureId ||
     phase1Fixture.kind !== "resource-output" ||
     phase1Fixture.roster.mode !== "explicit"
   ) {
     throw new Error("jp-wikiru-backup38-12h-v2 must retain its explicit regional roster");
   }
   const phase1OperatorIds = phase1Fixture.roster.operatorIds;
+  const phase1Schedule = benchmarkScheduleFromValidatedFixture(phase1Fixture);
+  if (!phase1Schedule) {
+    throw new Error(`${acceptedWikiruFixtureId} must retain its complete canonical rotation witness`);
+  }
   return {
     "base-mechanics-2026-07": createMechanicsObservation(),
-    "jp-243-factory-3group-2025-11": createIssue27OptimizerObservation("JP"),
-    "jp-glasgow-trading-125": createIssue27OptimizerObservation("JP", glasgowIds),
-    "cn-243-3shift-2026-06": createIssue27OptimizerObservation("CN"),
-    "jp-wikiru-backup38-12h-v2": createIssue27OptimizerObservation(phase1Fixture.region, phase1OperatorIds)
+    "jp-243-factory-3group-2025-11": createIssue27OptimizerObservationForSchedule("JP", undefined, benchmarkSchedule("jp-243-factory-3group-2025-11")),
+    "jp-glasgow-trading-125": createIssue27OptimizerObservationForSchedule("JP", glasgowIds, benchmarkSchedule("jp-glasgow-trading-125")),
+    "cn-243-3shift-2026-06": createIssue27OptimizerObservationForSchedule("CN", undefined, benchmarkSchedule("cn-243-3shift-2026-06")),
+    "jp-wikiru-backup38-12h-v2": createIssue27OptimizerObservationForSchedule(
+      phase1Fixture.region,
+      phase1OperatorIds,
+      phase1Schedule
+    )
   };
+}
+
+function benchmarkScheduleFromValidatedFixture(fixture: ResourceOutputBenchmark): ScheduleState | undefined {
+  const authority = effectiveBenchmarkScheduleAuthority(fixture);
+  if (authority.status === "incomplete") return undefined;
+  return {
+    cycleHours: authority.schedule.cycleHours,
+    groups: authority.schedule.groups.map((group) => ({ ...group })),
+    shifts: authority.schedule.shifts.map(
+      ({ id, startHour, endHour, activeGroupIds, recoveryGroupIds }) => ({
+        id,
+        startHour,
+        endHour,
+        activeGroupIds: [...activeGroupIds],
+        recoveryGroupIds: [...recoveryGroupIds]
+      })
+    )
+  };
+}
+
+function benchmarkSchedule(id: string): ScheduleState {
+  const fixture = optimizerBenchmarkFixtures
+    .map(validateOptimizerBenchmark)
+    .flatMap((result) => result.ok ? [result.value] : [])
+    .find((item) => item.kind === "resource-output" && item.id === id);
+  if (!fixture || fixture.kind !== "resource-output") {
+    throw new Error(`missing benchmark schedule ${id}`);
+  }
+  const schedule = benchmarkScheduleFromValidatedFixture(fixture);
+  if (!schedule) throw new Error(`missing benchmark schedule ${id}`);
+  return schedule;
 }
 
 export function runIssue27CurrentImplementationAudit(): OptimizerBenchmarkBatchResult {

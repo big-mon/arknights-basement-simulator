@@ -266,6 +266,31 @@ describe("validateOptimizerBenchmark", () => {
     expect(validateOptimizerBenchmark(validResourceBenchmark()).ok).toBe(true);
   });
 
+  it("accepts a fully covered variable schedule and rejects gaps, overlaps, and unknown groups", () => {
+    const benchmark = validResourceBenchmark() as Record<string, any>;
+    delete benchmark.rotation;
+    benchmark.schedule = {
+      cycleHours: 24,
+      groups: [{ id: "group-a" }, { id: "group-b" }],
+      shifts: [
+        { id: "night", startHour: 12, endHour: 24, activeGroupIds: ["group-b"], recoveryGroupIds: ["group-a"], assignments: { "trading-1": { operatorIds: ["char_009_12fce"] } } },
+        { id: "day", startHour: 0, endHour: 12, activeGroupIds: ["group-a"], recoveryGroupIds: ["group-b"], assignments: { "trading-1": { operatorIds: ["char_009_12fce"] } } }
+      ]
+    };
+
+    expect(validateOptimizerBenchmark(benchmark)).toEqual(expect.objectContaining({ ok: true }));
+
+    benchmark.schedule.shifts[0].startHour = 13;
+    benchmark.schedule.shifts[0].activeGroupIds = ["missing-group"];
+    expect(validateOptimizerBenchmark(benchmark)).toEqual(expect.objectContaining({
+      ok: false,
+      errors: expect.arrayContaining([
+        expect.stringContaining("references unknown group missing-group"),
+        expect.stringContaining("creates a gap")
+      ])
+    }));
+  });
+
   it("accepts a source-available explicit roster identity absent from the optimizer catalog", () => {
     const benchmark = validResourceBenchmark();
     benchmark.roster.operatorIds = ["char_2014_nian"];
@@ -1887,7 +1912,17 @@ describe("checked-in optimizer benchmark fixtures", () => {
 
   it("identifies every JP factory occupant and keeps remote support outside factory slots", () => {
     const jp = optimizerBenchmarkFixtures.find((fixture: any) => fixture.id === "jp-243-factory-3group-2025-11") as any;
-    const assignments = jp.rotation.shifts.flatMap((shift: any) => Object.values(shift.assignments));
+    const assignments = jp.schedule.shifts.flatMap((shift: any) => Object.values(shift.assignments));
+
+    expect(jp.schedule).toMatchObject({
+      cycleHours: 36,
+      groups: [{ id: "A" }, { id: "B" }, { id: "C" }],
+      shifts: [
+        { id: "groups-a-b", startHour: 0, endHour: 12, activeGroupIds: ["A", "B"], recoveryGroupIds: ["C"] },
+        { id: "groups-b-c", startHour: 12, endHour: 24, activeGroupIds: ["B", "C"], recoveryGroupIds: ["A"] },
+        { id: "groups-c-a", startHour: 24, endHour: 36, activeGroupIds: ["C", "A"], recoveryGroupIds: ["B"] }
+      ]
+    });
 
     expect(assignments.every((assignment: any) => assignment.operatorIds?.length === 3)).toBe(true);
     expect(assignments.flatMap((assignment: any) => assignment.remoteSupport?.operatorIds ?? [])).toEqual(
@@ -1902,21 +1937,30 @@ describe("checked-in optimizer benchmark fixtures", () => {
     const cn = optimizerBenchmarkFixtures.find((fixture: any) => fixture.id === "cn-243-3shift-2026-06") as any;
 
     expect(cn.confidence).toBe("disputed");
+    expect(cn.schedule).toMatchObject({
+      cycleHours: 24,
+      groups: [{ id: "composition-1" }, { id: "composition-2" }, { id: "composition-3" }],
+      shifts: [
+        { startHour: 0, endHour: 8, activeGroupIds: ["composition-1"], recoveryGroupIds: [] },
+        { startHour: 8, endHour: 16, activeGroupIds: ["composition-2"], recoveryGroupIds: [] },
+        { startHour: 16, endHour: 24, activeGroupIds: ["composition-3"], recoveryGroupIds: [] }
+      ]
+    });
     expect(cn.compositionEvidence.sourceOnlyOperators.map((item: any) => item.operatorId).sort()).toEqual([
       "char_1052_kalts2", "char_4133_logos"
     ]);
     expect(cn.compositionEvidence.conflicts).toContainEqual(expect.objectContaining({
-      path: "rotation.shifts.durationHours",
+      path: "schedule.shifts.durationHours",
       sourceValue: "12 hours per queue",
       benchmarkValue: "8 hours per shift"
     }));
     expect(cn.compositionEvidence.disputedAssignments).toEqual(expect.arrayContaining([
       expect.objectContaining({ facilityIds: ["workshop-1", "training-1"] })
     ]));
-    expect(cn.rotation.shifts.every((shift: any) => !shift.assignments["workshop-1"] && !shift.assignments["training-1"])).toBe(true);
+    expect(cn.schedule.shifts.every((shift: any) => !shift.assignments["workshop-1"] && !shift.assignments["training-1"])).toBe(true);
 
     const sourceIds = new Set<string>();
-    for (const shift of cn.rotation.shifts) {
+    for (const shift of cn.schedule.shifts) {
       for (const assignment of Object.values(shift.assignments) as any[]) {
         for (const id of assignment.operatorIds ?? []) sourceIds.add(id);
         for (const id of assignment.sourceOnlyOperatorIds ?? []) sourceIds.add(id);
