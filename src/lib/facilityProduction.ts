@@ -144,12 +144,46 @@ function nonNegativeNumber(value: unknown, path: string): number {
   return validated;
 }
 
-function validateEffects(effects: readonly ProductionEfficiencyEffect[], path: string): void {
+function nonArrayObject(value: unknown, path: string): Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new RangeError(`${path} must be a non-null object`);
+  }
+  return value as Record<string, unknown>;
+}
+
+function optionalArray(value: unknown, path: string): readonly unknown[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) throw new RangeError(`${path} must be an array`);
+  return value;
+}
+
+function validateEffects(
+  effects: unknown,
+  path: string,
+  activeEffectPaths: Map<string, string>,
+  requiredSource?: ProductionEfficiencyEffect["source"]
+): void {
+  if (!Array.isArray(effects)) throw new RangeError(`${path} must be an array`);
   effects.forEach((effect, index) => {
-    if (!effect.id) throw new RangeError(`${path}[${index}].id must be non-empty`);
-    finiteNumber(effect.additiveEfficiency, `${path}[${index}].additiveEfficiency`);
-    if (!(["all", "gold", "battleRecord", "normalOrder"] as const).includes(effect.target)) {
-      throw new RangeError(`${path}[${index}].target is unsupported`);
+    const effectPath = `${path}[${index}]`;
+    const effectRecord = nonArrayObject(effect, effectPath);
+    if (typeof effectRecord.id !== "string" || effectRecord.id.length === 0) {
+      throw new RangeError(`${effectPath}.id must be non-empty`);
+    }
+    if (requiredSource && effectRecord.source !== requiredSource) {
+      throw new RangeError(`${effectPath}.source must be "${requiredSource}"`);
+    }
+    if (effectRecord.source !== "operator" && effectRecord.source !== "remote") {
+      throw new RangeError(`${effectPath}.source must be "operator" or "remote"`);
+    }
+    const existingPath = activeEffectPaths.get(effectRecord.id);
+    if (existingPath) {
+      throw new RangeError(`duplicate effect ID "${effectRecord.id}" at ${effectPath}; already active at ${existingPath}`);
+    }
+    activeEffectPaths.set(effectRecord.id, effectPath);
+    finiteNumber(effectRecord.additiveEfficiency, `${effectPath}.additiveEfficiency`);
+    if (!(["all", "gold", "battleRecord", "normalOrder"] as readonly unknown[]).includes(effectRecord.target)) {
+      throw new RangeError(`${effectPath}.target is unsupported`);
     }
   });
 }
@@ -163,26 +197,60 @@ function effectMatches(effect: ProductionEfficiencyEffect, input: FacilityProduc
 
 function matchingEfficiency(
   effects: readonly ProductionEfficiencyEffect[],
-  input: FacilityProductionInput
+  input: FacilityProductionInput,
+  path: string
 ): number {
-  return effects.reduce(
-    (total, effect) => total + (effectMatches(effect, input) ? effect.additiveEfficiency : 0),
-    0
-  );
+  const values = effects
+    .filter((effect) => effectMatches(effect, input))
+    .sort((left, right) => left.id < right.id ? -1 : left.id > right.id ? 1 : 0)
+    .map((effect) => effect.additiveEfficiency);
+  return compensatedFiniteSum(values, path);
 }
 
-function validateInput(input: FacilityProductionInput): void {
+function compensatedFiniteSum(values: readonly number[], path: string): number {
+  let sum = 0;
+  let correction = 0;
+  for (const value of values) {
+    const next = finiteNumber(sum + value, path);
+    correction = finiteNumber(
+      correction + (Math.abs(sum) >= Math.abs(value) ? sum - next + value : value - next + sum),
+      path
+    );
+    sum = next;
+  }
+  const result = finiteNumber(sum + correction, path);
+  return Object.is(result, -0) ? 0 : result;
+}
+
+function validateInput(inputValue: unknown): asserts inputValue is FacilityProductionInput {
+  const input = nonArrayObject(inputValue, "input");
+  const facility = nonArrayObject(input.facility, "facility");
+  if (facility.kind !== "factory" && facility.kind !== "tradingPost") {
+    throw new RangeError("facility.kind is unsupported");
+  }
+  if (facility.level !== 3) throw new RangeError("facility.level must be 3");
+  if (facility.kind === "factory" && facility.product !== "gold" && facility.product !== "battleRecord") {
+    throw new RangeError("facility.product is unsupported");
+  }
+  if (facility.kind === "tradingPost" && facility.orderType !== "normalLmd") {
+    throw new RangeError("facility.orderType is unsupported");
+  }
+
   const durationHours = finiteNumber(input.durationHours, "durationHours");
   if (durationHours <= 0) throw new RangeError("durationHours must be positive");
 
-  const teamEffects = input.teamEffects ?? [];
-  const remoteEffects = input.remoteEffects ?? [];
-  validateEffects(teamEffects, "teamEffects");
-  validateEffects(remoteEffects, "remoteEffects");
+  const teamEffects = optionalArray(input.teamEffects, "teamEffects");
+  const remoteEffects = optionalArray(input.remoteEffects, "remoteEffects");
+  const staticEffectPaths = new Map<string, string>();
+  validateEffects(teamEffects, "teamEffects", staticEffectPaths, "operator");
+  validateEffects(remoteEffects, "remoteEffects", staticEffectPaths, "remote");
 
+  const events = optionalArray(input.efficiencyEvents, "efficiencyEvents");
   let previousBoundary = 0;
-  (input.efficiencyEvents ?? []).forEach((event, index) => {
-    const boundary = finiteNumber(event.atHour, `efficiencyEvents[${index}].atHour`);
+  events.forEach((event, index) => {
+    const eventPath = `efficiencyEvents[${index}]`;
+    const eventRecord = nonArrayObject(event, eventPath);
+    const boundary = finiteNumber(eventRecord.atHour, `${eventPath}.atHour`);
     if (boundary <= 0 || boundary >= durationHours) {
       throw new RangeError(`efficiency event boundary ${boundary} must be within (0, durationHours)`);
     }
@@ -190,17 +258,26 @@ function validateInput(input: FacilityProductionInput): void {
       throw new RangeError("efficiency event boundaries must be strictly sorted");
     }
     previousBoundary = boundary;
-    validateEffects(event.effects, `efficiencyEvents[${index}].effects`);
+    if (eventRecord.label !== undefined && typeof eventRecord.label !== "string") {
+      throw new RangeError(`${eventPath}.label must be a string`);
+    }
+    validateEffects(
+      eventRecord.effects,
+      `${eventPath}.effects`,
+      new Map(staticEffectPaths)
+    );
   });
 
-  if (input.storage) {
-    const initial = nonNegativeNumber(input.storage.initialUnits, "storage.initialUnits");
-    const capacity = nonNegativeNumber(input.storage.capacityUnits, "storage.capacityUnits");
+  if (input.storage !== undefined) {
+    const storage = nonArrayObject(input.storage, "storage");
+    const initial = nonNegativeNumber(storage.initialUnits, "storage.initialUnits");
+    const capacity = nonNegativeNumber(storage.capacityUnits, "storage.capacityUnits");
     if (initial > capacity) throw new RangeError("storage.initialUnits must not exceed storage.capacityUnits");
   }
 
-  if (input.display) {
-    const places = finiteNumber(input.display.decimalPlaces, "display.decimalPlaces");
+  if (input.display !== undefined) {
+    const display = nonArrayObject(input.display, "display");
+    const places = finiteNumber(display.decimalPlaces, "display.decimalPlaces");
     if (!Number.isInteger(places) || places < 0 || places > 12) {
       throw new RangeError("display.decimalPlaces must be an integer from 0 through 12");
     }
@@ -208,8 +285,15 @@ function validateInput(input: FacilityProductionInput): void {
 }
 
 function roundForDisplay(value: number, decimalPlaces: number): number {
+  const finiteValue = finiteNumber(value, "display.producedUnits");
   const factor = 10 ** decimalPlaces;
-  return Math.round((value + Number.EPSILON) * factor) / factor;
+  const requestedResolution = 1 / factor;
+  if (finiteValue !== 0 && requestedResolution < Math.abs(finiteValue) * Number.EPSILON) {
+    return finiteValue;
+  }
+  const scaled = (finiteValue + Number.EPSILON) * factor;
+  if (!Number.isFinite(scaled)) return finiteValue;
+  return finiteNumber(Math.round(scaled) / factor, "display.producedUnits");
 }
 
 function freezeSegments(segments: ProductionSegment[]): readonly ProductionSegment[] {
@@ -224,16 +308,17 @@ export function simulateFacilityProduction(input: FacilityProductionInput): Faci
 
   const teamEffects = input.teamEffects ?? [];
   const remoteEffects = input.remoteEffects ?? [];
-  const teamAdditiveEfficiency = matchingEfficiency(teamEffects, input);
-  const remoteAdditiveEfficiency = matchingEfficiency(remoteEffects, input);
-  const staticAdditiveEfficiency = teamAdditiveEfficiency + remoteAdditiveEfficiency;
-  const unitsPerHour = input.facility.kind === "factory"
+  const teamAdditiveEfficiency = matchingEfficiency(teamEffects, input, "teamAdditiveEfficiency");
+  const remoteAdditiveEfficiency = matchingEfficiency(remoteEffects, input, "remoteAdditiveEfficiency");
+  const staticEffects = [...teamEffects, ...remoteEffects];
+  const staticAdditiveEfficiency = matchingEfficiency(staticEffects, input, "staticAdditiveEfficiency");
+  const unitsPerHour = finiteNumber(input.facility.kind === "factory"
     ? 60 / factoryMechanics[input.facility.product].minutesPerUnit
-    : 60 / normalOrderMechanics.minutesPerOrder;
+    : 60 / normalOrderMechanics.minutesPerOrder, "baseRate");
   const events = input.efficiencyEvents ?? [];
   const boundaries = [0, ...events.map((event) => event.atHour), input.durationHours];
   let remainingCapacity = input.storage
-    ? input.storage.capacityUnits - input.storage.initialUnits
+    ? finiteNumber(input.storage.capacityUnits - input.storage.initialUnits, "remainingCapacity")
     : Number.POSITIVE_INFINITY;
   const segments: ProductionSegment[] = [];
 
@@ -241,20 +326,52 @@ export function simulateFacilityProduction(input: FacilityProductionInput): Faci
     const startHour = boundaries[index];
     const endHour = boundaries[index + 1];
     const event = index === 0 ? undefined : events[index - 1];
-    const eventEfficiency = matchingEfficiency(event?.effects ?? [], input);
-    const additiveEfficiency = staticAdditiveEfficiency + eventEfficiency;
-    const efficiencyMultiplier = 1 + additiveEfficiency;
+    const eventEfficiency = matchingEfficiency(
+      event?.effects ?? [],
+      input,
+      `eventAdditiveEfficiency at segment starting ${startHour}`
+    );
+    finiteNumber(eventEfficiency, `eventAdditiveEfficiency at segment starting ${startHour}`);
+    const additiveEfficiency = matchingEfficiency(
+      [...staticEffects, ...(event?.effects ?? [])],
+      input,
+      `additiveEfficiency at segment starting ${startHour}`
+    );
+    const efficiencyMultiplier = finiteNumber(
+      1 + additiveEfficiency,
+      `efficiencyMultiplier at segment starting ${startHour}`
+    );
     if (efficiencyMultiplier < 0) {
       throw new RangeError(`efficiency multiplier must be non-negative in segment starting at ${startHour}`);
     }
 
-    const segmentHours = endHour - startHour;
-    const rate = unitsPerHour * efficiencyMultiplier;
-    const potentialUnits = rate * segmentHours;
-    const producedUnits = Math.min(potentialUnits, remainingCapacity);
-    const productiveHours = rate === 0 ? segmentHours : producedUnits / rate;
-    const blockedTimeHours = rate === 0 ? 0 : segmentHours - productiveHours;
-    remainingCapacity -= producedUnits;
+    const segmentHours = finiteNumber(endHour - startHour, `segmentHours at segment starting ${startHour}`);
+    const rate = finiteNumber(
+      unitsPerHour * efficiencyMultiplier,
+      `segmentRate at segment starting ${startHour}`
+    );
+    const potentialUnits = finiteNumber(
+      rate * segmentHours,
+      `potentialUnits at segment starting ${startHour}`
+    );
+    const producedUnits = finiteNumber(
+      input.storage ? Math.min(potentialUnits, remainingCapacity) : potentialUnits,
+      `producedUnits at segment starting ${startHour}`
+    );
+    const productiveHours = finiteNumber(
+      rate === 0 ? segmentHours : producedUnits / rate,
+      `productiveHours at segment starting ${startHour}`
+    );
+    const blockedTimeHours = finiteNumber(
+      rate === 0 ? 0 : segmentHours - productiveHours,
+      `blockedTimeHours at segment starting ${startHour}`
+    );
+    if (input.storage) {
+      remainingCapacity = finiteNumber(
+        remainingCapacity - producedUnits,
+        `remainingCapacity after segment starting ${startHour}`
+      );
+    }
     segments.push({
       startHour,
       endHour,
@@ -267,9 +384,18 @@ export function simulateFacilityProduction(input: FacilityProductionInput): Faci
     });
   }
 
-  const potentialUnits = segments.reduce((total, segment) => total + segment.potentialUnits, 0);
-  const producedUnits = segments.reduce((total, segment) => total + segment.producedUnits, 0);
-  const blockedTimeHours = segments.reduce((total, segment) => total + segment.blockedTimeHours, 0);
+  const potentialUnits = compensatedFiniteSum(
+    segments.map((segment) => segment.potentialUnits),
+    "aggregate potentialUnits"
+  );
+  const producedUnits = compensatedFiniteSum(
+    segments.map((segment) => segment.producedUnits),
+    "aggregate producedUnits"
+  );
+  const blockedTimeHours = compensatedFiniteSum(
+    segments.map((segment) => segment.blockedTimeHours),
+    "aggregate blockedTimeHours"
+  );
   const storage = Object.freeze(input.storage
     ? {
         initialUnits: input.storage.initialUnits,
@@ -302,7 +428,7 @@ export function simulateFacilityProduction(input: FacilityProductionInput): Faci
     const ledger = createResourceLedger({
       natural: input.facility.product === "gold"
         ? { goldProduced: producedUnits }
-        : { battleRecordExp: producedUnits * (expPerUnit ?? 0) }
+        : { battleRecordExp: finiteNumber(producedUnits * (expPerUnit ?? 0), "ledger.natural.battleRecordExp") }
     });
     return Object.freeze({
       ...common,
@@ -318,8 +444,11 @@ export function simulateFacilityProduction(input: FacilityProductionInput): Faci
 
   const ledger = createResourceLedger({
     natural: {
-      goldConsumed: producedUnits * normalOrderMechanics.expectedGoldPerOrder,
-      lmd: producedUnits * normalOrderMechanics.expectedLmdPerOrder
+      goldConsumed: finiteNumber(
+        producedUnits * normalOrderMechanics.expectedGoldPerOrder,
+        "ledger.natural.goldConsumed"
+      ),
+      lmd: finiteNumber(producedUnits * normalOrderMechanics.expectedLmdPerOrder, "ledger.natural.lmd")
     }
   });
   return Object.freeze({

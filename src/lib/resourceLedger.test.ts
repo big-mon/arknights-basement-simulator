@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   aggregateResourceLedgers,
   createResourceLedger,
+  validateResourceLedger,
   type ResourceLedger,
   type ResourceLedgerInput
 } from "./resourceLedger";
@@ -68,6 +69,48 @@ describe("resource ledger", () => {
     expect(() => createResourceLedger(input)).toThrow(/finite non-negative number/);
   });
 
+  it.each([
+    ["natural primitive", { natural: 1 }],
+    ["natural null", { natural: null }],
+    ["natural array", { natural: [] }],
+    ["drone primitive", { drone: "invalid" }],
+    ["drone null", { drone: null }],
+    ["drone array", { drone: [] }]
+  ])("rejects a provided %s contribution object", (_label, input) => {
+    expect(() => createResourceLedger(input as unknown as ResourceLedgerInput)).toThrow(/must be a non-null, non-array object/);
+  });
+
+  it("strict-validates complete ledgers without defaulting missing drone fields", () => {
+    const missingGenerated = { ...createResourceLedger() } as Partial<ResourceLedger>;
+    delete missingGenerated.dronesGenerated;
+    const undefinedUsed = { ...createResourceLedger(), dronesUsed: undefined };
+
+    expect(() => validateResourceLedger(missingGenerated, "authority")).toThrow(/authority\.dronesGenerated/);
+    expect(() => validateResourceLedger(undefinedUsed, "authority")).toThrow(/authority\.dronesUsed/);
+  });
+
+  it.each([null, 1, "ledger", []])("rejects a non-object strict ledger authority value", (input) => {
+    expect(() => validateResourceLedger(input, "authority")).toThrow(/authority must be a non-null, non-array object/);
+  });
+
+  it("requires complete fields to be own properties at the strict authority boundary", () => {
+    const inherited = Object.create(createResourceLedger()) as ResourceLedger;
+
+    expect(() => validateResourceLedger(inherited, "authority")).toThrow(/authority\.natural is required/);
+  });
+
+  it.each([
+    ["goldProduced", { goldProduced: 1 }],
+    ["goldConsumed", { goldConsumed: 1 }],
+    ["battleRecordExp", { battleRecordExp: 1 }],
+    ["lmd", { lmd: 1 }],
+    ["goldNetChange", { goldNetChange: 1 }]
+  ])("rejects an inconsistent top-level %s value", (_field, override) => {
+    const forged = { ...createResourceLedger(), ...override };
+
+    expect(() => validateResourceLedger(forged, "authority")).toThrow(/authority\..*inconsistent/);
+  });
+
   it("rejects an invalid primitive flow in a ledger passed to aggregation", () => {
     const malformed = {
       ...createResourceLedger(),
@@ -75,5 +118,22 @@ describe("resource ledger", () => {
     } as ResourceLedger;
 
     expect(() => aggregateResourceLedgers([malformed])).toThrow(/finite non-negative number/);
+  });
+
+  it("rejects a forged incomplete ledger passed to aggregation", () => {
+    const incomplete = {
+      ...createResourceLedger(),
+      natural: { goldProduced: 1 },
+      goldProduced: 1,
+      goldNetChange: 1
+    } as unknown as ResourceLedger;
+
+    expect(() => aggregateResourceLedgers([incomplete])).toThrow(/ledgers\[0\]\.natural\.goldConsumed/);
+  });
+
+  it("rejects finite inputs whose aggregate addition overflows", () => {
+    const large = createResourceLedger({ natural: { lmd: Number.MAX_VALUE } });
+
+    expect(() => aggregateResourceLedgers([large, large])).toThrow(/lmd must be a finite non-negative number/);
   });
 });

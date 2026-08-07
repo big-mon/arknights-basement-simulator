@@ -33,9 +33,39 @@ function validateFlow(value: unknown, path: string): number {
   return value;
 }
 
+function validateSignedFinite(value: unknown, path: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new RangeError(`${path} must be a finite number`);
+  }
+  return value;
+}
+
+function isNonArrayObject(value: unknown): value is Record<PropertyKey, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function requireOwn(input: Record<PropertyKey, unknown>, field: string, path: string): unknown {
+  if (!Object.prototype.hasOwnProperty.call(input, field)) {
+    throw new RangeError(`${path}.${field} is required`);
+  }
+  return input[field];
+}
+
 function normalizeContribution(input: ResourceContributionInput | undefined, path: string): ResourceContribution {
+  if (input !== undefined && !isNonArrayObject(input)) {
+    throw new RangeError(`${path} must be a non-null, non-array object`);
+  }
   return Object.fromEntries(
     contributionFields.map((field) => [field, validateFlow(input?.[field] ?? 0, `${path}.${field}`)])
+  ) as unknown as ResourceContribution;
+}
+
+function validateCompleteContribution(input: unknown, path: string): ResourceContribution {
+  if (!isNonArrayObject(input)) {
+    throw new RangeError(`${path} must be a non-null, non-array object`);
+  }
+  return Object.fromEntries(
+    contributionFields.map((field) => [field, validateFlow(requireOwn(input, field, path), `${path}.${field}`)])
   ) as unknown as ResourceContribution;
 }
 
@@ -66,6 +96,33 @@ export function createResourceLedger(input: ResourceLedgerInput = {}): ResourceL
   });
 }
 
+export function validateResourceLedger(input: unknown, path = "resourceLedger"): ResourceLedger {
+  if (!isNonArrayObject(input)) {
+    throw new RangeError(`${path} must be a non-null, non-array object`);
+  }
+
+  const natural = validateCompleteContribution(requireOwn(input, "natural", path), `${path}.natural`);
+  const drone = validateCompleteContribution(requireOwn(input, "drone", path), `${path}.drone`);
+  const dronesGenerated = validateFlow(requireOwn(input, "dronesGenerated", path), `${path}.dronesGenerated`);
+  const dronesUsed = validateFlow(requireOwn(input, "dronesUsed", path), `${path}.dronesUsed`);
+  const canonical = createResourceLedger({ natural, drone, dronesGenerated, dronesUsed });
+
+  const aggregateFields = ["goldProduced", "goldConsumed", "battleRecordExp", "lmd"] as const;
+  for (const field of aggregateFields) {
+    const value = validateFlow(requireOwn(input, field, path), `${path}.${field}`);
+    if (value !== canonical[field]) {
+      throw new RangeError(`${path}.${field} is inconsistent with its immutable contributions`);
+    }
+  }
+
+  const goldNetChange = validateSignedFinite(requireOwn(input, "goldNetChange", path), `${path}.goldNetChange`);
+  if (goldNetChange !== canonical.goldNetChange) {
+    throw new RangeError(`${path}.goldNetChange is inconsistent with its immutable contributions`);
+  }
+
+  return canonical;
+}
+
 export function aggregateResourceLedgers(ledgers: readonly ResourceLedger[]): ResourceLedger {
   const total: {
     natural: ResourceContribution;
@@ -80,14 +137,13 @@ export function aggregateResourceLedgers(ledgers: readonly ResourceLedger[]): Re
   };
 
   for (const [index, ledger] of ledgers.entries()) {
-    const natural = normalizeContribution(ledger.natural, `ledgers[${index}].natural`);
-    const drone = normalizeContribution(ledger.drone, `ledgers[${index}].drone`);
+    const validated = validateResourceLedger(ledger, `ledgers[${index}]`);
     for (const field of contributionFields) {
-      total.natural[field] += natural[field];
-      total.drone[field] += drone[field];
+      total.natural[field] += validated.natural[field];
+      total.drone[field] += validated.drone[field];
     }
-    total.dronesGenerated += validateFlow(ledger.dronesGenerated, `ledgers[${index}].dronesGenerated`);
-    total.dronesUsed += validateFlow(ledger.dronesUsed, `ledgers[${index}].dronesUsed`);
+    total.dronesGenerated += validated.dronesGenerated;
+    total.dronesUsed += validated.dronesUsed;
   }
 
   return createResourceLedger(total);

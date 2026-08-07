@@ -1,5 +1,6 @@
 import baseMechanics from "../data/optimizer-benchmarks/base-mechanics-2026-07.json";
 import {
+  createMaxLevel243BenchmarkContext,
   validateBenchmarkBaseContext,
   type BenchmarkBaseContext
 } from "./benchmarkBaseContext";
@@ -15,6 +16,10 @@ import {
 } from "./resourceLedger";
 
 export interface PowerPlantDroneSkillIncrement {
+  /** Fixed 12-hour slot in which this power-plant assignment is active. */
+  slot: 0 | 1;
+  /** Power facility whose occupied slot witnesses this contribution. */
+  sourceFacilityId: string;
   id: string;
   /** Fractional increase applied to the verified base drone recovery rate. */
   recoveryRateIncrement: number;
@@ -30,6 +35,8 @@ export interface FixedDroneSpecialOrderProfile {
 }
 
 export interface TradingPostDroneAllocation {
+  /** Fixed 12-hour slot: 0 is [0, 12), 1 is [12, 24). */
+  slot: 0 | 1;
   targetFacilityId: string;
   drones: number;
   orderAcquisitionEfficiency?: number;
@@ -44,53 +51,68 @@ export interface TradingPostDroneSimulationInput {
   baseContext?: BenchmarkBaseContext;
 }
 
-export interface TradingPostDroneTargetResult {
-  targetFacilityId: string;
+export interface TradingPostDroneTargetSlotResult {
+  slot: 0 | 1;
   drones: number;
   orderAcquisitionEfficiency: number;
   shortenedMinutes: number;
   equivalentExtraProductiveTimeMinutes: number;
   specialOrder?: Readonly<FixedDroneSpecialOrderProfile>;
+  naturalOrders: number;
   droneOrders: Readonly<{ normal: number; special: number }>;
+  ledger: ResourceLedger;
+}
+
+export interface TradingPostDroneTargetResult {
+  targetFacilityId: string;
+  drones: number;
+  shortenedMinutes: number;
+  equivalentExtraProductiveTimeMinutes: number;
+  naturalOrders: number;
+  droneOrders: Readonly<{ normal: number; special: number }>;
+  slots: readonly Readonly<TradingPostDroneTargetSlotResult>[];
   ledger: ResourceLedger;
 }
 
 export interface TradingPostDroneSimulationResult {
   durationHours: 24;
-  /**
-   * Allocations have no timestamps. The aggregate allocation is therefore treated as if drones
-   * are consumed just in time as they recover, and cap overflow is calculated only after that
-   * allocation. This is an accounting upper bound, not an exact schedule-feasibility result.
-   */
   semantics: Readonly<{
-    allocationTimingAssumption: "just-in-time-consumption";
-    capOverflowAccounting: "after-aggregate-allocation";
-    exactScheduleFeasibility: "not-evaluated";
+    allocationTimingAssumption: "slot-batch-consumption";
+    capOverflowAccounting: "before-slot-allocation";
+    scheduleFeasibility: "evaluated-at-slot-boundaries";
   }>;
   generation: Readonly<{
     baseRatePerHour: number;
+    baseGeneratedPerSlot: number;
     baseGenerated: number;
     skillIncrements: ReadonlyArray<Readonly<PowerPlantDroneSkillIncrement & { generatedDrones: number }>>;
     skillGenerated: number;
-    /** Continuous 24-hour accrual before incomplete-drone progress is separated. */
     continuousGenerated: number;
-    /** Whole drones whose recovery completed during the period, before inventory-cap overflow. */
-    completedRecovery: number;
-    uncompletedDroneProgress: number;
+    slots: readonly Readonly<{
+      slot: 0 | 1;
+      baseGenerated: number;
+      skillGenerated: number;
+      generated: number;
+    }>[];
   }>;
   inventory: Readonly<{
     cap: number;
     initial: number;
-    /**
-     * Initial inventory plus completed recovery under the just-in-time consumption assumption.
-     * This is an aggregate allocation upper bound and may exceed the physical inventory cap.
-     */
-    maximumPotentiallyUsable: number;
+    generated: number;
     used: number;
-    /** Physical end inventory after aggregate allocations and cap overflow. */
     remaining: number;
-    /** Completed drones lost because post-allocation end inventory would exceed the cap. */
     overflow: number;
+    timeline: readonly Readonly<{
+      slot: 0 | 1;
+      startHour: 0 | 12;
+      endHour: 12 | 24;
+      opening: number;
+      generated: number;
+      overflow: number;
+      available: number;
+      used: number;
+      ending: number;
+    }>[];
   }>;
   targets: readonly Readonly<TradingPostDroneTargetResult>[];
   ledger: ResourceLedger;
@@ -107,18 +129,10 @@ function documentedMechanic(id: string): number {
 const durationHours = 24 as const;
 const baseDroneRecoveryPerHour = documentedMechanic("base-drone-recovery");
 const droneTimeReductionMinutes = documentedMechanic("drone-time-reduction");
-const droneCap = documentedMechanic("drone-cap");
 
 function finiteNonNegative(value: unknown, path: string): number {
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
     throw new RangeError(`${path} must be a finite non-negative number`);
-  }
-  return value;
-}
-
-function nonNegativeInteger(value: unknown, path: string): number {
-  if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || !Number.isInteger(value)) {
-    throw new RangeError(`${path} must be a finite non-negative integer`);
   }
   return value;
 }
@@ -200,134 +214,247 @@ function simulateNormalDroneContribution(
 function freezeTarget(target: TradingPostDroneTargetResult): Readonly<TradingPostDroneTargetResult> {
   return Object.freeze({
     ...target,
-    ...(target.specialOrder ? { specialOrder: Object.freeze({ ...target.specialOrder }) } : {}),
-    droneOrders: Object.freeze({ ...target.droneOrders })
+    droneOrders: Object.freeze({ ...target.droneOrders }),
+    slots: Object.freeze(target.slots.map((slot) => Object.freeze({
+      ...slot,
+      ...(slot.specialOrder ? { specialOrder: Object.freeze({ ...slot.specialOrder }) } : {}),
+      droneOrders: Object.freeze({ ...slot.droneOrders })
+    })))
   });
 }
 
 export function simulateTradingPostDrones24h(
   input: TradingPostDroneSimulationInput
 ): TradingPostDroneSimulationResult {
-  const initialDrones = nonNegativeInteger(input.initialDrones, "initialDrones");
-  if (initialDrones > droneCap) {
-    throw new RangeError(`initialDrones must not exceed the verified drone cap ${droneCap}`);
-  }
+  const initialDrones = finiteNonNegative(input.initialDrones, "initialDrones");
   if (!Array.isArray(input.powerPlantSkillIncrements)) {
     throw new RangeError("powerPlantSkillIncrements must be an array");
   }
   if (!Array.isArray(input.allocations)) throw new RangeError("allocations must be an array");
 
-  if (input.baseContext) {
-    const validation = validateBenchmarkBaseContext(input.baseContext);
-    if (!validation.ok) {
-      throw new RangeError(`baseContext is invalid: ${validation.errors.join("; ")}`);
-    }
+  const effectiveContext = input.baseContext === undefined
+    ? createMaxLevel243BenchmarkContext()
+    : input.baseContext;
+  const contextValidation = validateBenchmarkBaseContext(effectiveContext);
+  if (!contextValidation.ok) {
+    throw new RangeError(`baseContext is invalid: ${contextValidation.errors.join("; ")}`);
+  }
+  const validatedContext = contextValidation.value;
+  const inventoryCap = validatedContext.droneCap;
+  if (initialDrones > inventoryCap) {
+    throw new RangeError(`initialDrones must not exceed the verified drone cap ${inventoryCap}`);
   }
 
-  const baseGenerated = baseDroneRecoveryPerHour * durationHours;
+  const baseGeneratedPerSlot = baseDroneRecoveryPerHour * 12;
+  const baseGenerated = baseGeneratedPerSlot * 2;
+  const facilityById = new Map(validatedContext.facilities.map((facility) => [facility.id, facility]));
+  const incrementIdsBySlot = [new Set<string>(), new Set<string>()];
+  const sourceOccupancyBySlot = [new Map<string, number>(), new Map<string, number>()];
   const skillIncrements = input.powerPlantSkillIncrements.map((increment, index) => {
+    const path = `powerPlantSkillIncrements[${index}]`;
+    if (increment.slot !== 0 && increment.slot !== 1) {
+      throw new RangeError(`${path}.slot must be 0 or 1`);
+    }
+    const sourceFacilityId = nonEmptyId(increment.sourceFacilityId, `${path}.sourceFacilityId`);
+    const sourceFacility = facilityById.get(sourceFacilityId);
+    if (!sourceFacility) throw new RangeError(`unknown source facility ID: ${sourceFacilityId}`);
+    if (sourceFacility.type !== "power") {
+      throw new RangeError(`${sourceFacilityId} is not a power facility`);
+    }
+    const sourceOccupancy = (sourceOccupancyBySlot[increment.slot].get(sourceFacilityId) ?? 0) + 1;
+    if (sourceOccupancy > sourceFacility.slotCount) {
+      throw new RangeError(`source facility ${sourceFacilityId} is reused beyond its ${sourceFacility.slotCount} slot capacity in slot ${increment.slot}`);
+    }
+    sourceOccupancyBySlot[increment.slot].set(sourceFacilityId, sourceOccupancy);
     const id = nonEmptyId(increment.id, `powerPlantSkillIncrements[${index}].id`);
+    if (incrementIdsBySlot[increment.slot].has(id)) {
+      throw new RangeError(`duplicate power-plant increment ID in slot ${increment.slot}: ${id}`);
+    }
+    incrementIdsBySlot[increment.slot].add(id);
     const recoveryRateIncrement = finiteNonNegative(
       increment.recoveryRateIncrement,
       `powerPlantSkillIncrements[${index}].recoveryRateIncrement`
     );
     return Object.freeze({
+      slot: increment.slot,
+      sourceFacilityId,
       id,
       recoveryRateIncrement,
-      generatedDrones: baseGenerated * recoveryRateIncrement
+      generatedDrones: baseGeneratedPerSlot * recoveryRateIncrement
     });
   });
-  const skillGenerated = skillIncrements.reduce((total, increment) => total + increment.generatedDrones, 0);
-  const continuousGenerated = baseGenerated + skillGenerated;
-  const completedRecovery = Math.floor(continuousGenerated);
-  const uncompletedDroneProgress = continuousGenerated - completedRecovery;
-  const maximumPotentiallyUsable = initialDrones + completedRecovery;
+  const skillGenerated = finiteNonNegative(
+    skillIncrements.reduce((total, increment) => total + increment.generatedDrones, 0),
+    "skillGenerated"
+  );
+  const generationSlots = ([0, 1] as const).map((slot) => {
+    const slotSkillGenerated = finiteNonNegative(
+      skillIncrements
+        .filter((increment) => increment.slot === slot)
+        .reduce((total, increment) => total + increment.generatedDrones, 0),
+      `skillGenerated for slot ${slot}`
+    );
+    return Object.freeze({
+      slot,
+      baseGenerated: baseGeneratedPerSlot,
+      skillGenerated: slotSkillGenerated,
+      generated: finiteNonNegative(baseGeneratedPerSlot + slotSkillGenerated, `generated for slot ${slot}`)
+    });
+  });
+  const continuousGenerated = finiteNonNegative(
+    generationSlots.reduce((total, slot) => total + slot.generated, 0),
+    "continuousGenerated"
+  );
 
-  const facilityById = input.baseContext
-    ? new Map(input.baseContext.facilities.map((facility) => [facility.id, facility]))
-    : undefined;
-  const targetIds = new Set<string>();
-  let used = 0;
+  const targetIdsBySlot = [new Set<string>(), new Set<string>()];
 
   const validatedAllocations = input.allocations.map((item, index) => {
     const path = `allocations[${index}]`;
-    const targetFacilityId = nonEmptyId(item.targetFacilityId, `${path}.targetFacilityId`);
-    if (targetIds.has(targetFacilityId)) {
-      throw new RangeError(`duplicate allocation target ID: ${targetFacilityId}`);
+    if (item.slot !== 0 && item.slot !== 1) {
+      throw new RangeError(`${path}.slot must be 0 or 1`);
     }
-    targetIds.add(targetFacilityId);
+    const targetFacilityId = nonEmptyId(item.targetFacilityId, `${path}.targetFacilityId`);
+    if (targetIdsBySlot[item.slot].has(targetFacilityId)) {
+      throw new RangeError(`duplicate allocation target ID in slot ${item.slot}: ${targetFacilityId}`);
+    }
+    targetIdsBySlot[item.slot].add(targetFacilityId);
 
-    const facility = facilityById?.get(targetFacilityId);
-    if (facilityById && !facility) throw new RangeError(`unknown facility ID: ${targetFacilityId}`);
+    const facility = facilityById.get(targetFacilityId);
+    if (!facility) throw new RangeError(`unknown facility ID: ${targetFacilityId}`);
     if (facility && facility.type !== "trading") {
       throw new RangeError(`${targetFacilityId} is not a trading facility`);
     }
 
-    const drones = nonNegativeInteger(item.drones, `${path}.drones`);
+    const drones = finiteNonNegative(item.drones, `${path}.drones`);
     const orderAcquisitionEfficiency = finiteNonNegative(
       item.orderAcquisitionEfficiency ?? 0,
       `${path}.orderAcquisitionEfficiency`
     );
     const specialOrder = validateSpecialOrder(item.specialOrders, `${path}.specialOrders`);
-    used += drones;
-    return { targetFacilityId, drones, orderAcquisitionEfficiency, specialOrder };
+    return { slot: item.slot, targetFacilityId, drones, orderAcquisitionEfficiency, specialOrder };
   });
 
-  if (used > maximumPotentiallyUsable) {
-    throw new RangeError(
-      `drones used ${used} must not exceed available ${maximumPotentiallyUsable} under the just-in-time assumption`
-    );
-  }
-
-  const targets = validatedAllocations.map((item) => {
-    const natural = simulateFacilityProduction({
-      durationHours,
-      facility: { kind: "tradingPost", level: 3, orderType: "normalLmd" },
-      teamEffects: orderEfficiencyEffect(item.orderAcquisitionEfficiency, item.targetFacilityId)
-    });
-    const shortenedMinutes = item.drones * droneTimeReductionMinutes;
-    const normalProductiveMinutes = shortenedMinutes * (1 + item.orderAcquisitionEfficiency);
-    const normalDrone = simulateNormalDroneContribution(
-      shortenedMinutes,
-      item.orderAcquisitionEfficiency,
-      item.targetFacilityId
-    );
-    let equivalentExtraProductiveTimeMinutes = normalProductiveMinutes;
-    let normalOrders = normalDrone.orders;
-    let specialOrders = 0;
-    let droneContribution = normalDrone.contribution;
-
-    if (item.specialOrder) {
-      const specialProductiveMinutes = shortenedMinutes * (
-        item.specialOrder.affectedByEfficiency ? 1 + item.orderAcquisitionEfficiency : 1
-      );
-      specialOrders = specialProductiveMinutes / item.specialOrder.baseMinutes;
-      const specialContribution: ResourceContribution = {
-        goldProduced: 0,
-        goldConsumed: specialOrders * item.specialOrder.gold,
-        battleRecordExp: 0,
-        lmd: specialOrders * item.specialOrder.lmd
-      };
-      if (item.specialOrder.behavior === "exclusive") {
-        equivalentExtraProductiveTimeMinutes = specialProductiveMinutes;
-        normalOrders = 0;
-        droneContribution = specialContribution;
-      } else {
-        droneContribution = addContributions(droneContribution, specialContribution);
-      }
+  const timeline: Array<{
+    slot: 0 | 1;
+    startHour: 0 | 12;
+    endHour: 12 | 24;
+    opening: number;
+    generated: number;
+    overflow: number;
+    available: number;
+    used: number;
+    ending: number;
+  }> = [];
+  let currentInventory = initialDrones;
+  let overflow = 0;
+  for (const slot of [0, 1] as const) {
+    const opening = currentInventory;
+    const generated = generationSlots[slot].generated;
+    const uncapped = opening + generated;
+    const available = Math.min(inventoryCap, uncapped);
+    const slotOverflow = uncapped - available;
+    const slotUsed = validatedAllocations
+      .filter((allocation) => allocation.slot === slot)
+      .reduce((total, allocation) => total + allocation.drones, 0);
+    if (slotUsed > available + Number.EPSILON * Math.max(1, slotUsed, available) * 8) {
+      throw new RangeError(`slot ${slot} drones used ${slotUsed} must not exceed available ${available}`);
     }
+    currentInventory = Math.max(0, available - slotUsed);
+    overflow += slotOverflow;
+    timeline.push({
+      slot,
+      startHour: slot === 0 ? 0 : 12,
+      endHour: slot === 0 ? 12 : 24,
+      opening,
+      generated,
+      overflow: slotOverflow,
+      available,
+      used: slotUsed,
+      ending: currentInventory
+    });
+  }
+  const used = validatedAllocations.reduce((total, allocation) => total + allocation.drones, 0);
+
+  const allocationGroups = new Map<string, typeof validatedAllocations>();
+  for (const item of validatedAllocations) {
+    const group = allocationGroups.get(item.targetFacilityId) ?? [];
+    group.push(item);
+    allocationGroups.set(item.targetFacilityId, group);
+  }
+  const targets = [...allocationGroups.values()].map((items) => {
+    const orderedItems = [...items].sort((left, right) => left.slot - right.slot);
+    const slots: TradingPostDroneTargetSlotResult[] = orderedItems.map((item) => {
+      const natural = simulateFacilityProduction({
+        durationHours: 12,
+        facility: { kind: "tradingPost", level: 3, orderType: "normalLmd" },
+        teamEffects: orderEfficiencyEffect(item.orderAcquisitionEfficiency, item.targetFacilityId)
+      });
+      const shortenedMinutes = item.drones * droneTimeReductionMinutes;
+      const normalProductiveMinutes = shortenedMinutes * (1 + item.orderAcquisitionEfficiency);
+      const normalDrone = simulateNormalDroneContribution(
+        shortenedMinutes,
+        item.orderAcquisitionEfficiency,
+        item.targetFacilityId
+      );
+      let equivalentExtraProductiveTimeMinutes = normalProductiveMinutes;
+      let normalOrders = normalDrone.orders;
+      let specialOrders = 0;
+      let droneContribution = normalDrone.contribution;
+
+      if (item.specialOrder) {
+        const specialProductiveMinutes = shortenedMinutes * (
+          item.specialOrder.affectedByEfficiency ? 1 + item.orderAcquisitionEfficiency : 1
+        );
+        specialOrders = specialProductiveMinutes / item.specialOrder.baseMinutes;
+        const specialContribution: ResourceContribution = {
+          goldProduced: 0,
+          goldConsumed: specialOrders * item.specialOrder.gold,
+          battleRecordExp: 0,
+          lmd: specialOrders * item.specialOrder.lmd
+        };
+        if (item.specialOrder.behavior === "exclusive") {
+          equivalentExtraProductiveTimeMinutes = specialProductiveMinutes;
+          normalOrders = 0;
+          droneContribution = specialContribution;
+        } else {
+          droneContribution = addContributions(droneContribution, specialContribution);
+        }
+      }
+
+      return {
+        slot: item.slot,
+        drones: item.drones,
+        orderAcquisitionEfficiency: item.orderAcquisitionEfficiency,
+        shortenedMinutes,
+        equivalentExtraProductiveTimeMinutes,
+        ...(item.specialOrder ? { specialOrder: item.specialOrder } : {}),
+        naturalOrders: natural.production.producedUnits,
+        droneOrders: { normal: normalOrders, special: specialOrders },
+        ledger: createResourceLedger({
+          natural: natural.ledger.natural,
+          drone: droneContribution
+        })
+      };
+    });
+    const slotLedger = aggregateResourceLedgers(slots.map((slot) => slot.ledger));
 
     return freezeTarget({
-      targetFacilityId: item.targetFacilityId,
-      drones: item.drones,
-      orderAcquisitionEfficiency: item.orderAcquisitionEfficiency,
-      shortenedMinutes,
-      equivalentExtraProductiveTimeMinutes,
-      ...(item.specialOrder ? { specialOrder: item.specialOrder } : {}),
-      droneOrders: { normal: normalOrders, special: specialOrders },
+      targetFacilityId: orderedItems[0].targetFacilityId,
+      drones: slots.reduce((total, slot) => total + slot.drones, 0),
+      shortenedMinutes: slots.reduce((total, slot) => total + slot.shortenedMinutes, 0),
+      equivalentExtraProductiveTimeMinutes: slots.reduce(
+        (total, slot) => total + slot.equivalentExtraProductiveTimeMinutes,
+        0
+      ),
+      naturalOrders: slots.reduce((total, slot) => total + slot.naturalOrders, 0),
+      droneOrders: {
+        normal: slots.reduce((total, slot) => total + slot.droneOrders.normal, 0),
+        special: slots.reduce((total, slot) => total + slot.droneOrders.special, 0)
+      },
+      slots,
       ledger: createResourceLedger({
-        natural: natural.ledger.natural,
-        drone: droneContribution
+        natural: slotLedger.natural,
+        drone: slotLedger.drone
       })
     });
   });
@@ -336,38 +463,35 @@ export function simulateTradingPostDrones24h(
   const ledger = createResourceLedger({
     natural: targetLedger.natural,
     drone: targetLedger.drone,
-    dronesGenerated: completedRecovery,
+    dronesGenerated: continuousGenerated,
     dronesUsed: used
   });
   const frozenTargets = Object.freeze(targets);
-  const inventoryCap = input.baseContext?.droneCap ?? droneCap;
-  const uncappedEndInventory = maximumPotentiallyUsable - used;
-  const remaining = Math.min(inventoryCap, uncappedEndInventory);
-  const overflow = uncappedEndInventory - remaining;
 
   return Object.freeze({
     durationHours,
     semantics: Object.freeze({
-      allocationTimingAssumption: "just-in-time-consumption",
-      capOverflowAccounting: "after-aggregate-allocation",
-      exactScheduleFeasibility: "not-evaluated"
+      allocationTimingAssumption: "slot-batch-consumption",
+      capOverflowAccounting: "before-slot-allocation",
+      scheduleFeasibility: "evaluated-at-slot-boundaries"
     }),
     generation: Object.freeze({
       baseRatePerHour: baseDroneRecoveryPerHour,
+      baseGeneratedPerSlot,
       baseGenerated,
       skillIncrements: Object.freeze(skillIncrements),
       skillGenerated,
       continuousGenerated,
-      completedRecovery,
-      uncompletedDroneProgress
+      slots: Object.freeze(generationSlots)
     }),
     inventory: Object.freeze({
       cap: inventoryCap,
       initial: initialDrones,
-      maximumPotentiallyUsable,
+      generated: continuousGenerated,
       used,
-      remaining,
-      overflow
+      remaining: currentInventory,
+      overflow,
+      timeline: Object.freeze(timeline.map((entry) => Object.freeze(entry)))
     }),
     targets: frozenTargets,
     ledger

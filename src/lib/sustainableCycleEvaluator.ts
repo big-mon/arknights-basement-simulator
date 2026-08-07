@@ -1,11 +1,12 @@
 import baseMechanics from "../data/optimizer-benchmarks/base-mechanics-2026-07.json";
 import {
+  createMaxLevel243BenchmarkContext,
   validateBenchmarkBaseContext,
   type BenchmarkBaseContext
 } from "./benchmarkBaseContext";
 import {
   aggregateResourceLedgers,
-  createResourceLedger,
+  validateResourceLedger,
   type ResourceLedger
 } from "./resourceLedger";
 
@@ -13,8 +14,19 @@ export interface CycleFacilityAssignment {
   facilityId: string;
   operatorId: string;
   moraleConsumptionPerHour?: number;
-  /** Declares that the caller's ledger already models production after morale reaches zero. */
-  postZeroOutputModeled?: boolean;
+}
+
+export type CycleFacilityResourceContributionKind =
+  | "factory-gold"
+  | "factory-battle-record"
+  | "trading-post"
+  | "power-drone";
+
+export interface CycleFacilityResourceContribution {
+  id: string;
+  facilityId: string;
+  kind: CycleFacilityResourceContributionKind;
+  ledger: ResourceLedger;
 }
 
 export interface CycleShift {
@@ -22,7 +34,7 @@ export interface CycleShift {
   startHour: number;
   endHour: number;
   assignments: CycleFacilityAssignment[];
-  resourceLedger: ResourceLedger;
+  resourceContributions: CycleFacilityResourceContribution[];
 }
 
 export interface ConditionalRecoveryModifier {
@@ -47,11 +59,13 @@ export interface CycleRecoveryPlacement {
 
 export interface SustainableCycleInput {
   shifts: [CycleShift, CycleShift];
+  startingDrones: number;
   initialMorale: Record<string, number>;
   recoveryPlacements: CycleRecoveryPlacement[];
   startingGold: number;
   baseContext?: BenchmarkBaseContext;
   moraleCap?: number;
+  /** Used only for final morale/drone cycle closure; defaults to 1e-9 and must not exceed 1e-6. */
   cycleClosureTolerance?: number;
 }
 
@@ -105,6 +119,17 @@ export interface GoldTimelinePoint {
   gold: number;
 }
 
+export interface DroneTimelinePoint {
+  hour: number;
+  shiftId: string;
+  opening: number;
+  generated: number;
+  overflow: number;
+  available: number;
+  used: number;
+  ending: number;
+}
+
 export interface SustainableCycleResult {
   sustainable: boolean;
   failures: readonly Readonly<CycleFailure>[];
@@ -118,6 +143,15 @@ export interface SustainableCycleResult {
     netChange: number;
     ending: number;
     timeline: readonly Readonly<GoldTimelinePoint>[];
+  }>;
+  drones: Readonly<{
+    cap: number;
+    starting: number;
+    generated: number;
+    used: number;
+    overflow: number;
+    ending: number;
+    timeline: readonly Readonly<DroneTimelinePoint>[];
   }>;
 }
 
@@ -135,6 +169,9 @@ const verifiedDormitoryRecoveryRate = documentedMechanic("max-dormitory-recovery
 const cycleHours = 24;
 const shiftHours = 12;
 const calculationEpsilon = 1e-12;
+const exchangeFullMoraleEpsilon = 1e-9;
+const defaultCycleClosureTolerance = 1e-9;
+const maximumCycleClosureTolerance = 1e-6;
 
 function finiteNonNegative(value: unknown, path: string): number {
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
@@ -150,34 +187,70 @@ function nonEmptyId(value: unknown, path: string): string {
   return value;
 }
 
+function isNonArrayObject(value: unknown): value is Record<PropertyKey, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function requireOwn(input: Record<PropertyKey, unknown>, field: string, path: string): unknown {
+  if (!Object.prototype.hasOwnProperty.call(input, field)) {
+    throw new RangeError(`${path}.${field} is required`);
+  }
+  return input[field];
+}
+
+const resourceContributionKinds = [
+  "factory-gold",
+  "factory-battle-record",
+  "trading-post",
+  "power-drone"
+] as const satisfies readonly CycleFacilityResourceContributionKind[];
+
+function validateContributionKind(value: unknown, path: string): CycleFacilityResourceContributionKind {
+  if (!resourceContributionKinds.includes(value as CycleFacilityResourceContributionKind)) {
+    throw new RangeError(`${path} must be one of ${resourceContributionKinds.join(", ")}`);
+  }
+  return value as CycleFacilityResourceContributionKind;
+}
+
+function requireExactZero(value: number, path: string, kind: CycleFacilityResourceContributionKind): void {
+  if (value !== 0) throw new RangeError(`${path} must be exactly zero for ${kind}`);
+}
+
+function validateAllowedContributionFields(
+  ledger: ResourceLedger,
+  kind: CycleFacilityResourceContributionKind,
+  path: string
+): void {
+  const primitiveFields = [
+    ["natural.goldProduced", ledger.natural.goldProduced],
+    ["natural.goldConsumed", ledger.natural.goldConsumed],
+    ["natural.battleRecordExp", ledger.natural.battleRecordExp],
+    ["natural.lmd", ledger.natural.lmd],
+    ["drone.goldProduced", ledger.drone.goldProduced],
+    ["drone.goldConsumed", ledger.drone.goldConsumed],
+    ["drone.battleRecordExp", ledger.drone.battleRecordExp],
+    ["drone.lmd", ledger.drone.lmd],
+    ["dronesGenerated", ledger.dronesGenerated],
+    ["dronesUsed", ledger.dronesUsed]
+  ] as const;
+  const allowed = new Set<string>(kind === "factory-gold"
+    ? ["natural.goldProduced"]
+    : kind === "factory-battle-record"
+      ? ["natural.battleRecordExp"]
+      : kind === "trading-post"
+        ? ["natural.goldConsumed", "natural.lmd", "drone.goldConsumed", "drone.lmd", "dronesUsed"]
+        : ["dronesGenerated"]);
+  for (const [field, value] of primitiveFields) {
+    if (!allowed.has(field)) requireExactZero(value, `${path}.${field}`, kind);
+  }
+}
+
 function intervalsOverlap(leftStart: number, leftEnd: number, rightStart: number, rightEnd: number): boolean {
   return Math.max(leftStart, rightStart) < Math.min(leftEnd, rightEnd) - calculationEpsilon;
 }
 
 function failure(category: CycleFailureCategory, code: string, message: string, details: Partial<CycleFailure> = {}): CycleFailure {
   return { category, code, message, ...details };
-}
-
-function validateLedger(ledger: ResourceLedger, path: string): ResourceLedger {
-  if (typeof ledger !== "object" || ledger === null) throw new RangeError(`${path} resourceLedger must be an object`);
-  let normalized: ResourceLedger;
-  try {
-    normalized = createResourceLedger({
-      natural: ledger.natural,
-      drone: ledger.drone,
-      dronesGenerated: ledger.dronesGenerated,
-      dronesUsed: ledger.dronesUsed
-    });
-  } catch (error) {
-    throw new RangeError(`${path} resourceLedger is malformed: ${error instanceof Error ? error.message : String(error)}`);
-  }
-  const fields = ["goldProduced", "goldConsumed", "goldNetChange", "battleRecordExp", "lmd"] as const;
-  for (const field of fields) {
-    if (typeof ledger[field] !== "number" || !Number.isFinite(ledger[field]) || Math.abs(ledger[field] - normalized[field]) > calculationEpsilon) {
-      throw new RangeError(`${path} resourceLedger.${field} is inconsistent with its immutable contributions`);
-    }
-  }
-  return normalized;
 }
 
 interface ValidatedInput {
@@ -187,7 +260,9 @@ interface ValidatedInput {
   moraleCap: number;
   closureTolerance: number;
   startingGold: number;
-  context?: BenchmarkBaseContext;
+  startingDrones: number;
+  droneCap: number;
+  context: BenchmarkBaseContext;
   ledgers: [ResourceLedger, ResourceLedger];
 }
 
@@ -197,8 +272,11 @@ function validateInput(input: SustainableCycleInput): ValidatedInput {
   }
   const expectedBoundaries = [[0, 12], [12, 24]] as const;
   const seenShiftIds = new Set<string>();
-  const ledgers: ResourceLedger[] = [];
   input.shifts.forEach((shift, index) => {
+    const shiftPath = `shifts[${index}]`;
+    if (Object.prototype.hasOwnProperty.call(shift, "resourceLedger")) {
+      throw new RangeError(`${shiftPath}.resourceLedger is unsupported; use resourceContributions`);
+    }
     nonEmptyId(shift.id, `shifts[${index}].id`);
     if (seenShiftIds.has(shift.id)) throw new RangeError(`duplicate shift ID: ${shift.id}`);
     seenShiftIds.add(shift.id);
@@ -214,17 +292,23 @@ function validateInput(input: SustainableCycleInput): ValidatedInput {
         assignment.moraleConsumptionPerHour ?? verifiedConsumptionRate,
         `shifts[${index}].assignments[${assignmentIndex}].moraleConsumptionPerHour`
       );
-      if (assignment.postZeroOutputModeled !== undefined && typeof assignment.postZeroOutputModeled !== "boolean") {
-        throw new RangeError(`shifts[${index}].assignments[${assignmentIndex}].postZeroOutputModeled must be boolean`);
+      if (Object.prototype.hasOwnProperty.call(assignment, "postZeroOutputModeled")) {
+        throw new RangeError(`shifts[${index}].assignments[${assignmentIndex}].postZeroOutputModeled is unsupported`);
       }
     });
-    ledgers.push(validateLedger(shift.resourceLedger, `shifts[${index}]`));
+    if (!Array.isArray(shift.resourceContributions)) {
+      throw new RangeError(`${shiftPath}.resourceContributions must be an array`);
+    }
   });
 
   const moraleCap = finiteNonNegative(input.moraleCap ?? verifiedMoraleCap, "moraleCap");
   if (moraleCap === 0) throw new RangeError("moraleCap must be positive");
-  const closureTolerance = finiteNonNegative(input.cycleClosureTolerance ?? 1e-9, "cycleClosureTolerance");
+  const closureTolerance = finiteNonNegative(input.cycleClosureTolerance ?? defaultCycleClosureTolerance, "cycleClosureTolerance");
+  if (closureTolerance > maximumCycleClosureTolerance) {
+    throw new RangeError(`cycleClosureTolerance must not exceed ${maximumCycleClosureTolerance}`);
+  }
   const startingGold = finiteNonNegative(input.startingGold, "startingGold");
+  const startingDrones = finiteNonNegative(input.startingDrones, "startingDrones");
   if (typeof input.initialMorale !== "object" || input.initialMorale === null || Array.isArray(input.initialMorale)) {
     throw new RangeError("initialMorale must be an operator morale record");
   }
@@ -263,12 +347,60 @@ function validateInput(input: SustainableCycleInput): ValidatedInput {
     }
   });
 
-  let context: BenchmarkBaseContext | undefined;
-  if (input.baseContext) {
-    const validation = validateBenchmarkBaseContext(input.baseContext);
-    if (!validation.ok) throw new RangeError(`baseContext is invalid: ${validation.errors.join("; ")}`);
-    context = validation.value;
+  const effectiveContext = input.baseContext === undefined
+    ? createMaxLevel243BenchmarkContext()
+    : input.baseContext;
+  const contextValidation = validateBenchmarkBaseContext(effectiveContext);
+  if (!contextValidation.ok) {
+    throw new RangeError(`baseContext is invalid: ${contextValidation.errors.join("; ")}`);
   }
+  const context = contextValidation.value;
+  const droneCap = context.droneCap;
+  if (startingDrones > droneCap) {
+    throw new RangeError(`startingDrones must not exceed drone cap ${droneCap}`);
+  }
+
+  const facilityById = new Map(context.facilities.map((facility) => [facility.id, facility]));
+  const ledgers = input.shifts.map((shift, shiftIndex) => {
+    const seenContributionIds = new Set<string>();
+    const seenFacilityIds = new Set<string>();
+    const validatedContributions = shift.resourceContributions.map((contribution, contributionIndex) => {
+      const path = `shifts[${shiftIndex}].resourceContributions[${contributionIndex}]`;
+      if (!isNonArrayObject(contribution)) {
+        throw new RangeError(`${path} must be a non-null, non-array object`);
+      }
+      const id = nonEmptyId(requireOwn(contribution, "id", path), `${path}.id`);
+      if (seenContributionIds.has(id)) throw new RangeError(`${path}.id duplicates contribution ID ${id} in shift ${shift.id}`);
+      seenContributionIds.add(id);
+      const facilityId = nonEmptyId(requireOwn(contribution, "facilityId", path), `${path}.facilityId`);
+      if (seenFacilityIds.has(facilityId)) {
+        throw new RangeError(`${path}.facilityId duplicates facility ${facilityId} in shift ${shift.id}`);
+      }
+      seenFacilityIds.add(facilityId);
+      const kind = validateContributionKind(requireOwn(contribution, "kind", path), `${path}.kind`);
+      const ledger = validateResourceLedger(requireOwn(contribution, "ledger", path), `${path}.ledger`);
+      const facility = facilityById.get(facilityId);
+      if (!facility) throw new RangeError(`${path}.facilityId references unknown facility ${facilityId}`);
+      if (!shift.assignments.some((assignment) => assignment.facilityId === facilityId)) {
+        throw new RangeError(`${path}.facilityId ${facilityId} has no matching assignment in shift ${shift.id}`);
+      }
+      const kindMatches = kind === "factory-gold"
+        ? facility.type === "factory" && facility.product === "gold"
+        : kind === "factory-battle-record"
+          ? facility.type === "factory" && facility.product === "battleRecord"
+          : kind === "trading-post"
+            ? facility.type === "trading"
+            : facility.type === "power";
+      if (!kindMatches) {
+        throw new RangeError(`${path}.kind ${kind} is incompatible with facility ${facilityId}`);
+      }
+      validateAllowedContributionFields(ledger, kind, `${path}.ledger`);
+      return { id, ledger };
+    });
+    return aggregateResourceLedgers(
+      validatedContributions.sort((left, right) => compareIds(left.id, right.id)).map(({ ledger }) => ledger)
+    );
+  });
 
   const referencedOperators = new Set<string>();
   input.shifts.forEach((shift) => shift.assignments.forEach((assignment) => referencedOperators.add(assignment.operatorId)));
@@ -287,6 +419,8 @@ function validateInput(input: SustainableCycleInput): ValidatedInput {
     moraleCap,
     closureTolerance,
     startingGold,
+    startingDrones,
+    droneCap,
     context,
     ledgers: ledgers as [ResourceLedger, ResourceLedger]
   };
@@ -294,7 +428,7 @@ function validateInput(input: SustainableCycleInput): ValidatedInput {
 
 function collectStructuralFailures(input: ValidatedInput): CycleFailure[] {
   const failures: CycleFailure[] = [];
-  const facilityById = input.context ? new Map(input.context.facilities.map((item) => [item.id, item])) : undefined;
+  const facilityById = new Map(input.context.facilities.map((item) => [item.id, item]));
   const workersByShift: Array<Set<string>> = [];
 
   input.shifts.forEach((shift) => {
@@ -312,7 +446,7 @@ function collectStructuralFailures(input: ValidatedInput): CycleFailure[] {
       }));
       operators.add(assignment.operatorId);
       facilityOccupancy.set(assignment.facilityId, (facilityOccupancy.get(assignment.facilityId) ?? 0) + 1);
-      if (facilityById && !facilityById.has(assignment.facilityId)) failures.push(failure("overlap", "unknown-facility", `unknown facility ${assignment.facilityId}`, {
+      if (!facilityById.has(assignment.facilityId)) failures.push(failure("overlap", "unknown-facility", `unknown facility ${assignment.facilityId}`, {
         shiftId: shift.id, facilityId: assignment.facilityId, operatorId: assignment.operatorId
       }));
     }
@@ -328,10 +462,10 @@ function collectStructuralFailures(input: ValidatedInput): CycleFailure[] {
     if (workersByShift[1].has(operatorId)) failures.push(failure("overlap", "cross-group-worker-reuse", `operator ${operatorId} appears in both work groups`, { operatorId }));
   }
 
-  const dormitories = input.context?.facilities.filter((facility) => facility.type === "dormitory") ?? [];
+  const dormitories = input.context.facilities.filter((facility) => facility.type === "dormitory");
   const dormById = new Map(dormitories.map((dorm) => [dorm.id, dorm]));
   for (const placement of input.placements) {
-    if (input.context && !dormById.has(placement.dormitoryId)) failures.push(failure("dormitory", "unknown-dormitory", `unknown dormitory ${placement.dormitoryId}`, {
+    if (!dormById.has(placement.dormitoryId)) failures.push(failure("dormitory", "unknown-dormitory", `unknown dormitory ${placement.dormitoryId}`, {
       dormitoryId: placement.dormitoryId, operatorId: placement.operatorId
     }));
   }
@@ -354,12 +488,12 @@ function collectStructuralFailures(input: ValidatedInput): CycleFailure[] {
     const byDorm = new Map<string, number>();
     active.forEach((item) => byDorm.set(item.dormitoryId, (byDorm.get(item.dormitoryId) ?? 0) + 1));
     for (const [dormitoryId, count] of byDorm) {
-      const capacity = dormById.get(dormitoryId)?.slotCount ?? (input.context ? 0 : 5);
+      const capacity = dormById.get(dormitoryId)?.slotCount ?? 0;
       if (count > capacity) failures.push(failure("dormitory", "dormitory-overflow", `${dormitoryId} has ${count} occupants for ${capacity} beds`, {
         dormitoryId, hour: start
       }));
     }
-    if (input.context && active.length > dormitories.reduce((total, dorm) => total + dorm.slotCount, 0)) {
+    if (active.length > dormitories.reduce((total, dorm) => total + dorm.slotCount, 0)) {
       failures.push(failure("dormitory", "total-bed-overflow", "recovery placements exceed total available dormitory beds", { hour: start }));
     }
   }
@@ -399,6 +533,45 @@ function pushSegment(state: MutableOperatorState, segment: MoraleTimelineSegment
   state.timeline.push(segment);
 }
 
+function recoveryArithmetic(value: number, operatorId: string, placementPath: string, boundary: string): number {
+  if (!Number.isFinite(value)) {
+    throw new RangeError(`recovery arithmetic for operator ${operatorId} at ${placementPath}.${boundary} must be finite`);
+  }
+  return value;
+}
+
+function compareRecoveryModifiers(left: ConditionalRecoveryModifier, right: ConditionalRecoveryModifier): number {
+  return left.moraleAtMost - right.moraleAtMost || left.additionalRatePerHour - right.additionalRatePerHour;
+}
+
+function sumActiveRecoveryModifiers(
+  modifiers: readonly ConditionalRecoveryModifier[],
+  operatorId: string,
+  placementPath: string
+): number {
+  let sum = 0;
+  let correction = 0;
+  for (const modifier of [...modifiers].sort(compareRecoveryModifiers)) {
+    const next = recoveryArithmetic(
+      sum + modifier.additionalRatePerHour,
+      operatorId,
+      placementPath,
+      "conditionalModifierSum"
+    );
+    const roundingError = Math.abs(sum) >= Math.abs(modifier.additionalRatePerHour)
+      ? (sum - next) + modifier.additionalRatePerHour
+      : (modifier.additionalRatePerHour - next) + sum;
+    correction = recoveryArithmetic(
+      correction + roundingError,
+      operatorId,
+      placementPath,
+      "conditionalModifierSum"
+    );
+    sum = next;
+  }
+  return recoveryArithmetic(sum + correction, operatorId, placementPath, "conditionalModifierSum");
+}
+
 function simulateInterval(
   input: ValidatedInput,
   operatorId: string,
@@ -416,53 +589,125 @@ function simulateInterval(
     if (work) {
       const consumption = work.assignment.moraleConsumptionPerHour ?? verifiedConsumptionRate;
       const availableDuration = intervalEnd - cursor;
+      if (state.morale <= calculationEpsilon) {
+        const key = `${work.shift.id}\u0000${operatorId}`;
+        if (cursor < work.shift.endHour - calculationEpsilon && !fatigueKeys.has(key)) {
+          fatigueKeys.add(key);
+          failures.push(failure("morale", "fatigued-before-shift-end", `operator ${operatorId} has zero morale before shift ${work.shift.id} ends`, {
+            operatorId,
+            facilityId: work.assignment.facilityId,
+            shiftId: work.shift.id,
+            hour: cursor
+          }));
+        }
+        pushSegment(state, {
+          startHour: cursor,
+          endHour: intervalEnd,
+          mode: "work",
+          startMorale: 0,
+          endMorale: 0,
+          ratePerHour: 0,
+          facilityId: work.assignment.facilityId
+        });
+        state.morale = 0;
+        cursor = intervalEnd;
+        continue;
+      }
       const timeToZero = consumption === 0 ? Number.POSITIVE_INFINITY : state.morale / consumption;
       const duration = Math.min(availableDuration, timeToZero);
       const endMorale = Math.max(0, state.morale - consumption * duration);
-      const modeledAfterZero = work.assignment.postZeroOutputModeled === true;
-      const segmentDuration = duration > calculationEpsilon ? duration : availableDuration;
-      state.productiveHours += modeledAfterZero ? segmentDuration : duration;
+      state.productiveHours += duration;
       pushSegment(state, {
         startHour: cursor,
-        endHour: cursor + segmentDuration,
+        endHour: cursor + duration,
         mode: "work",
         startMorale: state.morale,
-        endMorale: duration > calculationEpsilon ? endMorale : state.morale,
-        ratePerHour: duration > calculationEpsilon ? -consumption : 0,
+        endMorale,
+        ratePerHour: -consumption,
         facilityId: work.assignment.facilityId
       });
       state.morale = endMorale;
-      cursor += segmentDuration;
+      cursor += duration;
       if (state.morale <= calculationEpsilon && cursor < work.shift.endHour - calculationEpsilon) {
         const key = `${work.shift.id}\u0000${operatorId}`;
-        if (!modeledAfterZero && !fatigueKeys.has(key)) {
+        if (!fatigueKeys.has(key)) {
           fatigueKeys.add(key);
           failures.push(failure("morale", "fatigued-before-shift-end", `operator ${operatorId} reaches zero morale before shift ${work.shift.id} ends`, {
-            operatorId, shiftId: work.shift.id, hour: cursor
+            operatorId,
+            facilityId: work.assignment.facilityId,
+            shiftId: work.shift.id,
+            hour: cursor
           }));
         }
       }
       continue;
     }
     if (recovery) {
+      const placementPath = `recoveryPlacements[${input.placements.indexOf(recovery)}]`;
       const baseRate = recovery.recoveryRatePerHour ?? verifiedDormitoryRecoveryRate;
-      const activeModifiers = (recovery.conditionalModifiers ?? []).filter((modifier) => state.morale < modifier.moraleAtMost - calculationEpsilon);
-      const rate = baseRate + activeModifiers.reduce((total, modifier) => total + modifier.additionalRatePerHour, 0);
-      const nextThreshold = activeModifiers
-        .map((modifier) => modifier.moraleAtMost)
-        .filter((threshold) => threshold > state.morale + calculationEpsilon)
-        .sort((a, b) => a - b)[0];
+      const activeModifiers = (recovery.conditionalModifiers ?? [])
+        .filter((modifier) => state.morale < modifier.moraleAtMost)
+        .sort(compareRecoveryModifiers);
+      const modifierSum = sumActiveRecoveryModifiers(activeModifiers, operatorId, placementPath);
+      const rate = recoveryArithmetic(
+        baseRate + modifierSum,
+        operatorId,
+        placementPath,
+        "baseRatePlusModifierSum"
+      );
+      const nextThreshold = activeModifiers[0]?.moraleAtMost;
       const nextMoraleBoundary = Math.min(input.moraleCap, nextThreshold ?? input.moraleCap);
-      const timeToBoundary = rate === 0 || state.morale >= input.moraleCap - calculationEpsilon
+      const moraleDelta = recoveryArithmetic(
+        nextMoraleBoundary - state.morale,
+        operatorId,
+        placementPath,
+        "moraleDelta"
+      );
+      const hasNoUpcomingBoundary = rate === 0 || moraleDelta === 0;
+      const timeToBoundary = hasNoUpcomingBoundary
         ? Number.POSITIVE_INFINITY
-        : (nextMoraleBoundary - state.morale) / rate;
-      const duration = Math.min(intervalEnd - cursor, Math.max(0, timeToBoundary));
-      const actualDuration = duration > calculationEpsilon ? duration : intervalEnd - cursor;
-      const effectiveRate = duration > calculationEpsilon ? rate : 0;
-      const endMorale = Math.min(input.moraleCap, state.morale + effectiveRate * actualDuration);
+        : recoveryArithmetic(moraleDelta / rate, operatorId, placementPath, "timeToBoundary");
+      if (timeToBoundary === 0 && moraleDelta > 0 && rate > 0) {
+        state.morale = nextMoraleBoundary;
+        continue;
+      }
+      const remainingDuration = recoveryArithmetic(
+        intervalEnd - cursor,
+        operatorId,
+        placementPath,
+        "remainingDuration"
+      );
+      const duration = recoveryArithmetic(
+        Math.min(remainingDuration, timeToBoundary),
+        operatorId,
+        placementPath,
+        "duration"
+      );
+      const effectiveRate = moraleDelta === 0 ? 0 : rate;
+      const recoveredMorale = recoveryArithmetic(
+        effectiveRate * duration,
+        operatorId,
+        placementPath,
+        "rateTimesDuration"
+      );
+      const calculatedEndMorale = recoveryArithmetic(
+        state.morale + recoveredMorale,
+        operatorId,
+        placementPath,
+        "endMorale"
+      );
+      const endMorale = duration === timeToBoundary
+        ? nextMoraleBoundary
+        : Math.min(input.moraleCap, calculatedEndMorale);
+      recoveryArithmetic(endMorale, operatorId, placementPath, "endMorale");
+      const segmentEnd = recoveryArithmetic(cursor + duration, operatorId, placementPath, "segmentEndHour");
+      if (segmentEnd <= cursor && moraleDelta > 0 && rate > 0) {
+        state.morale = nextMoraleBoundary;
+        continue;
+      }
       pushSegment(state, {
         startHour: cursor,
-        endHour: cursor + actualDuration,
+        endHour: segmentEnd,
         mode: "recovery",
         startMorale: state.morale,
         endMorale,
@@ -470,7 +715,7 @@ function simulateInterval(
         dormitoryId: recovery.dormitoryId
       });
       state.morale = endMorale;
-      cursor += actualDuration;
+      cursor = segmentEnd;
       continue;
     }
     pushSegment(state, {
@@ -500,7 +745,7 @@ function processExchange(
   const useWindow = Math.floor(event.atHour / shiftHours);
   const sourceUseKey = `${useWindow}\u0000${event.sourceOperatorId}`;
   let valid = true;
-  if (Math.abs(sourceState.morale - input.moraleCap) > input.closureTolerance) {
+  if (Math.abs(sourceState.morale - input.moraleCap) > exchangeFullMoraleEpsilon) {
     failures.push(failure("morale", "exchange-source-not-full", `exchange source ${event.sourceOperatorId} is not at full morale`, {
       operatorId: event.sourceOperatorId, hour: event.atHour
     }));
@@ -550,6 +795,35 @@ function processExchange(
   usedSources.add(sourceUseKey);
 }
 
+function compareIds(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function compareExchangePlacements(left: CycleRecoveryPlacement, right: CycleRecoveryPlacement): number {
+  const leftEvent = left.moraleExchange!;
+  const rightEvent = right.moraleExchange!;
+  return leftEvent.atHour - rightEvent.atHour ||
+    compareIds(left.dormitoryId, right.dormitoryId) ||
+    compareIds(leftEvent.sourceOperatorId, rightEvent.sourceOperatorId) ||
+    compareIds(left.operatorId, right.operatorId);
+}
+
+function prevalidateSameHourExchanges(hour: number, placements: readonly CycleRecoveryPlacement[]): void {
+  const useCounts = new Map<string, number>();
+  for (const placement of placements) {
+    const sourceOperatorId = placement.moraleExchange!.sourceOperatorId;
+    useCounts.set(sourceOperatorId, (useCounts.get(sourceOperatorId) ?? 0) + 1);
+    useCounts.set(placement.operatorId, (useCounts.get(placement.operatorId) ?? 0) + 1);
+  }
+  const reusedOperators = [...useCounts]
+    .filter(([, count]) => count > 1)
+    .map(([operatorId]) => operatorId)
+    .sort(compareIds);
+  if (reusedOperators.length > 0) {
+    throw new RangeError(`same-hour morale exchanges at hour ${hour} reuse operators: ${reusedOperators.join(", ")}`);
+  }
+}
+
 function freezeResult(result: SustainableCycleResult): SustainableCycleResult {
   const operators = Object.freeze(result.operators.map((operator) => Object.freeze({
     ...operator,
@@ -558,7 +832,15 @@ function freezeResult(result: SustainableCycleResult): SustainableCycleResult {
   const failures = Object.freeze(result.failures.map((item) => Object.freeze({ ...item })));
   const exchanges = Object.freeze(result.exchanges.map((item) => Object.freeze({ ...item })));
   const timeline = Object.freeze(result.gold.timeline.map((point) => Object.freeze({ ...point })));
-  return Object.freeze({ ...result, operators, failures, exchanges, gold: Object.freeze({ ...result.gold, timeline }) });
+  const droneTimeline = Object.freeze(result.drones.timeline.map((point) => Object.freeze({ ...point })));
+  return Object.freeze({
+    ...result,
+    operators,
+    failures,
+    exchanges,
+    gold: Object.freeze({ ...result.gold, timeline }),
+    drones: Object.freeze({ ...result.drones, timeline: droneTimeline })
+  });
 }
 
 export function evaluateSustainableCycle(input: SustainableCycleInput): SustainableCycleResult {
@@ -587,7 +869,11 @@ export function evaluateSustainableCycle(input: SustainableCycleInput): Sustaina
   const exchanges: AppliedMoraleExchange[] = [];
   for (let index = 0; index < boundaries.length; index += 1) {
     const boundary = boundaries[index];
-    for (const placement of exchangePlacements.filter((item) => item.moraleExchange!.atHour === boundary)) {
+    const boundaryExchanges = exchangePlacements
+      .filter((item) => item.moraleExchange!.atHour === boundary)
+      .sort(compareExchangePlacements);
+    prevalidateSameHourExchanges(boundary, boundaryExchanges);
+    for (const placement of boundaryExchanges) {
       processExchange(validated, placement, states, usedSources, failures, exchanges);
     }
     const nextBoundary = boundaries[index + 1];
@@ -620,12 +906,53 @@ export function evaluateSustainableCycle(input: SustainableCycleInput): Sustaina
   let currentGold = validated.startingGold;
   const goldTimeline: GoldTimelinePoint[] = [{ hour: 0, gold: currentGold }];
   validated.ledgers.forEach((ledger, index) => {
-    currentGold += ledger.goldNetChange;
     const hour = validated.shifts[index].endHour;
+    const nextGold = currentGold + ledger.goldNetChange;
+    if (!Number.isFinite(nextGold)) {
+      throw new RangeError(`gold inventory after shifts[${index}] at hour ${hour} must be finite`);
+    }
+    currentGold = nextGold;
     goldTimeline.push({ hour, gold: currentGold });
     if (currentGold < -calculationEpsilon) failures.push(failure("resource", "gold-prefix-underflow", `gold inventory is ${currentGold} at hour ${hour}`, { hour }));
   });
-  if (aggregateLedger.goldNetChange < -calculationEpsilon) failures.push(failure("resource", "negative-daily-gold-net", `daily gold net change ${aggregateLedger.goldNetChange} is negative`));
+  let currentDrones = validated.startingDrones;
+  let droneOverflow = 0;
+  const droneTimeline: DroneTimelinePoint[] = [];
+  validated.ledgers.forEach((ledger, index) => {
+    const opening = currentDrones;
+    const uncapped = currentDrones + ledger.dronesGenerated;
+    const capped = Math.min(validated.droneCap, uncapped);
+    const overflow = uncapped - capped;
+    droneOverflow += overflow;
+    currentDrones = capped - ledger.dronesUsed;
+    const hour = validated.shifts[index].endHour;
+    droneTimeline.push({
+      hour,
+      shiftId: validated.shifts[index].id,
+      opening,
+      generated: ledger.dronesGenerated,
+      overflow,
+      available: capped,
+      used: ledger.dronesUsed,
+      ending: currentDrones
+    });
+    if (currentDrones < -calculationEpsilon) {
+      failures.push(failure(
+        "resource",
+        "drone-prefix-underflow",
+        `drone inventory is ${currentDrones} at hour ${hour}`,
+        { shiftId: validated.shifts[index].id, hour }
+      ));
+    }
+  });
+  if (Math.abs(currentDrones - validated.startingDrones) > validated.closureTolerance) {
+    failures.push(failure(
+      "cycle-closure",
+      "drone-state-not-closed",
+      `drone inventory ends at ${currentDrones} instead of cycle-start inventory ${validated.startingDrones}`,
+      { hour: cycleHours }
+    ));
+  }
 
   return freezeResult({
     sustainable: failures.length === 0,
@@ -640,6 +967,15 @@ export function evaluateSustainableCycle(input: SustainableCycleInput): Sustaina
       netChange: aggregateLedger.goldNetChange,
       ending: currentGold,
       timeline: goldTimeline
+    },
+    drones: {
+      cap: validated.droneCap,
+      starting: validated.startingDrones,
+      generated: aggregateLedger.dronesGenerated,
+      used: aggregateLedger.dronesUsed,
+      overflow: droneOverflow,
+      ending: currentDrones,
+      timeline: droneTimeline
     }
   });
 }

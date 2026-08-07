@@ -11,6 +11,66 @@ const operatorEffect = (
 ): ProductionEfficiencyEffect => ({ id, source: "operator", additiveEfficiency, target });
 
 describe("facility production", () => {
+  describe("runtime input authority", () => {
+    it.each([
+      ["null input", null, /input must be a non-null object/],
+      ["array input", [], /input must be a non-null object/],
+      ["null facility", { durationHours: 1, facility: null }, /facility must be a non-null object/],
+      ["array facility", { durationHours: 1, facility: [] }, /facility must be a non-null object/],
+      [
+        "unknown facility kind",
+        { durationHours: 1, facility: { kind: "bogus", level: 99, orderType: "wrong" } },
+        /facility\.kind is unsupported/
+      ],
+      [
+        "wrong factory level",
+        { durationHours: 1, facility: { kind: "factory", level: 1, product: "gold" } },
+        /facility\.level must be 3/
+      ],
+      [
+        "wrong factory product",
+        { durationHours: 1, facility: { kind: "factory", level: 3, product: "originium" } },
+        /facility\.product is unsupported/
+      ],
+      [
+        "wrong trading-post level",
+        { durationHours: 1, facility: { kind: "tradingPost", level: 2, orderType: "normalLmd" } },
+        /facility\.level must be 3/
+      ],
+      [
+        "wrong trading-post order type",
+        { durationHours: 1, facility: { kind: "tradingPost", level: 3, orderType: "wrong" } },
+        /facility\.orderType is unsupported/
+      ]
+    ])("rejects %s with RangeError", (_label, malformed, diagnostic) => {
+      expect(() => simulateFacilityProduction(malformed as never)).toThrowError(RangeError);
+      expect(() => simulateFacilityProduction(malformed as never)).toThrow(diagnostic);
+    });
+
+    it.each([
+      ["non-array team effects", { teamEffects: {} }, /teamEffects must be an array/],
+      ["null remote effects", { remoteEffects: null }, /remoteEffects must be an array/],
+      ["non-array events", { efficiencyEvents: {} }, /efficiencyEvents must be an array/],
+      ["null effect record", { teamEffects: [null] }, /teamEffects\[0\] must be a non-null object/],
+      ["array effect record", { teamEffects: [[]] }, /teamEffects\[0\] must be a non-null object/],
+      ["null event record", { efficiencyEvents: [null] }, /efficiencyEvents\[0\] must be a non-null object/],
+      [
+        "non-array event effects",
+        { efficiencyEvents: [{ atHour: 0.5, effects: {} }] },
+        /efficiencyEvents\[0\]\.effects must be an array/
+      ]
+    ])("rejects %s as malformed JSON with RangeError", (_label, partial, diagnostic) => {
+      const malformed = {
+        durationHours: 1,
+        facility: { kind: "factory", level: 3, product: "gold" },
+        ...partial
+      };
+
+      expect(() => simulateFacilityProduction(malformed as never)).toThrowError(RangeError);
+      expect(() => simulateFacilityProduction(malformed as never)).toThrow(diagnostic);
+    });
+  });
+
   describe("verified base formulas", () => {
     it("produces level-3 gold and advanced battle records for a 12-hour shift", () => {
       const gold = simulateFacilityProduction({
@@ -89,6 +149,174 @@ describe("facility production", () => {
 
       expect(result.efficiency.remoteAdditiveEfficiency).toBe(0.15);
       expect(result.production.producedUnits).toBeCloseTo(11.5);
+    });
+
+    it("sums cancellation-prone effects deterministically by ID regardless of declaration order", () => {
+      const effects = [
+        operatorEffect("large-positive", 1e16),
+        operatorEffect("large-negative", -1e16),
+        operatorEffect("unit", 1)
+      ];
+      const permutations = [
+        effects,
+        [effects[0], effects[2], effects[1]],
+        [effects[1], effects[0], effects[2]],
+        [effects[1], effects[2], effects[0]],
+        [effects[2], effects[0], effects[1]],
+        [effects[2], effects[1], effects[0]]
+      ];
+
+      const results = permutations.map((teamEffects) => simulateFacilityProduction({
+        durationHours: 1,
+        facility: { kind: "factory", level: 3, product: "gold" },
+        teamEffects
+      }));
+
+      expect(results.map((result) => result.efficiency.teamAdditiveEfficiency)).toEqual(Array(6).fill(1));
+      expect(results.map((result) => result.production.producedUnits)).toEqual(Array(6).fill(5 / 3));
+    });
+
+    it("preserves ordinary cancellation without publishing negative zero", () => {
+      const result = simulateFacilityProduction({
+        durationHours: 1,
+        facility: { kind: "factory", level: 3, product: "gold" },
+        teamEffects: [operatorEffect("positive", 0.25), operatorEffect("negative", -0.25)]
+      });
+
+      expect(result.efficiency.teamAdditiveEfficiency).toBe(0);
+      expect(Object.is(result.efficiency.teamAdditiveEfficiency, -0)).toBe(false);
+      expect(result.production.producedUnits).toBeCloseTo(5 / 6);
+    });
+
+    it("rejects finite efficiency overflow before finite storage can hide it", () => {
+      expect(() => simulateFacilityProduction({
+        durationHours: 1,
+        facility: { kind: "factory", level: 3, product: "gold" },
+        teamEffects: [
+          operatorEffect("max-a", Number.MAX_VALUE),
+          operatorEffect("max-b", Number.MAX_VALUE)
+        ],
+        storage: { initialUnits: 0, capacityUnits: 1 }
+      })).toThrow(/teamAdditiveEfficiency must be a finite number/);
+    });
+  });
+
+  describe("active efficiency effect profiles", () => {
+    it.each([
+      [
+        "within team effects",
+        {
+          teamEffects: [operatorEffect("duplicate-team", 0.1), operatorEffect("duplicate-team", 0.2)]
+        },
+        /duplicate effect ID "duplicate-team".*teamEffects\[1\].*teamEffects\[0\]/
+      ],
+      [
+        "within remote effects",
+        {
+          remoteEffects: [
+            { id: "duplicate-remote", source: "remote" as const, additiveEfficiency: 0.1, target: "all" as const },
+            { id: "duplicate-remote", source: "remote" as const, additiveEfficiency: 0.2, target: "all" as const }
+          ]
+        },
+        /duplicate effect ID "duplicate-remote".*remoteEffects\[1\].*remoteEffects\[0\]/
+      ],
+      [
+        "between team and remote effects",
+        {
+          teamEffects: [operatorEffect("duplicate-static", 0.1)],
+          remoteEffects: [
+            { id: "duplicate-static", source: "remote" as const, additiveEfficiency: 0.2, target: "all" as const }
+          ]
+        },
+        /duplicate effect ID "duplicate-static".*remoteEffects\[0\].*teamEffects\[0\]/
+      ],
+      [
+        "within one event",
+        {
+          efficiencyEvents: [{
+            atHour: 1,
+            effects: [operatorEffect("duplicate-event", 0.1), operatorEffect("duplicate-event", 0.2)]
+          }]
+        },
+        /duplicate effect ID "duplicate-event".*efficiencyEvents\[0\]\.effects\[1\].*efficiencyEvents\[0\]\.effects\[0\]/
+      ],
+      [
+        "between static and event effects",
+        {
+          remoteEffects: [
+            { id: "duplicate-active", source: "remote" as const, additiveEfficiency: 0.1, target: "all" as const }
+          ],
+          efficiencyEvents: [{ atHour: 1, effects: [operatorEffect("duplicate-active", 0.2)] }]
+        },
+        /duplicate effect ID "duplicate-active".*efficiencyEvents\[0\]\.effects\[0\].*remoteEffects\[0\]/
+      ]
+    ])("rejects duplicate IDs %s instead of double-counting them", (_label, partial, diagnostic) => {
+      expect(() => simulateFacilityProduction({
+        durationHours: 2,
+        facility: { kind: "factory", level: 3, product: "gold" },
+        ...partial
+      })).toThrow(diagnostic);
+    });
+
+    it.each([
+      [
+        "team operator effect",
+        { teamEffects: [{ id: "wrong-team-source", source: "remote" as const, additiveEfficiency: 0.1, target: "all" as const }] },
+        /teamEffects\[0\]\.source.*operator/
+      ],
+      [
+        "remote external effect",
+        { remoteEffects: [operatorEffect("wrong-remote-source", 0.1)] },
+        /remoteEffects\[0\]\.source.*remote/
+      ]
+    ])("rejects a wrong source for a %s", (_label, partial, diagnostic) => {
+      expect(() => simulateFacilityProduction({
+        durationHours: 2,
+        facility: { kind: "factory", level: 3, product: "gold" },
+        ...partial
+      })).toThrow(diagnostic);
+    });
+
+    it("allows distinct static effects and ID reuse across replacement events without mutating input", () => {
+      const input = {
+        durationHours: 3,
+        facility: { kind: "factory" as const, level: 3 as const, product: "gold" as const },
+        teamEffects: [operatorEffect("team", 0.1)],
+        remoteEffects: [
+          { id: "remote", source: "remote" as const, additiveEfficiency: 0.2, target: "all" as const }
+        ],
+        efficiencyEvents: [
+          {
+            atHour: 1,
+            effects: [
+              operatorEffect("replacement", 0.4),
+              { id: "event-remote", source: "remote" as const, additiveEfficiency: 0.05, target: "all" as const }
+            ]
+          },
+          {
+            atHour: 2,
+            effects: [
+              { id: "replacement", source: "remote" as const, additiveEfficiency: 0.6, target: "all" as const }
+            ]
+          }
+        ]
+      };
+      const snapshot = structuredClone(input);
+
+      const result = simulateFacilityProduction(input);
+
+      expect(result.efficiency).toEqual({
+        staticAdditiveEfficiency: 0.30000000000000004,
+        teamAdditiveEfficiency: 0.1,
+        remoteAdditiveEfficiency: 0.2
+      });
+      expect(result.segments.map((segment) => segment.additiveEfficiency)).toEqual([
+        0.30000000000000004,
+        0.75,
+        0.9
+      ]);
+      expect(result.production.producedUnits).toBeCloseTo((60 / 72) * (1.3 + 1.75 + 1.9));
+      expect(input).toEqual(snapshot);
     });
   });
 
@@ -191,5 +419,31 @@ describe("facility production", () => {
 
     expect(result.production.producedUnits).toBeCloseTo(10 / 3);
     expect(result.display).toEqual({ decimalPlaces: 2, producedUnits: 3.33 });
+  });
+
+  it("keeps display rounding finite when decimal scaling would overflow", () => {
+    const result = simulateFacilityProduction({
+      durationHours: 1e308,
+      facility: { kind: "factory", level: 3, product: "gold" },
+      display: { decimalPlaces: 12 }
+    });
+
+    expect(result.production.producedUnits).toBe(8.333333333333334e307);
+    expect(result.display).toEqual({
+      decimalPlaces: 12,
+      producedUnits: 8.333333333333334e307
+    });
+    expect(Number.isFinite(result.display?.producedUnits)).toBe(true);
+  });
+
+  it("retains ordinary display rounding behavior", () => {
+    const result = simulateFacilityProduction({
+      durationHours: 1.206,
+      facility: { kind: "factory", level: 3, product: "gold" },
+      display: { decimalPlaces: 2 }
+    });
+
+    expect(result.production.producedUnits).toBeCloseTo(1.005);
+    expect(result.display).toEqual({ decimalPlaces: 2, producedUnits: 1.01 });
   });
 });
