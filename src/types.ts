@@ -5,7 +5,7 @@ export type FacilityType = "factory" | "trading" | "power" | "control" | "dormit
 
 export type ProductType = "gold" | "battleRecord" | "originium" | "lmd" | "power" | "morale" | "clue";
 
-export type BaseSkillFamily = "rhineTech" | "pinusSylvestris" | "standardization";
+export type BaseSkillFamily = "rhineTech" | "pinusSylvestris" | "standardization" | "metalwork";
 
 export type BaseLayout = "243" | "153";
 
@@ -169,6 +169,7 @@ export interface BaseSkillEffect {
     conditions: BaseSkillCondition[];
   }>;
   suppressesOtherFactoryEfficiency?: boolean;
+  factoryEfficiencySuppressionExempt?: boolean;
   tags?: string[];
   conditions?: BaseSkillCondition[];
   description: LocalizedText;
@@ -306,6 +307,7 @@ export interface Assignment {
   orderLimit?: number;
   tradingOrderEffects?: NonNullable<BaseSkillEffect["tradingOrderEffects"]>;
   suppressesOtherFactoryEfficiency?: boolean;
+  factoryEfficiencySuppressionExemptEfficiency?: number;
   globalStackKey?: string;
   globalStackKeys?: string[];
   skilllessPrerequisiteOperatorIds?: string[];

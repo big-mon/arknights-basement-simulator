@@ -2599,6 +2599,9 @@
         "slot": 0,
         "unlockPhase": 0,
         "unlockLevel": 1,
+        "families": [
+          "metalwork"
+        ],
         "effects": [
           {
             "facility": "factory",
@@ -2641,7 +2644,14 @@
               "ja": "製造所配置時、配置製造所の金属工芸系スキルの発動数1につき、製造効率+5%",
               "en": "When this Operator is assigned to a Factory, gain +5% productivity for each Metalwork-type skill in this Factory"
             },
-            "efficiency": 0.05
+            "efficiency": 0.05,
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "skillFamily",
+              "family": "metalwork",
+              "includeSelf": true,
+              "scope": "sameFacility"
+            }
           }
         ]
       }
@@ -11190,6 +11200,9 @@
         "slot": 1,
         "unlockPhase": 1,
         "unlockLevel": 1,
+        "families": [
+          "metalwork"
+        ],
         "effects": [
           {
             "facility": "factory",
@@ -12376,7 +12389,8 @@
               "type": "facilityCount",
               "facility": "power"
             },
-            "suppressesOtherFactoryEfficiency": true
+            "suppressesOtherFactoryEfficiency": true,
+            "factoryEfficiencySuppressionExempt": true
           }
         ]
       }
@@ -15429,7 +15443,12 @@
               "ja": "製造所配置時、貿易所1か所につき、配置中の製造所のみ金属製造の製造効率+20%",
               "en": "When this Operator is assigned to a Factory, every Trading Post makes the Factory's Precious Metal formula related productivity +20%"
             },
-            "efficiency": 0.2
+            "efficiency": 0.2,
+            "scaling": {
+              "type": "facilityCount",
+              "facility": "trading"
+            },
+            "factoryEfficiencySuppressionExempt": true
           }
         ]
       }
@@ -15836,7 +15855,8 @@
               "type": "facilityCount",
               "facility": "power"
             },
-            "suppressesOtherFactoryEfficiency": true
+            "suppressesOtherFactoryEfficiency": true,
+            "factoryEfficiencySuppressionExempt": true
           }
         ]
       },
@@ -15868,7 +15888,8 @@
               "type": "facilityCount",
               "facility": "power"
             },
-            "suppressesOtherFactoryEfficiency": true
+            "suppressesOtherFactoryEfficiency": true,
+            "factoryEfficiencySuppressionExempt": true
           }
         ]
       },
@@ -19215,7 +19236,8 @@
               "type": "facilityCount",
               "facility": "power"
             },
-            "suppressesOtherFactoryEfficiency": true
+            "suppressesOtherFactoryEfficiency": true,
+            "factoryEfficiencySuppressionExempt": true
           }
         ]
       },
@@ -19247,7 +19269,8 @@
               "type": "facilityCount",
               "facility": "power"
             },
-            "suppressesOtherFactoryEfficiency": true
+            "suppressesOtherFactoryEfficiency": true,
+            "factoryEfficiencySuppressionExempt": true
           }
         ]
       }
@@ -22576,7 +22599,8 @@
               "type": "facilityCount",
               "facility": "power"
             },
-            "suppressesOtherFactoryEfficiency": true
+            "suppressesOtherFactoryEfficiency": true,
+            "factoryEfficiencySuppressionExempt": true
           }
         ]
       }
@@ -22751,6 +22775,9 @@
         "slot": 0,
         "unlockPhase": 0,
         "unlockLevel": 1,
+        "families": [
+          "metalwork"
+        ],
         "effects": [
           {
             "facility": "factory",
@@ -22793,7 +22820,13 @@
               "ja": "製造所配置時、貿易所1か所につき、配置中の製造所のみ金属製造の製造効率+3%",
               "en": "When this Operator is assigned to a Factory, every Trading Post makes the Factory's Precious Metal formula related productivity +3%"
             },
-            "efficiency": 0.03
+            "efficiency": 0.03,
+            "baseEfficiency": 0,
+            "scaling": {
+              "type": "facilityCount",
+              "facility": "trading"
+            },
+            "factoryEfficiencySuppressionExempt": true
           }
         ]
       }

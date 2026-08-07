@@ -1141,6 +1141,9 @@ function bestSkillForFacility(
           orderLimit,
           ...(effect.tradingOrderEffects?.length ? { tradingOrderEffects: effect.tradingOrderEffects } : {}),
           ...(effect.suppressesOtherFactoryEfficiency ? { suppressesOtherFactoryEfficiency: true } : {}),
+          ...(effect.factoryEfficiencySuppressionExempt
+            ? { factoryEfficiencySuppressionExemptEfficiency: variantEffectiveEfficiency }
+            : {}),
           ...(effect.globalEffect?.stackKey ? { globalStackKey: globalEffectStackIdentity(effect) } : {}),
           ...(skilllessPrerequisiteOperatorIds.length ? { skilllessPrerequisiteOperatorIds } : {}),
           ...(baseSkilllessPrerequisiteOperatorIds.length ? { baseSkilllessPrerequisiteOperatorIds } : {}),
@@ -1778,6 +1781,11 @@ function aggregateOperatorAssignments(
     orderLimit: aggregateFacilityLimit(assignments, "orderLimit"),
     tradingOrderEffects,
     suppressesOtherFactoryEfficiency: assignments.some((assignment) => assignment.suppressesOtherFactoryEfficiency) || undefined,
+    factoryEfficiencySuppressionExemptEfficiency:
+      assignments.reduce(
+        (sum, assignment) => sum + (assignment.factoryEfficiencySuppressionExemptEfficiency ?? 0),
+        0
+      ) || undefined,
     globalStackKey: globalStackKeys[0],
     globalStackKeys: globalStackKeys.length ? globalStackKeys : undefined,
     skilllessPrerequisiteOperatorIds: skilllessPrerequisiteOperatorIds.length ? skilllessPrerequisiteOperatorIds : undefined,
@@ -1941,9 +1949,15 @@ function activeRemoteFacilityCountBonuses(
     .flatMap((effect) => effect.facilityCountBonuses ?? []);
 }
 
-function effectiveFacilityEfficiency(assignments: Assignment[], globalBonus = 0) {
+export function effectiveFacilityEfficiency(assignments: Assignment[], globalBonus = 0) {
   const suppressingAssignments = assignments.filter((assignment) => assignment.suppressesOtherFactoryEfficiency);
-  const countedAssignments = suppressingAssignments.length ? suppressingAssignments : assignments;
+  const countedAssignments = suppressingAssignments.length
+    ? assignments.filter(
+        (assignment) =>
+          assignment.suppressesOtherFactoryEfficiency ||
+          (assignment.factoryEfficiencySuppressionExemptEfficiency ?? 0) > 0
+      )
+    : assignments;
   const baseEfficiency = countedAssignments.reduce((sum, assignment) => {
     const teamScalingAdjustment = (assignment.facilityStatScalings ?? []).reduce((scalingSum, scaling) => {
       const otherLimit = countedAssignments
@@ -1959,7 +1973,12 @@ function effectiveFacilityEfficiency(assignments: Assignment[], globalBonus = 0)
       const currentSteps = statScalingStepCount(scaling.current, scaling);
       return scalingSum + (desiredSteps - currentSteps) * scaling.efficiencyPerStep;
     }, 0);
-    return sum + (assignment.efficiency + teamScalingAdjustment) * (assignment.shiftUptime ?? 1);
+    const retainedEfficiency = suppressingAssignments.length
+      ? assignment.suppressesOtherFactoryEfficiency
+        ? assignment.efficiency + teamScalingAdjustment
+        : assignment.factoryEfficiencySuppressionExemptEfficiency ?? 0
+      : assignment.efficiency + teamScalingAdjustment;
+    return sum + retainedEfficiency * (assignment.shiftUptime ?? 1);
   }, globalBonus);
   return tradingOrderAdjustedEfficiency(
     baseEfficiency,
@@ -2426,7 +2445,7 @@ function remoteFacilityStatBonusAmount(
   return matchingAssignments.length >= (bonus.min ?? 1) ? matchingAssignments.length * Math.max(bonus.amount, 0) : 0;
 }
 
-function calculateRemoteFacilityEfficiencyBonus(facility: FacilitySlot, context: AssignmentEvaluationContext): number {
+export function calculateRemoteFacilityEfficiencyBonus(facility: FacilitySlot, context: AssignmentEvaluationContext): number {
   return context.assignments.reduce((sum, assignment) => {
     return (
       sum +

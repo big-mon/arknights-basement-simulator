@@ -9,7 +9,9 @@ import {
   averageMoraleCurveEfficiency,
   bestDormitoryRecoveryPerHour,
   bestDormitoryRecoveryProvenance,
+  calculateRemoteFacilityEfficiencyBonus,
   conditionsSatisfied,
+  effectiveFacilityEfficiency,
   findCandidates,
   generateAssignmentPlan,
   registeredComplexBaseSkillHandlerKeys,
@@ -167,6 +169,11 @@ const matterhorn = operators.find((operator) => operator.id === "char_199_yak")!
 const obliviator = operators.find((operator) => operator.id === "char_4182_oblvns")!;
 const mortis = operators.find((operator) => operator.id === "char_4183_mortis")!;
 const mrNothing = operators.find((operator) => operator.id === "char_455_nothin")!;
+const bryophyta = operators.find((operator) => operator.id === "char_4106_bryota")!;
+const gravel = operators.find((operator) => operator.id === "char_237_gravel")!;
+const thornsTheLodestar = operators.find((operator) => operator.id === "char_1039_thorn2")!;
+const viviana = operators.find((operator) => operator.id === "char_4098_vvana")!;
+const purestream = operators.find((operator) => operator.id === "char_385_finlpp")!;
 const weedy = operators.find((operator) => operator.id === "char_400_weedy")!;
 const vulcan = operators.find((operator) => operator.id === "char_163_hpsts")!;
 const warmy = operators.find((operator) => operator.id === "char_4081_warmy")!;
@@ -706,6 +713,177 @@ describe("optimizer", () => {
 
     expect(candidate.suppressesOtherFactoryEfficiency).toBe(true);
     expect(candidate.efficiency).toBeCloseTo(0.1);
+  });
+
+  it("evaluates the JP Purestream, Weedy, and Eunectes factory team at +140% with Greyy's facility-count support", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) {
+      entry.owned = false;
+    }
+    ownOperators(state, [purestream.id, weedy.id, eunectes.id, greyyAlter.id]);
+    const factory = state.facilities.find((facility) => facility.type === "factory" && facility.product === "gold")!;
+    const power = state.facilities.find((facility) => facility.type === "power")!;
+    const greyyAssignment = findCandidates(power, state).find((candidate) => candidate.operatorId === greyyAlter.id)!;
+    const teamContext = [purestream.id, weedy.id, eunectes.id].map((operatorId) =>
+      contextAssignment(factory, operatorId)
+    );
+    const candidates = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      roster: state.roster,
+      assignments: [greyyAssignment, ...teamContext]
+    });
+    const team = [purestream.id, weedy.id, eunectes.id].map(
+      (operatorId) => candidates.find((candidate) => candidate.operatorId === operatorId)!
+    );
+
+    expect(greyyAssignment.remoteFacilityCountBonuses).toContainEqual({ facility: "power", amount: 1 });
+    expect(team.map((assignment) => assignment.operatorId)).toEqual([purestream.id, weedy.id, eunectes.id]);
+    expect(team[0].factoryEfficiencySuppressionExemptEfficiency).toBeCloseTo(0.4);
+    expect(effectiveFacilityEfficiency(team)).toBeCloseTo(1.4);
+  });
+
+  it("retains only Thorns the Lodestar's trading-post-derived factory efficiency under Weedy suppression", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) {
+      entry.owned = false;
+    }
+    ownOperators(state, [weedy.id, thornsTheLodestar.id]);
+    const factory = state.facilities.find((facility) => facility.type === "factory" && facility.product === "gold")!;
+    const teamContext = [weedy.id, thornsTheLodestar.id].map((operatorId) => contextAssignment(factory, operatorId));
+    const candidates = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      roster: state.roster,
+      assignments: teamContext
+    });
+    const weedyAssignment = candidates.find((candidate) => candidate.operatorId === weedy.id)!;
+    const thornsAssignment = candidates.find((candidate) => candidate.operatorId === thornsTheLodestar.id)!;
+
+    expect(state.facilities.filter((facility) => facility.type === "power")).toHaveLength(3);
+    expect(state.facilities.filter((facility) => facility.type === "trading")).toHaveLength(2);
+    expect(weedyAssignment.efficiency).toBeCloseTo(0.45);
+    expect(thornsAssignment.efficiency).toBeCloseTo(0.36);
+    expect(thornsAssignment.factoryEfficiencySuppressionExemptEfficiency).toBeCloseTo(0.06);
+    expect(effectiveFacilityEfficiency([weedyAssignment, thornsAssignment])).toBeCloseTo(0.51);
+  });
+
+  it("still suppresses ordinary teammate factory efficiency when it is not marked exempt", () => {
+    const factory = createDefaultState().facilities.find((facility) => facility.type === "factory")!;
+    const suppressingAssignment = contextAssignment(factory, weedy.id, {
+      score: 0.45,
+      efficiency: 0.45,
+      suppressesOtherFactoryEfficiency: true
+    });
+    const ordinaryAssignment = contextAssignment(factory, texas.id, {
+      score: 0.35,
+      efficiency: 0.35
+    });
+
+    expect(effectiveFacilityEfficiency([suppressingAssignment, ordinaryAssignment])).toBeCloseTo(0.45);
+  });
+
+  it("retains only the exact exempt portion of a mixed factory assignment under suppression", () => {
+    const factory = createDefaultState().facilities.find((facility) => facility.type === "factory")!;
+    const suppressingAssignment = contextAssignment(factory, weedy.id, {
+      score: 0.45,
+      efficiency: 0.45,
+      suppressesOtherFactoryEfficiency: true
+    });
+    const mixedAssignment = contextAssignment(factory, purestream.id, {
+      score: 0.35,
+      efficiency: 0.35,
+      factoryEfficiencySuppressionExemptEfficiency: 0.2
+    });
+
+    expect(effectiveFacilityEfficiency([suppressingAssignment, mixedAssignment])).toBeCloseTo(0.65);
+    expect(effectiveFacilityEfficiency([mixedAssignment])).toBeCloseTo(0.35);
+  });
+
+  it("evaluates the JP Metalwork gold team with Viviana in control at +123%", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) {
+      entry.owned = false;
+    }
+    ownOperators(state, [bryophyta.id, gravel.id, thornsTheLodestar.id, viviana.id]);
+    const factory = state.facilities.find((facility) => facility.type === "factory" && facility.product === "gold")!;
+    const control = state.facilities.find((facility) => facility.type === "control")!;
+    const teamContext = [bryophyta.id, gravel.id, thornsTheLodestar.id].map((operatorId) =>
+      contextAssignment(factory, operatorId)
+    );
+    const vivianaAssignment = findCandidates(control, state, 0, {
+      facilities: state.facilities,
+      roster: state.roster,
+      assignments: teamContext
+    }).find((candidate) => candidate.operatorId === viviana.id)!;
+    const context = {
+      facilities: state.facilities,
+      roster: state.roster,
+      assignments: [vivianaAssignment, ...teamContext]
+    };
+    const candidates = findCandidates(factory, state, 0, context);
+    const team = [bryophyta.id, gravel.id, thornsTheLodestar.id].map(
+      (operatorId) => candidates.find((candidate) => candidate.operatorId === operatorId)!
+    );
+    const vivianaKnightBonus = calculateRemoteFacilityEfficiencyBonus(factory, context);
+
+    expect(state.facilities.filter((facility) => facility.type === "trading")).toHaveLength(2);
+    expect(vivianaKnightBonus).toBeCloseTo(0.07);
+    expect(team.map((assignment) => assignment.operatorId)).toEqual([
+      bryophyta.id,
+      gravel.id,
+      thornsTheLodestar.id
+    ]);
+    expect(team.map((assignment) => assignment.efficiency)).toEqual([
+      expect.closeTo(0.45),
+      expect.closeTo(0.35),
+      expect.closeTo(0.36)
+    ]);
+    expect(effectiveFacilityEfficiency(team, vivianaKnightBonus)).toBeCloseTo(1.23);
+  });
+
+  it("derives no Viviana remote factory bonus when no assigned operator is a Knight", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) {
+      entry.owned = false;
+    }
+    ownOperators(state, [viviana.id, bryophyta.id, thornsTheLodestar.id]);
+    const factory = state.facilities.find((facility) => facility.type === "factory" && facility.product === "gold")!;
+    const control = state.facilities.find((facility) => facility.type === "control")!;
+    const factoryAssignments = [bryophyta.id, thornsTheLodestar.id].map((operatorId) =>
+      contextAssignment(factory, operatorId)
+    );
+    const vivianaAssignment = findCandidates(control, state, 0, {
+      facilities: state.facilities,
+      roster: state.roster,
+      assignments: factoryAssignments
+    }).find((candidate) => candidate.operatorId === viviana.id)!;
+
+    expect(
+      calculateRemoteFacilityEfficiencyBonus(factory, {
+        facilities: state.facilities,
+        roster: state.roster,
+        assignments: [vivianaAssignment, ...factoryAssignments]
+      })
+    ).toBe(0);
+  });
+
+  it("does not count non-Metalwork teammate skills for Bryophyta's family scaling", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) {
+      entry.owned = false;
+    }
+    ownOperators(state, [bryophyta.id, texas.id, lappland.id]);
+    const factory = state.facilities.find((facility) => facility.type === "factory" && facility.product === "gold")!;
+    const candidate = findCandidates(factory, state, 0, {
+      facilities: state.facilities,
+      roster: state.roster,
+      assignments: [
+        contextAssignment(factory, bryophyta.id),
+        contextAssignment(factory, texas.id),
+        contextAssignment(factory, lappland.id)
+      ]
+    }).find((assignment) => assignment.operatorId === bryophyta.id)!;
+
+    expect(candidate.efficiency).toBeCloseTo(0.35);
   });
 
   it("uses max facility level for reception-level scaling skills", () => {
@@ -1537,6 +1715,19 @@ describe("optimizer", () => {
     expect(tuyeOverrides["trade_ord_spd&gold[000]"].effects[0].patch.product).toBe("lmd");
     expect(tuyeOverrides["trade_ord_spd&gold[010]"].effects[0].patch.product).toBe("lmd");
     expect(uOfficialOverrides["trade_ord_spd&wt[000]"].effects[0].patch.product).toBe("lmd");
+  });
+
+  it("marks every modeled facility-count factory efficiency effect as suppression-exempt", () => {
+    const facilityCountFactoryEffects = operators.flatMap((operator) =>
+      operator.skills.flatMap((skill) =>
+        skill.effects.filter(
+          (effect) => effect.facility === "factory" && effect.scaling?.type === "facilityCount"
+        )
+      )
+    );
+
+    expect(facilityCountFactoryEffects.length).toBeGreaterThan(0);
+    expect(facilityCountFactoryEffects.every((effect) => effect.factoryEfficiencySuppressionExempt === true)).toBe(true);
   });
 
   it("registers handlers for complex remote control efficiency skills", () => {

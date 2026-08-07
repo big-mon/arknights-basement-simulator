@@ -1979,7 +1979,8 @@
                 "type": "facilityCount",
                 "facility": "power"
               },
-              "suppressesOtherFactoryEfficiency": true
+              "suppressesOtherFactoryEfficiency": true,
+              "factoryEfficiencySuppressionExempt": true
             }
           }
         ]
@@ -2824,7 +2825,8 @@
                 "type": "facilityCount",
                 "facility": "power"
               },
-              "suppressesOtherFactoryEfficiency": true
+              "suppressesOtherFactoryEfficiency": true,
+              "factoryEfficiencySuppressionExempt": true
             }
           }
         ]
@@ -2839,7 +2841,8 @@
                 "type": "facilityCount",
                 "facility": "power"
               },
-              "suppressesOtherFactoryEfficiency": true
+              "suppressesOtherFactoryEfficiency": true,
+              "factoryEfficiencySuppressionExempt": true
             }
           }
         ]
@@ -3337,6 +3340,25 @@
       }
     }
   },
+  "char_385_finlpp": {
+    "skills": {
+      "manu_prod_spd&trade[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.2,
+              "scaling": {
+                "type": "facilityCount",
+                "facility": "trading"
+              },
+              "factoryEfficiencySuppressionExempt": true
+            }
+          }
+        ]
+      }
+    }
+  },
   "char_400_weedy": {
     "skills": {
       "manu_prod_spd&power[010]": {
@@ -3349,7 +3371,8 @@
                 "type": "facilityCount",
                 "facility": "power"
               },
-              "suppressesOtherFactoryEfficiency": true
+              "suppressesOtherFactoryEfficiency": true,
+              "factoryEfficiencySuppressionExempt": true
             }
           }
         ]
@@ -3364,7 +3387,8 @@
                 "type": "facilityCount",
                 "facility": "power"
               },
-              "suppressesOtherFactoryEfficiency": true
+              "suppressesOtherFactoryEfficiency": true,
+              "factoryEfficiencySuppressionExempt": true
             }
           }
         ]
@@ -3717,7 +3741,8 @@
                 "type": "facilityCount",
                 "facility": "power"
               },
-              "suppressesOtherFactoryEfficiency": true
+              "suppressesOtherFactoryEfficiency": true,
+              "factoryEfficiencySuppressionExempt": true
             }
           }
         ]
@@ -4354,6 +4379,72 @@
       },
       "manu_prod_spd[010]": {
         "patch": { "families": ["standardization"] }
+      }
+    }
+  },
+  "char_4106_bryota": {
+    "skills": {
+      "manu_formula_spd[100]": {
+        "patch": {
+          "families": [
+            "metalwork"
+          ]
+        }
+      },
+      "manu_skill_spd1[020]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.05,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "skillFamily",
+                "family": "metalwork",
+                "includeSelf": true,
+                "scope": "sameFacility"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "char_237_gravel": {
+    "skills": {
+      "manu_formula_spd[110]": {
+        "patch": {
+          "families": [
+            "metalwork"
+          ]
+        }
+      }
+    }
+  },
+  "char_1039_thorn2": {
+    "skills": {
+      "manu_formula_spd[102]": {
+        "patch": {
+          "families": [
+            "metalwork"
+          ]
+        }
+      },
+      "manu_prod_spd&trade[1000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "efficiency": 0.03,
+              "baseEfficiency": 0,
+              "scaling": {
+                "type": "facilityCount",
+                "facility": "trading"
+              },
+              "factoryEfficiencySuppressionExempt": true
+            }
+          }
+        ]
       }
     }
   },
