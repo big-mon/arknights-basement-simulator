@@ -1,4 +1,5 @@
 import {
+  hasResolvedExecutableCompositionAuthority,
   isPassFailEligible,
   validateOptimizerBenchmark,
   type BenchmarkEquivalentComposition,
@@ -96,9 +97,18 @@ function sameStringSet(expected: readonly string[], actual: readonly string[]): 
 /**
  * Stable mismatch precedence, independent of fixture and observation declaration order:
  * reference provenance; runtime region, availability commit, roster mode, roster IDs;
- * rotation cycle, then shift state; composition search; skill interpretation;
+ * rotation cycle, then shift state; composition comparisons under search authority; skill interpretation;
  * calculation; and finally every other path. Paths are lexical within each tier.
  */
+const compositionComparisonPrefixes = [
+  "composition/search/",
+  "composition/remote-support/"
+] as const;
+
+function isCompositionComparisonPath(path: string): boolean {
+  return compositionComparisonPrefixes.some((prefix) => path.startsWith(prefix));
+}
+
 function stableMismatchPathRank(path: string): number {
   if (path.startsWith("metadata/reference-provenance/")) return 0;
   if (path === "metadata/runtime-data-provenance/region") return 1;
@@ -107,7 +117,7 @@ function stableMismatchPathRank(path: string): number {
   if (path === "metadata/runtime-data-provenance/roster/operatorIds") return 4;
   if (path === "rotation/state-model/cycleHours") return 5;
   if (path.startsWith("rotation/state-model/shifts/")) return 6;
-  if (path.startsWith("composition/search/")) return 7;
+  if (isCompositionComparisonPath(path)) return 7;
   if (path.startsWith("skill-interpretation/")) return 8;
   if (path.startsWith("calculation/")) return 9;
   return 10;
@@ -245,9 +255,23 @@ function compositionCandidates(fixture: ResourceOutputBenchmark): Array<{
   ];
 }
 
+function identifiedRemoteSupportByShift(
+  fixture: ResourceOutputBenchmark
+): Map<string, Record<string, readonly string[]>> {
+  return new Map(fixture.rotation.shifts.map((shift) => [
+    shift.id,
+    Object.fromEntries(Object.entries(shift.assignments).flatMap(([facilityId, assignment]) =>
+      assignment.remoteSupport?.operatorIds?.length
+        ? [[facilityId, assignment.remoteSupport.operatorIds]]
+        : []
+    ))
+  ]));
+}
+
 function candidateMatches(
   candidate: BenchmarkEquivalentComposition["shifts"],
-  actualShifts: NonNullable<BenchmarkObservation["rotation"]>["shifts"] | undefined
+  actualShifts: NonNullable<BenchmarkObservation["rotation"]>["shifts"] | undefined,
+  expectedRemoteSupportByShift: ReadonlyMap<string, Record<string, readonly string[]>>
 ): boolean {
   if (!actualShifts) return false;
   const candidateShiftCounts = new Map<string, number>();
@@ -265,9 +289,16 @@ function candidateMatches(
     const actualShift = actualShifts.find((shift) => shift.id === expectedShift.shiftId)!;
     const expectedFacilityIds = Object.keys(expectedShift.assignments);
     const actualFacilityIds = Object.keys(actualShift.assignments);
+    const expectedRemoteSupport = expectedRemoteSupportByShift.get(expectedShift.shiftId) ?? {};
+    const actualRemoteSupport = actualShift.remoteSupportOperatorIds ?? {};
     return sameStringSet(expectedFacilityIds, actualFacilityIds) &&
       Object.entries(expectedShift.assignments).every(([facilityId, expectedIds]) => {
         const actualIds = actualShift.assignments[facilityId];
+        return Array.isArray(actualIds) && sameStringSet(expectedIds, actualIds);
+      }) &&
+      sameStringSet(Object.keys(expectedRemoteSupport), Object.keys(actualRemoteSupport)) &&
+      Object.entries(expectedRemoteSupport).every(([facilityId, expectedIds]) => {
+        const actualIds = actualRemoteSupport[facilityId];
         return Array.isArray(actualIds) && sameStringSet(expectedIds, actualIds);
       });
   });
@@ -276,10 +307,12 @@ function candidateMatches(
 function compareRotationAndComposition(
   fixture: ResourceOutputBenchmark,
   observation: BenchmarkObservation,
-  diagnostics: BenchmarkDiagnostic[]
+  diagnostics: BenchmarkDiagnostic[],
+  allowCompositionMatch: boolean
 ): "primary" | `equivalent[${number}]` | undefined {
   const actualRotation = observation.rotation;
   const actualShifts = actualRotation?.shifts;
+  const expectedRemoteSupportByShift = identifiedRemoteSupportByShift(fixture);
   const expectedShiftIds = new Set(fixture.rotation.shifts.map((shift) => shift.id));
   const actualShiftCounts = new Map<string, number>();
   for (const shift of actualShifts ?? []) {
@@ -358,7 +391,7 @@ function compareRotationAndComposition(
           message: "reference composition is label-only and is not independently identified"
         });
       }
-      if (assignment.remoteSupport?.operatorIds) {
+      if (assignment.remoteSupport?.operatorIds?.length) {
         const actualSupportIds = actualShift?.remoteSupportOperatorIds?.[facilityId];
         addComparison(
           diagnostics,
@@ -386,6 +419,19 @@ function compareRotationAndComposition(
         });
       }
     }
+    const expectedSupportFacilityIds = new Set(Object.keys(expectedRemoteSupportByShift.get(expectedShift.id) ?? {}));
+    for (const facilityId of Object.keys(actualShift?.remoteSupportOperatorIds ?? {}).sort()) {
+      if (!expectedSupportFacilityIds.has(facilityId)) {
+        addComparison(
+          diagnostics,
+          `composition/remote-support/${expectedShift.id}/${facilityId}/unexpected`,
+          "search",
+          "absent",
+          "present",
+          false
+        );
+      }
+    }
   }
 
   for (const conflict of fixture.compositionEvidence?.conflicts ?? []) {
@@ -408,8 +454,12 @@ function compareRotationAndComposition(
   }
 
   const candidates = compositionCandidates(fixture);
-  const matched = observedShiftIdsValid
-    ? candidates.find((candidate) => candidateMatches(candidate.shifts, actualShifts))
+  const matched = allowCompositionMatch && observedShiftIdsValid
+    ? candidates.find((candidate) => candidateMatches(
+      candidate.shifts,
+      actualShifts,
+      expectedRemoteSupportByShift
+    ))
     : undefined;
   if (matched) return matched.name;
 
@@ -626,7 +676,12 @@ export function runOptimizerBenchmarkBatch(
     }
     compareMetadata(fixture, observation, diagnostics);
     const matchedComposition = fixture.kind === "resource-output"
-      ? compareRotationAndComposition(fixture, observation, diagnostics)
+      ? compareRotationAndComposition(
+        fixture,
+        observation,
+        diagnostics,
+        hasResolvedExecutableCompositionAuthority(fixture)
+      )
       : undefined;
     compareInterpretations(observation, diagnostics);
     compareCalculations(fixture, observation, diagnostics);

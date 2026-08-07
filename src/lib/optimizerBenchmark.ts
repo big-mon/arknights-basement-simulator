@@ -1506,7 +1506,7 @@ function validateResourceBenchmark(benchmark: Record<string, unknown>, errors: s
             operatorId,
             `rotation.shifts[${shiftIndex}].assignments.${facilityId}.remoteSupport.operatorIds[${operatorIndex}]`,
             benchmark.region,
-            undefined,
+            explicitRosterIds,
             errors
           );
         }
@@ -1659,15 +1659,37 @@ export function validateOptimizerBenchmark(input: unknown): BenchmarkValidationR
     : { ok: false, errors };
 }
 
+export function hasResolvedExecutableCompositionAuthority(benchmark: ResourceOutputBenchmark): boolean {
+  const evidence = benchmark.compositionEvidence;
+  if (evidence !== undefined && (
+    evidence.status !== "comparable" ||
+    evidence.sourceOnlyOperators.length > 0 ||
+    evidence.conflicts.length > 0 ||
+    evidence.disputedAssignments.length > 0
+  )) {
+    return false;
+  }
+
+  return benchmark.rotation.shifts.every((shift) =>
+    Object.values(shift.assignments).every((assignment) =>
+      (assignment.sourceOnlyOperatorIds?.length ?? 0) === 0 &&
+      (assignment.remoteSupport?.unresolved?.length ?? 0) === 0
+    )
+  );
+}
+
 export function isPassFailEligible(benchmark: unknown): boolean {
+  const validation = validateOptimizerBenchmark(benchmark);
+  if (!validation.ok) return false;
+
+  const validatedBenchmark = validation.value;
   if (
-    !isRecord(benchmark) ||
-    benchmark.kind !== "resource-output" ||
-    benchmark.contractVersion !== "phase1-pass-fail-v1" ||
-    benchmark.confidence === "disputed"
+    validatedBenchmark.kind !== "resource-output" ||
+    validatedBenchmark.contractVersion !== "phase1-pass-fail-v1" ||
+    validatedBenchmark.confidence === "disputed"
   ) {
     return false;
   }
 
-  return validateOptimizerBenchmark(benchmark).ok;
+  return hasResolvedExecutableCompositionAuthority(validatedBenchmark);
 }

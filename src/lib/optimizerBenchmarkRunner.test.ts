@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { optimizerBenchmarkFixtures } from "../data/optimizer-benchmarks";
-import type { OptimizerBenchmark, ResourceOutputBenchmark } from "./optimizerBenchmark";
+import {
+  validateOptimizerBenchmark,
+  type OptimizerBenchmark,
+  type ResourceOutputBenchmark
+} from "./optimizerBenchmark";
 import {
   operatorAvailabilitySnapshot,
   type OperatorAvailabilityRegion
@@ -132,6 +136,29 @@ function expectedResource(fixture: ResourceOutputBenchmark, resource: keyof Reso
   return value;
 }
 
+function identifiedSupportFixture(id: string): {
+  fixture: ResourceOutputBenchmark;
+  shiftIndex: number;
+  facilityId: string;
+  supportIds: string[];
+} {
+  const fixture = gatingFixture(id);
+  const rosterIds = fixture.roster.mode === "explicit" ? fixture.roster.operatorIds : [];
+  const facilityId = "reception";
+  const shiftIndex = fixture.rotation.shifts.findIndex((shift) => {
+    const occupants = new Set(Object.values(shift.assignments).flatMap((assignment) => assignment.operatorIds ?? []));
+    return rosterIds.filter((operatorId) => !occupants.has(operatorId)).length >= 2;
+  });
+  const shift = fixture.rotation.shifts[shiftIndex];
+  const occupants = new Set(Object.values(shift.assignments).flatMap((assignment) => assignment.operatorIds ?? []));
+  const supportIds = rosterIds.filter((operatorId) => !occupants.has(operatorId)).slice(0, 2);
+  shift.assignments[facilityId].remoteSupport = {
+    operatorIds: [...supportIds].reverse(),
+    notes: ["Remote support is outside the facility slot count."]
+  };
+  return { fixture, shiftIndex, facilityId, supportIds };
+}
+
 describe("runOptimizerBenchmarkBatch", () => {
   it("passes an exact observation and compares operator sets independent of order", () => {
     const result = runOptimizerBenchmarkBatch([resourceFixture("JP")], { "runner-case": observation("JP") });
@@ -147,42 +174,380 @@ describe("runOptimizerBenchmarkBatch", () => {
     }));
   });
 
+  it("does not report a composition match for a source-only unknown operator", () => {
+    const fixture = resourceFixture("JP", {
+      compositionEvidence: {
+        status: "comparable",
+        sourceOnlyOperators: [{
+          sourceName: "Unknown Source Operator",
+          operatorId: "source-only-unknown-operator",
+          reason: "The source operator is not present in the runtime catalog."
+        }],
+        conflicts: [],
+        disputedAssignments: []
+      }
+    }) as ResourceOutputBenchmark;
+    fixture.rotation.shifts[0].assignments["trading-label-only"].sourceOnlyOperatorIds = [
+      "source-only-unknown-operator"
+    ];
+
+    const result = runOptimizerBenchmarkBatch([fixture], { "runner-case": observation("JP") });
+
+    expect(validateOptimizerBenchmark(fixture)).toEqual(expect.objectContaining({ ok: true }));
+    expect(result.cases[0]).toMatchObject({ status: "non-gating", gating: false });
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "reference/source-only/day/trading-label-only/source-only-unknown-operator",
+      severity: "info"
+    }));
+    expect(result.cases[0].matchedComposition).toBeUndefined();
+  });
+
+  it.each([
+    {
+      name: "disputed composition evidence",
+      prepare: (fixture: ResourceOutputBenchmark) => {
+        fixture.compositionEvidence = {
+          status: "disputed",
+          sourceOnlyOperators: [],
+          conflicts: [],
+          disputedAssignments: []
+        };
+      },
+      diagnosticPath: "reference/disputed"
+    },
+    {
+      name: "a composition evidence conflict",
+      prepare: (fixture: ResourceOutputBenchmark) => {
+        fixture.compositionEvidence = {
+          status: "comparable",
+          sourceOnlyOperators: [],
+          conflicts: [{
+            path: "day/trading-1",
+            sourceValue: "source composition",
+            benchmarkValue: "benchmark composition",
+            notes: "The cited compositions conflict."
+          }],
+          disputedAssignments: []
+        };
+      },
+      diagnosticPath: "reference/conflict/day/trading-1"
+    },
+    {
+      name: "a disputed assignment",
+      prepare: (fixture: ResourceOutputBenchmark) => {
+        fixture.compositionEvidence = {
+          status: "comparable",
+          sourceOnlyOperators: [],
+          conflicts: [],
+          disputedAssignments: [{
+            shiftId: "day",
+            facilityIds: ["trading-1"],
+            sourceOperators: [{
+              sourceName: "Catalogued Operator",
+              operatorId: genericOperatorIds("JP")[0]
+            }],
+            reason: "The cited assignment is disputed."
+          }]
+        };
+      },
+      diagnosticPath: "reference/disputed-assignment/day/trading-1"
+    }
+  ])("does not report a composition match with $name but retains diagnostics", ({ prepare, diagnosticPath }) => {
+    const fixture = resourceFixture("JP") as ResourceOutputBenchmark;
+    prepare(fixture);
+    const mismatchedObservation = observation("JP", { resources: { lmd: 99 } });
+
+    const result = runOptimizerBenchmarkBatch([fixture], { "runner-case": mismatchedObservation });
+
+    expect(validateOptimizerBenchmark(fixture)).toEqual(expect.objectContaining({ ok: true }));
+    expect(result.cases[0]).toMatchObject({
+      status: "non-gating",
+      gating: false,
+      smallestMismatchPath: "calculation/resource-values/lmd"
+    });
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: diagnosticPath,
+      severity: "info"
+    }));
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "calculation/resource-values/lmd",
+      severity: "error"
+    }));
+    expect(result.cases[0].matchedComposition).toBeUndefined();
+  });
+
+  it.each([
+    {
+      name: "clean comparable composition evidence",
+      prepare: (fixture: ResourceOutputBenchmark) => {
+        fixture.compositionEvidence = {
+          status: "comparable",
+          sourceOnlyOperators: [],
+          conflicts: [],
+          disputedAssignments: []
+        };
+      }
+    },
+    {
+      name: "clean legacy disputed confidence",
+      prepare: (fixture: ResourceOutputBenchmark) => {
+        fixture.confidence = "disputed";
+      }
+    }
+  ])("may report a composition match for $name", ({ prepare }) => {
+    const fixture = resourceFixture("JP") as ResourceOutputBenchmark;
+    prepare(fixture);
+
+    const result = runOptimizerBenchmarkBatch([fixture], { "runner-case": observation("JP") });
+
+    expect(validateOptimizerBenchmark(fixture)).toEqual(expect.objectContaining({ ok: true }));
+    expect(result.cases[0]).toMatchObject({
+      status: "non-gating",
+      gating: false,
+      matchedComposition: "primary"
+    });
+  });
+
   it("compares remote support requirements deterministically without treating them as occupants", () => {
-    const fixture = resourceFixture() as Record<string, any>;
+    const genericIds = genericOperatorIds("JP");
+    const fixture = gatingFixture("runner-remote-support");
+    const explicitRosterOperatorIds = fixture.roster.mode === "explicit" ? fixture.roster.operatorIds : [];
+    const facilityId = "reception";
+    const shiftIndex = fixture.rotation.shifts.findIndex((candidate: any) => {
+      const occupants = new Set(
+        Object.values(candidate.assignments).flatMap((item: any) => item.operatorIds)
+      );
+      return genericIds.filter((operatorId) =>
+        explicitRosterOperatorIds.includes(operatorId) && !occupants.has(operatorId)
+      ).length >= 2;
+    });
+    const shift = fixture.rotation.shifts[shiftIndex] as any;
+    const assignment = shift.assignments[facilityId];
+    const primaryOccupants = [...assignment.operatorIds];
+    const shiftOccupants = new Set(
+      Object.values(shift.assignments).flatMap((item: any) => item.operatorIds)
+    );
+    const remoteSupportOperatorIds = genericIds.filter((operatorId) =>
+      explicitRosterOperatorIds.includes(operatorId) && !shiftOccupants.has(operatorId)
+    ).slice(0, 2);
+    assignment.remoteSupport = {
+      operatorIds: [...remoteSupportOperatorIds].reverse(),
+      notes: ["Remote support is outside the facility slot count."]
+    };
+
+    const matchedObservation = savedReferenceObservation(fixture);
+    matchedObservation.rotation!.shifts[shiftIndex].assignments[facilityId] = [...primaryOccupants].reverse();
+    matchedObservation.rotation!.shifts[shiftIndex].remoteSupportOperatorIds = {
+      [facilityId]: remoteSupportOperatorIds
+    };
+    const matched = runOptimizerBenchmarkBatch([fixture], {
+      [fixture.id]: matchedObservation
+    });
+    const missing = runOptimizerBenchmarkBatch([fixture], {
+      [fixture.id]: savedReferenceObservation(fixture)
+    });
+
+    expect(validateOptimizerBenchmark(fixture)).toEqual(expect.objectContaining({ ok: true }));
+    expect(primaryOccupants).toHaveLength(2);
+    expect(remoteSupportOperatorIds).toHaveLength(2);
+    expect(new Set([...primaryOccupants, ...remoteSupportOperatorIds])).toHaveProperty("size", 4);
+    expect(remoteSupportOperatorIds.every((operatorId) => !shiftOccupants.has(operatorId))).toBe(true);
+    expect(explicitRosterOperatorIds).toEqual(expect.arrayContaining(remoteSupportOperatorIds));
+    expect(assignment.operatorIds).toEqual(primaryOccupants);
+    expect(matched.cases[0]).toMatchObject({ status: "passed", matchedComposition: "primary" });
+    expect(matched.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: `composition/remote-support/${shift.id}/${facilityId}`,
+      passed: true
+    }));
+    expect(missing.cases[0]).toMatchObject({
+      status: "failed",
+      smallestMismatchPath: `composition/remote-support/${shift.id}/${facilityId}`
+    });
+    expect(missing.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: `composition/remote-support/${shift.id}/${facilityId}`,
+      severity: "error",
+      passed: false
+    }));
+  });
+
+  it("ranks remote-support composition failures before calculation across declaration permutations", () => {
+    const genericIds = genericOperatorIds("JP");
+    const fixture = gatingFixture("remote-support-ranking");
+    const explicitRosterOperatorIds = fixture.roster.mode === "explicit" ? fixture.roster.operatorIds : [];
+    const facilityId = "reception";
+    const shiftIndex = fixture.rotation.shifts.findIndex((candidate: any) => {
+      const occupants = new Set(
+        Object.values(candidate.assignments).flatMap((item: any) => item.operatorIds)
+      );
+      return genericIds.filter((operatorId) =>
+        explicitRosterOperatorIds.includes(operatorId) && !occupants.has(operatorId)
+      ).length >= 2;
+    });
+    const shift = fixture.rotation.shifts[shiftIndex] as any;
+    const shiftOccupants = new Set(
+      Object.values(shift.assignments).flatMap((item: any) => item.operatorIds)
+    );
+    const remoteSupportOperatorIds = genericIds.filter((operatorId) =>
+      explicitRosterOperatorIds.includes(operatorId) && !shiftOccupants.has(operatorId)
+    ).slice(0, 2);
+    shift.assignments[facilityId].remoteSupport = {
+      operatorIds: [...remoteSupportOperatorIds].reverse(),
+      notes: ["Remote support is outside the facility slot count."]
+    };
+    shift.assignments.office.remoteSupport = {
+      operatorIds: [remoteSupportOperatorIds[0]],
+      notes: ["Remote support is outside the facility slot count."]
+    };
+    const expectedPath = `composition/remote-support/${shift.id}/office`;
+
+    const observation = savedReferenceObservation(fixture);
+    observation.resources = {
+      ...observation.resources,
+      goldProduced: expectedResource(fixture, "goldProduced") - 1
+    };
+    const permutedFixture = structuredClone(fixture);
+    for (const candidate of permutedFixture.rotation.shifts) {
+      candidate.assignments = Object.fromEntries(Object.entries(candidate.assignments).reverse());
+    }
+    const permutedObservation = savedReferenceObservation(permutedFixture);
+    permutedObservation.resources = {
+      ...permutedObservation.resources,
+      goldProduced: expectedResource(permutedFixture, "goldProduced") - 1
+    };
+
+    const first = runOptimizerBenchmarkBatch([fixture], { [fixture.id]: observation });
+    const second = runOptimizerBenchmarkBatch([permutedFixture], { [permutedFixture.id]: permutedObservation });
+
+    expect(fixture.contractVersion).toBe("phase1-pass-fail-v1");
+    expect(validateOptimizerBenchmark(fixture)).toEqual(expect.objectContaining({ ok: true }));
+    expect(validateOptimizerBenchmark(permutedFixture)).toEqual(expect.objectContaining({ ok: true }));
+    expect(remoteSupportOperatorIds).toHaveLength(2);
+    expect(remoteSupportOperatorIds.every((operatorId) => !shiftOccupants.has(operatorId))).toBe(true);
+    expect(first.cases[0].diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({ path: expectedPath, category: "search", severity: "error" }),
+      expect.objectContaining({ path: "calculation/resource-values/goldProduced", severity: "error" })
+    ]));
+    expect(first.cases[0].smallestMismatchPath).toBe(expectedPath);
+    expect(formatOptimizerBenchmarkBatchResult(first)).toContain(`FAIL ${fixture.id} ${expectedPath}:`);
+    expect(second.cases[0].smallestMismatchPath).toBe(expectedPath);
+    expect(second.cases[0].diagnostics).toEqual(first.cases[0].diagnostics);
+    expect(formatOptimizerBenchmarkBatchResult(second)).toBe(formatOptimizerBenchmarkBatchResult(first));
+  });
+
+  it("reports unresolved remote support informationally without making the fixture gate", () => {
+    const fixture = resourceFixture("JP") as Record<string, any>;
     fixture.rotation.shifts[0].assignments["trading-1"].remoteSupport = {
-      operatorIds: ["support-b", "support-a"],
       unresolved: [{ sourceName: "Unknown Support", reason: "Not mapped by the fixed source catalog." }],
       notes: ["Remote support is outside the trading-post slot count."]
     };
 
-    const matched = runOptimizerBenchmarkBatch([fixture], {
-      "runner-case": observation({
-        rotation: {
-          cycleHours: 24,
-          shifts: [{
-            id: "day",
-            durationHours: 24,
-            assignments: { "trading-1": ["b", "a"] },
-            remoteSupportOperatorIds: { "trading-1": ["support-a", "support-b"] }
-          }]
-        }
-      } as any)
+    const result = runOptimizerBenchmarkBatch([fixture], {
+      "runner-case": observation("JP", { resources: { lmd: 99 } })
     });
-    const missing = runOptimizerBenchmarkBatch([fixture], { "runner-case": observation() });
 
-    expect(matched.cases[0]).toMatchObject({ status: "passed", matchedComposition: "primary" });
-    expect(matched.cases[0].diagnostics).toContainEqual(expect.objectContaining({
-      path: "composition/remote-support/day/trading-1",
-      passed: true
-    }));
-    expect(matched.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+    expect(validateOptimizerBenchmark(fixture)).toEqual(expect.objectContaining({ ok: true }));
+    expect(result.cases[0]).toMatchObject({
+      status: "non-gating",
+      smallestMismatchPath: "calculation/resource-values/lmd"
+    });
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
       path: "reference/unresolved-support/day/trading-1/Unknown Support",
       severity: "info"
     }));
-    expect(missing.cases[0]).toMatchObject({
-      status: "failed",
-      smallestMismatchPath: "composition/remote-support/day/trading-1"
-    });
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "calculation/resource-values/lmd",
+      severity: "error"
+    }));
+    expect(result.cases[0].matchedComposition).toBeUndefined();
+  });
+
+  it("rejects an unexpected observed support facility without matching otherwise exact composition", () => {
+    const fixture = gatingFixture("unexpected-remote-support");
+    const observation = savedReferenceObservation(fixture);
+    const shift = fixture.rotation.shifts[0];
+    observation.rotation!.shifts[0].remoteSupportOperatorIds = {
+      office: [fixture.roster.mode === "explicit" ? fixture.roster.operatorIds[0] : genericOperatorIds("JP")[0]]
+    };
+
+    const result = runOptimizerBenchmarkBatch([fixture], { [fixture.id]: observation });
+    const path = `composition/remote-support/${shift.id}/office/unexpected`;
+
+    expect(validateOptimizerBenchmark(fixture)).toEqual(expect.objectContaining({ ok: true }));
+    expect(result.cases[0]).toMatchObject({ status: "failed", smallestMismatchPath: path });
+    expect(result.cases[0].matchedComposition).toBeUndefined();
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path,
+      expected: "absent",
+      actual: "present",
+      passed: false
+    }));
+  });
+
+  it("rejects missing, wrong, and duplicate identified support without matching composition", () => {
+    const { fixture, shiftIndex, facilityId, supportIds } = identifiedSupportFixture("wrong-remote-support");
+    const rosterIds = fixture.roster.mode === "explicit" ? fixture.roster.operatorIds : [];
+    const wrongSupportId = rosterIds.find((operatorId) => !supportIds.includes(operatorId))!;
+    const shiftId = fixture.rotation.shifts[shiftIndex].id;
+    const path = `composition/remote-support/${shiftId}/${facilityId}`;
+    const observations = [
+      savedReferenceObservation(fixture),
+      savedReferenceObservation(fixture),
+      savedReferenceObservation(fixture)
+    ];
+    observations[1].rotation!.shifts[shiftIndex].remoteSupportOperatorIds = {
+      [facilityId]: [supportIds[0], wrongSupportId]
+    };
+    observations[2].rotation!.shifts[shiftIndex].remoteSupportOperatorIds = {
+      [facilityId]: [supportIds[0], supportIds[0]]
+    };
+
+    for (const observation of observations) {
+      const result = runOptimizerBenchmarkBatch([fixture], { [fixture.id]: observation });
+      expect(result.cases[0]).toMatchObject({ status: "failed", smallestMismatchPath: path });
+      expect(result.cases[0].matchedComposition).toBeUndefined();
+    }
+  });
+
+  it("applies fixture-level identified support exactly to equivalent occupant candidates", () => {
+    const { fixture, shiftIndex, facilityId, supportIds } = identifiedSupportFixture("equivalent-remote-support");
+    const rosterIds = fixture.roster.mode === "explicit" ? fixture.roster.operatorIds : [];
+    const equivalentShifts = fixture.rotation.shifts.map((shift) => ({
+      shiftId: shift.id,
+      assignments: Object.fromEntries(Object.entries(shift.assignments).flatMap(([id, assignment]) =>
+        assignment.operatorIds ? [[id, [...assignment.operatorIds]]] : []
+      ))
+    }));
+    const shiftOccupants = new Set(Object.values(equivalentShifts[shiftIndex].assignments).flat());
+    const replacements = rosterIds.filter((operatorId) => !shiftOccupants.has(operatorId) && !supportIds.includes(operatorId)).slice(0, 2);
+    equivalentShifts[shiftIndex].assignments[facilityId] = replacements;
+    fixture.expected.equivalentCompositions = [{ shifts: equivalentShifts }];
+
+    const exact = savedReferenceObservation(fixture);
+    exact.rotation!.shifts = exact.rotation!.shifts.map((shift, index) => ({
+      ...shift,
+      assignments: structuredClone(equivalentShifts[index].assignments),
+      ...(index === shiftIndex ? { remoteSupportOperatorIds: { [facilityId]: [...supportIds] } } : {})
+    }));
+    const missing = structuredClone(exact);
+    missing.rotation!.shifts[shiftIndex].remoteSupportOperatorIds = {};
+    const extra = structuredClone(exact);
+    const extraSupportId = rosterIds.find((operatorId) => !supportIds.includes(operatorId))!;
+    extra.rotation!.shifts[shiftIndex].remoteSupportOperatorIds = {
+      [facilityId]: [...supportIds, extraSupportId]
+    };
+
+    const exactResult = runOptimizerBenchmarkBatch([fixture], { [fixture.id]: exact });
+    const missingResult = runOptimizerBenchmarkBatch([fixture], { [fixture.id]: missing });
+    const extraResult = runOptimizerBenchmarkBatch([fixture], { [fixture.id]: extra });
+
+    expect(validateOptimizerBenchmark(fixture)).toEqual(expect.objectContaining({ ok: true }));
+    expect(replacements).toHaveLength(2);
+    expect(exactResult.cases[0]).toMatchObject({ status: "passed", matchedComposition: "equivalent[0]" });
+    expect(missingResult.cases[0].matchedComposition).toBeUndefined();
+    expect(extraResult.cases[0].matchedComposition).toBeUndefined();
+    expect(extraResult.cases[0].smallestMismatchPath).toBe(
+      `composition/remote-support/${fixture.rotation.shifts[shiftIndex].id}/${facilityId}`
+    );
   });
 
   it("rejects an unexpected observed shift as a state-model mismatch", () => {

@@ -109,12 +109,12 @@ JPは保存済みHTML `/tmp/wikiru-base-shift.html` の見出し`content_1_11`�
 
 CNは固定HEAD `d374e1513a90adb45cb37259047e5db02db8ac1d` の
 `data/non-standard-configs/config-02-243-2change-3shift.json`を転写し、同commitの
-`data/operator_pool.json`で57 source namesすべてをIDへ対応させた。55 IDはchecked-in CN availabilityに存在する。次の2 IDはsource-onlyであり、runnable composition matchingから除外する。
+`data/operator_pool.json`で57 source namesすべてをIDへ対応させた。57/57 IDはchecked-in/pinned CN availability snapshotに存在する。そのうち55 IDはchecked-in軽量runtime catalog/base-skill dataにも収録されたcomparable IDである。次の2 IDはCN availabilityには存在するがruntime catalog/base-skill dataに未収録のsource-only IDであり、runnable composition matchingから除外する。
 
 | source name | operator ID | runtime境界 |
 |---|---|---|
-| 凯尔希·思衡托 | `char_1052_kalts2` | catalog/CN snapshotに不在 |
-| 逻各斯 | `char_4133_logos` | catalog/CN snapshotに不在 |
+| 凯尔希·思衡托 | `char_1052_kalts2` | CN availabilityに存在、runtime catalog/base-skill dataに不在 |
+| 逻各斯 | `char_4133_logos` | CN availabilityに存在、runtime catalog/base-skill dataに不在 |
 
 `workshop`と`training`は各shiftで同じ煌（`char_017_huang`）・逻各斯（`char_4133_logos`）を再利用する。選択肢なのか同時配置なのか固定configだけでは決められないため、施設occupantへ平坦化せず`disputedAssignments`に保存した。その他の制御中枢、製造、貿易、発電、事務、応接、宿舎はfixtureの各facility/shiftへID付きで転写した。
 

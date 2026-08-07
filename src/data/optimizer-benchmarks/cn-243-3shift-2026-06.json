@@ -131,12 +131,12 @@
       {
         "sourceName": "凯尔希·思衡托",
         "operatorId": "char_1052_kalts2",
-        "reason": "Mapped by the fixed operator_pool.json but absent from the checked-in 324-operator runtime catalog and CN availability snapshot."
+        "reason": "Mapped by the fixed operator_pool.json and present in the pinned CN operator availability snapshot, but absent from the checked-in lightweight runtime operator catalog/base-skill data, so it cannot be a runnable comparable assignment."
       },
       {
         "sourceName": "逻各斯",
         "operatorId": "char_4133_logos",
-        "reason": "Mapped by the fixed operator_pool.json but absent from the checked-in 324-operator runtime catalog and CN availability snapshot."
+        "reason": "Mapped by the fixed operator_pool.json and present in the pinned CN operator availability snapshot, but absent from the checked-in lightweight runtime operator catalog/base-skill data, so it cannot be a runnable comparable assignment."
       }
     ],
     "conflicts": [
