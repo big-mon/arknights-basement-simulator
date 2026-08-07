@@ -97,10 +97,19 @@ describe("Issue #27 current-implementation audit", () => {
     });
   });
 
-  it("keeps unavailable quantities missing and CN source conflicts diagnostic", () => {
+  it("keeps unavailable quantities missing with typed plan-resource reasons and CN source conflicts diagnostic", () => {
     expect(observations["jp-243-factory-3group-2025-11"]?.resources).toBeUndefined();
     expect(observations["cn-243-3shift-2026-06"]?.resources).toBeUndefined();
     expect(observations["jp-wikiru-backup38-12h-v2"]?.resources).toBeUndefined();
+    for (const id of [
+      "jp-243-factory-3group-2025-11",
+      "cn-243-3shift-2026-06",
+      "jp-wikiru-backup38-12h-v2"
+    ]) {
+      expect(observations[id]?.planResourceMissingReasons).toEqual(expect.arrayContaining([
+        expect.objectContaining({ code: "schedule-group-unpopulated" })
+      ]));
+    }
     expect(result.cases.find((item) => item.id === "cn-243-3shift-2026-06")?.diagnostics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -120,6 +129,22 @@ describe("Issue #27 current-implementation audit", () => {
     expect(result.cases.find((item) => item.id === "cn-243-3shift-2026-06")?.diagnostics).not.toContainEqual(
       expect.objectContaining({ message: "reference composition is label-only and is not independently identified" })
     );
+  });
+
+  it("feeds independently calculated resources for a complete generated plan", () => {
+    const glasgow = observations["jp-glasgow-trading-125"];
+
+    expect(glasgow?.planResourceMissingReasons).toBeUndefined();
+    expect(glasgow?.resources).toEqual(expect.objectContaining({
+      goldProduced: expect.any(Number),
+      goldConsumed: expect.any(Number),
+      goldNetChange: expect.any(Number),
+      battleRecordExp: expect.any(Number),
+      lmd: expect.any(Number),
+      dronesUsed: expect.any(Number),
+      droneLmd: expect.any(Number),
+      droneGoldConsumed: expect.any(Number)
+    }));
   });
 
   it("keeps disputed and formula-only references diagnostic while the accepted contract gates", () => {
@@ -203,12 +228,34 @@ describe("Issue #27 current-implementation audit", () => {
     }, 2.5, 1)).toBeCloseTo((0.3 * 2 + 0.2 * 0.5) / 2.5);
   });
 
-  it("confirms generated plans do not expose quantity or sustainable-cycle results", () => {
+  it("exposes typed plan quantities without adding sustainable-cycle results", () => {
     const plan = generateAssignmentPlan(createDefaultState());
 
-    expect(plan).not.toHaveProperty("resourceLedger");
-    expect(plan).not.toHaveProperty("goldProduced");
-    expect(plan).not.toHaveProperty("battleRecordExp");
-    expect(plan).not.toHaveProperty("lmd");
+    expect(plan.resources).toMatchObject({
+      status: "complete",
+      assumptions: {
+        facilityProductionCalculator: "simulateFacilityProduction",
+        droneCalculator: "simulateTradingPostDrones24h"
+      }
+    });
+    expect(plan.resources.per24Ledger).toBeDefined();
+    expect(plan).not.toHaveProperty("sustainableCycle");
+  });
+
+  it("does not let fixture expected-output changes alter generated-plan observations", () => {
+    const changedFixtures = structuredClone(optimizerBenchmarkFixtures) as Array<{
+      id?: string;
+      kind?: string;
+      expected?: { output?: Record<string, number> };
+    }>;
+    for (const fixture of changedFixtures) {
+      if (fixture.id === "jp-glasgow-trading-125" && fixture.kind === "resource-output" && fixture.expected?.output) {
+        for (const resource of Object.keys(fixture.expected.output)) {
+          fixture.expected.output[resource] = 987654321;
+        }
+      }
+    }
+
+    expect(createIssue27CurrentObservations(changedFixtures)).toEqual(observations);
   });
 });

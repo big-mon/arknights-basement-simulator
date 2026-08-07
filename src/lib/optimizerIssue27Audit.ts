@@ -19,6 +19,7 @@ import { simulateTradingPostDrones24h } from "./tradingPostDrones";
 import {
   effectiveBenchmarkScheduleAuthority,
   validateOptimizerBenchmark,
+  type BenchmarkResourceOutput,
   type ResourceOutputBenchmark
 } from "./optimizerBenchmark";
 import type { Assignment, AppState, ScheduleState } from "../types";
@@ -195,16 +196,34 @@ function createIssue27OptimizerObservationForSchedule(
         recoveryGroupIds: [...window.recoveryGroupIds],
         assignments: assignmentsByFacility(window.assignments)
       }))
-    }
-    // generateAssignmentPlan exposes scores/efficiencies, not actual resource quantities.
-    // Missing resources are intentionally left missing rather than copied from fixture expectations.
+    },
+    ...(plan.resources.status === "complete" && plan.resources.per24Ledger
+      ? { resources: benchmarkResources(plan.resources.per24Ledger) }
+      : { planResourceMissingReasons: plan.resources.missing })
   };
   return observation;
 }
 
-export function createIssue27CurrentObservations(): BenchmarkObservationMap {
+function benchmarkResources(
+  ledger: NonNullable<ReturnType<typeof generateAssignmentPlan>["resources"]["per24Ledger"]>
+): BenchmarkResourceOutput {
+  return {
+    goldProduced: ledger.goldProduced,
+    goldConsumed: ledger.goldConsumed,
+    goldNetChange: ledger.goldNetChange,
+    battleRecordExp: ledger.battleRecordExp,
+    lmd: ledger.lmd,
+    dronesUsed: ledger.dronesUsed,
+    droneLmd: ledger.drone.lmd,
+    droneGoldConsumed: ledger.drone.goldConsumed
+  };
+}
+
+export function createIssue27CurrentObservations(
+  fixtures: readonly unknown[] = optimizerBenchmarkFixtures
+): BenchmarkObservationMap {
   const glasgowIds = ["char_4110_delphn", "char_154_morgan", "char_112_siege"] as const;
-  const phase1Candidate = optimizerBenchmarkFixtures.find((fixture) =>
+  const phase1Candidate = fixtures.find((fixture) =>
     (fixture as { id?: string }).id === acceptedWikiruFixtureId
   );
   const phase1Validation = validateOptimizerBenchmark(phase1Candidate);
@@ -226,9 +245,9 @@ export function createIssue27CurrentObservations(): BenchmarkObservationMap {
   }
   return {
     "base-mechanics-2026-07": createMechanicsObservation(),
-    "jp-243-factory-3group-2025-11": createIssue27OptimizerObservationForSchedule("JP", undefined, benchmarkSchedule("jp-243-factory-3group-2025-11")),
-    "jp-glasgow-trading-125": createIssue27OptimizerObservationForSchedule("JP", glasgowIds, benchmarkSchedule("jp-glasgow-trading-125")),
-    "cn-243-3shift-2026-06": createIssue27OptimizerObservationForSchedule("CN", undefined, benchmarkSchedule("cn-243-3shift-2026-06")),
+    "jp-243-factory-3group-2025-11": createIssue27OptimizerObservationForSchedule("JP", undefined, benchmarkSchedule(fixtures, "jp-243-factory-3group-2025-11")),
+    "jp-glasgow-trading-125": createIssue27OptimizerObservationForSchedule("JP", glasgowIds, benchmarkSchedule(fixtures, "jp-glasgow-trading-125")),
+    "cn-243-3shift-2026-06": createIssue27OptimizerObservationForSchedule("CN", undefined, benchmarkSchedule(fixtures, "cn-243-3shift-2026-06")),
     "jp-wikiru-backup38-12h-v2": createIssue27OptimizerObservationForSchedule(
       phase1Fixture.region,
       phase1OperatorIds,
@@ -255,8 +274,8 @@ function benchmarkScheduleFromValidatedFixture(fixture: ResourceOutputBenchmark)
   };
 }
 
-function benchmarkSchedule(id: string): ScheduleState {
-  const fixture = optimizerBenchmarkFixtures
+function benchmarkSchedule(fixtures: readonly unknown[], id: string): ScheduleState {
+  const fixture = fixtures
     .map(validateOptimizerBenchmark)
     .flatMap((result) => result.ok ? [result.value] : [])
     .find((item) => item.kind === "resource-output" && item.id === id);

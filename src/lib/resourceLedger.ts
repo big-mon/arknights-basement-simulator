@@ -148,3 +148,19 @@ export function aggregateResourceLedgers(ledgers: readonly ResourceLedger[]): Re
 
   return createResourceLedger(total);
 }
+
+export function scaleResourceLedger(ledger: ResourceLedger, factor: number): ResourceLedger {
+  const validatedFactor = validateFlow(factor, "factor");
+  const validated = validateResourceLedger(ledger, "ledger");
+
+  return createResourceLedger({
+    natural: Object.fromEntries(
+      contributionFields.map((field) => [field, validated.natural[field] * validatedFactor])
+    ),
+    drone: Object.fromEntries(
+      contributionFields.map((field) => [field, validated.drone[field] * validatedFactor])
+    ),
+    dronesGenerated: validated.dronesGenerated * validatedFactor,
+    dronesUsed: validated.dronesUsed * validatedFactor
+  });
+}

@@ -1,3 +1,5 @@
+import type { PlanResourceEvaluation } from "./lib/planResourceTypes";
+
 export type FacilityType = "factory" | "trading" | "power" | "control" | "dormitory" | "reception";
 
 export type ProductType = "gold" | "battleRecord" | "originium" | "lmd" | "power" | "morale" | "clue";
@@ -359,5 +361,6 @@ export interface AssignmentPlan {
   schedule: ScheduleState;
   rotation: RotationWindow[];
   diagnostics: AssignmentPlanDiagnostic[];
+  resources: PlanResourceEvaluation;
   warnings: string[];
 }

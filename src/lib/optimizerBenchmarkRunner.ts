@@ -11,6 +11,7 @@ import {
   type OptimizerBenchmark,
   type ResourceOutputBenchmark
 } from "./optimizerBenchmark";
+import type { PlanResourceMissingReason } from "./planResourceTypes";
 
 export type BenchmarkDiagnosticCategory =
   | "source-data"
@@ -45,6 +46,7 @@ export interface BenchmarkObservation {
     }>;
   };
   resources?: BenchmarkResourceOutput;
+  planResourceMissingReasons?: readonly Readonly<PlanResourceMissingReason>[];
   formulaValues?: Record<string, number>;
   interpretedEffects?: Array<{ id: string; expected: number; actual: number }>;
   provenCauses?: Array<{
@@ -96,6 +98,7 @@ export type BenchmarkObservationMap = Readonly<Record<string, BenchmarkObservati
 export type BenchmarkCaseStatus = "passed" | "failed" | "not-run" | "non-gating" | "invalid";
 
 export interface BenchmarkDiagnostic {
+  code?: string;
   path: string;
   category: BenchmarkDiagnosticCategory;
   severity: "error" | "info";
@@ -109,6 +112,11 @@ export interface BenchmarkDiagnostic {
   tolerance?: BenchmarkTolerance;
   appliedTolerance?: { type: "absolute" | "relative" | "absolute-zero-fallback"; value: number };
   evidence?: string;
+  operatorId?: string;
+  effectId?: string;
+  effectIndex?: number;
+  effectType?: PlanResourceMissingReason["effectType"];
+  effectKind?: PlanResourceMissingReason["effectKind"];
 }
 
 export interface OptimizerBenchmarkCaseResult {
@@ -653,6 +661,21 @@ function compareCalculations(
       );
     }
     return;
+  }
+
+  for (const reason of observation.planResourceMissingReasons ?? []) {
+    diagnostics.push({
+      code: reason.code,
+      path: `calculation/plan-resources/${reason.path}`,
+      category: "calculation",
+      severity: "info",
+      message: reason.message,
+      ...(reason.operatorId ? { operatorId: reason.operatorId } : {}),
+      ...(reason.effectId ? { effectId: reason.effectId } : {}),
+      ...(reason.effectIndex !== undefined ? { effectIndex: reason.effectIndex } : {}),
+      ...(reason.effectType ? { effectType: reason.effectType } : {}),
+      ...(reason.effectKind ? { effectKind: reason.effectKind } : {})
+    });
   }
 
   for (const [resource, expected] of Object.entries(fixture.expected.output) as Array<[BenchmarkResourceName, number]>) {
