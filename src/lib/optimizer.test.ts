@@ -5,6 +5,8 @@ import { exportState, importState } from "./storage";
 import {
   attachRotationAlternatives,
   activeBaseSkills,
+  averageEffectEfficiency,
+  averageMoraleCurveEfficiency,
   bestDormitoryRecoveryPerHour,
   conditionsSatisfied,
   findCandidates,
@@ -12,7 +14,7 @@ import {
   registeredComplexBaseSkillHandlerKeys,
   tradingOrderAdjustedEfficiency
 } from "./optimizer";
-import type { Assignment, FacilityPlan, FacilitySlot } from "../types";
+import type { Assignment, BaseSkillEffect, FacilityPlan, FacilitySlot } from "../types";
 
 const factoryEliteLockedOperator = operators.find((operator) =>
   operator.skills.some(
@@ -765,6 +767,158 @@ describe("optimizer", () => {
 
     expect(twelveHourCandidate.efficiency).toBeCloseTo(0.2375);
     expect(eightHourCandidate.efficiency).toBeCloseTo(0.23125);
+  });
+
+  it("weights the fractional final time-curve segment instead of truncating it", () => {
+    const effect = {
+      facility: "factory" as const,
+      efficiency: 0,
+      description: { en: "synthetic fractional-hour curve" },
+      timeCurve: {
+        initialEfficiency: 0,
+        efficiencyPerHour: 0.1,
+        maxEfficiency: 1
+      }
+    };
+
+    const twoHours = averageEffectEfficiency(effect, 2);
+    const twoAndHalfHours = averageEffectEfficiency(effect, 2.5);
+
+    expect(twoAndHalfHours, "RED proof: Math.trunc currently makes 2.5h equal 2h").not.toBe(twoHours);
+    expect(twoAndHalfHours, "(0.1 * 1h + 0.2 * 1h + 0.3 * 0.5h) / 2.5h").toBeCloseTo(0.18);
+  });
+
+  describe("continuous curve boundaries", () => {
+    const timeEffect = (
+      startsAfterFirstHour: boolean,
+      overrides: Partial<NonNullable<BaseSkillEffect["timeCurve"]>> = {}
+    ): BaseSkillEffect => ({
+      facility: "factory",
+      efficiency: 0,
+      description: { en: "synthetic time curve" },
+      timeCurve: {
+        initialEfficiency: 0.1,
+        efficiencyPerHour: 0.1,
+        maxEfficiency: 1,
+        startsAfterFirstHour,
+        ...overrides
+      }
+    });
+    const moraleCurve: NonNullable<BaseSkillEffect["moraleCurve"]> = {
+      initialEfficiency: 0.3,
+      efficiencyPerStep: -0.1,
+      moralePerStep: 2,
+      minEfficiency: 0
+    };
+
+    it("keeps the first time increment active below and at one hour when there is no warmup", () => {
+      expect(averageEffectEfficiency(timeEffect(false), 0.75)).toBeCloseTo(0.2);
+      expect(averageEffectEfficiency(timeEffect(false), 1)).toBeCloseTo(0.2);
+    });
+
+    it("keeps warmup inactive below and at one hour", () => {
+      expect(averageEffectEfficiency(timeEffect(true), 0.75)).toBeCloseTo(0.1);
+      expect(averageEffectEfficiency(timeEffect(true), 1)).toBeCloseTo(0.1);
+    });
+
+    it("weights a non-half fractional time segment after warmup", () => {
+      expect(averageEffectEfficiency(timeEffect(true), 2.25)).toBeCloseTo(
+        (0.1 * 1 + 0.2 * 1 + 0.3 * 0.25) / 2.25
+      );
+    });
+
+    it("caps each time segment after the cap is reached partway through the shift", () => {
+      const capped = timeEffect(false, { efficiencyPerHour: 0.2, maxEfficiency: 0.5 });
+
+      expect(averageEffectEfficiency(capped, 3.25)).toBeCloseTo(
+        (0.3 * 1 + 0.5 * 1 + 0.5 * 1 + 0.5 * 0.25) / 3.25
+      );
+    });
+
+    it("changes morale efficiency immediately before, exactly at, and after a threshold", () => {
+      expect(averageMoraleCurveEfficiency(moraleCurve, 1.999, 1)).toBeCloseTo(0.3);
+      expect(averageMoraleCurveEfficiency(moraleCurve, 2, 1)).toBeCloseTo(0.3);
+      expect(averageMoraleCurveEfficiency(moraleCurve, 2.25, 1)).toBeCloseTo(
+        (0.3 * 2 + 0.2 * 0.25) / 2.25
+      );
+    });
+
+    it("uses the actual width of a non-half final morale segment", () => {
+      expect(averageMoraleCurveEfficiency(moraleCurve, 4.4, 1)).toBeCloseTo(
+        (0.3 * 2 + 0.2 * 2 + 0.1 * 0.4) / 4.4
+      );
+    });
+
+    it("keeps morale efficiency constant when morale consumption is zero", () => {
+      expect(averageMoraleCurveEfficiency(moraleCurve, 2.5, 0)).toBeCloseTo(0.3);
+    });
+
+    it("evaluates a finite extreme morale rate after the curve reaches its floor", () => {
+      const extremeCurve: NonNullable<BaseSkillEffect["moraleCurve"]> = {
+        initialEfficiency: 1e308,
+        efficiencyPerStep: -5e307,
+        moralePerStep: 1,
+        minEfficiency: 0.25
+      };
+
+      expect(averageMoraleCurveEfficiency(extremeCurve, 2, 1e308)).toBeCloseTo(1, 15);
+    });
+
+    it("preserves bounded sequence semantics for negative and zero increments", () => {
+      expect(averageEffectEfficiency(timeEffect(false, {
+        initialEfficiency: 0.8,
+        efficiencyPerHour: -0.2,
+        maxEfficiency: 0.5
+      }), 2.5)).toBeCloseTo((0.5 + 0.4 + 0.2 * 0.5) / 2.5);
+      expect(averageEffectEfficiency(timeEffect(true, {
+        initialEfficiency: 0.4,
+        efficiencyPerHour: 0,
+        maxEfficiency: 0.3
+      }), 2.5)).toBeCloseTo(0.3);
+      expect(averageMoraleCurveEfficiency({
+        ...moraleCurve,
+        initialEfficiency: -0.2,
+        efficiencyPerStep: 0.1,
+        minEfficiency: 0
+      }, 6.5, 1)).toBeCloseTo((0 * 2 + 0 * 2 + 0 * 2 + 0.1 * 0.5) / 6.5);
+      expect(averageMoraleCurveEfficiency({
+        ...moraleCurve,
+        initialEfficiency: 0.2,
+        efficiencyPerStep: 0,
+        minEfficiency: 0.3
+      }, 2.5, 1)).toBeCloseTo(0.3);
+    });
+
+    it("handles an underflowed positive threshold width analytically", () => {
+      expect(averageMoraleCurveEfficiency({
+        ...moraleCurve,
+        moralePerStep: Number.MIN_VALUE,
+        minEfficiency: 0
+      }, 2, Number.MAX_VALUE)).toBe(0);
+    });
+
+    it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+      "rejects invalid shift duration %s instead of coercing it to one hour",
+      (duration) => {
+        expect(() => averageEffectEfficiency(timeEffect(false), duration)).toThrowError(RangeError);
+        expect(() => averageMoraleCurveEfficiency(moraleCurve, duration, 1)).toThrowError(RangeError);
+      }
+    );
+
+    it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
+      "rejects invalid morale consumption rate %s",
+      (rate) => {
+        expect(() => averageMoraleCurveEfficiency(moraleCurve, 2.5, rate)).toThrowError(RangeError);
+      }
+    );
+
+    it("rejects non-finite time rates and non-positive morale step widths", () => {
+      expect(() => averageEffectEfficiency(
+        timeEffect(false, { efficiencyPerHour: Number.NaN }),
+        2.5
+      )).toThrowError(RangeError);
+      expect(() => averageMoraleCurveEfficiency({ ...moraleCurve, moralePerStep: 0 }, 2.5, 1)).toThrowError(RangeError);
+    });
   });
 
   it("models Totter's productivity from Morale spent during the 12-hour shift", () => {

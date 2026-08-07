@@ -4,7 +4,7 @@ import cnFullBase from "../data/optimizer-benchmarks/cn-243-3shift-2026-06.json"
 import jpWikiru from "../data/optimizer-benchmarks/jp-wikiru-backup38-12h-v2.json";
 import { createDefaultState } from "../data/defaults";
 import { optimizerBenchmarkFixtures } from "../data/optimizer-benchmarks";
-import { averageEffectEfficiency, generateAssignmentPlan } from "./optimizer";
+import { averageEffectEfficiency, averageMoraleCurveEfficiency, generateAssignmentPlan } from "./optimizer";
 import { operatorAvailabilitySnapshot } from "./operatorAvailability";
 import { calculateCanonicalSha256 } from "./phase1AssumptionBundle";
 import { createIssue27CurrentObservations, createIssue27OptimizerObservation } from "./optimizerIssue27Audit";
@@ -183,7 +183,7 @@ describe("Issue #27 current-implementation audit", () => {
     });
   });
 
-  it("confirms optimizer morale/time averaging still truncates fractional hours", () => {
+  it("covers optimizer time and morale curves at fractional boundaries", () => {
     const effect = {
       facility: "factory" as const,
       efficiency: 0,
@@ -191,7 +191,16 @@ describe("Issue #27 current-implementation audit", () => {
       timeCurve: { initialEfficiency: 0, efficiencyPerHour: 0.1, maxEfficiency: 1 }
     };
 
-    expect(averageEffectEfficiency(effect, 2.5)).toBe(averageEffectEfficiency(effect, 2));
+    expect(averageEffectEfficiency(effect, 2)).toBeCloseTo((0.1 * 1 + 0.2 * 1) / 2);
+    expect(averageEffectEfficiency(effect, 2.5)).toBeCloseTo(
+      (0.1 * 1 + 0.2 * 1 + 0.3 * 0.5) / 2.5
+    );
+    expect(averageMoraleCurveEfficiency({
+      initialEfficiency: 0.3,
+      efficiencyPerStep: -0.1,
+      moralePerStep: 2,
+      minEfficiency: 0
+    }, 2.5, 1)).toBeCloseTo((0.3 * 2 + 0.2 * 0.5) / 2.5);
   });
 
   it("confirms generated plans do not expose quantity or sustainable-cycle results", () => {
