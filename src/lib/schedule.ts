@@ -23,6 +23,10 @@ function close(left: number, right: number): boolean {
   return Math.abs(left - right) <= scheduleEpsilonHours;
 }
 
+function compareStableIds(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
 function normalizeGroupIds(value: unknown, path: string, knownGroups: Set<string>, errors: string[]): string[] {
   if (!Array.isArray(value)) {
     errors.push(`${path} must be an array`);
@@ -69,6 +73,7 @@ export function validateSchedule(value: unknown): ScheduleValidationResult {
   const seenShiftIds = new Set<string>();
   const activeGroupIdsAcrossShifts = new Set<string>();
   const shifts: ScheduleShift[] = [];
+  const declarationIndexes = new Map<ScheduleShift, number>();
   rawShifts.forEach((shift, index) => {
     const path = `shifts[${index}]`;
     if (!isRecord(shift)) {
@@ -96,7 +101,9 @@ export function validateSchedule(value: unknown): ScheduleValidationResult {
       if (recoveryGroupIds.includes(groupId)) errors.push(`${path} group ${groupId} cannot be active and recovering simultaneously`);
     }
     if (validId(id) && finite(startHour) && finite(endHour)) {
-      shifts.push({ id, startHour, endHour, activeGroupIds, recoveryGroupIds });
+      const normalizedShift = { id, startHour, endHour, activeGroupIds, recoveryGroupIds };
+      shifts.push(normalizedShift);
+      declarationIndexes.set(normalizedShift, index);
     }
   });
 
@@ -104,12 +111,12 @@ export function validateSchedule(value: unknown): ScheduleValidationResult {
     if (!activeGroupIdsAcrossShifts.has(group.id)) errors.push(`group ${group.id} must be active in at least one shift`);
   }
 
-  shifts.sort((left, right) => left.startHour - right.startHour || left.endHour - right.endHour || left.id.localeCompare(right.id));
+  shifts.sort((left, right) => left.startHour - right.startHour || left.endHour - right.endHour || compareStableIds(left.id, right.id));
   if (finite(cycleHours) && cycleHours > 0 && shifts.length > 0) {
     let boundary = 0;
-    shifts.forEach((shift, index) => {
+    shifts.forEach((shift) => {
       if (!close(shift.startHour, boundary)) {
-        errors.push(`shifts[${index}] creates a ${shift.startHour > boundary ? "gap" : "overlap"} at hour ${boundary}`);
+        errors.push(`shifts[${declarationIndexes.get(shift)}] creates a ${shift.startHour > boundary ? "gap" : "overlap"} at hour ${boundary}`);
       }
       boundary = shift.endHour;
     });
@@ -117,7 +124,18 @@ export function validateSchedule(value: unknown): ScheduleValidationResult {
   }
 
   if (errors.length > 0 || !finite(cycleHours)) return { ok: false, errors };
-  return { ok: true, value: { cycleHours, groups, shifts } };
+  return {
+    ok: true,
+    value: {
+      cycleHours,
+      groups: groups.sort((left, right) => compareStableIds(left.id, right.id)),
+      shifts: shifts.map((shift) => ({
+        ...shift,
+        activeGroupIds: shift.activeGroupIds.sort(compareStableIds),
+        recoveryGroupIds: shift.recoveryGroupIds.sort(compareStableIds)
+      }))
+    }
+  };
 }
 
 export function normalizeSchedule(value: unknown): ScheduleState {

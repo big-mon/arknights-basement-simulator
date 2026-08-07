@@ -276,37 +276,73 @@ interface ValidatedInput {
 function validateInput(input: SustainableCycleInput): ValidatedInput {
   if (!input) throw new RangeError("input is required");
   const schedule = normalizeSchedule(input.schedule);
-  if (!Array.isArray(input.shifts) || input.shifts.length !== schedule.shifts.length) {
-    throw new RangeError(`shifts must contain exactly the ${schedule.shifts.length} schedule shifts`);
-  }
+  if (!Array.isArray(input.shifts)) throw new RangeError("shifts must be an array");
+  const scheduleShiftById = new Map(schedule.shifts.map((shift) => [shift.id, shift]));
+  const inputShiftById = new Map<string, { shift: CycleShift; index: number }>();
   const seenShiftIds = new Set<string>();
   input.shifts.forEach((shift, index) => {
     const shiftPath = `shifts[${index}]`;
+    if (!isNonArrayObject(shift)) throw new RangeError(`${shiftPath} must be a non-null, non-array object`);
     if (Object.prototype.hasOwnProperty.call(shift, "resourceLedger")) {
       throw new RangeError(`${shiftPath}.resourceLedger is unsupported; use resourceContributions`);
     }
-    nonEmptyId(shift.id, `shifts[${index}].id`);
+    nonEmptyId(shift.id, `${shiftPath}.id`);
     if (seenShiftIds.has(shift.id)) throw new RangeError(`duplicate shift ID: ${shift.id}`);
     seenShiftIds.add(shift.id);
-    const expected = schedule.shifts[index];
-    if (shift.id !== expected.id) throw new RangeError(`shifts[${index}].id must match schedule shift ${expected.id}`);
-    if (Math.abs(shift.startHour - expected.startHour) > scheduleEpsilonHours || Math.abs(shift.endHour - expected.endHour) > scheduleEpsilonHours) {
-      throw new RangeError(`shifts[${index}] boundaries must match schedule ${expected.startHour}..${expected.endHour}`);
+    if (!scheduleShiftById.has(shift.id)) {
+      throw new RangeError(`${shiftPath}.id references unknown schedule shift ${shift.id}`);
     }
-    if (!Array.isArray(shift.groupIds) || shift.groupIds.length !== expected.activeGroupIds.length ||
-        shift.groupIds.some((groupId, groupIndex) => groupId !== expected.activeGroupIds[groupIndex])) {
-      throw new RangeError(`shifts[${index}].groupIds must match schedule activeGroupIds`);
+    inputShiftById.set(shift.id, { shift, index });
+  });
+  for (const expected of schedule.shifts) {
+    if (!inputShiftById.has(expected.id)) throw new RangeError(`shifts is missing schedule shift ${expected.id}`);
+  }
+
+  const canonicalShiftRecords = schedule.shifts.map((expected) => ({
+    expected,
+    ...inputShiftById.get(expected.id)!
+  }));
+  const shifts = canonicalShiftRecords.map(({ shift }) => shift);
+  const knownGroupIds = new Set(schedule.groups.map((group) => group.id));
+  canonicalShiftRecords.forEach(({ expected, shift, index }) => {
+    const shiftPath = `shifts[${index}]`;
+    if (typeof shift.startHour !== "number" || !Number.isFinite(shift.startHour) ||
+        typeof shift.endHour !== "number" || !Number.isFinite(shift.endHour) ||
+        Math.abs(shift.startHour - expected.startHour) > scheduleEpsilonHours ||
+        Math.abs(shift.endHour - expected.endHour) > scheduleEpsilonHours) {
+      throw new RangeError(`${shiftPath} boundaries must match schedule shift ${expected.id} ${expected.startHour}..${expected.endHour}`);
     }
-    if (!Array.isArray(shift.assignments)) throw new RangeError(`shifts[${index}].assignments must be an array`);
+    if (!Array.isArray(shift.groupIds)) throw new RangeError(`${shiftPath}.groupIds must be an array`);
+    const expectedGroupIds = new Set(expected.activeGroupIds);
+    const seenGroupIds = new Set<string>();
+    shift.groupIds.forEach((groupId, groupIndex) => {
+      nonEmptyId(groupId, `${shiftPath}.groupIds[${groupIndex}]`);
+      if (seenGroupIds.has(groupId)) {
+        throw new RangeError(`${shiftPath}.groupIds contains duplicate group ID ${groupId}`);
+      }
+      seenGroupIds.add(groupId);
+      if (!knownGroupIds.has(groupId)) {
+        throw new RangeError(`${shiftPath}.groupIds references unknown group ${groupId}`);
+      }
+      if (!expectedGroupIds.has(groupId)) {
+        throw new RangeError(`${shiftPath}.groupIds contains inactive group ${groupId} for schedule shift ${expected.id}`);
+      }
+    });
+    for (const groupId of expected.activeGroupIds) {
+      if (!seenGroupIds.has(groupId)) {
+        throw new RangeError(`${shiftPath}.groupIds is missing active group ${groupId} for schedule shift ${expected.id}`);
+      }
+    }
+    if (!Array.isArray(shift.assignments)) throw new RangeError(`${shiftPath}.assignments must be an array`);
     shift.assignments.forEach((assignment, assignmentIndex) => {
-      nonEmptyId(assignment.facilityId, `shifts[${index}].assignments[${assignmentIndex}].facilityId`);
-      nonEmptyId(assignment.operatorId, `shifts[${index}].assignments[${assignmentIndex}].operatorId`);
+      nonEmptyId(assignment.facilityId, `${shiftPath}.assignments[${assignmentIndex}].facilityId`);
+      nonEmptyId(assignment.operatorId, `${shiftPath}.assignments[${assignmentIndex}].operatorId`);
       finiteNonNegative(
         assignment.moraleConsumptionPerHour ?? verifiedConsumptionRate,
-        `shifts[${index}].assignments[${assignmentIndex}].moraleConsumptionPerHour`
+        `${shiftPath}.assignments[${assignmentIndex}].moraleConsumptionPerHour`
       );
       if (Object.prototype.hasOwnProperty.call(assignment, "postZeroOutputModeled")) {
-        throw new RangeError(`shifts[${index}].assignments[${assignmentIndex}].postZeroOutputModeled is unsupported`);
+        throw new RangeError(`${shiftPath}.assignments[${assignmentIndex}].postZeroOutputModeled is unsupported`);
       }
     });
     if (!Array.isArray(shift.resourceContributions)) {
@@ -374,7 +410,7 @@ function validateInput(input: SustainableCycleInput): ValidatedInput {
   }
 
   const facilityById = new Map(context.facilities.map((facility) => [facility.id, facility]));
-  const ledgers = input.shifts.map((shift, shiftIndex) => {
+  const ledgers = canonicalShiftRecords.map(({ shift, index: shiftIndex }) => {
     const seenContributionIds = new Set<string>();
     const seenFacilityIds = new Set<string>();
     const validatedContributions = shift.resourceContributions.map((contribution, contributionIndex) => {
@@ -416,7 +452,7 @@ function validateInput(input: SustainableCycleInput): ValidatedInput {
   });
 
   const referencedOperators = new Set<string>();
-  input.shifts.forEach((shift) => shift.assignments.forEach((assignment) => referencedOperators.add(assignment.operatorId)));
+  shifts.forEach((shift) => shift.assignments.forEach((assignment) => referencedOperators.add(assignment.operatorId)));
   input.recoveryPlacements.forEach((placement) => {
     referencedOperators.add(placement.operatorId);
     if (placement.moraleExchange) referencedOperators.add(placement.moraleExchange.sourceOperatorId);
@@ -427,7 +463,7 @@ function validateInput(input: SustainableCycleInput): ValidatedInput {
 
   return {
     schedule,
-    shifts: input.shifts,
+    shifts,
     placements: input.recoveryPlacements,
     initialMorale,
     moraleCap,

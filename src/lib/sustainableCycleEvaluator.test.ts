@@ -160,6 +160,52 @@ function emptyCycle(overrides: Partial<SustainableCycleInput> = {}): Sustainable
   };
 }
 
+function orderInvariantInput(): SustainableCycleInput {
+  const shifts = [
+    { id: "ab", startHour: 0, endHour: 8, groupIds: ["A", "B"], goldProduced: 4, goldConsumed: 1, drones: 1 },
+    { id: "bc", startHour: 8, endHour: 16, groupIds: ["B", "C"], goldProduced: 2, goldConsumed: 3, drones: 2 },
+    { id: "ca", startHour: 16, endHour: 24, groupIds: ["C", "A"], goldProduced: 5, goldConsumed: 2, drones: 3 }
+  ].map(({ id, startHour, endHour, groupIds, goldProduced, goldConsumed, drones }) => ({
+    id,
+    startHour,
+    endHour,
+    groupIds,
+    assignments: [
+      { facilityId: "factory-1", operatorId: `${id}-factory`, moraleConsumptionPerHour: 0 },
+      { facilityId: "trading-1", operatorId: `${id}-trading`, moraleConsumptionPerHour: 0 },
+      { facilityId: "power-1", operatorId: `${id}-power`, moraleConsumptionPerHour: 0 }
+    ],
+    resourceContributions: [
+      contribution(`${id}-factory`, "factory-1", "factory-gold", createResourceLedger({ natural: { goldProduced } })),
+      contribution(`${id}-trading`, "trading-1", "trading-post", createResourceLedger({
+        natural: { goldConsumed, lmd: goldConsumed * 500 },
+        dronesUsed: drones
+      })),
+      contribution(`${id}-power`, "power-1", "power-drone", createResourceLedger({ dronesGenerated: drones }))
+    ]
+  }));
+
+  return {
+    schedule: {
+      cycleHours: 24,
+      groups: [{ id: "A" }, { id: "B" }, { id: "C" }],
+      shifts: [
+        { id: "ab", startHour: 0, endHour: 8, activeGroupIds: ["A", "B"], recoveryGroupIds: ["C"] },
+        { id: "bc", startHour: 8, endHour: 16, activeGroupIds: ["B", "C"], recoveryGroupIds: ["A"] },
+        { id: "ca", startHour: 16, endHour: 24, activeGroupIds: ["C", "A"], recoveryGroupIds: ["B"] }
+      ]
+    },
+    shifts,
+    startingDrones: 0,
+    initialMorale: Object.fromEntries(
+      shifts.flatMap((shift) => shift.assignments.map((assignment) => [assignment.operatorId, 24]))
+    ),
+    recoveryPlacements: [],
+    startingGold: 10,
+    baseContext: createMaxLevel243BenchmarkContext()
+  };
+}
+
 describe("evaluateSustainableCycle", () => {
   it("rejects stale shift resourceLedger input instead of certifying ownerless production", () => {
     const input = emptyCycle();
@@ -1026,6 +1072,71 @@ describe("evaluateSustainableCycle", () => {
 
     expect(input).toEqual(snapshot);
     expect(first).toEqual(second);
+  });
+
+  it("canonicalizes three multi-group shifts and every groupIds list independently of input order", () => {
+    const chronological = orderInvariantInput();
+    const permuted = structuredClone(chronological);
+    permuted.shifts.reverse();
+    permuted.shifts.forEach((shift) => shift.groupIds.reverse());
+
+    expect(evaluateSustainableCycle(permuted)).toEqual(evaluateSustainableCycle(chronological));
+  });
+
+  it("requires the input shifts to be the complete unique schedule shift ID set", () => {
+    const duplicate = orderInvariantInput();
+    duplicate.shifts[2] = structuredClone(duplicate.shifts[0]);
+    expect(() => evaluateSustainableCycle(duplicate)).toThrowError(new RangeError("duplicate shift ID: ab"));
+
+    const missing = orderInvariantInput();
+    missing.shifts.pop();
+    expect(() => evaluateSustainableCycle(missing)).toThrowError(new RangeError("shifts is missing schedule shift ca"));
+
+    const extra = orderInvariantInput();
+    extra.shifts.push({
+      id: "extra",
+      startHour: 24,
+      endHour: 25,
+      groupIds: ["A"],
+      assignments: [],
+      resourceContributions: []
+    });
+    expect(() => evaluateSustainableCycle(extra)).toThrowError(
+      new RangeError("shifts[3].id references unknown schedule shift extra")
+    );
+
+    const mismatchedBoundaries = orderInvariantInput();
+    mismatchedBoundaries.shifts.reverse();
+    mismatchedBoundaries.shifts[2].endHour = 9;
+    expect(() => evaluateSustainableCycle(mismatchedBoundaries)).toThrowError(
+      new RangeError("shifts[2] boundaries must match schedule shift ab 0..8")
+    );
+  });
+
+  it("requires duplicate-free exact active group sets while distinguishing unknown and inactive groups", () => {
+    const duplicate = orderInvariantInput();
+    duplicate.shifts[0].groupIds = ["A", "A"];
+    expect(() => evaluateSustainableCycle(duplicate)).toThrowError(
+      new RangeError("shifts[0].groupIds contains duplicate group ID A")
+    );
+
+    const missing = orderInvariantInput();
+    missing.shifts[0].groupIds = ["A"];
+    expect(() => evaluateSustainableCycle(missing)).toThrowError(
+      new RangeError("shifts[0].groupIds is missing active group B for schedule shift ab")
+    );
+
+    const unknown = orderInvariantInput();
+    unknown.shifts[0].groupIds = ["A", "unknown"];
+    expect(() => evaluateSustainableCycle(unknown)).toThrowError(
+      new RangeError("shifts[0].groupIds references unknown group unknown")
+    );
+
+    const inactive = orderInvariantInput();
+    inactive.shifts[0].groupIds = ["A", "C"];
+    expect(() => evaluateSustainableCycle(inactive)).toThrowError(
+      new RangeError("shifts[0].groupIds contains inactive group C for schedule shift ab")
+    );
   });
 
   it("uses a 36-hour three-shift schedule and permits non-overlapping operator reuse", () => {

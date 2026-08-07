@@ -6,7 +6,7 @@ import {
   isOperatorAvailable,
   operatorAvailabilitySnapshot
 } from "./operatorAvailability";
-import { scheduleEpsilonHours } from "./schedule";
+import { normalizeSchedule, scheduleEpsilonHours } from "./schedule";
 import type {
   AppState,
   Assignment,
@@ -154,6 +154,7 @@ function averageMoraleCurveEfficiency(
 }
 
 export function generateAssignmentPlan(state: AppState): AssignmentPlan {
+  state = { ...state, schedule: normalizeSchedule(state.schedule) };
   state = createRegionallyAvailableState(state, operatorAvailabilitySnapshot, state.region);
   const enabledFacilities = state.facilities.filter((facility) => facility.type !== "dormitory");
   let facilityPlans = buildFacilityPlans(state, enabledFacilities, []);
@@ -782,14 +783,24 @@ function statScalingStepCount(value: number, scaling: NonNullable<Assignment["fa
 
 function buildRotationWindows(activeAssignments: Assignment[], alternativeAssignments: Assignment[], schedule: AppState["schedule"]) {
   const populatedGroups = new Map<string, Assignment[]>();
-  const firstGroup = schedule.groups[0];
-  const secondGroup = schedule.groups[1];
+  const canonicalGroupIds: string[] = [];
+  const seenGroupIds = new Set<string>();
+  const appendUnseenGroupIds = (groupIds: string[]) => {
+    for (const groupId of [...groupIds].sort()) {
+      if (seenGroupIds.has(groupId)) continue;
+      seenGroupIds.add(groupId);
+      canonicalGroupIds.push(groupId);
+    }
+  };
+  for (const shift of schedule.shifts) appendUnseenGroupIds(shift.activeGroupIds);
+  appendUnseenGroupIds(schedule.groups.map((group) => group.id));
+  const [firstGroupId, secondGroupId] = canonicalGroupIds;
   const firstDuration = schedule.shifts[0]?.endHour - schedule.shifts[0]?.startHour;
   const canUseWholeBaseGroups = schedule.shifts.every((shift) =>
     shift.activeGroupIds.length === 1 && Math.abs((shift.endHour - shift.startHour) - firstDuration) <= scheduleEpsilonHours
   );
-  if (canUseWholeBaseGroups && firstGroup) populatedGroups.set(firstGroup.id, activeAssignments.filter((assignment) => assignment.fatigueHours > 0));
-  if (canUseWholeBaseGroups && secondGroup) populatedGroups.set(secondGroup.id, alternativeAssignments.filter((assignment) => assignment.fatigueHours > 0));
+  if (canUseWholeBaseGroups && firstGroupId) populatedGroups.set(firstGroupId, activeAssignments.filter((assignment) => assignment.fatigueHours > 0));
+  if (canUseWholeBaseGroups && secondGroupId) populatedGroups.set(secondGroupId, alternativeAssignments.filter((assignment) => assignment.fatigueHours > 0));
 
   const diagnostics: AssignmentPlan["diagnostics"] = [];
   const windows = schedule.shifts.map((shift, index) => {

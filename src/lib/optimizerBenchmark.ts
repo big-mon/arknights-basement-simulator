@@ -1,7 +1,7 @@
 import operatorsData from "../data/operators.json";
 import { operatorAvailabilitySnapshot } from "./operatorAvailability";
 import { calculateCanonicalSha256 } from "./phase1AssumptionBundle";
-import { validateSchedule } from "./schedule";
+import { scheduleEpsilonHours, validateSchedule } from "./schedule";
 import type { ScheduleState } from "../types";
 
 const PASS_FAIL_AUTHORITY_SHA256_BY_ID: Readonly<Record<string, string>> = {
@@ -1715,6 +1715,140 @@ export function hasResolvedExecutableCompositionAuthority(benchmark: ResourceOut
       (assignment.remoteSupport?.unresolved?.length ?? 0) === 0
     )
   );
+}
+
+export interface EffectiveBenchmarkScheduleIdentity {
+  cycleHours: number;
+  groups: Array<{ id: string }>;
+  shifts: Array<{
+    id: string;
+    durationHours: number;
+    startHour: number;
+    endHour: number;
+    activeGroupIds: string[];
+    recoveryGroupIds: string[];
+  }>;
+}
+
+export type EffectiveBenchmarkScheduleAuthority =
+  | {
+      status: "complete";
+      source: "explicit-schedule" | "rotation-witness";
+      schedule: EffectiveBenchmarkScheduleIdentity;
+    }
+  | {
+      status: "incomplete";
+      source: "rotation-witness";
+      errors: string[];
+    };
+
+const stableScheduleIdentityId = /^[A-Za-z0-9][A-Za-z0-9._:-]*$/;
+
+/**
+ * Resolves schedule identity only after a resource-output fixture has passed
+ * validateOptimizerBenchmark. Explicit schedules retain their declared identity;
+ * rotations must provide a complete worker-group witness to be derivable.
+ */
+export function effectiveBenchmarkScheduleAuthority(
+  benchmark: ResourceOutputBenchmark
+): EffectiveBenchmarkScheduleAuthority {
+  if (benchmark.schedule) {
+    return {
+      status: "complete",
+      source: "explicit-schedule",
+      schedule: {
+        cycleHours: benchmark.schedule.cycleHours,
+        groups: benchmark.schedule.groups.map((group) => ({ id: group.id })),
+        shifts: benchmark.schedule.shifts.map((shift) => ({
+          id: shift.id,
+          durationHours: shift.endHour - shift.startHour,
+          startHour: shift.startHour,
+          endHour: shift.endHour,
+          activeGroupIds: [...shift.activeGroupIds],
+          recoveryGroupIds: [...shift.recoveryGroupIds]
+        }))
+      }
+    };
+  }
+
+  const errors: string[] = [];
+  const { cycleHours, shifts, workerGroupCount } = benchmark.rotation;
+  if (!Number.isFinite(cycleHours) || cycleHours <= 0) {
+    errors.push("rotation.cycleHours must be a finite positive number");
+  }
+  if (!Number.isInteger(workerGroupCount) || (workerGroupCount ?? 0) <= 0) {
+    errors.push("rotation.workerGroupCount must be a positive integer");
+  }
+  if (shifts.length === 0) errors.push("rotation.shifts must not be empty");
+
+  const allGroupIds: string[] = [];
+  const seenGroupIds = new Set<string>();
+  const seenShiftIds = new Set<string>();
+  for (const [index, shift] of shifts.entries()) {
+    if (!stableScheduleIdentityId.test(shift.id)) {
+      errors.push(`rotation.shifts[${index}].id must be a stable ID`);
+    } else if (seenShiftIds.has(shift.id)) {
+      errors.push(`rotation.shifts[${index}].id must be unique`);
+    }
+    seenShiftIds.add(shift.id);
+    if (!Number.isFinite(shift.durationHours) || shift.durationHours <= scheduleEpsilonHours) {
+      errors.push(`rotation.shifts[${index}].durationHours must be a finite positive duration`);
+    }
+    if (!Array.isArray(shift.workerGroupIds) || shift.workerGroupIds.length === 0) {
+      errors.push(`rotation.shifts[${index}].workerGroupIds must contain group IDs`);
+      continue;
+    }
+    const seenInShift = new Set<string>();
+    for (const [groupIndex, groupId] of shift.workerGroupIds.entries()) {
+      if (!stableScheduleIdentityId.test(groupId)) {
+        errors.push(`rotation.shifts[${index}].workerGroupIds[${groupIndex}] must be a stable ID`);
+      }
+      if (seenInShift.has(groupId)) {
+        errors.push(`rotation.shifts[${index}].workerGroupIds[${groupIndex}] must be unique within the shift`);
+      }
+      seenInShift.add(groupId);
+      if (!seenGroupIds.has(groupId)) {
+        seenGroupIds.add(groupId);
+        allGroupIds.push(groupId);
+      }
+    }
+  }
+  if (workerGroupCount !== allGroupIds.length) {
+    errors.push(
+      `rotation.workerGroupCount must equal ${allGroupIds.length} distinct worker groups in rotation.shifts`
+    );
+  }
+
+  let boundary = 0;
+  const scheduleShifts = shifts.map((shift) => {
+    const startHour = boundary;
+    boundary += shift.durationHours;
+    const activeGroupIds = [...(shift.workerGroupIds ?? [])];
+    return {
+      id: shift.id,
+      durationHours: shift.durationHours,
+      startHour,
+      endHour: boundary,
+      activeGroupIds,
+      recoveryGroupIds: allGroupIds.filter((groupId) => !activeGroupIds.includes(groupId))
+    };
+  });
+  if (!Number.isFinite(boundary) || Math.abs(boundary - cycleHours) > scheduleEpsilonHours) {
+    errors.push("rotation shift durations must cover cycleHours exactly");
+  } else if (scheduleShifts.length > 0) {
+    scheduleShifts[scheduleShifts.length - 1].endHour = cycleHours;
+  }
+
+  if (errors.length > 0) return { status: "incomplete", source: "rotation-witness", errors };
+  return {
+    status: "complete",
+    source: "rotation-witness",
+    schedule: {
+      cycleHours,
+      groups: allGroupIds.map((id) => ({ id })),
+      shifts: scheduleShifts
+    }
+  };
 }
 
 export function isPassFailEligible(benchmark: unknown): boolean {

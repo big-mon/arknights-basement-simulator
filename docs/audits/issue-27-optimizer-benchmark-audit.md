@@ -18,7 +18,7 @@
 - callerがroster metadataを別途宣言するAPIはない。`generateAssignmentPlan`、metadata region、runtime availability commit、roster metadataは同じstate/snapshot境界から得る。
 - availability snapshotに存在して軽量operator catalogに未収録のIDも、選択されたownershipとしてstateに保持する。optimizerはoperator recordのないIDを候補にしないが、metadataが実stateのownershipを隠さないようにする。
 - JP/CN all-unlocked、Glasgow explicit、accepted Wikiru explicitを維持する。
-- schedule fixtureを監査するときは、そのfixtureのstable group ID、ordered shift ID、明示境界、active/recovery group IDだけを`AppState.schedule`へ渡し、planが実際に返したschedule/assignmentを観測する。fixture expected quantityやexpected assignmentは観測へコピーしない。
+- schedule fixtureを監査するときは、そのfixtureのstable group ID、ordered shift ID、明示境界、active/recovery group IDだけを`AppState.schedule`へ渡し、planが実際に返したschedule/assignmentを観測する。audit adapterとrunnerは同じeffective schedule authorityを使う。明示scheduleはそのままauthorityとし、accepted Wikiruはcanonical rotation witnessのexact worker-group count、stable group evidence、duplicate-free worker groups、全cycleを覆うusable durationが揃う場合に限り、duration累積境界とactive groupのexact complementとなるrecovery groupを決定的に導出する。fixture expected quantityやexpected assignmentは観測へコピーしない。
 - `generateAssignmentPlan`はactual resource quantitiesを返さないため、observationの`resources`はmissingのままにする。
 
 GLOBAL base mechanics observationは、checked-in fixture constantsを消費する`simulateFacilityProduction`、`simulateTradingPostDrones24h`、`evaluateSustainableCycle`のrepository内経路を診断する。これはchecked-in repository constantsの再現であり、独立した外部game truthの検証ではない。
@@ -31,9 +31,22 @@ GLOBAL base mechanics observationは、checked-in fixture constantsを消費す�
 | `jp-glasgow-trading-125` | legacy / `disputed` | non-gating | JP Glasgow explicit。sourceの1x24h scheduleをplanへ伝播する。互換代替枠はlabel-onlyで、quantitiesはmissing |
 | `cn-243-3shift-2026-06` | legacy / `disputed` | non-gating | CN all-unlocked。24h・3x8h scheduleをplanへ伝播する。57 source IDsのうち55はcomparable、2はsource-only。12h source commentとの衝突とworkshop/training解釈はdiagnosticのまま |
 | `base-mechanics-2026-07` | legacy / `corroborated` | non-gating | checked-in formula valuesのrepository内diagnostic。独立外部検証ではない |
-| `jp-wikiru-backup38-12h-v2` | `phase1-pass-fail-v1` / `corroborated` | gating | canonical SHA-256 pin、explicit roster、固定source、24h evaluation window、36h full-cycle witnessを保持する。current planはlegacy-compatible 24h・2x12h scheduleでactual quantitiesもないため、最初のfailureは36h expected対24h actual |
+| `jp-wikiru-backup38-12h-v2` | `phase1-pass-fail-v1` / `corroborated` | gating | canonical SHA-256 pin、explicit roster、固定source、24h evaluation window、36h full-cycle witnessを保持する。witnessから36h・3 group・3x12h scheduleを導出したためIssue #33の36h expected対24h actual state mismatchは解消。current planはpair-active group compositionを生成せず、最初のfailureは`groups-a-b/control-center`のexpected operator IDsに対するactual missing。actual quantitiesもない |
 
 `corroborated`を`confirmed`とは扱わない。legacy disputed fixturesとdiagnostic-only base mechanicsはaggregate pass/failをgateしない。source-only/reference conflict/disputed assignment、または未解決remote supportを含むfixtureをpass/fail eligibleへ昇格しない。
+
+Current deterministic runner output:
+
+```text
+optimizer benchmarks: FAILED (passed=0 failed=1 not-run=0 non-gating=4 invalid=0)
+NON-GATING jp-243-factory-3group-2025-11
+NON-GATING jp-glasgow-trading-125
+NON-GATING cn-243-3shift-2026-06
+NON-GATING base-mechanics-2026-07
+FAIL jp-wikiru-backup38-12h-v2 composition/search/groups-a-b/control-center: expected ["char_4179_monstr","char_2024_chyue","char_2015_dusk","char_2023_ling","char_4098_vvana"], actual missing
+```
+
+accepted Wikiruだけがcorroborated gating failureであり、4 legacy fixtureはnon-gatingのままである。
 
 ## PR40 source-evidence authority
 
@@ -48,7 +61,11 @@ GLOBAL base mechanics observationは、checked-in fixture constantsを消費す�
 
 共通schedule stateは`cycleHours`、stable group IDs、連続する明示境界を持つordered shifts、各shiftのactive/recovery group IDsを保持する。group数とshift数は独立であり、validatorはduplicate/unknown group、duplicate shift ID、gap、overlap、cycle外境界、未使用groupをrejectする。
 
-runnerはschedule fixtureについて、shift配列位置ではなくstable shift IDでduration、start/end boundary、active/recovery group集合を比較する。state mismatchまたは未解決composition authorityがある場合は`matchedComposition`を返さない。formatterとcross-category hierarchyはaccepted PR40のまま維持する。
+runnerは明示scheduleまたはcomplete rotation witnessから得たeffective schedule authorityについて、shift配列位置ではなくstable shift IDでduration、start/end boundary、duplicate-free active/recovery group集合を常に比較する。wrong/missing/duplicate/extra group、boundary mismatch、missing/unexpected/duplicate shiftのいずれもstate-model errorとなり、gating caseをfailさせて`matchedComposition`を返さない。formatterとcross-category hierarchyはaccepted PR40のまま維持する。
+
+accepted Wikiruのcanonical JSON自体には`fixture.schedule`を追加せず、SHA-256とsemantic pinを維持する。shared production authorityがvalidated rotation witnessからのみ、`groups-a-b` 0–12h（active A+B / recovery C）、`groups-b-c` 12–24h（active B+C / recovery A）、`groups-c-a` 24–36h（active A+C / recovery B）を導出し、audit用`AppState`とrunner gateの両方へ渡す。明示scheduleを持つlegacy fixtureは明示authorityを変更せず使い、group count、stable ID、duration coverageの証拠が不足するrotationはtyped incomplete authorityとしてdefault 24h scheduleに見せかけずfail closedとする。
+
+これによりschedule state comparisonはcycle末の36hまで通過する。次のactual first mismatchはrunnerが報告した`composition/search/groups-a-b/control-center`で、expectedの5 operator IDsに対してactualはmissingである。fixture assignmentを観測へコピーしておらず、optimizerが生成できない第3 groupを含むrotation compositionは未解決のままである。canonical expected resource outputは連続24h evaluation windowに対する値である一方、schedule witnessは36h full cycleを表す。planはどちらのactual quantity ledgerも返さないため、resource observationは引き続きmissingである。
 
 standalone sustainable-cycle evaluatorは可変shift数とcycle境界を受け取る一方、accepted PR38以降の次のauthorityを維持する。
 
@@ -62,7 +79,7 @@ standalone sustainable-cycle evaluatorは可変shift数とcycle境界を受け�
 1. actual quantityとdrone ledgerはassignment planへ未統合で、resource observationはmissingである。
 2. sustainable-cycle resultはplan/UIへ未統合である。
 3. optimizerのfractional time/morale curve問題はschedule表現とは別scopeである。
-4. scheduleを表現できても、未生成group assignmentやexternal-equivalent compositionの探索正しさは証明されない。
+4. 36h scheduleを表現できても、optimizerが未生成の第3 groupを含むgroup assignmentやexternal-equivalent compositionの探索正しさは証明されない。現在のaccepted Wikiru観測ではpair-active shift assignmentがmissingである。
 5. CN timing/source conflictsとsource-only mechanicsはnon-gating diagnosticのままである。
 
 #28、Issue/GitHub state、production search、expected valuesはこのrebaseで変更していない。

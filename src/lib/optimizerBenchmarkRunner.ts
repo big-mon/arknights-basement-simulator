@@ -1,4 +1,5 @@
 import {
+  effectiveBenchmarkScheduleAuthority,
   hasResolvedExecutableCompositionAuthority,
   isPassFailEligible,
   validateOptimizerBenchmark,
@@ -66,17 +67,29 @@ type ComparableBenchmarkShift = {
 function benchmarkCycleAndShifts(fixture: ResourceOutputBenchmark): {
   cycleHours: number;
   shifts: ComparableBenchmarkShift[];
+  scheduleAuthorityComplete: boolean;
+  scheduleAuthorityErrors: string[];
 } {
-  if (fixture.schedule) {
+  const authority = effectiveBenchmarkScheduleAuthority(fixture);
+  const fixtureShifts = fixture.schedule?.shifts ?? fixture.rotation.shifts;
+  if (authority.status === "complete") {
+    const fixtureShiftById = new Map(fixtureShifts.map((shift) => [shift.id, shift] as const));
     return {
-      cycleHours: fixture.schedule.cycleHours,
-      shifts: fixture.schedule.shifts.map((shift) => ({
-        ...shift,
-        durationHours: shift.endHour - shift.startHour
-      }))
+      cycleHours: authority.schedule.cycleHours,
+      shifts: authority.schedule.shifts.map((identity) => ({
+        ...fixtureShiftById.get(identity.id)!,
+        ...identity
+      })),
+      scheduleAuthorityComplete: true,
+      scheduleAuthorityErrors: []
     };
   }
-  return { cycleHours: fixture.rotation.cycleHours, shifts: fixture.rotation.shifts };
+  return {
+    cycleHours: fixture.rotation.cycleHours,
+    shifts: fixture.rotation.shifts,
+    scheduleAuthorityComplete: false,
+    scheduleAuthorityErrors: authority.errors
+  };
 }
 
 export type BenchmarkObservationMap = Readonly<Record<string, BenchmarkObservation | undefined>>;
@@ -146,7 +159,7 @@ function stableMismatchPathRank(path: string): number {
   if (path === "metadata/runtime-data-provenance/roster/mode") return 3;
   if (path === "metadata/runtime-data-provenance/roster/operatorIds") return 4;
   if (path === "rotation/state-model/cycleHours") return 5;
-  if (path.startsWith("rotation/state-model/shifts/")) return 6;
+  if (path.startsWith("rotation/state-model/")) return 6;
   if (isCompositionComparisonPath(path)) return 7;
   if (path.startsWith("skill-interpretation/")) return 8;
   if (path.startsWith("calculation/")) return 9;
@@ -366,6 +379,16 @@ function compareRotationAndComposition(
     actualRotation?.cycleHours,
     expectedRotation.cycleHours === actualRotation?.cycleHours
   );
+  if (!expectedRotation.scheduleAuthorityComplete && isPassFailEligible(fixture)) {
+    addComparison(
+      diagnostics,
+      "rotation/state-model/schedule-authority",
+      "state-model",
+      "complete",
+      expectedRotation.scheduleAuthorityErrors,
+      false
+    );
+  }
   for (const [shiftId, count] of [...actualShiftCounts].sort(([left], [right]) => left.localeCompare(right))) {
     if (count > 1) {
       addComparison(

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createDefaultState, createFacilitiesForLayout } from "../data/defaults";
+import { normalizeSchedule } from "./schedule";
 import { exportState, importState, loadState, saveState } from "./storage";
 
 describe("AppState benchmark region persistence", () => {
@@ -74,7 +75,7 @@ describe("AppState benchmark region persistence", () => {
       ]
     };
 
-    expect(importState(exportState(state)).schedule).toEqual(state.schedule);
+    expect(importState(exportState(state)).schedule).toEqual(normalizeSchedule(state.schedule));
   });
 
   it("falls back only malformed stored or imported schedules while preserving valid user data", () => {
