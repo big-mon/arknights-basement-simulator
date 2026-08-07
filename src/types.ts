@@ -1,4 +1,5 @@
 import type { PlanResourceEvaluation } from "./lib/planResourceTypes";
+import type { PlanSustainabilityEvaluation } from "./lib/planSustainabilityTypes";
 
 export type FacilityType = "factory" | "trading" | "power" | "control" | "dormitory" | "reception";
 
@@ -311,8 +312,31 @@ export interface Assignment {
   fatigueHours: number;
   recoveryHours: number;
   moraleExchangeApplied?: boolean;
+  moraleExchangeSourceOperatorId?: string;
   moraleConsumptionPerHour?: number;
   dormitoryRecoveryPerHour?: number;
+  recoveryProvenance?: Readonly<{
+    baseRecoveryRatePerHour: number;
+    conditionalModifiers: readonly Readonly<{
+      moraleAtMost: number;
+      additionalRatePerHour: number;
+      sourceOperatorIds: readonly string[];
+    }>[];
+    sources: readonly Readonly<{
+      operatorId: string;
+      role: "recovery-source" | "required-helper";
+      allocation:
+        | "self-no-slot"
+        | "room-shareable"
+        | "single-other-exclusive"
+        | "cross-dormitory-working"
+        | "required-helper"
+        | "exchange";
+      occupiesDormitorySlot: boolean;
+      ownedAtEvaluation: boolean;
+    }>[];
+  }>;
+  postZeroOutputModeled?: boolean;
   shiftUptime?: number;
   moraleEfficiencyCurves?: Array<{
     baselineEfficiency: number;
@@ -362,5 +386,6 @@ export interface AssignmentPlan {
   rotation: RotationWindow[];
   diagnostics: AssignmentPlanDiagnostic[];
   resources: PlanResourceEvaluation;
+  sustainability: PlanSustainabilityEvaluation;
   warnings: string[];
 }

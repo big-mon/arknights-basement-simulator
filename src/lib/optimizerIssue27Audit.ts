@@ -199,7 +199,14 @@ function createIssue27OptimizerObservationForSchedule(
     },
     ...(plan.resources.status === "complete" && plan.resources.per24Ledger
       ? { resources: benchmarkResources(plan.resources.per24Ledger) }
-      : { planResourceMissingReasons: plan.resources.missing })
+      : { planResourceMissingReasons: plan.resources.missing }),
+    planSustainability: plan.sustainability.status === "evaluated"
+      ? {
+          status: "evaluated",
+          sustainable: plan.sustainability.result.sustainable,
+          failures: plan.sustainability.result.failures
+        }
+      : { status: "incomplete", missing: plan.sustainability.missing }
   };
   return observation;
 }

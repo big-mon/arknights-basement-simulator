@@ -1257,6 +1257,50 @@ describe("runOptimizerBenchmarkBatch", () => {
     }));
   });
 
+  it("propagates evaluated sustainable-cycle failures and incomplete reasons at stable paths", () => {
+    const evaluated = runOptimizerBenchmarkBatch([resourceFixture("JP")], {
+      "runner-case": observation("JP", {
+        planSustainability: {
+          status: "evaluated",
+          sustainable: false,
+          failures: [{ category: "resource", code: "gold-prefix-underflow", message: "gold underflow", hour: 12 }]
+        }
+      })
+    });
+    const incomplete = runOptimizerBenchmarkBatch([resourceFixture("JP")], {
+      "runner-case": observation("JP", {
+        planSustainability: {
+          status: "incomplete",
+          missing: [{
+            code: "recovery-provenance-unavailable",
+            path: "rotation/day/assignments/a/recoveryProvenance",
+            message: "recovery provenance missing",
+            operatorId: "a",
+            shiftId: "day"
+          }]
+        }
+      })
+    });
+
+    expect(evaluated.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      code: "gold-prefix-underflow",
+      path: "sustainable-cycle/failures/resource/gold-prefix-underflow/shift/none/operator/none/hour/12",
+      category: "calculation",
+      severity: "error",
+      certainty: "proven"
+    }));
+    expect(incomplete.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      code: "recovery-provenance-unavailable",
+      path: "sustainable-cycle/incomplete/rotation/day/assignments/a/recoveryProvenance",
+      category: "state-model",
+      severity: "error",
+      certainty: "proven",
+      operatorId: "a"
+    }));
+    expect(evaluated.cases[0].status).toBe("non-gating");
+    expect(incomplete.cases[0].status).toBe("non-gating");
+  });
+
   it("preserves fixture order, formats deterministic minimal failures, and does not mutate inputs", () => {
     const fixtures = [gatingFixture("z-first"), gatingFixture("a-second")];
     const observations: BenchmarkObservationMap = {

@@ -3,8 +3,8 @@
 ## 監査メタデータとscope
 
 - 再監査日: 2026-08-07（Asia/Tokyo）
-- 対象: accepted PR38–42 authorityを完全な基礎とするIssue #35のactual quantity・drone ledger統合追補
-- 制約: assignment plan数量、監査adapter、machine-readable missing evidenceだけを追加し、composition search、sustainable-cycle統合、schedule authority、UI表示を拡張しない
+- 対象: accepted PR38–43 authorityを完全な基礎とするIssue #36のplan sustainability統合追補
+- 制約: 回復provenance、interval-aware dormitory allocation、machine-readable incomplete evidenceだけを追加し、composition search、fixture、game data、assignment選択・score、#35 resource totals、schedule authority、UI表示を変更しない
 
 過去監査のbranch/baseや旧出力件数はcurrent authorityとして再利用しない。検証結果はrebase後に実行したコマンドから別途報告する。
 
@@ -19,6 +19,7 @@
 - JP/CN all-unlocked、Glasgow explicit、accepted Wikiru explicitを維持する。
 - schedule fixtureを監査するときは、そのfixtureのstable group ID、ordered shift ID、明示境界、active/recovery group IDだけを`AppState.schedule`へ渡し、planが実際に返したschedule/assignmentを観測する。audit adapterとrunnerは同じeffective schedule authorityを使う。明示scheduleはそのままauthorityとし、accepted Wikiruはcanonical rotation witnessのexact worker-group count、stable group evidence、duplicate-free worker groups、全cycleを覆うusable durationが揃う場合に限り、duration累積境界とactive groupのexact complementとなるrecovery groupを決定的に導出する。fixture expected quantityやexpected assignmentは観測へコピーしない。
 - `generateAssignmentPlan`は選択済みfacility planとnormalized rotationを一度だけ`evaluatePlanResources`へ渡す。complete planだけactual `per24Ledger`をobservationへ写し、fixture `expected.output`は参照しない。未生成groupや未対応effectがあればtyped reasonを保持して`resources`はmissingのままにする。
+- `evaluatePlanSustainability`は同じselected plan、normalized schedule、strict actual resource ledgerだけをstandalone `evaluateSustainableCycle`へ変換する。fixture expected quantityを入力へ使わず、評価不能な前提はstable machine-readable reasonとしてrunnerへ渡す。
 
 GLOBAL base mechanics observationは、checked-in fixture constantsを消費する`simulateFacilityProduction`、`simulateTradingPostDrones24h`、`evaluateSustainableCycle`のrepository内経路を診断する。これはchecked-in repository constantsの再現であり、独立した外部game truthの検証ではない。
 
@@ -77,18 +78,25 @@ standalone sustainable-cycle evaluatorは可変shift数とcycle境界を受け�
 
 Issue #34のscopeでは、optimizerのtime/morale曲線平均を連続する端数時間へ対応させた。public helperの`averageEffectEfficiency`は1時間単位の区分一定値を、`averageMoraleCurveEfficiency`は消費体力閾値単位の区分一定値を、それぞれ実際の区間幅で加重平均する。cap/floor到達後も同じ連続区間モデルを保ち、不正なduration/rateは決定的に拒否する。
 
-監査回帰はexpected fixture値をコピーせず、time curveの2時間を`(0.1 * 1 + 0.2 * 1) / 2 = 0.15`、2.5時間を`(0.1 * 1 + 0.2 * 1 + 0.3 * 0.5) / 2.5 = 0.18`、morale curveの2.5時間を`(0.3 * 2 + 0.2 * 0.5) / 2.5 = 0.28`として独立に手計算する。Issue #35はこのcontinuous curve authorityを変更しない。
+監査回帰はexpected fixture値をコピーせず、time curveの2時間を`(0.1 * 1 + 0.2 * 1) / 2 = 0.15`、2.5時間を`(0.1 * 1 + 0.2 * 1 + 0.3 * 0.5) / 2.5 = 0.18`、morale curveの2.5時間を`(0.3 * 2 + 0.2 * 0.5) / 2.5 = 0.28`として独立に手計算する。Issue #36はこのcontinuous curve authorityを変更しない。
 
 ## Issue #35 actual plan resource integration
 
 complete planでは各windowのselected facility teamを`simulateFacilityProduction`でexact-once評価し、自然生産とdrone寄与を別ledgerとして集約する。power増分はcycle加重平均し、accepted fractional drone allocation・gold carryover semanticsを持つ`simulateTradingPostDrones24h`へ一度だけ渡す。cycle ledgerと24h正規化ledgerはいずれもstrict `ResourceLedger` shapeで、gold produced/consumed/net、battle-record EXP、LMD、generated/used dronesを有限な派生値として保持する。special orderやdroneを別経路で加算しない。
 
-未生成schedule group、missing facility team、unsupported factory product、未対応trading-order effect、非有限efficiency、calculator errorはtyped incomplete reasonとなり、aggregateを返さない。未対応trading effectはoperator、skill、array index、effect type/kindをstable evidence pathに含め、0として扱わない。監査adapterはplanのactual ledgerだけを観測し、fixture expected-outputを変更してもobservationは変化しない。これはquantity integrationであり、composition search、sustainable-cycle correctness、UI production表示を追加しない。
+未生成schedule group、missing facility team、unsupported factory product、未対応trading-order effect、非有限efficiency、calculator errorはtyped incomplete reasonとなり、aggregateを返さない。未対応trading effectはoperator、skill、array index、effect type/kindをstable evidence pathに含め、0として扱わない。監査adapterはplanのactual ledgerだけを観測し、fixture expected-outputを変更してもobservationは変化しない。Issue #36はこのstrict ledgerを変更せず、sustainability入力として消費する。
+
+## Issue #36 selected-plan sustainability integration
+
+`AssignmentPlan.sustainability`は必ず`evaluated`または`incomplete`を返す。adapterはcanonical scheduleの全window、各Assignmentの実morale消費、window別facility-owned自然ledger、24h drone ledgerのduration比例shareをstandalone evaluatorへ渡す。自然生産とdroneは別authorityのままで、expected copies、special-order再加算、整数丸めを行わない。
+
+最大レベル243 context（4宿舎×5枠）で、条件回復source provenance、full-morale交換source、interval-aware dormitory packing、gold prefix、cycle closureを評価する。開始純金はAppStateに在庫authorityがないため0とし、underflowを隠さない。初期morale位相はbounded successive-cycle fixed pointで求め、評価不能・未収束・資源aggregate不一致はstable typed reasonになる。3 groupsへ2-shift tupleを流用せず、未生成groupを含むJP/CN planは正直に`incomplete`を維持する。
+
+runnerは`sustainable-cycle/...` diagnosticsをplanのactual result/reasonsから構築する。five-fixture gate model、Wikiru 36h witness、CN 57 source IDs / 55 comparable IDsを変更しない。sustainability evidenceが既存composition mismatchより先に成立しないため、accepted Wikiruのfirst mismatchは`composition/search/groups-a-b/control-center`のままである。
 
 ## Remaining blockers
 
-1. sustainable-cycle resultはplan/UIへ未統合である。
-2. 36h scheduleを表現できても、optimizerが未生成の第3 groupを含むgroup assignmentやexternal-equivalent compositionの探索正しさは証明されない。現在のaccepted Wikiru観測ではpair-active shift assignmentとresource aggregateがtyped missingである。
-3. CN timing/source conflictsとsource-only mechanicsはnon-gating diagnosticのままである。
+1. 36h scheduleを表現できても、optimizerが未生成の第3 groupを含むgroup assignmentやexternal-equivalent compositionの探索正しさは証明されない。現在のaccepted Wikiru観測ではpair-active shift assignment、resource aggregate、sustainabilityがtyped missingである。
+2. CN timing/source conflictsとsource-only mechanicsはnon-gating diagnosticのままである。
 
 #28、Issue/GitHub state、production search、expected valuesはこのrebaseで変更していない。

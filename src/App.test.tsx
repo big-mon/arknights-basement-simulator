@@ -577,6 +577,22 @@ describe("App", () => {
         facilityPlans: [],
         rotation: []
       }),
+      sustainability: {
+        status: "incomplete",
+        assumptions: {
+          startingGold: 0,
+          moraleCap: 24,
+          baseContext: "max-level-243-verified-4x5-dormitories",
+          droneDistributionPolicy: "duration-proportional-from-strict-slot-batch-plan-ledger",
+          recoveryPackingPolicy: "deterministic-interval-aware-first-fit-4x5",
+          exchangeEventBoundary: "recovery-placement-start",
+          fixedPointMethod: "successive-cycle-final-morale",
+          fixedPointTolerance: 1e-9,
+          fixedPointIterationLimit: 256,
+          resourceAggregateEpsilon: 1e-9
+        },
+        missing: []
+      },
       warnings: []
     };
 
