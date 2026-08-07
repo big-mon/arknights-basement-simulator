@@ -20,7 +20,6 @@ function validatePassFailAuthorityPin(benchmark: Record<string, unknown>, errors
     }
   }
 }
-
 export type BenchmarkRegion = "JP" | "CN" | "GLOBAL";
 export type BenchmarkConfidence = "confirmed" | "corroborated" | "disputed";
 
@@ -106,6 +105,36 @@ export interface BenchmarkEquivalentComposition {
   }>;
 }
 
+export interface BenchmarkRemoteSupport {
+  operatorIds?: string[];
+  unresolved?: Array<{ sourceName: string; reason: string }>;
+  notes: string[];
+}
+
+export interface BenchmarkAssignment {
+  label?: string;
+  operatorIds?: string[];
+  remoteSupport?: BenchmarkRemoteSupport;
+  sourceOnlyOperatorIds?: string[];
+}
+
+export interface BenchmarkCompositionEvidence {
+  status: "comparable" | "disputed";
+  sourceOnlyOperators: Array<{ sourceName: string; operatorId: string; reason: string }>;
+  conflicts: Array<{
+    path: string;
+    sourceValue: string;
+    benchmarkValue: string;
+    notes: string;
+  }>;
+  disputedAssignments: Array<{
+    shiftId: string;
+    facilityIds: string[];
+    sourceOperators: Array<{ sourceName: string; operatorId: string }>;
+    reason: string;
+  }>;
+}
+
 export type BenchmarkTolerance =
   | { type: "absolute"; value: number }
   | { type: "relative"; value: number; zeroExpectedAbsolute?: number };
@@ -169,7 +198,7 @@ export interface ResourceOutputBenchmark extends BenchmarkBase {
       durationHours: number;
       workerGroupIds?: string[];
       factoryProducts?: { gold: number; battleRecord: number };
-      assignments: Record<string, { label?: string; operatorIds?: string[] }>;
+      assignments: Record<string, BenchmarkAssignment>;
       operatorStates?: Array<{
         operatorId: string;
         activity: "work" | "recovery" | "idle" | "exchange-support";
@@ -195,6 +224,7 @@ export interface ResourceOutputBenchmark extends BenchmarkBase {
     tolerance: BenchmarkTolerance;
     equivalentCompositions?: BenchmarkEquivalentComposition[];
   };
+  compositionEvidence?: BenchmarkCompositionEvidence;
 }
 
 export type OptimizerBenchmark = FormulaBenchmark | ResourceOutputBenchmark;
@@ -1215,6 +1245,78 @@ function validateResourceOutput(output: unknown, path: string, errors: string[])
   }
 }
 
+function facilitySlotCount(facilityId: string): number | undefined {
+  if (facilityId.startsWith("trading-")) return 3;
+  if (facilityId.startsWith("factory-")) return 3;
+  if (facilityId.startsWith("power-")) return 1;
+  if (facilityId.startsWith("control-")) return 5;
+  if (facilityId.startsWith("dormitory-")) return 5;
+  if (facilityId.startsWith("reception-")) return 2;
+  if (facilityId.startsWith("office-")) return 1;
+  if (facilityId.startsWith("workshop-")) return 1;
+  if (facilityId.startsWith("training-")) return 2;
+  return undefined;
+}
+
+function validateStringArray(value: unknown, path: string, errors: string[]): value is string[] {
+  if (!Array.isArray(value) || value.length === 0 || !value.every(isNonEmptyString)) {
+    errors.push(`${path} must contain non-empty strings`);
+    return false;
+  }
+  if (new Set(value).size !== value.length) errors.push(`${path} must not contain duplicates`);
+  return true;
+}
+
+function validateCompositionEvidence(value: unknown, shiftIds: Set<string>, errors: string[]): Set<string> {
+  const declaredSourceOnlyIds = new Set<string>();
+  if (value === undefined) return declaredSourceOnlyIds;
+  if (!isRecord(value)) {
+    errors.push("compositionEvidence must be an object when present");
+    return declaredSourceOnlyIds;
+  }
+  if (!["comparable", "disputed"].includes(value.status as string)) {
+    errors.push("compositionEvidence.status must be comparable or disputed");
+  }
+  if (!Array.isArray(value.sourceOnlyOperators)) {
+    errors.push("compositionEvidence.sourceOnlyOperators must be an array");
+  } else {
+    value.sourceOnlyOperators.forEach((item, index) => {
+      const path = `compositionEvidence.sourceOnlyOperators[${index}]`;
+      if (!isRecord(item) || !isNonEmptyString(item.sourceName) || !isNonEmptyString(item.operatorId) || !isNonEmptyString(item.reason)) {
+        errors.push(`${path} is malformed`);
+        return;
+      }
+      if (declaredSourceOnlyIds.has(item.operatorId)) errors.push(`${path}.operatorId must be unique`);
+      declaredSourceOnlyIds.add(item.operatorId);
+    });
+  }
+  if (!Array.isArray(value.conflicts)) {
+    errors.push("compositionEvidence.conflicts must be an array");
+  } else {
+    value.conflicts.forEach((item, index) => {
+      if (!isRecord(item) || !isNonEmptyString(item.path) || !isNonEmptyString(item.sourceValue) ||
+        !isNonEmptyString(item.benchmarkValue) || !isNonEmptyString(item.notes)) {
+        errors.push(`compositionEvidence.conflicts[${index}] is malformed`);
+      }
+    });
+  }
+  if (!Array.isArray(value.disputedAssignments)) {
+    errors.push("compositionEvidence.disputedAssignments must be an array");
+  } else {
+    value.disputedAssignments.forEach((item, index) => {
+      const path = `compositionEvidence.disputedAssignments[${index}]`;
+      if (!isRecord(item) || !isNonEmptyString(item.shiftId) || !shiftIds.has(item.shiftId) ||
+        !Array.isArray(item.facilityIds) || item.facilityIds.length === 0 || !item.facilityIds.every(isNonEmptyString) ||
+        !Array.isArray(item.sourceOperators) || item.sourceOperators.length === 0 ||
+        !item.sourceOperators.every((operator) => isRecord(operator) && isNonEmptyString(operator.sourceName) && isNonEmptyString(operator.operatorId)) ||
+        !isNonEmptyString(item.reason)) {
+        errors.push(`${path} is malformed`);
+      }
+    });
+  }
+  return declaredSourceOnlyIds;
+}
+
 function validateFormulaBenchmark(benchmark: Record<string, unknown>, errors: string[]): void {
   if (!Array.isArray(benchmark.formulas) || benchmark.formulas.length === 0) {
     errors.push("formulas must contain at least one formula");
@@ -1336,10 +1438,15 @@ function validateResourceBenchmark(benchmark: Record<string, unknown>, errors: s
           }
           const hasLabel = isNonEmptyString(assignment.label);
           const hasIds = Array.isArray(assignment.operatorIds) && assignment.operatorIds.length > 0 && assignment.operatorIds.every(isNonEmptyString);
-          if (!hasLabel && !hasIds) errors.push(`rotation.shifts[${index}].assignments.${facilityId} needs a label or operatorIds`);
+          const hasSourceOnlyIds = Array.isArray(assignment.sourceOnlyOperatorIds) && assignment.sourceOnlyOperatorIds.length > 0 && assignment.sourceOnlyOperatorIds.every(isNonEmptyString);
+          if (!hasLabel && !hasIds && !hasSourceOnlyIds) errors.push(`rotation.shifts[${index}].assignments.${facilityId} needs a label, operatorIds, or sourceOnlyOperatorIds`);
           if (assignment.operatorIds !== undefined && !hasIds) {
             errors.push(`rotation.shifts[${index}].assignments.${facilityId}.operatorIds is malformed`);
           } else if (hasIds) {
+            const slots = facilitySlotCount(facilityId);
+            if (slots !== undefined && (assignment.operatorIds as string[]).length > slots) {
+              errors.push(`rotation.shifts[${index}].assignments.${facilityId}.operatorIds exceeds ${facilityId} slot count ${slots}`);
+            }
             for (const [operatorIndex, operatorId] of (assignment.operatorIds as string[]).entries()) {
               if (assignedOperatorIds.has(operatorId)) errors.push(`rotation.shifts[${index}] assigns ${operatorId} more than once`);
               assignedOperatorIds.add(operatorId);
@@ -1352,6 +1459,31 @@ function validateResourceBenchmark(benchmark: Record<string, unknown>, errors: s
               );
             }
           }
+          if (assignment.sourceOnlyOperatorIds !== undefined && !hasSourceOnlyIds) {
+            errors.push(`rotation.shifts[${index}].assignments.${facilityId}.sourceOnlyOperatorIds is malformed`);
+          }
+          if (assignment.remoteSupport !== undefined) {
+            const supportPath = `rotation.shifts[${index}].assignments.${facilityId}.remoteSupport`;
+            if (!isRecord(assignment.remoteSupport)) {
+              errors.push(`${supportPath} must be an object`);
+            } else {
+              if (assignment.remoteSupport.operatorIds !== undefined) {
+                validateStringArray(assignment.remoteSupport.operatorIds, `${supportPath}.operatorIds`, errors);
+              }
+              if (assignment.remoteSupport.unresolved !== undefined &&
+                (!Array.isArray(assignment.remoteSupport.unresolved) || assignment.remoteSupport.unresolved.length === 0 ||
+                  !assignment.remoteSupport.unresolved.every((item) => isRecord(item) && isNonEmptyString(item.sourceName) && isNonEmptyString(item.reason)))) {
+                errors.push(`${supportPath}.unresolved is malformed`);
+              }
+              if (!Array.isArray(assignment.remoteSupport.notes) || assignment.remoteSupport.notes.length === 0 ||
+                !assignment.remoteSupport.notes.every(isNonEmptyString)) {
+                errors.push(`${supportPath}.notes must contain at least one non-empty string`);
+              }
+              if (assignment.remoteSupport.operatorIds === undefined && assignment.remoteSupport.unresolved === undefined) {
+                errors.push(`${supportPath} must identify an operator or unresolved source name`);
+              }
+            }
+          }
         }
       }
       if (shift.referenceOutputPer24Hours !== undefined) {
@@ -1360,6 +1492,37 @@ function validateResourceBenchmark(benchmark: Record<string, unknown>, errors: s
     });
     if (typeof cycleHours === "number" && Number.isFinite(cycleHours) && Math.abs(durationTotal - cycleHours) > 1e-9) {
       errors.push("rotation shift durations must sum to cycleHours");
+    }
+
+    const declaredSourceOnlyIds = validateCompositionEvidence(benchmark.compositionEvidence, shiftIds, errors);
+    for (const [shiftIndex, shift] of benchmark.rotation.shifts.entries()) {
+      if (!isRecord(shift) || !isRecord(shift.assignments)) continue;
+      for (const [facilityId, assignment] of Object.entries(shift.assignments)) {
+        if (!isRecord(assignment)) continue;
+        const remoteIds = isRecord(assignment.remoteSupport) && Array.isArray(assignment.remoteSupport.operatorIds)
+          ? assignment.remoteSupport.operatorIds : [];
+        for (const [operatorIndex, operatorId] of remoteIds.entries()) {
+          validateOperatorReference(
+            operatorId,
+            `rotation.shifts[${shiftIndex}].assignments.${facilityId}.remoteSupport.operatorIds[${operatorIndex}]`,
+            benchmark.region,
+            explicitRosterIds,
+            errors
+          );
+        }
+        for (const operatorId of Array.isArray(assignment.sourceOnlyOperatorIds) ? assignment.sourceOnlyOperatorIds : []) {
+          if (!declaredSourceOnlyIds.has(operatorId)) {
+            errors.push(`${operatorId} must be declared in compositionEvidence.sourceOnlyOperators`);
+          }
+          if (catalogOperatorIds.has(operatorId)) errors.push(`${operatorId} is runtime-catalogued and cannot be source-only`);
+          if (Array.isArray(assignment.operatorIds) && assignment.operatorIds.includes(operatorId)) {
+            errors.push(`${operatorId} cannot be both a comparable occupant and source-only`);
+          }
+        }
+      }
+    }
+    for (const operatorId of declaredSourceOnlyIds) {
+      if (catalogOperatorIds.has(operatorId)) errors.push(`${operatorId} is runtime-catalogued and cannot be source-only`);
     }
   }
 
@@ -1496,15 +1659,37 @@ export function validateOptimizerBenchmark(input: unknown): BenchmarkValidationR
     : { ok: false, errors };
 }
 
+export function hasResolvedExecutableCompositionAuthority(benchmark: ResourceOutputBenchmark): boolean {
+  const evidence = benchmark.compositionEvidence;
+  if (evidence !== undefined && (
+    evidence.status !== "comparable" ||
+    evidence.sourceOnlyOperators.length > 0 ||
+    evidence.conflicts.length > 0 ||
+    evidence.disputedAssignments.length > 0
+  )) {
+    return false;
+  }
+
+  return benchmark.rotation.shifts.every((shift) =>
+    Object.values(shift.assignments).every((assignment) =>
+      (assignment.sourceOnlyOperatorIds?.length ?? 0) === 0 &&
+      (assignment.remoteSupport?.unresolved?.length ?? 0) === 0
+    )
+  );
+}
+
 export function isPassFailEligible(benchmark: unknown): boolean {
+  const validation = validateOptimizerBenchmark(benchmark);
+  if (!validation.ok) return false;
+
+  const validatedBenchmark = validation.value;
   if (
-    !isRecord(benchmark) ||
-    benchmark.kind !== "resource-output" ||
-    benchmark.contractVersion !== "phase1-pass-fail-v1" ||
-    benchmark.confidence === "disputed"
+    validatedBenchmark.kind !== "resource-output" ||
+    validatedBenchmark.contractVersion !== "phase1-pass-fail-v1" ||
+    validatedBenchmark.confidence === "disputed"
   ) {
     return false;
   }
 
-  return validateOptimizerBenchmark(benchmark).ok;
+  return hasResolvedExecutableCompositionAuthority(validatedBenchmark);
 }

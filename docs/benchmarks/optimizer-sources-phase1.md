@@ -95,6 +95,28 @@
   - 理性換算は本プロジェクトの合格基準に使用しない。
   - 後半収束値が定常楽観値を上回っており、ソルバー側の瞬時モデルまたは換算の再確認が必要。
   - 資源別値は各シフトを8時間ずつ使用する定常評価の算術平均であり、ゲーム内実測値ではない。
+  - 固定config自身の各`_comment`は「队列1/2/3 12小时」と記載する一方、このfixtureは3×8時間で24時間平均を作っている。この時間根拠の衝突は解消せず、CN full-base fixtureを`disputed`・非gatingにする。
+
+### Issue #32 編成証拠の固定
+
+JPは保存済みHTML `/tmp/wikiru-base-shift.html` の見出し`content_1_11`〜`content_1_14`を再確認した。製造所3枠と遠隔条件を分離した対応は次のとおり。
+
+| 組 | 製造所occupant IDs | 遠隔/support |
+|---|---|---|
+| 知覚情報 | `char_446_aroma`, `char_243_waaifu`, `char_391_rosmon` | ウィスパーレイン。checked-in 324人catalogにIDがなく、未解決のsource nameとして保持 |
+| 金属工芸 | `char_4106_bryota`, `char_237_gravel`, `char_1039_thorn2` | `char_4098_vvana`（制御中枢） |
+| レッドパイン | `char_431_ashlok`, `char_496_wildmn`, `char_430_fartth` | `char_420_flamtl`（制御中枢） |
+
+CNは固定HEAD `d374e1513a90adb45cb37259047e5db02db8ac1d` の
+`data/non-standard-configs/config-02-243-2change-3shift.json`を転写し、同commitの
+`data/operator_pool.json`で57 source namesすべてをIDへ対応させた。57/57 IDはchecked-in/pinned CN availability snapshotに存在する。そのうち55 IDはchecked-in軽量runtime catalog/base-skill dataにも収録されたcomparable IDである。次の2 IDはCN availabilityには存在するがruntime catalog/base-skill dataに未収録のsource-only IDであり、runnable composition matchingから除外する。
+
+| source name | operator ID | runtime境界 |
+|---|---|---|
+| 凯尔希·思衡托 | `char_1052_kalts2` | CN availabilityに存在、runtime catalog/base-skill dataに不在 |
+| 逻各斯 | `char_4133_logos` | CN availabilityに存在、runtime catalog/base-skill dataに不在 |
+
+`workshop`と`training`は各shiftで同じ煌（`char_017_huang`）・逻各斯（`char_4133_logos`）を再利用する。選択肢なのか同時配置なのか固定configだけでは決められないため、施設occupantへ平坦化せず`disputedAssignments`に保存した。その他の制御中枢、製造、貿易、発電、事務、応接、宿舎はfixtureの各facility/shiftへID付きで転写した。
 
 ### S5: 別のCN基地排班モデル
 

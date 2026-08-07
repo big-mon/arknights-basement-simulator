@@ -18,7 +18,7 @@
       "accessedAt": "2026-08-04",
       "language": "ja",
       "role": "composition",
-      "notes": "Backup 38. The page presents one operational plan, not a uniquely optimal solution."
+      "notes": "Backup 38. Captured page sections content_1_11 through content_1_14 identify the Perception Information, Metalworking, and Pinus headings. The page presents one operational plan, not a uniquely optimal solution."
     },
     {
       "url": "https://arknights.wikiru.jp/?SandBox/%E5%9F%BA%E5%9C%B0%E3%82%B9%E3%82%AD%E3%83%AB%E7%B5%84%E3%81%BF%E5%90%88%E3%82%8F%E3%81%9B%E4%BE%8B",
@@ -54,25 +54,66 @@
             "label": "FEater + Conviction + Minimalist (+110%)",
             "operatorIds": ["char_241_panda", "char_159_peacok", "char_4054_malist"]
           },
-          "factory-battle-record-2": { "label": "Flametail-linked Pinus Sylvestris team (+115.5%)" },
+          "factory-battle-record-2": {
+            "label": "Flametail-linked Pinus Sylvestris team (+115.5%)",
+            "operatorIds": ["char_431_ashlok", "char_496_wildmn", "char_430_fartth"],
+            "remoteSupport": {
+              "operatorIds": ["char_420_flamtl"],
+              "notes": ["Flametail is a remote/control-center dependency, not a fourth factory occupant."]
+            }
+          },
           "factory-gold-1": {
             "label": "Purestream + Weedy + Eunectes (+140%)",
             "operatorIds": ["char_385_finlpp", "char_400_weedy", "char_416_zumama"]
           },
-          "factory-gold-2": { "label": "Perception Information team (+125.42%)" }
+          "factory-gold-2": {
+            "label": "Perception Information team (+125.42%)",
+            "operatorIds": ["char_446_aroma", "char_243_waaifu", "char_391_rosmon"],
+            "remoteSupport": {
+              "unresolved": [{
+                "sourceName": "ウィスパーレイン",
+                "reason": "The captured JP heading identifies Whisperain as remote support, but the checked-in 324-operator catalog has no matching operator ID."
+              }],
+              "notes": ["Whisperain is support provenance, not a fourth factory occupant."]
+            }
+          }
         }
       },
       {
         "id": "groups-b-c",
         "durationHours": 12,
         "assignments": {
-          "factory-battle-record-1": { "label": "Flametail-linked Pinus Sylvestris team (+115.5%)" },
+          "factory-battle-record-1": {
+            "label": "Flametail-linked Pinus Sylvestris team (+115.5%)",
+            "operatorIds": ["char_431_ashlok", "char_496_wildmn", "char_430_fartth"],
+            "remoteSupport": {
+              "operatorIds": ["char_420_flamtl"],
+              "notes": ["Flametail is a remote/control-center dependency, not a fourth factory occupant."]
+            }
+          },
           "factory-battle-record-2": {
             "label": "Pallas + Scene + Vermeil (+104.75%)",
             "operatorIds": ["char_485_pallas", "char_336_folivo", "char_190_clour"]
           },
-          "factory-gold-1": { "label": "Perception Information team (+125.42%)" },
-          "factory-gold-2": { "label": "Metalworking team (+123%)" }
+          "factory-gold-1": {
+            "label": "Perception Information team (+125.42%)",
+            "operatorIds": ["char_446_aroma", "char_243_waaifu", "char_391_rosmon"],
+            "remoteSupport": {
+              "unresolved": [{
+                "sourceName": "ウィスパーレイン",
+                "reason": "The captured JP heading identifies Whisperain as remote support, but the checked-in 324-operator catalog has no matching operator ID."
+              }],
+              "notes": ["Whisperain is support provenance, not a fourth factory occupant."]
+            }
+          },
+          "factory-gold-2": {
+            "label": "Metalworking team (+123%)",
+            "operatorIds": ["char_4106_bryota", "char_237_gravel", "char_1039_thorn2"],
+            "remoteSupport": {
+              "operatorIds": ["char_4098_vvana"],
+              "notes": ["Viviana is a remote/control-center dependency, not a fourth factory occupant."]
+            }
+          }
         }
       },
       {
@@ -87,7 +128,14 @@
             "label": "FEater + Conviction + Minimalist (+110%)",
             "operatorIds": ["char_241_panda", "char_159_peacok", "char_4054_malist"]
           },
-          "factory-gold-1": { "label": "Metalworking team (+123%)" },
+          "factory-gold-1": {
+            "label": "Metalworking team (+123%)",
+            "operatorIds": ["char_4106_bryota", "char_237_gravel", "char_1039_thorn2"],
+            "remoteSupport": {
+              "operatorIds": ["char_4098_vvana"],
+              "notes": ["Viviana is a remote/control-center dependency, not a fourth factory occupant."]
+            }
+          },
           "factory-gold-2": {
             "label": "Purestream + Weedy + Eunectes (+140%)",
             "operatorIds": ["char_385_finlpp", "char_400_weedy", "char_416_zumama"]

@@ -68,19 +68,28 @@ describe("Issue #27 current-implementation audit", () => {
     });
   });
 
-  it("keeps unavailable quantities missing and label-only compositions unproved", () => {
+  it("keeps unavailable quantities missing and CN source conflicts diagnostic", () => {
     expect(observations["jp-243-factory-3group-2025-11"]?.resources).toBeUndefined();
     expect(observations["cn-243-3shift-2026-06"]?.resources).toBeUndefined();
     expect(observations["jp-wikiru-backup38-12h-v2"]?.resources).toBeUndefined();
     expect(result.cases.find((item) => item.id === "cn-243-3shift-2026-06")?.diagnostics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          path: "composition/search/shift-1/full-base",
+          path: "reference/source-only/shift-1/office-1/char_1052_kalts2",
           severity: "info",
-          message: "reference composition is label-only and is not independently identified"
+          message: "source-only operator is excluded from runnable composition matching"
+        }),
+        expect.objectContaining({
+          path: "reference/conflict/rotation.shifts.durationHours",
+          severity: "info",
+          expected: "12 hours per queue",
+          actual: "8 hours per shift"
         }),
         expect.objectContaining({ path: "calculation/resource-values/lmd", actual: undefined })
       ])
+    );
+    expect(result.cases.find((item) => item.id === "cn-243-3shift-2026-06")?.diagnostics).not.toContainEqual(
+      expect.objectContaining({ message: "reference composition is label-only and is not independently identified" })
     );
   });
 

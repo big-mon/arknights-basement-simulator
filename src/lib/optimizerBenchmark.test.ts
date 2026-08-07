@@ -300,6 +300,23 @@ describe("validateOptimizerBenchmark", () => {
     }));
   });
 
+  it("reports provenance mismatch without suppressing unavailable comparable operator diagnostics", () => {
+    const benchmark = validResourceBenchmark();
+    benchmark.runtimeDataProvenance.operatorAvailabilitySourceCommit =
+      "81c6d458a1778a9ba878a95c4e6fe48fb4254041";
+    benchmark.roster.operatorIds.push("char_4228_closur");
+    benchmark.rotation.shifts[0].assignments["trading-1"].operatorIds = ["char_4228_closur"];
+
+    expect(validateOptimizerBenchmark(benchmark)).toEqual(expect.objectContaining({
+      ok: false,
+      errors: expect.arrayContaining([
+        "runtimeDataProvenance.operatorAvailabilitySourceCommit must equal JP operator availability boundary 7faf192d15eeac8b236c561a1938679f4642279e",
+        "roster.operatorIds[1] contains operator ID char_4228_closur unavailable in JP",
+        "rotation.shifts[0].assignments.trading-1.operatorIds[0] contains operator ID char_4228_closur unavailable in JP"
+      ])
+    }));
+  });
+
   it("requires runtime operator availability provenance on resource-output benchmarks", () => {
     const benchmark = validResourceBenchmark() as Record<string, unknown>;
     delete benchmark.runtimeDataProvenance;
@@ -519,6 +536,129 @@ describe("validateOptimizerBenchmark", () => {
       }]
     });
     expect(validateOptimizerBenchmark(benchmark).ok).toBe(false);
+  });
+  it("accepts separately identified occupants, remote support, source-only IDs, and disputed evidence", () => {
+    const benchmark = validResourceBenchmark() as Record<string, any>;
+    benchmark.confidence = "disputed";
+    benchmark.roster.operatorIds.push("char_225_haak");
+    benchmark.rotation.shifts[0].assignments["trading-1"] = {
+      operatorIds: ["char_009_12fce"],
+      remoteSupport: {
+        operatorIds: ["char_225_haak"],
+        unresolved: [{ sourceName: "Uncatalogued Supporter", reason: "Absent from the checked-in catalog." }],
+        notes: ["Remote dependencies are not facility occupants."]
+      },
+      sourceOnlyOperatorIds: ["char_source_only"]
+    };
+    benchmark.compositionEvidence = {
+      status: "disputed",
+      sourceOnlyOperators: [{
+        sourceName: "Source Only",
+        operatorId: "char_source_only",
+        reason: "The fixed source identifies this ID, but the runtime catalog does not contain it."
+      }],
+      conflicts: [{
+        path: "rotation.shifts.durationHours",
+        sourceValue: "12 hours",
+        benchmarkValue: "8 hours",
+        notes: "The two references conflict."
+      }],
+      disputedAssignments: [{
+        shiftId: "shift-1",
+        facilityIds: ["workshop-1", "training-1"],
+        sourceOperators: [{ sourceName: "Option", operatorId: "char_009_12fce" }],
+        reason: "The repeated list may describe options rather than simultaneous occupancy."
+      }]
+    };
+
+    expect(validateOptimizerBenchmark(benchmark).ok).toBe(true);
+  });
+
+  it("validates comparable assignment IDs against regional availability and facility slots", () => {
+    const unavailable = validResourceBenchmark() as Record<string, any>;
+    unavailable.runtimeDataProvenance.operatorAvailabilitySourceCommit = "7faf192d15eeac8b236c561a1938679f4642279e";
+    unavailable.rotation.shifts[0].assignments["trading-1"].operatorIds = ["char_4228_closur"];
+    expect(validateOptimizerBenchmark(unavailable)).toEqual(expect.objectContaining({
+      ok: false,
+      errors: expect.arrayContaining([
+        "rotation.shifts[0].assignments.trading-1.operatorIds[0] contains operator ID char_4228_closur unavailable in JP",
+        "rotation.shifts[0].assignments.trading-1.operatorIds[0] contains operator ID char_4228_closur outside the explicit roster"
+      ])
+    }));
+
+    const tooMany = validResourceBenchmark() as Record<string, any>;
+    tooMany.rotation.shifts[0].assignments["trading-1"].operatorIds = [
+      "char_009_12fce", "char_225_haak", "char_4178_alanna", "char_446_aroma"
+    ];
+    expect(validateOptimizerBenchmark(tooMany)).toEqual(expect.objectContaining({
+      ok: false,
+      errors: expect.arrayContaining([
+        expect.stringContaining("exceeds trading-1 slot count 3")
+      ])
+    }));
+  });
+
+  it("requires identified remote support to belong to an explicit roster at the exact reference path", () => {
+    const benchmark = validResourceBenchmark() as Record<string, any>;
+    benchmark.rotation.shifts[0].assignments["trading-1"].remoteSupport = {
+      operatorIds: ["char_225_haak"],
+      notes: ["Remote support is outside the facility slot count."]
+    };
+
+    expect(validateOptimizerBenchmark(benchmark)).toEqual(expect.objectContaining({
+      ok: false,
+      errors: expect.arrayContaining([
+        "rotation.shifts[0].assignments.trading-1.remoteSupport.operatorIds[0] contains operator ID char_225_haak outside the explicit roster"
+      ])
+    }));
+  });
+
+  it("allows identified remote support for an all-unlocked roster", () => {
+    const benchmark = validResourceBenchmark() as Record<string, any>;
+    benchmark.roster = { mode: "all-unlocked" };
+    benchmark.rotation.shifts[0].assignments["trading-1"].remoteSupport = {
+      operatorIds: ["char_225_haak"],
+      notes: ["Remote support is outside the facility slot count."]
+    };
+
+    expect(validateOptimizerBenchmark(benchmark)).toEqual(expect.objectContaining({ ok: true }));
+  });
+
+  it("does not count roster-owned identified remote support against occupant slots", () => {
+    const benchmark = validResourceBenchmark() as Record<string, any>;
+    benchmark.roster.operatorIds.push("char_225_haak", "char_4178_alanna", "char_446_aroma");
+    benchmark.rotation.shifts[0].assignments["trading-1"] = {
+      operatorIds: ["char_009_12fce", "char_225_haak", "char_4178_alanna"],
+      remoteSupport: {
+        operatorIds: ["char_446_aroma"],
+        notes: ["Remote support is outside the facility slot count."]
+      }
+    };
+
+    expect(validateOptimizerBenchmark(benchmark)).toEqual(expect.objectContaining({ ok: true }));
+  });
+
+  it("requires source-only IDs to be declared, absent from the runtime catalog, and excluded from comparable occupants", () => {
+    const benchmark = validResourceBenchmark() as Record<string, any>;
+    benchmark.runtimeDataProvenance.operatorAvailabilitySourceCommit = "7faf192d15eeac8b236c561a1938679f4642279e";
+    benchmark.rotation.shifts[0].assignments["trading-1"] = {
+      operatorIds: ["char_009_12fce"],
+      sourceOnlyOperatorIds: ["char_009_12fce", "char_missing_declaration"]
+    };
+    benchmark.compositionEvidence = {
+      status: "disputed",
+      sourceOnlyOperators: [{ sourceName: "Available", operatorId: "char_009_12fce", reason: "invalid" }],
+      conflicts: [],
+      disputedAssignments: []
+    };
+
+    expect(validateOptimizerBenchmark(benchmark)).toEqual(expect.objectContaining({
+      ok: false,
+      errors: expect.arrayContaining([
+        expect.stringContaining("char_009_12fce is runtime-catalogued and cannot be source-only"),
+        expect.stringContaining("char_missing_declaration must be declared in compositionEvidence.sourceOnlyOperators")
+      ])
+    }));
   });
 
   it("rejects an equivalent-composition operator unavailable in the region and outside the explicit roster", () => {
@@ -1333,6 +1473,134 @@ describe("isPassFailEligible", () => {
     disputed.confidence = "disputed";
     expect(isPassFailEligible(disputed)).toBe(false);
   });
+
+  it("accepts a strict-valid synthetic fixture with clean comparable composition evidence", () => {
+    const benchmark = validStrictBenchmark() as Record<string, any>;
+    benchmark.compositionEvidence = {
+      status: "comparable",
+      sourceOnlyOperators: [],
+      conflicts: [],
+      disputedAssignments: []
+    };
+
+    expect(validateOptimizerBenchmark(benchmark)).toEqual(expect.objectContaining({ ok: true }));
+    expect(isPassFailEligible(benchmark)).toBe(true);
+  });
+
+  it("rejects strict-valid synthetic composition evidence with disputed status", () => {
+    const benchmark = validStrictBenchmark() as Record<string, any>;
+    benchmark.compositionEvidence = {
+      status: "disputed",
+      sourceOnlyOperators: [],
+      conflicts: [],
+      disputedAssignments: []
+    };
+
+    expect(validateOptimizerBenchmark(benchmark)).toEqual(expect.objectContaining({ ok: true }));
+    expect(isPassFailEligible(benchmark)).toBe(false);
+  });
+
+  it.each([
+    ["source-only operators", "sourceOnlyOperators", {
+      sourceName: "Source-only operator",
+      operatorId: "char_source_only",
+      reason: "The fixed source operator is absent from the runtime catalog."
+    }],
+    ["conflicts", "conflicts", {
+      path: "rotation.shifts[0].assignments.trading-post-1",
+      sourceValue: "Source composition",
+      benchmarkValue: "Normalized composition",
+      notes: "The authority sources disagree."
+    }],
+    ["disputed assignments", "disputedAssignments", {
+      shiftId: "shift-1",
+      facilityIds: ["trading-post-1"],
+      sourceOperators: [{ sourceName: "Source option", operatorId: "char_009_12fce" }],
+      reason: "The source does not establish a single executable assignment."
+    }]
+  ] as const)("rejects strict-valid comparable evidence with nonempty %s", (_label, field, item) => {
+    const benchmark = validStrictBenchmark() as Record<string, any>;
+    benchmark.compositionEvidence = {
+      status: "comparable",
+      sourceOnlyOperators: [],
+      conflicts: [],
+      disputedAssignments: [],
+      [field]: [item]
+    };
+
+    expect(validateOptimizerBenchmark(benchmark)).toEqual(expect.objectContaining({ ok: true }));
+    expect(isPassFailEligible(benchmark)).toBe(false);
+  });
+
+  it("rejects a strict-valid assignment containing a source-only operator ID", () => {
+    const benchmark = validStrictBenchmark() as Record<string, any>;
+    benchmark.rotation.shifts[0].assignments["trading-post-1"].sourceOnlyOperatorIds = ["char_source_only"];
+    benchmark.compositionEvidence = {
+      status: "comparable",
+      sourceOnlyOperators: [{
+        sourceName: "Source-only operator",
+        operatorId: "char_source_only",
+        reason: "The fixed source operator is absent from the runtime catalog."
+      }],
+      conflicts: [],
+      disputedAssignments: []
+    };
+
+    expect(validateOptimizerBenchmark(benchmark)).toEqual(expect.objectContaining({ ok: true }));
+    expect(isPassFailEligible(benchmark)).toBe(false);
+  });
+
+  it("rejects strict-valid unresolved remote support", () => {
+    const benchmark = validStrictBenchmark() as Record<string, any>;
+    benchmark.rotation.shifts[0].assignments["trading-post-1"].remoteSupport = {
+      unresolved: [{
+        sourceName: "Unresolved supporter",
+        reason: "The fixed source does not identify the remote operator."
+      }],
+      notes: ["Remote support is not a facility occupant."]
+    };
+
+    expect(validateOptimizerBenchmark(benchmark)).toEqual(expect.objectContaining({ ok: true }));
+    expect(isPassFailEligible(benchmark)).toBe(false);
+  });
+
+  it("keeps strict-valid identified remote support eligible without treating it as an occupant", () => {
+    const benchmark = validStrictBenchmark() as Record<string, any>;
+    const assignment = benchmark.rotation.shifts[0].assignments["trading-post-1"];
+    const occupantIds = [...assignment.operatorIds];
+    const shiftOccupants = new Set(
+      Object.values(benchmark.rotation.shifts[0].assignments).flatMap((item: any) => item.operatorIds)
+    );
+    const supportId = benchmark.roster.operatorIds.find((operatorId: string) => !shiftOccupants.has(operatorId));
+    assignment.remoteSupport = {
+      operatorIds: [supportId],
+      notes: ["Remote support is not a facility occupant."]
+    };
+
+    expect(validateOptimizerBenchmark(benchmark)).toEqual(expect.objectContaining({ ok: true }));
+    expect(supportId).toBeTruthy();
+    expect(shiftOccupants.has(supportId)).toBe(false);
+    expect(assignment.operatorIds).toEqual(occupantIds);
+    expect(isPassFailEligible(benchmark)).toBe(true);
+  });
+
+  it("keeps malformed composition evidence invalid instead of treating it as non-gating", () => {
+    const benchmark = validStrictBenchmark() as Record<string, any>;
+    benchmark.compositionEvidence = {
+      status: "comparable",
+      sourceOnlyOperators: [],
+      conflicts: [],
+      disputedAssignments: "not-an-array"
+    };
+
+    expect(validateOptimizerBenchmark(benchmark)).toEqual(expect.objectContaining({
+      ok: false,
+      errors: expect.arrayContaining([
+        "compositionEvidence.disputedAssignments must be an array"
+      ])
+    }));
+    expect(isPassFailEligible(benchmark)).toBe(false);
+  });
 });
 
 const wikiruBundleTuple = {
@@ -1615,5 +1883,51 @@ describe("checked-in optimizer benchmark fixtures", () => {
     expect(fixtures.flatMap((result) =>
       result.ok && isPassFailEligible(result.value) ? [result.value.id] : []
     )).toEqual(["jp-wikiru-backup38-12h-v2"]);
+  });
+
+  it("identifies every JP factory occupant and keeps remote support outside factory slots", () => {
+    const jp = optimizerBenchmarkFixtures.find((fixture: any) => fixture.id === "jp-243-factory-3group-2025-11") as any;
+    const assignments = jp.rotation.shifts.flatMap((shift: any) => Object.values(shift.assignments));
+
+    expect(assignments.every((assignment: any) => assignment.operatorIds?.length === 3)).toBe(true);
+    expect(assignments.flatMap((assignment: any) => assignment.remoteSupport?.operatorIds ?? [])).toEqual(
+      expect.arrayContaining(["char_4098_vvana", "char_420_flamtl"])
+    );
+    expect(assignments.flatMap((assignment: any) => assignment.remoteSupport?.unresolved ?? [])).toEqual(
+      expect.arrayContaining([expect.objectContaining({ sourceName: "ウィスパーレイン" })])
+    );
+  });
+
+  it("records the CN source-only IDs and timing/duplicate-assignment disputes machine-readably", () => {
+    const cn = optimizerBenchmarkFixtures.find((fixture: any) => fixture.id === "cn-243-3shift-2026-06") as any;
+
+    expect(cn.confidence).toBe("disputed");
+    expect(cn.compositionEvidence.sourceOnlyOperators.map((item: any) => item.operatorId).sort()).toEqual([
+      "char_1052_kalts2", "char_4133_logos"
+    ]);
+    expect(cn.compositionEvidence.conflicts).toContainEqual(expect.objectContaining({
+      path: "rotation.shifts.durationHours",
+      sourceValue: "12 hours per queue",
+      benchmarkValue: "8 hours per shift"
+    }));
+    expect(cn.compositionEvidence.disputedAssignments).toEqual(expect.arrayContaining([
+      expect.objectContaining({ facilityIds: ["workshop-1", "training-1"] })
+    ]));
+    expect(cn.rotation.shifts.every((shift: any) => !shift.assignments["workshop-1"] && !shift.assignments["training-1"])).toBe(true);
+
+    const sourceIds = new Set<string>();
+    for (const shift of cn.rotation.shifts) {
+      for (const assignment of Object.values(shift.assignments) as any[]) {
+        for (const id of assignment.operatorIds ?? []) sourceIds.add(id);
+        for (const id of assignment.sourceOnlyOperatorIds ?? []) sourceIds.add(id);
+      }
+    }
+    for (const item of cn.compositionEvidence.disputedAssignments) {
+      for (const operator of item.sourceOperators) sourceIds.add(operator.operatorId);
+    }
+    expect(sourceIds.size).toBe(57);
+    const cnAvailable = new Set(operatorAvailabilitySnapshot.regions.CN.operatorIds);
+    expect([...sourceIds].filter((id) => cnAvailable.has(id))).toHaveLength(57);
+    expect([...sourceIds].filter((id) => !cnAvailable.has(id))).toEqual([]);
   });
 });
