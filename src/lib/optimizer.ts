@@ -3551,10 +3551,8 @@ export interface FacilityTeamOptionGenerationDiagnostic {
   optimality: "certified" | "not-certified";
   limitation?: "candidate-generation-limited";
   inputCandidateCount: number;
-  eligibleCandidateCount: number;
   constructedOptionCount: number;
   retainedOptionCount: number;
-  constructionAttempts: number;
   cacheHit: boolean;
 }
 
@@ -3717,14 +3715,8 @@ function teamRetentionKeys(team: readonly Assignment[]) {
   return [...new Set(keys)].sort(compareCodePoints);
 }
 
-function deepFreeze<T>(value: T): T {
-  if (value === null || typeof value !== "object" || Object.isFrozen(value)) return value;
-  for (const nestedValue of Object.values(value)) deepFreeze(nestedValue);
-  return Object.freeze(value);
-}
-
 function cacheFacilityTeamOptions(key: string, value: CachedFacilityTeamOptions) {
-  const snapshot = deepFreeze(structuredClone(value));
+  const snapshot = structuredClone(value);
   if (facilityTeamOptionCache.size >= facilityTeamCacheLimit) {
     const oldest = facilityTeamOptionCache.keys().next().value;
     if (oldest !== undefined) facilityTeamOptionCache.delete(oldest);
@@ -3945,18 +3937,12 @@ export function buildFacilityTeamOptionSet(
     optimality: limited ? "not-certified" : "certified",
     ...(limited ? { limitation: "candidate-generation-limited" as const } : {}),
     inputCandidateCount: candidates.length,
-    eligibleCandidateCount: eligibleCandidates.length,
     constructedOptionCount,
-    retainedOptionCount: retainedOptions.length,
-    constructionAttempts: Math.min(constructionAttempts, facilityTeamConstructionLimit)
+    retainedOptionCount: retainedOptions.length
   };
   const result = { options: retainedOptions, diagnostic };
   const snapshot = cacheFacilityTeamOptions(cacheKey, result);
   return mutableFacilityTeamOptionResult(snapshot, false);
-}
-
-export function buildFacilityTeamOptions(candidates: Assignment[], slotCount: number) {
-  return buildFacilityTeamOptionSet(candidates, slotCount).options;
 }
 
 function reevaluateFacilityTeam(

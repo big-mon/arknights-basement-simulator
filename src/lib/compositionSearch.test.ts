@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildFacilityTeamOptionSet,
-  buildFacilityTeamOptions,
   effectiveFacilityEfficiency,
   facilityTeamEligibleForScheduleComparison
 } from "./optimizer";
@@ -102,7 +101,7 @@ describe("deterministic conflict-free composition search", () => {
       reason: "Issue #28 candidate regression"
     }));
 
-    expect(buildFacilityTeamOptions(candidates, 1).map((team) => team[0]?.operatorId))
+    expect(buildFacilityTeamOptionSet(candidates, 1).options.map((team) => team[0]?.operatorId))
       .toContain("operator-17");
   });
 
@@ -127,7 +126,7 @@ describe("deterministic conflict-free composition search", () => {
           }]
         : undefined
     }));
-    const signatures = (input: Assignment[]) => buildFacilityTeamOptions(input, 3)
+    const signatures = (input: Assignment[]) => buildFacilityTeamOptionSet(input, 3).options
       .map((team) => team.map(({ operatorId, skillId }) => `${operatorId}:${skillId}`).sort().join("|"));
 
     const canonical = signatures(candidates);
@@ -238,7 +237,7 @@ describe("deterministic conflict-free composition search", () => {
         contextSensitive: true
       }
     ];
-    const signatures = buildFacilityTeamOptions([...ordinary, ...contextPair], 3)
+    const signatures = buildFacilityTeamOptionSet([...ordinary, ...contextPair], 3).options
       .map((team) => team.map(({ operatorId }) => operatorId).sort().join("|"));
 
     expect(signatures).toContain("ordinary-0|resource-context|time-context");
@@ -272,7 +271,7 @@ describe("deterministic conflict-free composition search", () => {
     const invalidTeam = [suppressorA, suppressorB, ordinary];
     const validRawTeam = [suppressorA, suppressorB, exemptRaw];
     const validReevaluatedTeam = [suppressorA, suppressorB, exemptReevaluated];
-    const signatures = (assignments: Assignment[]) => buildFacilityTeamOptions(assignments, 3)
+    const signatures = (assignments: Assignment[]) => buildFacilityTeamOptionSet(assignments, 3).options
       .map((team) => team.map(({ operatorId }) => operatorId).sort().join("|"));
 
     expect(signatures(invalidTeam)).not.toContain("ordinary|suppressor-a|suppressor-b");
@@ -312,7 +311,7 @@ describe("deterministic conflict-free composition search", () => {
       provider("deep-twelve", 19, 12),
       consumer
     ];
-    const signatures = buildFacilityTeamOptions(candidates, 3)
+    const signatures = buildFacilityTeamOptionSet(candidates, 3).options
       .map((team) => team.map(({ operatorId }) => operatorId).sort().join("|"));
 
     expect(signatures).toContain("deep-eight|deep-twelve|storage-consumer");

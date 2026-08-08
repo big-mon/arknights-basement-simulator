@@ -45,11 +45,6 @@ export interface ConflictFreeSearchConstraints<T> {
   completeSelectionEvaluationBudget?: number;
 }
 
-export interface ConflictFreePrefrontierInspection {
-  dimensionOptions: Readonly<Record<string, readonly string[]>>;
-  discardedOptions: number;
-}
-
 type IndexedOption<T> = ConflictFreeSearchOption<T> & { keys: readonly string[] };
 type IndexedDimension<T> = {
   stableId: string;
@@ -157,7 +152,7 @@ function buildPrefrontier<T>(dimensions: readonly IndexedDimension<T>[]) {
 
 export function inspectConflictFreePrefrontier<T>(
   dimensions: readonly ConflictFreeSearchDimension<T>[]
-): ConflictFreePrefrontierInspection {
+) {
   const normalized = normalizeDimensions(dimensions);
   const reduced = buildPrefrontier(normalized);
   return {
@@ -685,10 +680,4 @@ export function searchBestConflictFreeOptions<T>(
             : normalized.map(({ stableId }) => stableId)
     }
   };
-}
-
-export function selectBestConflictFreeOptions<T>(
-  dimensions: readonly ConflictFreeSearchDimension<T>[]
-): readonly ConflictFreeSearchOption<T>[] {
-  return searchBestConflictFreeOptions(dimensions).options;
 }

@@ -7,7 +7,7 @@ import { evaluateCandidateObjectiveEvidence } from "./optimizerIssue27Audit";
 import { evaluateReferenceCompositionDiagnostic } from "./optimizerReferenceDiagnostic";
 import { validateSchedule } from "./schedule";
 import {
-  buildFacilityTeamOptions,
+  buildFacilityTeamOptionSet,
   evaluateWindowFacilityEfficiencies,
   findCandidates,
   generateAssignmentPlan,
@@ -685,7 +685,7 @@ describe("Issue #28 schedule-aware composition integration", () => {
       );
       if (!facility) throw new Error(`missing ${product} factory`);
       const productCandidates = findCandidates(facility, state);
-      const signatures = new Set(buildFacilityTeamOptions(productCandidates, facility.slotCount)
+      const signatures = new Set(buildFacilityTeamOptionSet(productCandidates, facility.slotCount).options
         .map((team) => team.map(({ operatorId }) => operatorId).sort().join("|")));
       for (const team of teams) {
         const signature = [...team].sort().join("|");
