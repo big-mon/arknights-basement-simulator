@@ -1,5 +1,7 @@
 # Domain Context
 
+This glossary is the shared entry point for Arknights base-rotation terminology used by optimizer code, benchmark fixtures, specifications, tests, and reviews. Read it before changing or interpreting schedule, sustainability, benchmark, or acceptance concepts; implementation requirements remain in the linked optimizer specifications referenced from [`AGENTS.md`](./AGENTS.md).
+
 ## Glossary
 
 ### 24時間評価窓
