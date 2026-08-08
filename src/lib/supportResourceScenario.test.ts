@@ -589,7 +589,8 @@ describe("support-resource scenario source resolution", () => {
   });
 
   it("applies resolved resources only to their exact windows and records typed evidence once", () => {
-    const plan = generateAssignmentPlan(stateForExactWindowResourceEvaluation(), {
+    const state = stateForExactWindowResourceEvaluation();
+    const plan = generateAssignmentPlan(state, {
       supportResourceScenario: exactWindowScenario()
     });
     const factoryWindows = plan.resources.windows.map((window) =>
@@ -606,19 +607,27 @@ describe("support-resource scenario source resolution", () => {
     expect(plan.windowFacilityEfficiencyEvaluations?.every((evaluation) =>
       Number.isFinite(evaluation.additiveEfficiency)
     )).toBe(true);
-    expect(factoryWindows.map((facility) => facility.additiveEfficiency)).toEqual([
-      expect.closeTo(0.4),
-      expect.closeTo(0.3),
-      expect.closeTo(0.2)
-    ]);
-    expect(factoryWindows.map((facility) => facility.ledger.goldProduced)).toEqual([
-      expect.closeTo(14),
-      expect.closeTo(13),
-      expect.closeTo(12)
-    ]);
+    const fixedPerceptionByWindow = [20, 10, 0];
+    // Group A works one continuous 36h block. Morale carries across the 12h boundaries,
+    // so exact-window Rosmontis efficiency is the active fixed Perception amount at 1% each.
+    const expectedScheduleAwareEfficiency = fixedPerceptionByWindow.map((amount) => amount / 100);
+    const baseGoldPerWindow = 10;
+    expect(factoryWindows.map((facility) => facility.additiveEfficiency))
+      .toEqual(expectedScheduleAwareEfficiency.map((efficiency) => expect.closeTo(efficiency)));
+    expect(factoryWindows.map((facility) => facility.ledger.goldProduced)).toEqual(
+      expectedScheduleAwareEfficiency.map((efficiency) => expect.closeTo(baseGoldPerWindow * (1 + efficiency)))
+    );
+    expect(plan.resources.cycleLedger?.goldProduced).toBeCloseTo(
+      expectedScheduleAwareEfficiency.reduce(
+        (gold, efficiency) => gold + baseGoldPerWindow * (1 + efficiency),
+        0
+      )
+    );
+    expect(plan.resources.per24Ledger?.goldProduced).toBeCloseTo(
+      plan.resources.cycleLedger!.goldProduced * 24 / state.schedule.cycleHours
+    );
     expect(factoryWindows[0].additiveEfficiency).not.toBeCloseTo(factoryPlan.expectedEfficiency);
     expect(factoryWindows[0].ledger.goldProduced).not.toBeCloseTo(11);
-    const state = stateForExactWindowResourceEvaluation();
     const expectedDailyValue = plan.windowFacilityEfficiencyEvaluations!.reduce((sum, evaluation) => {
       const facility = plan.facilityPlans.find((candidate) => candidate.facility.id === evaluation.facilityId)!.facility;
       const window = plan.rotation.find((candidate) => candidate.shiftId === evaluation.scheduleWindowId)!;
@@ -637,17 +646,17 @@ describe("support-resource scenario source resolution", () => {
     expect(plan.dailyValue).toBeCloseTo(expectedDailyValue);
     expect(factoryWindows.map((facility) => facility.efficiencyEvaluation)).toEqual([
       expect.objectContaining({
-        provenance: "optimizer-normal-team-reevaluation-with-resolved-support-context",
+        provenance: "optimizer-normal-team-reevaluation-with-schedule-aware-contiguous-work-and-resolved-support-context",
         fixedResourceAmounts: { perceptionInfo: 20 },
         fixedDormitoryOccupancy: 20
       }),
       expect.objectContaining({
-        provenance: "optimizer-normal-team-reevaluation-with-resolved-support-context",
+        provenance: "optimizer-normal-team-reevaluation-with-schedule-aware-contiguous-work-and-resolved-support-context",
         fixedResourceAmounts: { perceptionInfo: 10 },
         fixedDormitoryOccupancy: 20
       }),
       expect.objectContaining({
-        provenance: "optimizer-normal-team-reevaluation-with-resolved-support-context",
+        provenance: "optimizer-normal-team-reevaluation-with-schedule-aware-contiguous-work-and-resolved-support-context",
         fixedResourceAmounts: {},
         fixedDormitoryOccupancy: 20
       })
@@ -714,9 +723,36 @@ describe("support-resource scenario source resolution", () => {
     expect(ordinaryPlan.resources.windows.map((window) =>
       window.facilities.find((facility) => facility.facilityId === "factory-1")!.additiveEfficiency
     )).toEqual([expect.closeTo(0.1), expect.closeTo(0.1), expect.closeTo(0.1)]);
-    expect(plan.resources.windows.map((window) =>
-      window.facilities.find((facility) => facility.facilityId === "factory-1")!.additiveEfficiency
-    )).toEqual([expect.closeTo(0.3), expect.closeTo(0.3), expect.closeTo(0.3)]);
+    const factoryWindows = plan.resources.windows.map((window) =>
+      window.facilities.find((facility) => facility.facilityId === "factory-1")!
+    );
+    const windowHours = 12;
+    const moraleCapacity = 24;
+    const controlAdjustedMoralePerHour = 0.95;
+    const fixedDormitoryEfficiency = 0.1;
+    // Rosmontis works continuously for 36h. The first two windows consume 22.8 morale;
+    // only the remaining 1.2 morale is productive in the third window.
+    const finalWindowUptime = (moraleCapacity - 2 * windowHours * controlAdjustedMoralePerHour) /
+      (windowHours * controlAdjustedMoralePerHour);
+    const expectedEfficiencies = [
+      fixedDormitoryEfficiency,
+      fixedDormitoryEfficiency,
+      fixedDormitoryEfficiency * finalWindowUptime
+    ];
+    expect(factoryWindows.map((facility) => facility.additiveEfficiency))
+      .toEqual(expectedEfficiencies.map((efficiency) => expect.closeTo(efficiency)));
+    expect(factoryWindows.map((facility) => facility.ledger.goldProduced))
+      .toEqual(expectedEfficiencies.map((efficiency) => expect.closeTo(10 * (1 + efficiency))));
+    expect(factoryWindows.map((facility) => facility.efficiencyEvaluation)).toEqual(
+      plan.schedule.shifts.map(() => expect.objectContaining({
+        provenance: "optimizer-normal-team-reevaluation-with-schedule-aware-contiguous-work-and-resolved-support-context",
+        fixedResourceAmounts: {},
+        fixedDormitoryOccupancy: fixedDormitoryOccupancy.amount
+      }))
+    );
+    expect(plan.resources.evidence?.fixedContexts).toEqual([
+      expect.objectContaining({ contextKey: "dormitoryOccupancy", amount: fixedDormitoryOccupancy.amount })
+    ]);
   });
 
   it("keeps a same-facility fixed source reserved instead of generating an ordinary assignment", () => {
@@ -739,7 +775,18 @@ describe("support-resource scenario source resolution", () => {
       { perceptionInfo: 10 },
       {}
     ]);
-    expect(efficiencies).toEqual([expect.closeTo(0.2), expect.closeTo(0.3), expect.closeTo(0.2)]);
+    const fixedPerceptionByWindow = [0, 10, 0];
+    // The same Rosmontis assignment spans the full 36h block; there is no per-window
+    // morale reset, and the reserved Dusk source contributes only in groups-b-c.
+    const expectedEfficiencies = fixedPerceptionByWindow.map((amount) => amount / 100);
+    expect(efficiencies).toEqual(expectedEfficiencies.map((efficiency) => expect.closeTo(efficiency)));
+    expect(plan.resources.windows.map((window) =>
+      window.facilities.find((facility) => facility.facilityId === "factory-1")!.ledger.goldProduced
+    )).toEqual(expectedEfficiencies.map((efficiency) => expect.closeTo(10 * (1 + efficiency))));
+    expect(plan.windowFacilityEfficiencyEvaluations?.filter((evaluation) => evaluation.facilityId === "factory-1")
+      .map((evaluation) => evaluation.provenance)).toEqual(plan.schedule.shifts.map(() =>
+      "optimizer-normal-team-reevaluation-with-schedule-aware-contiguous-work-and-resolved-support-context"
+    ));
   });
 
   it("marks plan resources typed incomplete when a support source is unresolved", () => {

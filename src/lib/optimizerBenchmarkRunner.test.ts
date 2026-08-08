@@ -11,8 +11,10 @@ import {
   operatorAvailabilitySnapshot,
   type OperatorAvailabilityRegion
 } from "./operatorAvailability";
+import type { PlanSustainabilityEvaluation } from "./planSustainabilityTypes";
 import {
   formatOptimizerBenchmarkBatchResult,
+  isAuthoritativeObjectiveSustainability,
   runOptimizerBenchmarkBatch,
   type BenchmarkObservation,
   type BenchmarkObservationMap
@@ -60,7 +62,7 @@ function resourceFixture(
       layout: "243",
       drones: "excluded",
       facilityProducts: ["lmd"],
-      objectiveProfile: "lmd",
+      objectiveProfile: "balanced",
       notes: ["fixture"]
     },
     roster: { mode: "explicit", operatorIds: [operatorA, operatorB, operatorC, operatorD] },
@@ -114,6 +116,25 @@ function gatingFixture(id: string): ResourceOutputBenchmark {
   const fixture = structuredClone(checkedGatingFixture);
   fixture.id = id;
   return fixture;
+}
+
+function strictSyntheticFixture(tolerance: ResourceOutputBenchmark["expected"]["tolerance"] = {
+  type: "relative", value: 0.001, zeroExpectedAbsolute: 0
+}): ResourceOutputBenchmark {
+  const fixture = gatingFixture("runner-case");
+  fixture.expected.tolerance = tolerance;
+  const validation = validateOptimizerBenchmark(fixture);
+  if (!validation.ok || validation.value.kind !== "resource-output") {
+    throw new Error(validation.ok ? "strict synthetic fixture has wrong kind" : validation.errors.join("\n"));
+  }
+  if (!isPassFailEligible(validation.value)) {
+    throw new Error("strict synthetic fixture must remain pass/fail eligible");
+  }
+  const authority = effectiveBenchmarkScheduleAuthority(validation.value);
+  if (authority.status !== "complete") {
+    throw new Error(authority.errors.join("\n"));
+  }
+  return validation.value;
 }
 
 function savedReferenceObservation(fixture: ResourceOutputBenchmark): BenchmarkObservation {
@@ -184,7 +205,537 @@ function identifiedSupportFixture(id: string): {
   return { fixture, shiftIndex, facilityId, supportIds };
 }
 
+function completePlanEvidence(
+  fixture: ResourceOutputBenchmark = strictSyntheticFixture()
+): NonNullable<BenchmarkObservation["planEvidence"]> {
+  const authority = effectiveBenchmarkScheduleAuthority(fixture);
+  if (authority.status !== "complete") throw new Error(authority.errors.join("\n"));
+  const requiredWindowIds = authority.schedule.shifts.map((shift) => shift.id);
+  const requiredFacilitySlots = fixture.rotation.shifts.flatMap((shift) =>
+    Object.entries(shift.assignments).flatMap(([facilityId, assignment]) =>
+      assignment.operatorIds
+        ? [{ shiftId: shift.id, facilityId, slotCount: assignment.operatorIds.length }]
+        : []
+    )
+  );
+  return {
+    search: {
+      completion: "complete",
+      proofStatus: "not-certified",
+      diagnostics: [{
+        code: "composition-search-not-certified",
+        message: "bounded search",
+        limitation: "candidate-generation-limited",
+        visitedStates: 1,
+        discardedStates: 0,
+        feasibilityVisitedStates: 1,
+        feasibilityWorkBudget: 1,
+        feasibilityBudgetExhausted: false,
+        optimizationVisitedStates: 1,
+        optimizationWorkBudget: 1,
+        optimizationBudgetExhausted: false,
+        candidateGenerationInputCount: 1,
+        candidateGenerationConstructedCount: 1,
+        candidateGenerationRetainedCount: 1
+      }]
+    },
+    production: {
+      requiredWindowIds,
+      completedWindowIds: [...requiredWindowIds],
+      requiredFacilitySlots,
+      actualFacilityOperators: fixture.rotation.shifts.flatMap((shift) =>
+        Object.entries(shift.assignments).flatMap(([facilityId, assignment]) =>
+          assignment.operatorIds
+            ? [{ shiftId: shift.id, facilityId, operatorIds: [...assignment.operatorIds] }]
+            : []
+        )
+      )
+    },
+    simultaneousOperatorConflicts: [],
+    supportResourceScenario: {
+      requested: true,
+      complete: true,
+      requestedSourceIds: fixture.supportResourceScenario?.sources.map((source) => source.id) ?? ["support-a"],
+      resolvedSourceIds: fixture.supportResourceScenario?.sources.map((source) => source.id) ?? ["support-a"],
+      fixedSourceEvidenceSourceIds: fixture.supportResourceScenario?.sources.map((source) => source.id) ?? ["support-a"],
+      fixedContextRequested: true,
+      fixedContextResolved: true
+    },
+    scheduledSupport: {
+      completion: "complete",
+      provenance: "bounded-scheduled-support-materialization-not-certified",
+      supportPlacements: [{
+        kind: "ordinary",
+        operatorId: "supporter",
+        facilityId: "control-1",
+        groupId: "group-day",
+        scheduleWindowIds: [...requiredWindowIds],
+        recoveryWindowIds: []
+      }],
+      supportCapacityValidated: true,
+      supportRecoveryValidated: true,
+      issues: []
+    },
+    resourceEvaluation: {
+      status: "complete",
+      requiredWindowIds,
+      evaluatedWindowIds: [...requiredWindowIds],
+      missingCount: 0
+    }
+  };
+}
+
+function authoritativeObjective(value: number, fixture: ResourceOutputBenchmark = strictSyntheticFixture()) {
+  const authority = effectiveBenchmarkScheduleAuthority(fixture);
+  if (authority.status !== "complete") throw new Error(authority.errors.join("\n"));
+  const requiredWindowIds = authority.schedule.shifts.map((shift) => shift.id);
+  const requiredFacilityEvaluationCount = fixture.rotation.shifts.reduce((count, shift) =>
+    count + Object.values(shift.assignments).filter((assignment) => assignment.operatorIds !== undefined).length,
+  0);
+  return {
+    status: "complete" as const,
+    authority: "authoritative" as const,
+    value,
+    objectiveProfile: "balanced" as const,
+    weights: { gold: 0.5, battleRecord: 0.5, lmd: 0 },
+    provenance: "exact-window-facility-normal-mechanics-evaluation" as const,
+    completeness: {
+      supportResourceScenario: "complete" as const,
+      resourceEvaluation: "complete" as const,
+      requiredWindowIds,
+      evaluatedWindowIds: [...requiredWindowIds],
+      requiredFacilityEvaluationCount,
+      evaluatedFacilityEvaluationCount: requiredFacilityEvaluationCount
+    },
+    sustainability: {
+      status: "evaluated" as const,
+      assumptions: {},
+      convergence: {},
+      input: {},
+      result: { sustainable: true, failures: [] },
+      missing: [] as const
+    } as unknown as PlanSustainabilityEvaluation
+  };
+}
+
+function objectiveSuperiorFixture(tolerance: Record<string, unknown> = {
+  type: "relative", value: 0.001, zeroExpectedAbsolute: 0
+}) {
+  return strictSyntheticFixture(tolerance as ResourceOutputBenchmark["expected"]["tolerance"]);
+}
+
+function objectiveSuperiorObservation(
+  candidateValue = 10.02,
+  referenceValue = 10,
+  evidence: NonNullable<BenchmarkObservation["planEvidence"]> = completePlanEvidence()
+): BenchmarkObservation {
+  const fixture = strictSyntheticFixture();
+  const actual = savedReferenceObservation(fixture);
+  const firstShift = actual.rotation!.shifts[0];
+  const firstFacilityId = Object.keys(firstShift.assignments)[0];
+  firstShift.assignments[firstFacilityId] = [
+    fixture.roster.mode === "explicit" ? fixture.roster.operatorIds.at(-1)! : "synthetic-alternative",
+    ...firstShift.assignments[firstFacilityId].slice(1)
+  ];
+  const resourceName = Object.keys(fixture.expected.output)[0] as keyof typeof fixture.expected.output;
+  return {
+    ...actual,
+    resources: { ...fixture.expected.output, [resourceName]: fixture.expected.output[resourceName]! * 0.9 },
+    planSustainability: { status: "evaluated", sustainable: true, failures: [] },
+    planEvidence: evidence,
+    objectiveEvidence: {
+      candidate: authoritativeObjective(candidateValue, fixture),
+      reference: authoritativeObjective(referenceValue, fixture)
+    }
+  };
+}
+
 describe("runOptimizerBenchmarkBatch", () => {
+  it("does not authorize objective evidence when a fixed support worker lacks morale provenance", () => {
+    expect(isAuthoritativeObjectiveSustainability({
+      status: "incomplete",
+      assumptions: {} as never,
+      missing: [{
+        code: "recovery-provenance-unavailable",
+        path: "rotation/day/assignments/char_2015_dusk/recoveryProvenance",
+        message: "fixed support recovery provenance is unavailable",
+        operatorId: "char_2015_dusk",
+        facilityId: "control-1",
+        shiftId: "day"
+      }]
+    })).toBe(false);
+  });
+
+  it("accepts a mechanically complete composition and output mismatch with authoritative objective superiority", () => {
+    const fixture = objectiveSuperiorFixture();
+    const actual = objectiveSuperiorObservation();
+
+    const result = runOptimizerBenchmarkBatch([fixture], { "runner-case": actual });
+
+    expect(result.cases[0]).toMatchObject({
+      status: "passed",
+      acceptanceMode: "objective-superior",
+      searchProofStatus: "not-certified"
+    });
+    expect(result.cases[0].matchedComposition).toBeUndefined();
+  });
+
+  it.each([
+    ["absent", undefined],
+    ["incomplete", {
+      status: "incomplete" as const,
+      assumptions: {},
+      missing: [{
+        code: "morale-consumption-unavailable" as const,
+        path: "rotation/day/assignments/fixed-support/moraleConsumptionPerHour",
+        message: "fixed support morale is unavailable",
+        operatorId: "fixed-support"
+      }]
+    }],
+    ["unsustainable", {
+      status: "evaluated" as const,
+      assumptions: {}, convergence: {}, input: {},
+      result: { sustainable: false, failures: [] }, missing: [] as const
+    }],
+    ["non-empty failures", {
+      status: "evaluated" as const,
+      assumptions: {}, convergence: {}, input: {},
+      result: {
+        sustainable: true,
+        failures: [{ category: "morale" as const, code: "fixed-support-fatigue", message: "failure" }]
+      },
+      missing: [] as const
+    }]
+  ])("rejects objective superiority when reference objective sustainability is %s", (_name, sustainability) => {
+    const actual = objectiveSuperiorObservation(10.02, 10);
+    const reference = actual.objectiveEvidence!.reference as unknown as { sustainability?: unknown };
+    if (sustainability === undefined) delete reference.sustainability;
+    else reference.sustainability = sustainability;
+
+    const result = runOptimizerBenchmarkBatch([objectiveSuperiorFixture()], { "runner-case": actual });
+
+    expect(result.cases[0]).toMatchObject({ status: "failed" });
+    expect(result.cases[0].acceptanceMode).toBeUndefined();
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "objective-comparison", severity: "error"
+    }));
+  });
+
+  it("rejects objective superiority when plan sustainability evidence is absent", () => {
+    const actual = objectiveSuperiorObservation();
+    actual.planSustainability = undefined;
+
+    const result = runOptimizerBenchmarkBatch([objectiveSuperiorFixture()], { "runner-case": actual });
+
+    expect(result.cases[0]).toMatchObject({ status: "failed" });
+    expect(result.cases[0].acceptanceMode).toBeUndefined();
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      code: "plan-sustainability-evidence-absent",
+      path: "sustainable-cycle/evidence",
+      category: "state-model",
+      severity: "error",
+      certainty: "proven"
+    }));
+  });
+
+  it.each([
+    ["incomplete", {
+      status: "incomplete" as const,
+      missing: []
+    }, "plan-sustainability-incomplete"],
+    ["evaluated but unsustainable", {
+      status: "evaluated" as const,
+      sustainable: false,
+      failures: []
+    }, "plan-sustainability-unsustainable"],
+    ["evaluated with failures", {
+      status: "evaluated" as const,
+      sustainable: true,
+      failures: [{ category: "morale" as const, code: "test-failure", message: "failure" }]
+    }, "test-failure"]
+  ])("rejects objective superiority when sustainability is %s", (_name, planSustainability, code) => {
+    const actual = objectiveSuperiorObservation();
+    actual.planSustainability = planSustainability;
+
+    const result = runOptimizerBenchmarkBatch([objectiveSuperiorFixture()], { "runner-case": actual });
+
+    expect(result.cases[0]).toMatchObject({ status: "failed" });
+    expect(result.cases[0].acceptanceMode).toBeUndefined();
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({ code, severity: "error" }));
+  });
+
+  it("rejects objective superiority when scheduled support materialization is incomplete", () => {
+    const evidence = completePlanEvidence();
+    evidence.scheduledSupport.completion = "incomplete";
+    const actual = objectiveSuperiorObservation(10.02, 10, evidence);
+
+    const result = runOptimizerBenchmarkBatch([objectiveSuperiorFixture()], { "runner-case": actual });
+
+    expect(result.cases[0]).toMatchObject({ status: "failed" });
+    expect(result.cases[0].acceptanceMode).toBeUndefined();
+  });
+
+  it.each([
+    ["search completion", (e: ReturnType<typeof completePlanEvidence>) => { e.search.completion = "unknown"; }],
+    ["required production windows", (e: ReturnType<typeof completePlanEvidence>) => { e.production.requiredWindowIds = []; }],
+    ["completed production windows", (e: ReturnType<typeof completePlanEvidence>) => { e.production.completedWindowIds = []; }],
+    ["declared production slots", (e: ReturnType<typeof completePlanEvidence>) => { e.production.requiredFacilitySlots = []; }],
+    ["materialized production slots", (e: ReturnType<typeof completePlanEvidence>) => { e.production.actualFacilityOperators[0].operatorIds = ["x"]; }],
+    ["simultaneous conflicts", (e: ReturnType<typeof completePlanEvidence>) => {
+      e.simultaneousOperatorConflicts = [{ shiftId: "day", operatorId: "x" }];
+    }],
+    ["fixed support scenario", (e: ReturnType<typeof completePlanEvidence>) => { e.supportResourceScenario!.complete = false; }],
+    ["fixed support source", (e: ReturnType<typeof completePlanEvidence>) => { e.supportResourceScenario!.resolvedSourceIds = []; }],
+    ["fixed support source evidence", (e: ReturnType<typeof completePlanEvidence>) => {
+      e.supportResourceScenario!.fixedSourceEvidenceSourceIds = [];
+    }],
+    ["fixed support context", (e: ReturnType<typeof completePlanEvidence>) => { e.supportResourceScenario!.fixedContextResolved = false; }],
+    ["scheduled support materialization", (e: ReturnType<typeof completePlanEvidence>) => { e.scheduledSupport.completion = "incomplete"; }],
+    ["scheduled support capacity", (e: ReturnType<typeof completePlanEvidence>) => { e.scheduledSupport.supportCapacityValidated = false; }],
+    ["scheduled support recovery", (e: ReturnType<typeof completePlanEvidence>) => { e.scheduledSupport.supportRecoveryValidated = false; }],
+    ["scheduled support issues", (e: ReturnType<typeof completePlanEvidence>) => {
+      e.scheduledSupport.issues = [{
+        code: "support-work-recovery-overlap",
+        operatorId: "supporter",
+        facilityId: "control-1",
+        scheduleWindowIds: ["day"],
+        message: "overlap"
+      }];
+    }],
+    ["resource evaluation status", (e: ReturnType<typeof completePlanEvidence>) => { e.resourceEvaluation.status = "incomplete"; }],
+    ["resource evaluation windows", (e: ReturnType<typeof completePlanEvidence>) => { e.resourceEvaluation.evaluatedWindowIds = []; }],
+    ["resource missing count", (e: ReturnType<typeof completePlanEvidence>) => { e.resourceEvaluation.missingCount = 1; }]
+  ])("rejects objective superiority with incomplete %s mechanical evidence", (_name, mutate) => {
+    const evidence = completePlanEvidence();
+    mutate(evidence);
+    const result = runOptimizerBenchmarkBatch([objectiveSuperiorFixture()], {
+      "runner-case": objectiveSuperiorObservation(10.02, 10, evidence)
+    });
+
+    expect(result.cases[0].status).toBe("failed");
+    expect(result.cases[0].acceptanceMode).toBeUndefined();
+  });
+
+  it.each([
+    ["exact boundary", 1001, 1000],
+    ["below boundary", 1000.999, 1000]
+  ])("rejects objective superiority at or below the relative tolerance: %s", (_name, candidate, reference) => {
+    const result = runOptimizerBenchmarkBatch([objectiveSuperiorFixture()], {
+      "runner-case": objectiveSuperiorObservation(candidate, reference)
+    });
+
+    expect(result.cases[0].status).toBe("failed");
+    expect(result.cases[0].acceptanceMode).toBeUndefined();
+  });
+
+  it.each([
+    ["missing objective authority", (o: BenchmarkObservation) => {
+      o.objectiveEvidence = undefined;
+    }],
+    ["non-finite candidate", (o: BenchmarkObservation) => {
+      o.objectiveEvidence!.candidate = authoritativeObjective(Number.NaN);
+    }],
+    ["zero reference", (o: BenchmarkObservation) => {
+      o.objectiveEvidence!.reference = authoritativeObjective(0);
+    }],
+    ["non-finite reference", (o: BenchmarkObservation) => {
+      o.objectiveEvidence!.reference = authoritativeObjective(Number.POSITIVE_INFINITY);
+    }],
+    ["unavailable candidate", (o: BenchmarkObservation) => {
+      o.objectiveEvidence!.candidate = {
+        ...authoritativeObjective(10.02), status: "incomplete", authority: "unavailable", reason: "missing exact mechanics"
+      } as NonNullable<BenchmarkObservation["objectiveEvidence"]>["candidate"];
+    }],
+    ["unavailable reference", (o: BenchmarkObservation) => {
+      o.objectiveEvidence!.reference = {
+        ...authoritativeObjective(10), status: "incomplete", authority: "unavailable", reason: "missing exact mechanics"
+      } as NonNullable<BenchmarkObservation["objectiveEvidence"]>["reference"];
+    }],
+    ["profile mismatch", (o: BenchmarkObservation) => {
+      o.objectiveEvidence!.candidate = {
+        ...authoritativeObjective(10.02), objectiveProfile: "lmd",
+        weights: { gold: 0, battleRecord: 0, lmd: 1 }
+      };
+    }],
+    ["weight mismatch", (o: BenchmarkObservation) => {
+      o.objectiveEvidence!.candidate = { ...authoritativeObjective(10.02), weights: { gold: 1, battleRecord: 0, lmd: 0 } };
+    }],
+    ["provenance mismatch", (o: BenchmarkObservation) => {
+      o.objectiveEvidence!.candidate = {
+        ...authoritativeObjective(10.02), provenance: "raw-assignment-sum"
+      } as unknown as NonNullable<BenchmarkObservation["objectiveEvidence"]>["candidate"];
+    }],
+    ["incomplete exact objective", (o: BenchmarkObservation) => {
+      if (o.objectiveEvidence!.candidate.status === "complete") {
+        o.objectiveEvidence!.candidate = {
+          ...o.objectiveEvidence!.candidate,
+          completeness: {
+            ...o.objectiveEvidence!.candidate.completeness,
+            evaluatedFacilityEvaluationCount: 0
+          }
+        };
+      }
+    }]
+  ])("rejects objective superiority with %s evidence", (_name, mutate) => {
+    const actual = objectiveSuperiorObservation();
+    mutate(actual);
+    const result = runOptimizerBenchmarkBatch([objectiveSuperiorFixture()], { "runner-case": actual });
+
+    expect(result.cases[0].status).toBe("failed");
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "objective-comparison", severity: "error"
+    }));
+  });
+
+  it("rejects objective superiority under a non-relative fixture tolerance", () => {
+    const result = runOptimizerBenchmarkBatch([objectiveSuperiorFixture({ type: "absolute", value: 0.001 })], {
+      "runner-case": objectiveSuperiorObservation()
+    });
+
+    expect(result.cases[0].status).toBe("failed");
+  });
+
+  it("retains composition and resource mismatches as warnings only after accepted superiority", () => {
+    const fixture = objectiveSuperiorFixture();
+    const result = runOptimizerBenchmarkBatch([fixture], {
+      "runner-case": objectiveSuperiorObservation()
+    });
+    const resourceName = Object.keys(fixture.expected.output)[0] as keyof typeof fixture.expected.output;
+    const expectedResourceValue = fixture.expected.output[resourceName]!;
+    const resource = result.cases[0].diagnostics.find((item) =>
+      item.path === `calculation/resource-values/${resourceName}`
+    );
+
+    expect(result.cases[0].acceptanceMode).toBe("objective-superior");
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "composition/search/groups-a-b/control-center", severity: "warning"
+    }));
+    expect(resource).toMatchObject({
+      severity: "warning", expected: expectedResourceValue, actual: expectedResourceValue * 0.9,
+      absoluteError: expectedResourceValue * 0.1, relativeError: 0.1,
+      tolerance: { type: "relative", value: 0.001, zeroExpectedAbsolute: 0 },
+      appliedTolerance: { type: "relative", value: 0.001 }
+    });
+    expect(result.cases[0].objectiveComparison).toMatchObject({
+      candidateValue: 10.02,
+      referenceValue: 10,
+      objectiveProfile: "balanced",
+      provenance: "exact-window-facility-normal-mechanics-evaluation"
+    });
+    expect(result.cases[0].objectiveComparison?.absoluteAdvantage).toBeCloseTo(0.02, 12);
+    expect(result.cases[0].objectiveComparison?.relativeAdvantage).toBeCloseTo(0.002, 12);
+    expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "objective-comparison",
+      candidateValue: 10.02,
+      referenceValue: 10,
+      objectiveProfile: "balanced",
+      objectiveWeights: { gold: 0.5, battleRecord: 0.5, lmd: 0 },
+      objectiveProvenance: "exact-window-facility-normal-mechanics-evaluation",
+      tolerance: { type: "relative", value: 0.001, zeroExpectedAbsolute: 0 }
+    }));
+
+    const rejected = objectiveSuperiorObservation();
+    rejected.metadata.region = "CN";
+    const rejectedResult = runOptimizerBenchmarkBatch([objectiveSuperiorFixture()], { "runner-case": rejected });
+    expect(rejectedResult.cases[0]).toMatchObject({ status: "failed" });
+    expect(rejectedResult.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: "metadata/runtime-data-provenance/region", severity: "error"
+    }));
+    expect(rejectedResult.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+      path: expect.stringMatching(/^calculation\/resource-values\//), severity: "error"
+    }));
+  });
+
+  describe("strict output-equivalent acceptance", () => {
+    function outputEquivalentObservation(
+      evidence: NonNullable<BenchmarkObservation["planEvidence"]> = completePlanEvidence()
+    ): BenchmarkObservation {
+      const fixture = strictSyntheticFixture();
+      const actual = savedReferenceObservation(fixture);
+      const firstShift = actual.rotation!.shifts[0];
+      const firstFacilityId = Object.keys(firstShift.assignments)[0];
+      firstShift.assignments[firstFacilityId] = [
+        fixture.roster.mode === "explicit" ? fixture.roster.operatorIds.at(-1)! : "synthetic-alternative",
+        ...firstShift.assignments[firstFacilityId].slice(1)
+      ];
+      return { ...actual, resources: { ...fixture.expected.output }, planEvidence: evidence };
+    }
+
+    it("accepts only a mechanically complete within-tolerance composition mismatch as output-equivalent", () => {
+      const fixture = strictSyntheticFixture();
+      const result = runOptimizerBenchmarkBatch([fixture], {
+        "runner-case": outputEquivalentObservation()
+      });
+
+      expect(result.cases[0]).toMatchObject({
+        status: "passed",
+        matchedComposition: "output-equivalent",
+        acceptanceMode: "output-equivalent",
+        searchProofStatus: "not-certified"
+      });
+      expect(result.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+        path: "composition/search/proof-status",
+        severity: "info",
+        actual: "not-certified"
+      }));
+    });
+
+    it.each([
+      ["production window", (e: ReturnType<typeof completePlanEvidence>) => { e.production.completedWindowIds = []; }],
+      ["support scenario", (e: ReturnType<typeof completePlanEvidence>) => { e.supportResourceScenario!.complete = false; }],
+      ["support source", (e: ReturnType<typeof completePlanEvidence>) => { e.supportResourceScenario!.resolvedSourceIds = []; }],
+      ["fixed source evidence", (e: ReturnType<typeof completePlanEvidence>) => { e.supportResourceScenario!.fixedSourceEvidenceSourceIds = []; }],
+      ["resources", (e: ReturnType<typeof completePlanEvidence>) => { e.resourceEvaluation.status = "incomplete"; }],
+      ["operator conflict", (e: ReturnType<typeof completePlanEvidence>) => {
+        e.simultaneousOperatorConflicts = [{ shiftId: "day", operatorId: "x" }];
+      }]
+    ])("rejects equal totals with incomplete %s evidence", (_name, mutate) => {
+      const evidence = completePlanEvidence();
+      mutate(evidence);
+      const result = runOptimizerBenchmarkBatch([strictSyntheticFixture()], {
+        "runner-case": outputEquivalentObservation(evidence)
+      });
+      expect(result.cases[0]).toMatchObject({ status: "failed" });
+      expect(result.cases[0].matchedComposition).toBeUndefined();
+    });
+
+    it("uses the fixture relative tolerance and never turns output equivalence into certified optimality", () => {
+      const fixture = strictSyntheticFixture();
+      const resourceName = Object.keys(fixture.expected.output)[0] as keyof typeof fixture.expected.output;
+      const expectedValue = fixture.expected.output[resourceName]!;
+      const within = outputEquivalentObservation();
+      within.resources = { ...fixture.expected.output, [resourceName]: expectedValue * 1.001 };
+      const outside = outputEquivalentObservation();
+      outside.resources = { ...fixture.expected.output, [resourceName]: expectedValue * 1.001001 };
+
+      const accepted = runOptimizerBenchmarkBatch([fixture], { "runner-case": within });
+      const rejected = runOptimizerBenchmarkBatch([fixture], { "runner-case": outside });
+      expect(accepted.cases[0]).toMatchObject({ status: "passed", matchedComposition: "output-equivalent" });
+      expect(accepted.cases[0].searchProofStatus).toBe("not-certified");
+      expect(rejected.cases[0]).toMatchObject({
+        status: "failed"
+      });
+      expect(rejected.cases[0].diagnostics).toContainEqual(expect.objectContaining({
+        path: `calculation/resource-values/${resourceName}`,
+        severity: "error",
+        appliedTolerance: { type: "relative", value: 0.001 }
+      }));
+    });
+
+    it.each([
+      ["region", (o: BenchmarkObservation) => { o.metadata.region = "CN"; }],
+      ["capacity", (o: BenchmarkObservation) => { o.planEvidence!.production.actualFacilityOperators[0].operatorIds = ["x"]; }],
+      ["search completion", (o: BenchmarkObservation) => { o.planEvidence!.search.completion = "unknown"; }],
+      ["calculation", (o: BenchmarkObservation) => { o.resources = { lmd: 99 }; }]
+    ])("does not downgrade %s errors", (_name, mutate) => {
+      const actual = outputEquivalentObservation();
+      mutate(actual);
+      const result = runOptimizerBenchmarkBatch([strictSyntheticFixture()], { "runner-case": actual });
+      expect(result.cases[0].status).toBe("failed");
+      expect(result.cases[0].matchedComposition).toBeUndefined();
+    });
+  });
+
   it("passes an exact observation and compares operator sets independent of order", () => {
     const result = runOptimizerBenchmarkBatch([resourceFixture("JP")], { "runner-case": observation("JP") });
 

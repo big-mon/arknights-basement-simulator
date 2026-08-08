@@ -2,7 +2,7 @@ import operatorsData from "../data/operators.json";
 import { operatorAvailabilitySnapshot } from "./operatorAvailability";
 import { calculateCanonicalSha256 } from "./phase1AssumptionBundle";
 import { scheduleEpsilonHours, validateSchedule } from "./schedule";
-import type { ScheduleState, SupportResourceScenarioInput } from "../types";
+import type { OptimizationPreference, ScheduleState, SupportResourceScenarioInput } from "../types";
 
 const PASS_FAIL_AUTHORITY_SHA256_BY_ID: Readonly<Record<string, string>> = {
   "jp-wikiru-backup38-12h-v2": "a9f1f69b2bceff6896cc2bdcfaa61b88d648548fb21729a9a3ec19afae96f8b5"
@@ -76,6 +76,15 @@ export const PHASE1_ALLOWED_ASSUMPTION_IDS = [
 ] as const;
 
 export type Phase1AllowedAssumptionId = (typeof PHASE1_ALLOWED_ASSUMPTION_IDS)[number];
+
+export type ResourceObjectiveProfile = Exclude<BenchmarkAssumptions["objectiveProfile"], "formula-only">;
+
+export const resourceObjectiveWeights: Readonly<Record<ResourceObjectiveProfile, Readonly<OptimizationPreference>>> =
+  Object.freeze({
+    balanced: Object.freeze({ gold: 0.5, battleRecord: 0.5, lmd: 0 }),
+    battleRecord: Object.freeze({ gold: 0, battleRecord: 1, lmd: 0 }),
+    lmd: Object.freeze({ gold: 0, battleRecord: 0, lmd: 1 })
+  });
 
 export interface FormulaBenchmark extends BenchmarkBase {
   kind: "formula";

@@ -37,3 +37,18 @@ Phase 1は実機イベント列の完全再現ではなく、固定入力から�
 
 ### Phase 1基準編成
 固定したWikiru backup 38の12時間variant。順序付き36時間全循環の先頭勤務枠を評価開始境界とし、先頭2枠を具体的な連続24時間評価窓として採用する。
+
+### Reference baseline
+同一のregion、roster、schedule、objective profile、scenario assumptionsで外部資料から得た、optimizer benchmarkの比較基準となるcompositionとresource output。optimizerが必ず再現すべき唯一解ではなく、production scoringへの入力にも使用しない。
+
+### Output-equivalent plan
+Reference baselineと異なるcompositionでも、対象resourceごとの出力がbenchmark tolerance内にあり、同一assumptionsを満たすplan。
+
+### Mechanically valid plan
+必要なproduction slot、operatorの同時重複、support facility capacity、window別support source、勤務・回復、resource observationがすべて完全かつ矛盾なく評価されたplan。不完全なevidenceや所有可能性だけに基づくsupport bonusはmechanical validityを満たさない。
+
+### Objective-superior plan
+Reference baselineと同一のobjective profileおよびassumptionsで評価され、mechanically validであり、authoritative objective valueがreference baselineを上回るplan。Global optimalityの証明を意味せず、探索がboundedなら`not-certified`のままとする。
+
+### Benchmark acceptance mode
+Benchmark caseが受理された理由。Phase 1では少なくとも`reference`、`output-equivalent`、`objective-superior`を区別し、各resourceの差分とsearch proof statusを失わない。

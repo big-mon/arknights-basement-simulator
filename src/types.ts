@@ -435,6 +435,8 @@ export interface Assignment {
   skillId: string;
   score: number;
   efficiency: number;
+  /** The assignment can become valuable only after team or fixed-resource context is known. */
+  contextSensitive?: boolean;
   storageLimit?: number;
   orderLimit?: number;
   tradingOrderEffects?: NonNullable<BaseSkillEffect["tradingOrderEffects"]>;
@@ -510,9 +512,24 @@ export interface WindowFacilityEfficiencyEvaluation {
   scheduleWindowId: string;
   facilityId: string;
   additiveEfficiency: number;
-  provenance: "optimizer-normal-team-reevaluation-with-resolved-support-context";
+  provenance:
+    | "optimizer-normal-team-reevaluation-with-schedule-aware-contiguous-work-and-resolved-support-context"
+    | "optimizer-normal-team-reevaluation-with-resolved-support-context";
   fixedResourceAmounts: Readonly<Record<string, number>>;
   fixedDormitoryOccupancy?: number;
+}
+
+/**
+ * Clone-safe provenance for schedule-aware output. Consumers may mutate a returned rotation, but
+ * must preserve this payload when copying it so the optimizer can normalize from the raw window.
+ */
+export interface ScheduleAwareRotationMaterialization {
+  version: 1;
+  contextFingerprint: string;
+  ambientContextFingerprint: string;
+  sourceFingerprint: string;
+  materializedWindowFingerprint: string;
+  sourceWindow: Omit<RotationWindow, "scheduleAwareMaterialization">;
 }
 
 export interface RotationWindow {
@@ -526,14 +543,137 @@ export interface RotationWindow {
   incompleteGroupIds: string[];
   assignments: Assignment[];
   recovery: Assignment[];
+  /** Authoritative raw input used to avoid compounding duration mechanics after structuredClone. */
+  scheduleAwareMaterialization?: ScheduleAwareRotationMaterialization;
 }
 
-export interface AssignmentPlanDiagnostic {
-  code: "schedule-group-unpopulated";
-  message: string;
-  groupId: string;
-  shiftId: string;
+export interface ScheduledSupportPlacement {
+  kind: "ordinary" | "fixed";
+  operatorId: string;
+  facilityId: string;
+  groupId?: string;
+  /** Exact half-open schedule windows in which this operator is working as support. */
+  scheduleWindowIds: readonly string[];
+  /** Exact schedule windows in which an ordinary supporter is materialized as recovering. */
+  recoveryWindowIds: readonly string[];
 }
+
+export type ScheduledSupportValidationIssueCode =
+  | "support-placement-not-materialized"
+  | "support-facility-capacity-exceeded"
+  | "support-operator-duplicated"
+  | "support-work-overlap"
+  | "support-work-recovery-overlap";
+
+export interface ScheduledSupportValidationIssue {
+  code: ScheduledSupportValidationIssueCode;
+  operatorId?: string;
+  facilityId?: string;
+  scheduleWindowIds: readonly string[];
+  message: string;
+}
+
+export type AssignmentPlanDiagnostic = {
+  groupId?: string;
+  shiftId?: string;
+} & (
+  | {
+      code: "schedule-group-unpopulated";
+      message: string;
+      groupId: string;
+      shiftId: string;
+    }
+  | {
+      code: "composition-search-infeasible";
+      message: string;
+      incompleteDimensionIds: readonly string[];
+    }
+  | {
+      code: "composition-search-not-certified";
+      message: string;
+      limitation: "candidate-generation-limited" | "prefrontier-limited" | "frontier-limited" |
+        "feasibility-budget-limited" | "optimization-budget-limited";
+      visitedStates: number;
+      discardedStates: number;
+      feasibilityVisitedStates: number;
+      feasibilityWorkBudget: number;
+      feasibilityBudgetExhausted: boolean;
+      optimizationVisitedStates: number;
+      optimizationWorkBudget: number;
+      optimizationBudgetExhausted: boolean;
+      candidateGenerationInputCount: number;
+      candidateGenerationConstructedCount: number;
+      candidateGenerationRetainedCount: number;
+    }
+  | {
+      code: "joint-support-search-not-certified";
+      message: string;
+      provenance: "bounded-joint-static-support-production-removal-proven";
+      initialAggregateScore: number;
+      bestProductionOnlyAggregateScore: number;
+      bestStaticOnlyAggregateScore: number;
+      aggregateScore: number;
+      initialSupportOperatorIds: readonly string[];
+      selectedSupportOperatorIds: readonly string[];
+      requirementSignatures: readonly string[];
+      rounds: number;
+      roundLimit: number;
+      work: number;
+      workLimit: number;
+      discardedOptions: number;
+      seedCount: number;
+      seedLimit: number;
+      discardedSeeds: number;
+      retainedRequirementSignatures: readonly string[];
+      startsEvaluated: number;
+      removalProofs: readonly {
+        supportOperatorId: string;
+        supportFacilityId: string;
+        productionFacilityId: string;
+        productionOperatorIds: readonly string[];
+        scheduleWindowId: string;
+        windowHours: number;
+        withSupportEfficiency: number;
+        withoutSupportEfficiency: number;
+      }[];
+    }
+  | {
+      code: "scheduled-support-profile";
+      message: string;
+      completion: "complete" | "incomplete";
+      provenance: "bounded-scheduled-support-materialization-not-certified";
+      supportPlacements: readonly Readonly<ScheduledSupportPlacement>[];
+      supportCapacityValidated: boolean;
+      supportRecoveryValidated: boolean;
+      issues: readonly Readonly<ScheduledSupportValidationIssue>[];
+    }
+  | {
+      code: "scheduled-support-materialization-not-certified";
+      message: string;
+      completion: "incomplete";
+      supportPlacements: readonly Readonly<ScheduledSupportPlacement>[];
+      supportCapacityValidated: boolean;
+      supportRecoveryValidated: boolean;
+      issues: readonly Readonly<ScheduledSupportValidationIssue>[];
+    }
+  | {
+      code: "schedule-group-search-profile";
+      message: string;
+      completion: "complete" | "infeasible" | "unknown";
+      dimensionIds: readonly string[];
+      groupIds: readonly string[];
+      optionCounts: Readonly<Record<string, number>>;
+      visitedStates: number;
+      discardedStates: number;
+      feasibilityVisitedStates: number;
+      feasibilityWorkBudget: number;
+      feasibilityBudgetExhausted: boolean;
+      optimizationVisitedStates: number;
+      optimizationWorkBudget: number;
+      optimizationBudgetExhausted: boolean;
+      incompleteDimensionIds: readonly string[];
+    }
+);
 
 export interface AssignmentPlan {
   generatedAt: string;
