@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { buildOperatorAvailabilitySnapshot } from "./operator-availability.mjs";
 
 const root = process.cwd();
@@ -81,7 +82,7 @@ function conditionLevelToNumber(level) {
   return Number.isFinite(numericLevel) ? Math.max(1, Math.trunc(numericLevel)) : 1;
 }
 
-function roomTypeToFacility(roomType) {
+export function roomTypeToFacility(roomType) {
   switch (String(roomType ?? "").toUpperCase()) {
     case "MANUFACTURE":
       return "factory";
@@ -95,6 +96,8 @@ function roomTypeToFacility(roomType) {
       return "dormitory";
     case "MEETING":
       return "reception";
+    case "HIRE":
+      return "office";
     default:
       return null;
   }
@@ -460,7 +463,7 @@ function inferBaseSkillFamilies(name) {
   return [];
 }
 
-function normalize(
+export function normalize(
   languages,
   nameOverrides,
   baseSkillOverrides,
@@ -489,6 +492,9 @@ function normalize(
 
           const facility = roomTypeToFacility(buff.roomType);
           if (!facility) return null;
+          if (facility === "office" && !baseSkillOverrides?.[charId]?.skills?.[rawBuff.buffId]) {
+            return null;
+          }
 
           const description = cleanDescription(buff.description);
           const localizedBuffName = localizedText(
@@ -830,33 +836,39 @@ function annotateTimeCurve(effect) {
   return effect;
 }
 
-const languages = Object.fromEntries(
-  await Promise.all(
-    Object.entries(sources).map(async ([language, languageSources]) => [
-      language,
-      {
-        characters: await fetchJson(languageSources.characters),
-        building: await fetchJson(languageSources.building)
-      }
-    ])
-  )
-);
-const operators = normalize(
-  languages,
-  await loadNameOverrides(),
-  await loadBaseSkillOverrides(),
-  await loadBaseSkillLocalizationOverrides(),
-  await loadBaseSkillLocalizationFallbacks()
-);
-const availabilitySnapshot = buildOperatorAvailabilitySnapshot({
-  regions: {
-    JP: { characterTable: languages.ja.characters, source: sources.ja.availabilitySource },
-    CN: { characterTable: languages.zh.characters, source: sources.zh.availabilitySource }
-  }
-});
+async function main() {
+  const languages = Object.fromEntries(
+    await Promise.all(
+      Object.entries(sources).map(async ([language, languageSources]) => [
+        language,
+        {
+          characters: await fetchJson(languageSources.characters),
+          building: await fetchJson(languageSources.building)
+        }
+      ])
+    )
+  );
+  const operators = normalize(
+    languages,
+    await loadNameOverrides(),
+    await loadBaseSkillOverrides(),
+    await loadBaseSkillLocalizationOverrides(),
+    await loadBaseSkillLocalizationFallbacks()
+  );
+  const availabilitySnapshot = buildOperatorAvailabilitySnapshot({
+    regions: {
+      JP: { characterTable: languages.ja.characters, source: sources.ja.availabilitySource },
+      CN: { characterTable: languages.zh.characters, source: sources.zh.availabilitySource }
+    }
+  });
 
-await mkdir(path.dirname(outputPath), { recursive: true });
-await writeFile(outputPath, `${JSON.stringify(operators, null, 2)}\n`, "utf8");
-await writeFile(availabilityOutputPath, `${JSON.stringify(availabilitySnapshot, null, 2)}\n`, "utf8");
-console.log(`Imported ${operators.length} operators into ${outputPath}`);
-console.log(`Imported regional availability into ${availabilityOutputPath}`);
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, `${JSON.stringify(operators, null, 2)}\n`, "utf8");
+  await writeFile(availabilityOutputPath, `${JSON.stringify(availabilitySnapshot, null, 2)}\n`, "utf8");
+  console.log(`Imported ${operators.length} operators into ${outputPath}`);
+  console.log(`Imported regional availability into ${availabilityOutputPath}`);
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  await main();
+}

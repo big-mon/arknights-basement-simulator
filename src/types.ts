@@ -3,6 +3,8 @@ import type { PlanSustainabilityEvaluation } from "./lib/planSustainabilityTypes
 
 export type FacilityType = "factory" | "trading" | "power" | "control" | "dormitory" | "reception";
 
+export type SupportFacilityType = FacilityType | "office";
+
 export type ProductType = "gold" | "battleRecord" | "originium" | "lmd" | "power" | "morale" | "clue";
 
 export type BaseSkillFamily = "rhineTech" | "pinusSylvestris" | "standardization" | "metalwork";
@@ -95,7 +97,8 @@ export interface BaseSkillEffect {
       | "dormitoryOccupancy"
       | "skillFamily"
       | "facilityStorageLimit"
-      | "facilityOrderLimit";
+      | "facilityOrderLimit"
+      | "facilityRecruitmentSlots";
     affiliations?: string[];
     facility?: FacilityType;
     product?: ProductType;
@@ -107,6 +110,7 @@ export interface BaseSkillEffect {
     max?: number;
     min?: number;
     scope?: "base" | "facility" | "sameFacility";
+    excludedInitialSlots?: number;
   };
   globalEffect?: {
     facility: FacilityType;
@@ -262,6 +266,134 @@ export interface AppState {
   preference: OptimizationPreference;
 }
 
+interface SupportFacilityMetadata {
+  id: string;
+  type: SupportFacilityType;
+  level: number;
+  /** One-based slot number within the declared facility capacity. */
+  slot: number;
+  capacity: number;
+}
+
+export interface AppStateBackedSupportFacility extends SupportFacilityMetadata {
+  backing: "app-state";
+}
+
+export interface FixedNormalizedTheoreticalSupportFacility extends SupportFacilityMetadata {
+  backing: "fixed-normalized-theoretical";
+  provenance: {
+    source: string;
+    detail: string;
+  };
+  assumptions: string[];
+  simplifications: string[];
+}
+
+export type SupportFacility = AppStateBackedSupportFacility | FixedNormalizedTheoreticalSupportFacility;
+
+export interface SupportResourceSource {
+  id: string;
+  scheduleWindowId: string;
+  operatorId: string;
+  region: AppRegion;
+  facility: SupportFacility;
+  resourceKey: string;
+  amount: number;
+  provenance: {
+    source: string;
+    detail: string;
+  };
+  assumptions: string[];
+  simplifications: string[];
+}
+
+export interface SupportResourceScenarioInput {
+  sources: SupportResourceSource[];
+  fixedContext?: {
+    dormitoryOccupancy: FixedNormalizedTheoreticalSupportContext;
+  };
+}
+
+export interface FixedNormalizedTheoreticalSupportContext {
+  backing: "fixed-normalized-theoretical";
+  amount: number;
+  provenance: {
+    source: string;
+    detail: string;
+  };
+  assumptions: string[];
+  simplifications: string[];
+}
+
+export interface GenerateAssignmentPlanOptions {
+  supportResourceScenario?: SupportResourceScenarioInput;
+}
+
+export type SupportResourceDiagnosticCode =
+  | "source-id-duplicate"
+  | "schedule-window-not-found"
+  | "source-operator-not-found"
+  | "source-operator-unowned"
+  | "source-operator-region-unavailable"
+  | "source-operator-facility-ineligible"
+  | "source-region-mismatch"
+  | "source-fixed-facility-invalid"
+  | "source-facility-not-found"
+  | "source-facility-mismatch"
+  | "source-facility-slot-out-of-range"
+  | "source-facility-slot-conflict"
+  | "source-facility-capacity-conflict"
+  | "source-operator-reservation-conflict"
+  | "source-operator-conflict"
+  | "source-amount-invalid";
+
+export interface SupportResourceDiagnostic {
+  code: SupportResourceDiagnosticCode;
+  sourceId: string;
+  scheduleWindowId: string;
+  message: string;
+  conflictingSourceId?: string;
+  conflictingFacilityId?: string;
+}
+
+export interface SupportResourceReservation {
+  scheduleWindowId: string;
+  operatorId: string;
+  facilityId: string;
+  facilityType: SupportFacilityType;
+  facilityLevel: number;
+  slot: number;
+  capacity: number;
+}
+
+export interface SupportResourceSourceEvidence {
+  source: SupportResourceSource;
+  status: "resolved" | "unresolved";
+  reservation?: SupportResourceReservation;
+  diagnostics: SupportResourceDiagnostic[];
+}
+
+export interface SupportResourceScenarioEvaluation {
+  complete: boolean;
+  sources: SupportResourceSourceEvidence[];
+  diagnostics: SupportResourceDiagnostic[];
+  fixedContext?: {
+    dormitoryOccupancy: SupportFixedContextEvidence;
+  };
+}
+
+export interface SupportFixedContextDiagnostic {
+  code: "fixed-context-amount-invalid";
+  contextKey: "dormitoryOccupancy";
+  message: string;
+}
+
+export interface SupportFixedContextEvidence {
+  context: FixedNormalizedTheoreticalSupportContext;
+  status: "resolved" | "unresolved";
+  diagnostics: SupportFixedContextDiagnostic[];
+}
+
 export interface RecoverySourceProvenance {
   operatorId: string;
   role: "recovery-source" | "required-helper";
@@ -374,6 +506,15 @@ export interface FacilityPlan {
   alternatives: Assignment[];
 }
 
+export interface WindowFacilityEfficiencyEvaluation {
+  scheduleWindowId: string;
+  facilityId: string;
+  additiveEfficiency: number;
+  provenance: "optimizer-normal-team-reevaluation-with-resolved-support-context";
+  fixedResourceAmounts: Readonly<Record<string, number>>;
+  fixedDormitoryOccupancy?: number;
+}
+
 export interface RotationWindow {
   label: string;
   hours: number;
@@ -405,4 +546,6 @@ export interface AssignmentPlan {
   resources: PlanResourceEvaluation;
   sustainability: PlanSustainabilityEvaluation;
   warnings: string[];
+  supportResourceScenario?: SupportResourceScenarioEvaluation;
+  windowFacilityEfficiencyEvaluations?: readonly Readonly<WindowFacilityEfficiencyEvaluation>[];
 }

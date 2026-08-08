@@ -1669,10 +1669,19 @@ describe("checked-in optimizer benchmark fixtures", () => {
     expect(glasgow?.ok && isPassFailEligible(glasgow.value)).toBe(false);
   });
 
-  it.each([
-    "jp-243-factory-3group-2025-11",
-    "cn-243-3shift-2026-06"
-  ])("keeps unverified composition fixture %s disputed and out of pass/fail eligibility", (id) => {
+  it("promotes the normalized-theoretical JP fixture to strict corroborated pass/fail eligibility", () => {
+    const id = "jp-243-factory-3group-2025-11";
+    const fixture = optimizerBenchmarkFixtures
+      .map(validateOptimizerBenchmark)
+      .find((result) => result.ok && result.value.id === id);
+
+    expect(fixture?.ok && fixture.value.confidence).toBe("corroborated");
+    expect(fixture?.ok && fixture.value.contractVersion).toBe("phase1-pass-fail-v1");
+    expect(fixture?.ok && isPassFailEligible(fixture.value)).toBe(true);
+  });
+
+  it("keeps the CN composition fixture disputed and out of pass/fail eligibility", () => {
+    const id = "cn-243-3shift-2026-06";
     const fixture = optimizerBenchmarkFixtures
       .map(validateOptimizerBenchmark)
       .find((result) => result.ok && result.value.id === id);
@@ -1901,36 +1910,163 @@ describe("checked-in optimizer benchmark fixtures", () => {
     expect(formula?.runtimeDataProvenance).toBeUndefined();
   });
 
-  it("promotes only the accepted Wikiru fixture to the strict pass/fail contract", () => {
+  it("promotes only the accepted Wikiru and normalized-theoretical JP fixtures to the strict pass/fail contract", () => {
     const fixtures = optimizerBenchmarkFixtures.map(validateOptimizerBenchmark);
 
     expect(fixtures.every((result) => result.ok)).toBe(true);
     expect(fixtures.flatMap((result) =>
       result.ok && isPassFailEligible(result.value) ? [result.value.id] : []
-    )).toEqual(["jp-wikiru-backup38-12h-v2"]);
+    ).sort()).toEqual(["jp-243-factory-3group-2025-11", "jp-wikiru-backup38-12h-v2"]);
   });
 
   it("identifies every JP factory occupant and keeps remote support outside factory slots", () => {
     const jp = optimizerBenchmarkFixtures.find((fixture: any) => fixture.id === "jp-243-factory-3group-2025-11") as any;
-    const assignments = jp.schedule.shifts.flatMap((shift: any) => Object.values(shift.assignments));
+    const assignments = jp.rotation.shifts.flatMap((shift: any) =>
+      Object.entries(shift.assignments)
+        .filter(([facilityId]) => facilityId.startsWith("factory-"))
+        .map(([, assignment]) => assignment)
+    ) as any[];
 
-    expect(jp.schedule).toMatchObject({
+    expect(jp.rotation).toMatchObject({
       cycleHours: 36,
-      groups: [{ id: "A" }, { id: "B" }, { id: "C" }],
+      workerGroupCount: 3,
       shifts: [
-        { id: "groups-a-b", startHour: 0, endHour: 12, activeGroupIds: ["A", "B"], recoveryGroupIds: ["C"] },
-        { id: "groups-b-c", startHour: 12, endHour: 24, activeGroupIds: ["B", "C"], recoveryGroupIds: ["A"] },
-        { id: "groups-c-a", startHour: 24, endHour: 36, activeGroupIds: ["C", "A"], recoveryGroupIds: ["B"] }
+        { id: "groups-a-b", durationHours: 12, workerGroupIds: ["group-a", "group-b"] },
+        { id: "groups-b-c", durationHours: 12, workerGroupIds: ["group-b", "group-c"] },
+        { id: "groups-c-a", durationHours: 12, workerGroupIds: ["group-c", "group-a"] }
       ]
     });
 
     expect(assignments.every((assignment: any) => assignment.operatorIds?.length === 3)).toBe(true);
-    expect(assignments.flatMap((assignment: any) => assignment.remoteSupport?.operatorIds ?? [])).toEqual(
-      expect.arrayContaining(["char_4098_vvana", "char_420_flamtl"])
+    expect(assignments.every((assignment: any) =>
+      (assignment.remoteSupport?.operatorIds ?? []).every(
+        (operatorId: string) => !assignment.operatorIds.includes(operatorId)
+      )
+    )).toBe(true);
+    const ordinarySupport = jp.supportResourceScenario.sources.filter(
+      (source: any) => source.resourceKey === "ordinarySupportPlacement"
     );
-    expect(assignments.flatMap((assignment: any) => assignment.remoteSupport?.unresolved ?? [])).toEqual(
-      expect.arrayContaining([expect.objectContaining({ sourceName: "ウィスパーレイン" })])
+    expect(ordinarySupport.map((source: any) => source.operatorId)).toEqual(
+      expect.arrayContaining(["char_1027_greyy2", "char_4098_vvana", "char_420_flamtl"])
     );
+    expect(ordinarySupport.every((source: any) =>
+      jp.roster.operatorIds.includes(source.operatorId) &&
+      operatorAvailabilitySnapshot.regions.JP.operatorIds.includes(source.operatorId)
+    )).toBe(true);
+    expect(assignments.flatMap((assignment: any) => assignment.remoteSupport?.unresolved ?? [])).toEqual([]);
+    expect(jp.compositionEvidence).toEqual({
+      status: "comparable",
+      sourceOnlyOperators: [],
+      conflicts: [],
+      disputedAssignments: []
+    });
+    expect(jp.roster).toEqual({ mode: "explicit", operatorIds: jp.rotation.fullCycleOperatorIds });
+    expect(jp.rotation.facilities).toHaveLength(12);
+    expect(jp.rotation.shifts.every((shift: any) => Object.keys(shift.assignments).length === 12)).toBe(true);
+    expect(jp.rotation.shifts.every((shift: any) => shift.operatorStates.length === 51)).toBe(true);
+    expect(jp.evaluationWindow.shiftIds).toEqual(["groups-a-b", "groups-b-c"]);
+    expect(jp.expected.output.goldProduced).toBe(
+      jp.rotation.shifts[0].resources.goldProduced + jp.rotation.shifts[1].resources.goldProduced
+    );
+    expect(jp.expected.output.battleRecordExp).toBe(
+      jp.rotation.shifts[0].resources.battleRecordExp + jp.rotation.shifts[1].resources.battleRecordExp
+    );
+    expect(jp.expected.output.goldProduced).not.toBe(
+      jp.rotation.shifts.reduce((sum: number, shift: any) => sum + shift.resources.goldProduced, 0)
+    );
+    expect(jp.supportResourceScenario.fixedContext).toMatchObject({
+      dormitoryOccupancy: { backing: "fixed-normalized-theoretical", amount: 20 }
+    });
+    expect(jp.supportResourceScenario.sources).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        scheduleWindowId: "groups-a-b",
+        operatorId: "char_436_whispr",
+        region: "JP",
+        facility: expect.objectContaining({ backing: "fixed-normalized-theoretical", id: "office-1" }),
+        resourceKey: "perceptionInfo",
+        amount: 20
+      }),
+      expect.objectContaining({
+        scheduleWindowId: "groups-b-c",
+        operatorId: "char_2015_dusk",
+        region: "JP",
+        facility: expect.objectContaining({ backing: "app-state", id: "control-1" }),
+        resourceKey: "perceptionInfo",
+        amount: 10
+      })
+    ]));
+    expect(jp.expected.tolerance).toEqual({ type: "relative", value: 0.001, zeroExpectedAbsolute: 0 });
+  });
+
+  it("rejects malformed normalized-theoretical support scenarios deterministically", () => {
+    const jp = structuredClone(optimizerBenchmarkFixtures.find(
+      (fixture: any) => fixture.id === "jp-243-factory-3group-2025-11"
+    )) as any;
+    jp.supportResourceScenario = {
+      sources: [{
+        id: "duplicate",
+        scheduleWindowId: "missing-window",
+        operatorId: "char_436_whispr",
+        region: "CN",
+        facility: {
+          backing: "fixed-normalized-theoretical",
+          id: "office-1",
+          type: "office",
+          level: 2,
+          slot: 1,
+          capacity: 1,
+          provenance: { source: "", detail: "" },
+          assumptions: []
+        },
+        resourceKey: "perceptionInfo",
+        amount: 20,
+        provenance: { source: "", detail: "" },
+        assumptions: [],
+        simplifications: []
+      }, {
+        id: "duplicate",
+        scheduleWindowId: "groups-a-b",
+        operatorId: "char_2015_dusk",
+        region: "JP",
+        facility: {
+          backing: "app-state",
+          id: "control-1",
+          type: "control",
+          level: 5,
+          slot: 1,
+          capacity: 5
+        },
+        resourceKey: "perceptionInfo",
+        amount: 10,
+        provenance: { source: "ok", detail: "ok" },
+        assumptions: ["ok"],
+        simplifications: ["ok"]
+      }],
+      fixedContext: {
+        dormitoryOccupancy: {
+          backing: "fixed-normalized-theoretical",
+          amount: -1,
+          provenance: { source: "", detail: "" },
+          assumptions: [],
+          simplifications: []
+        }
+      }
+    };
+
+    const first = validateOptimizerBenchmark(jp);
+    const second = validateOptimizerBenchmark(jp);
+    expect(first).toEqual(second);
+    expect(first).toEqual(expect.objectContaining({ ok: false }));
+    if (first.ok) throw new Error("malformed fixture unexpectedly validated");
+    expect(first.errors).toEqual(expect.arrayContaining([
+      expect.stringContaining("scheduleWindowId must name a fixture schedule window"),
+      expect.stringContaining("region must equal fixture region JP"),
+      expect.stringContaining("id must be unique"),
+      expect.stringContaining("provenance.source must be a non-empty string"),
+      expect.stringContaining("assumptions must contain at least one non-empty string"),
+      expect.stringContaining("simplifications must contain at least one non-empty string"),
+      expect.stringContaining("amount must be a finite non-negative integer")
+    ]));
   });
 
   it("records the CN source-only IDs and timing/duplicate-assignment disputes machine-readably", () => {

@@ -38,7 +38,9 @@ describe("checked-in operator availability snapshot", () => {
   it("keeps the pinned JP and CN availability sets separate", () => {
     expect(availableOperatorIds(operatorAvailabilitySnapshot, "JP")).toHaveLength(405);
     expect(availableOperatorIds(operatorAvailabilitySnapshot, "CN")).toHaveLength(425);
-    expect(availableOperators(operatorAvailabilitySnapshot, "JP", operators)).toHaveLength(314);
+    expect(availableOperators(operatorAvailabilitySnapshot, "JP", operators)).toHaveLength(315);
+    expect(isOperatorAvailable(operatorAvailabilitySnapshot, "JP", "char_436_whispr")).toBe(true);
+    expect(isOperatorAvailable(operatorAvailabilitySnapshot, "CN", "char_436_whispr")).toBe(true);
   });
 
   it("intersects authoritative availability with the supplied modeled operators", () => {
@@ -52,7 +54,7 @@ describe("checked-in operator availability snapshot", () => {
     ]);
   });
 
-  it.each(["char_2014_nian", "char_436_whispr", "char_473_mberry"])(
+  it.each(["char_2014_nian", "char_473_mberry"])(
     "includes source-authoritative JP operator %s even when absent from the optimizer catalog",
     (operatorId) => {
       expect(catalogOperatorIds).not.toContain(operatorId);

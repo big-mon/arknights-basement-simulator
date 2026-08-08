@@ -1,4 +1,46 @@
 {
+  "char_436_whispr": {
+    "skills": {
+      "hire_spd_bd_n1_n1[100]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "resourceEffects": [
+                {
+                  "resource": "memoryFragments",
+                  "amount": 10,
+                  "scaling": {
+                    "type": "facilityRecruitmentSlots",
+                    "excludedInitialSlots": 1
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "hire_spd_bd_n1[000]": {
+        "effects": [
+          {
+            "index": 0,
+            "patch": {
+              "resourceEffects": [
+                {
+                  "resource": "perceptionInfo",
+                  "amount": 1,
+                  "scaling": {
+                    "type": "resource",
+                    "resource": "memoryFragments"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
   "char_225_haak": {
     "skills": {
       "control_clue_cost[000]": {
@@ -83,6 +125,12 @@
               "scaling": {
                 "type": "fixed",
                 "count": 1
+              },
+              "timeCurve": {
+                "initialEfficiency": 0,
+                "efficiencyPerHour": 0.02,
+                "maxEfficiency": 0.2,
+                "startsAfterFirstHour": true
               }
             }
           }

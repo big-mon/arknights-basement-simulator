@@ -7,9 +7,19 @@ import { optimizerBenchmarkFixtures } from "../data/optimizer-benchmarks";
 import { averageEffectEfficiency, averageMoraleCurveEfficiency, generateAssignmentPlan } from "./optimizer";
 import { operatorAvailabilitySnapshot } from "./operatorAvailability";
 import { calculateCanonicalSha256 } from "./phase1AssumptionBundle";
+import { effectiveBenchmarkScheduleAuthority, validateOptimizerBenchmark } from "./optimizerBenchmark";
 import { createIssue27CurrentObservations, createIssue27OptimizerObservation } from "./optimizerIssue27Audit";
 import { formatOptimizerBenchmarkBatchResult, runOptimizerBenchmarkBatch } from "./optimizerBenchmarkRunner";
+import { evaluateReferenceCompositionDiagnostic } from "./optimizerReferenceDiagnostic";
 import type { BenchmarkObservationMap, OptimizerBenchmarkBatchResult } from "./optimizerBenchmarkRunner";
+
+function validatedJpFactoryFixture() {
+  const validated = validateOptimizerBenchmark(jpFactory);
+  if (!validated.ok || validated.value.kind !== "resource-output") {
+    throw new Error(validated.ok ? "wrong fixture kind" : validated.errors.join("\n"));
+  }
+  return validated.value;
+}
 
 describe("Issue #27 current-implementation audit", () => {
   let observations: BenchmarkObservationMap;
@@ -17,13 +27,18 @@ describe("Issue #27 current-implementation audit", () => {
 
   beforeAll(() => {
     observations = createIssue27CurrentObservations();
-    result = runOptimizerBenchmarkBatch(optimizerBenchmarkFixtures, observations);
+    const diagnostic = evaluateReferenceCompositionDiagnostic(validatedJpFactoryFixture());
+    if (diagnostic.status !== "complete") throw new Error(JSON.stringify(diagnostic.diagnostics));
+    result = runOptimizerBenchmarkBatch(optimizerBenchmarkFixtures, {
+      ...observations,
+      "jp-243-factory-3group-2025-11": diagnostic.observation
+    });
   });
 
   it("reports every checked-in fixture with deterministic gating diagnostics", () => {
     expect(formatOptimizerBenchmarkBatchResult(result)).toBe([
-      "optimizer benchmarks: FAILED (passed=0 failed=1 not-run=0 non-gating=4 invalid=0)",
-      "NON-GATING jp-243-factory-3group-2025-11",
+      "optimizer benchmarks: FAILED (passed=1 failed=1 not-run=0 non-gating=3 invalid=0)",
+      "PASS jp-243-factory-3group-2025-11",
       "NON-GATING jp-glasgow-trading-125",
       "NON-GATING cn-243-3shift-2026-06",
       "NON-GATING base-mechanics-2026-07",
@@ -57,7 +72,12 @@ describe("Issue #27 current-implementation audit", () => {
   });
 
   it("derives the accepted Wikiru schedule while leaving composition search unresolved", () => {
-    expect(jpFactory.schedule.shifts).toHaveLength(3);
+    const jpScheduleAuthority = effectiveBenchmarkScheduleAuthority(validatedJpFactoryFixture());
+    expect(jpScheduleAuthority.status).toBe("complete");
+    if (jpScheduleAuthority.status !== "complete") {
+      throw new Error(jpScheduleAuthority.errors.join("\n"));
+    }
+    expect(jpScheduleAuthority.schedule.shifts).toHaveLength(3);
     expect(cnFullBase.schedule.shifts).toHaveLength(3);
     expect(observations["jp-243-factory-3group-2025-11"]?.rotation).toMatchObject({
       cycleHours: 36,
@@ -149,13 +169,16 @@ describe("Issue #27 current-implementation audit", () => {
 
   it("keeps disputed and formula-only references diagnostic while the accepted contract gates", () => {
     for (const id of [
-      "jp-243-factory-3group-2025-11",
       "jp-glasgow-trading-125",
       "cn-243-3shift-2026-06",
       "base-mechanics-2026-07"
     ]) {
       expect(result.cases.find((item) => item.id === id)).toMatchObject({ status: "non-gating", gating: false });
     }
+    expect(result.cases.find((item) => item.id === "jp-243-factory-3group-2025-11")).toMatchObject({
+      status: "passed",
+      gating: true
+    });
     expect(result.cases.find((item) => item.id === "jp-wikiru-backup38-12h-v2")).toMatchObject({
       status: "failed",
       gating: true,
@@ -250,7 +273,8 @@ describe("Issue #27 current-implementation audit", () => {
     expect(glasgow?.planSustainability).toMatchObject({ status: "evaluated" });
     expect(jp?.planSustainability).toMatchObject({ status: "incomplete" });
     expect(cn?.planSustainability).toMatchObject({ status: "incomplete" });
-    expect(result.cases.find((item) => item.id === "jp-243-factory-3group-2025-11")?.diagnostics).toContainEqual(
+    const currentResult = runOptimizerBenchmarkBatch(optimizerBenchmarkFixtures, observations);
+    expect(currentResult.cases.find((item) => item.id === "jp-243-factory-3group-2025-11")?.diagnostics).toContainEqual(
       expect.objectContaining({
         code: "plan-resources-incomplete",
         path: expect.stringMatching(/^sustainable-cycle\/incomplete\//)

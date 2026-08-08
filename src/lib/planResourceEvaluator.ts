@@ -3,7 +3,9 @@ import type {
   FacilityPlan,
   FacilitySlot,
   RotationWindow,
-  ScheduleState
+  ScheduleState,
+  SupportResourceScenarioEvaluation,
+  WindowFacilityEfficiencyEvaluation
 } from "../types";
 import { simulateFacilityProduction } from "./facilityProduction";
 import {
@@ -19,6 +21,7 @@ import type {
   PlanResourceAssumptions,
   PlanResourceEvaluation,
   PlanResourceMissingReason,
+  PlanResourceEvidence,
   PlanWindowResourceResult
 } from "./planResourceTypes";
 
@@ -37,6 +40,8 @@ export interface PlanResourceEvaluationInput {
   schedule: ScheduleState;
   facilityPlans: readonly FacilityPlan[];
   rotation: readonly RotationWindow[];
+  supportResourceScenario?: SupportResourceScenarioEvaluation;
+  windowFacilityEfficiencyEvaluations?: readonly Readonly<WindowFacilityEfficiencyEvaluation>[];
 }
 
 const assumptions = Object.freeze<PlanResourceAssumptions>({
@@ -57,8 +62,18 @@ function missingReason(reason: PlanResourceMissingReason): Readonly<PlanResource
   return Object.freeze({ ...reason });
 }
 
-function evaluatedEfficiency(plan: FacilityPlan, groupIndex: number): number | undefined {
-  return groupIndex === 0 ? plan.expectedEfficiency : plan.alternativeExpectedEfficiency;
+function evaluatedEfficiency(
+  input: PlanResourceEvaluationInput,
+  plan: FacilityPlan,
+  groupIndex: number,
+  scheduleWindowId: string
+): { value: number | undefined; evidence?: WindowFacilityEfficiencyEvaluation } {
+  const windowEvaluation = input.windowFacilityEfficiencyEvaluations?.find(
+    (evaluation) => evaluation.scheduleWindowId === scheduleWindowId && evaluation.facilityId === plan.facility.id
+  );
+  return windowEvaluation
+    ? { value: windowEvaluation.additiveEfficiency, evidence: windowEvaluation }
+    : { value: groupIndex === 0 ? plan.expectedEfficiency : plan.alternativeExpectedEfficiency };
 }
 
 function assignmentsForFacility(window: RotationWindow, facilityId: string): Assignment[] {
@@ -87,8 +102,52 @@ function freezeWindow(result: PlanWindowResourceResult): Readonly<PlanWindowReso
     activeGroupIds: Object.freeze([...result.activeGroupIds]),
     facilities: Object.freeze(result.facilities.map((facility) => Object.freeze({
       ...facility,
-      operatorIds: Object.freeze([...facility.operatorIds])
+      operatorIds: Object.freeze([...facility.operatorIds]),
+      ...(facility.efficiencyEvaluation
+        ? {
+            efficiencyEvaluation: Object.freeze({
+              ...facility.efficiencyEvaluation,
+              fixedResourceAmounts: Object.freeze({ ...facility.efficiencyEvaluation.fixedResourceAmounts })
+            })
+          }
+        : {})
     })))
+  });
+}
+
+function supportEvidence(scenario: SupportResourceScenarioEvaluation | undefined): Readonly<PlanResourceEvidence> | undefined {
+  if (!scenario?.complete) return undefined;
+  const fixedSources = scenario.sources
+    .filter((source) => source.status === "resolved")
+    .map(({ source }) => Object.freeze({
+      sourceId: source.id,
+      scheduleWindowId: source.scheduleWindowId,
+      operatorId: source.operatorId,
+      facilityId: source.facility.id,
+      facilityType: source.facility.type,
+      facilityLevel: source.facility.level,
+      facilitySlot: source.facility.slot,
+      facilityCapacity: source.facility.capacity,
+      resourceKey: source.resourceKey,
+      amount: source.amount,
+      provenance: Object.freeze({ ...source.provenance }),
+      assumptions: Object.freeze([...source.assumptions]),
+      simplifications: Object.freeze([...source.simplifications])
+    }))
+    .sort((left, right) => left.sourceId < right.sourceId ? -1 : left.sourceId > right.sourceId ? 1 : 0);
+  const dormitoryOccupancy = scenario.fixedContext?.dormitoryOccupancy;
+  const fixedContexts = dormitoryOccupancy?.status === "resolved"
+    ? [Object.freeze({
+        contextKey: "dormitoryOccupancy" as const,
+        amount: dormitoryOccupancy.context.amount,
+        provenance: Object.freeze({ ...dormitoryOccupancy.context.provenance }),
+        assumptions: Object.freeze([...dormitoryOccupancy.context.assumptions]),
+        simplifications: Object.freeze([...dormitoryOccupancy.context.simplifications])
+      })]
+    : [];
+  return Object.freeze({
+    fixedSources: Object.freeze(fixedSources),
+    fixedContexts: Object.freeze(fixedContexts)
   });
 }
 
@@ -106,6 +165,33 @@ function evaluateInternal(input: PlanResourceEvaluationInput): PlanResourceEvalu
   const powerPlans = input.facilityPlans.filter((plan) => plan.facility.type === "power");
   const efficiencyHoursByFacility = new Map<string, number>();
   const powerEfficiencyHoursBySlot = new Map<string, number>();
+  const evidence = supportEvidence(input.supportResourceScenario);
+
+  for (const source of input.supportResourceScenario?.sources ?? []) {
+    if (source.status === "resolved") continue;
+    for (const diagnostic of source.diagnostics) {
+      missing.push(missingReason({
+        code: "support-resource-unresolved",
+        path: `support-resource-scenario/sources/${source.source.id}`,
+        message: diagnostic.message,
+        sourceId: source.source.id,
+        scheduleWindowId: source.source.scheduleWindowId,
+        diagnosticCode: diagnostic.code
+      }));
+    }
+  }
+  const fixedDormitoryOccupancy = input.supportResourceScenario?.fixedContext?.dormitoryOccupancy;
+  if (fixedDormitoryOccupancy?.status === "unresolved") {
+    for (const diagnostic of fixedDormitoryOccupancy.diagnostics) {
+      missing.push(missingReason({
+        code: "support-fixed-context-unresolved",
+        path: "support-resource-scenario/fixed-context/dormitory-occupancy",
+        message: diagnostic.message,
+        contextKey: "dormitoryOccupancy",
+        diagnosticCode: diagnostic.code
+      }));
+    }
+  }
 
   for (const shift of input.schedule.shifts) {
     const window = windowByShiftId.get(shift.id);
@@ -138,7 +224,12 @@ function evaluateInternal(input: PlanResourceEvaluationInput): PlanResourceEvalu
       }));
       continue;
     }
-    if (shift.activeGroupIds.length !== 1) {
+    const hasExplicitWindowEvaluation = [...directPlans, ...powerPlans].every((plan) =>
+      input.windowFacilityEfficiencyEvaluations?.some(
+        (evaluation) => evaluation.scheduleWindowId === shift.id && evaluation.facilityId === plan.facility.id
+      )
+    );
+    if (shift.activeGroupIds.length !== 1 && !hasExplicitWindowEvaluation) {
       missing.push(missingReason({
         code: "schedule-active-groups-unresolved",
         path: `rotation/${shift.id}/active-groups`,
@@ -157,7 +248,7 @@ function evaluateInternal(input: PlanResourceEvaluationInput): PlanResourceEvalu
 
     const activeGroupId = shift.activeGroupIds[0];
     const selectedGroupIndex = groupIndex.get(activeGroupId);
-    if (selectedGroupIndex === undefined || selectedGroupIndex > 1) {
+    if (!hasExplicitWindowEvaluation && (selectedGroupIndex === undefined || selectedGroupIndex > 1)) {
       missing.push(missingReason({
         code: "schedule-group-unpopulated",
         path: `rotation/${shift.id}/groups/${activeGroupId}`,
@@ -177,9 +268,12 @@ function evaluateInternal(input: PlanResourceEvaluationInput): PlanResourceEvalu
     const durationHours = shift.endHour - shift.startHour;
     for (const plan of [...directPlans, ...powerPlans].sort((left, right) => left.facility.id.localeCompare(right.facility.id))) {
       const selectedAssignments = assignmentsForFacility(window, plan.facility.id);
-      const plannedAssignments = (selectedGroupIndex === 0 ? plan.assignments : plan.alternatives)
-        .filter((assignment) => assignment.facilityId === plan.facility.id);
-      const efficiency = evaluatedEfficiency(plan, selectedGroupIndex);
+      const plannedAssignments = hasExplicitWindowEvaluation
+        ? selectedAssignments
+        : (selectedGroupIndex === 0 ? plan.assignments : plan.alternatives)
+          .filter((assignment) => assignment.facilityId === plan.facility.id);
+      const efficiencyResult = evaluatedEfficiency(input, plan, selectedGroupIndex ?? 0, shift.id);
+      const efficiency = efficiencyResult.value;
       const path = `rotation/${shift.id}/facilities/${plan.facility.id}`;
       if (!sameAssignmentTeam(selectedAssignments, plannedAssignments)) {
         missing.push(missingReason({
@@ -275,6 +369,17 @@ function evaluateInternal(input: PlanResourceEvaluationInput): PlanResourceEvalu
             product: "lmd",
             operatorIds: selectedAssignments.map((assignment) => assignment.operatorId),
             additiveEfficiency: efficiency,
+            ...(efficiencyResult.evidence
+              ? {
+                  efficiencyEvaluation: {
+                    provenance: efficiencyResult.evidence.provenance,
+                    fixedResourceAmounts: efficiencyResult.evidence.fixedResourceAmounts,
+                    ...(efficiencyResult.evidence.fixedDormitoryOccupancy === undefined
+                      ? {}
+                      : { fixedDormitoryOccupancy: efficiencyResult.evidence.fixedDormitoryOccupancy })
+                  }
+                }
+              : {}),
             ledger: production.ledger
           });
         } else if (plan.facility.type === "factory" &&
@@ -298,6 +403,17 @@ function evaluateInternal(input: PlanResourceEvaluationInput): PlanResourceEvalu
             product,
             operatorIds: selectedAssignments.map((assignment) => assignment.operatorId),
             additiveEfficiency: efficiency,
+            ...(efficiencyResult.evidence
+              ? {
+                  efficiencyEvaluation: {
+                    provenance: efficiencyResult.evidence.provenance,
+                    fixedResourceAmounts: efficiencyResult.evidence.fixedResourceAmounts,
+                    ...(efficiencyResult.evidence.fixedDormitoryOccupancy === undefined
+                      ? {}
+                      : { fixedDormitoryOccupancy: efficiencyResult.evidence.fixedDormitoryOccupancy })
+                  }
+                }
+              : {}),
             ledger: production.ledger
           });
         }
@@ -325,7 +441,8 @@ function evaluateInternal(input: PlanResourceEvaluationInput): PlanResourceEvalu
       status: "incomplete",
       assumptions,
       windows: Object.freeze(windowResults),
-      missing: Object.freeze(missing)
+      missing: Object.freeze(missing),
+      ...(evidence ? { evidence } : {})
     });
   }
 
@@ -380,6 +497,7 @@ function evaluateInternal(input: PlanResourceEvaluationInput): PlanResourceEvalu
       assumptions,
       windows: Object.freeze(windowResults),
       missing: Object.freeze([]),
+      ...(evidence ? { evidence } : {}),
       drone,
       cycleLedger,
       per24Ledger
@@ -393,7 +511,8 @@ function evaluateInternal(input: PlanResourceEvaluationInput): PlanResourceEvalu
         code: "calculator-error",
         path: "drone-evaluation",
         message: calculatorMessage(error)
-      })])
+      })]),
+      ...(evidence ? { evidence } : {})
     });
   }
 }
