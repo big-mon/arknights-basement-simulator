@@ -31,11 +31,11 @@
 - Vitest
 - pnpm
 
-Node関連ツールはこのマシンでは `mise` 管理です。グローバルインストールは不要です。
+必要なパッケージマネージャーのバージョンは [`package.json`](./package.json) を参照してください。
 
 ## Getting Started
 
-```powershell
+```console
 pnpm install
 pnpm dev
 ```
@@ -44,7 +44,7 @@ pnpm dev
 
 ## Scripts
 
-```powershell
+```console
 pnpm dev
 pnpm test
 pnpm build
@@ -56,16 +56,13 @@ pnpm import:game-data
 
 ## Data Sources
 
-ゲームデータの取り込みには主に以下を利用しています。
+ゲームデータの取り込み元、ローカライズの優先順位、手動修正とフォールバックの扱いは [`src/data/localization-sources.md`](./src/data/localization-sources.md) を参照してください。
 
-- CN game data: `Kengxxiao/ArknightsGameData`
-- JP game data: `ArknightsAssets/ArknightsGamedata` (`jp/gamedata/excel`)
-- EN game data: `Kengxxiao/ArknightsGameData_YoStar`
-- Operator face icons: [`yuanyan3060/ArknightsGameResource`](https://github.com/yuanyan3060/ArknightsGameResource) (`avatar/`)
+オペレーターの顔アイコンは [`yuanyan3060/ArknightsGameResource`](https://github.com/yuanyan3060/ArknightsGameResource) の `avatar/` を利用しています。
 
 オペレーターの顔アイコンはゲームクライアント由来の素材です。画像の著作権はArknights / Hypergryphおよび各権利者に帰属します。
 
-日本語名は地域差や実装時期の都合で未確定・未翻訳の場合があります。手動で確認した名称は `src/data/operator-name-overrides.json` に追加し、生成済みデータがチェックインされている場合は `src/data/operators.json` も更新してください。
+日本語名は地域差や実装時期の都合で未確定・未翻訳の場合があります。
 
 ## JSON Import / Export
 
@@ -82,7 +79,7 @@ pnpm import:game-data
 
 このリポジトリには Cloudflare Workers / Pages の静的アセット配信用 `wrangler.jsonc` が含まれます。
 
-```powershell
+```console
 pnpm build
 ```
 

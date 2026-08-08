@@ -6,12 +6,11 @@
 
 ## Reporting a Vulnerability
 
-脆弱性を見つけた場合は、GitHub Issue または作者のXアカウントから連絡してください。
+脆弱性を見つけた場合は、有効になっている GitHub Private Vulnerability Reporting から非公開で報告してください。
 
-- GitHub: https://github.com/big-mon/arknights-basement-simulator
-- X: https://x.com/BIG_MON
+- Private report: https://github.com/big-mon/arknights-basement-simulator/security/advisories/new
 
-公開Issueに詳細な攻撃手順や悪用可能なペイロードをそのまま貼るのは避けてください。影響範囲、再現条件、修正案の概要が分かる形で報告してください。
+この非公開窓口が利用できない場合は、作者のXアカウント https://x.com/BIG_MON へ非公開で連絡するか、連絡調整だけを目的とした公開Issueを作成してください。公開Issueには、攻撃・再現手順、悪用可能なペイロード、秘密情報、未公開・公開猶予中の情報を含めず、公開して安全な概要と非公開連絡手段の相談だけを記載してください。
 
 ## App Security Notes
 
@@ -26,7 +25,7 @@
 
 依存関係の脆弱性が見つかった場合は、lockfileの差分と動作確認を含めて更新してください。
 
-```powershell
+```console
 pnpm test
 pnpm build
 ```

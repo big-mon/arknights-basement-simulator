@@ -2,108 +2,33 @@
 
 ## Project
 
-This repository is a Vite + React + TypeScript single-page app for an Arknights base rotation simulator.
+This repository is a Vite + React + TypeScript single-page app for an Arknights base rotation simulator. Keep changes focused on the requested behavior and preserve the browser-based, Japanese-first tool experience.
 
-The app lets users select owned operators, choose a base layout, and see facility assignment / rotation suggestions for trade posts, factories, power plants, control center, and dormitories.
+## Read By Trigger
 
-## Environment
+- For domain terms, benchmark vocabulary, or rotation-model concepts, read [`CONTEXT.md`](./CONTEXT.md).
+- For optimizer scoring, assignment, rotation, benchmark, or base-skill accuracy changes, read [`docs/specs/optimizer-accuracy-phase1.md`](./docs/specs/optimizer-accuracy-phase1.md). It is authoritative when [`docs/specs/optimizer-normalized-theoretical-scenarios.md`](./docs/specs/optimizer-normalized-theoretical-scenarios.md) conflicts with it.
+- For benchmark acceptance changes, also read [`docs/specs/optimizer-objective-superior-acceptance.md`](./docs/specs/optimizer-objective-superior-acceptance.md) and its decision record, [`docs/adr/0001-accept-objective-superior-optimizer-plans.md`](./docs/adr/0001-accept-objective-superior-optimizer-plans.md). They are authoritative for `reference`, `output-equivalent`, and `objective-superior` acceptance semantics where older Phase 1 acceptance wording is narrower.
+- For localization sources, fallback policy, or name precedence, read [`src/data/localization-sources.md`](./src/data/localization-sources.md). For the localization and import workflow, read [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+- For scripts and the required package-manager version, use [`package.json`](./package.json) as the authority. Follow the validation matrix in [`CONTRIBUTING.md`](./CONTRIBUTING.md) before finishing.
 
-- Use the repository package manager: `pnpm`.
-- The expected package manager version is declared in `package.json`.
-- This machine uses `mise` for Node-related tools. Do not install Node, pnpm, or other tools globally.
-- If the sandbox cannot resolve a `mise` shim, prefer the existing mise-managed pnpm binary instead of changing machine-wide settings.
-- Do not use administrator privileges unless explicitly requested.
+## Project Guardrails
 
-## Common Commands
+- Use the repository-declared `pnpm`; keep tool setup local and use no administrator privileges unless explicitly requested.
+- Treat imports as explicit network operations. Confirm network access and review generated diffs before keeping them.
+- Preserve generated data and manual overrides as separate responsibilities described by the localization and contribution guides.
+- Add focused optimizer regression coverage for scoring, assignment, rotation, or base-skill behavior changes.
+- Keep controls compact and practical. Clickable cards and choice controls show a pointer cursor and a clear selected state.
+- Preserve the proposal facility colors: trading post blue, factory yellow, and power plant green.
 
-- Start local dev server: `pnpm dev`
-- Run tests: `pnpm test`
-- Build: `pnpm build`
-- Run both tests and build: `pnpm validate`
-- Import game data: `pnpm import:game-data`
+## Completion And Git Safety
 
-`pnpm import:game-data` fetches remote data and therefore needs network access.
+- Use the applicable row of the validation matrix, then run `git diff --check`.
+- Report every required command and browser check with its exact result. For anything not run, report `not run` and the concrete blocker.
+- Keep commits focused, work on a feature branch (prefer `codex/`), and do not commit directly to `main`.
+- Preserve unrelated user changes. Do not commit, push, open a pull request, merge, or deploy unless the user requests it.
+- Resolve repository identity and remotes from Git when repository-specific operations are needed, rather than relying on a cached remote name, URL, or transport protocol.
 
-## Repository Layout
+## Encoding
 
-- `src/App.tsx`: main UI and app state wiring.
-- `src/components/`: reusable UI components.
-- `src/lib/optimizer.ts`: assignment, scoring, and rotation logic.
-- `src/lib/optimizer.test.ts`: optimizer-focused tests.
-- `src/App.test.tsx`: app behavior, UI, localization, and regression tests.
-- `src/data/operators.json`: generated lightweight operator/base-skill data used by the app.
-- `src/data/operator-name-overrides.json`: manually maintained localized name corrections.
-- `scripts/import-game-data.mjs`: importer that normalizes upstream game data into `operators.json`.
-
-## Data Sources And Name Quality
-
-The importer currently uses:
-
-- CN game data from `Kengxxiao/ArknightsGameData`
-- JP game data from `ArknightsAssets/ArknightsGamedata` under `jp/gamedata/excel`
-- Yostar `en_US` game data from `Kengxxiao/ArknightsGameData_YoStar`
-
-Do not assume that every `ja_JP` value is a confirmed correct Japanese display name. Some newer or region-lagged operators may be missing, untranslated, provisional, or still identical to Chinese names.
-
-When correcting localized names:
-
-- Update `src/data/operator-name-overrides.json`.
-- Update the corresponding generated entry in `src/data/operators.json` if the app data is already checked in.
-- Add or update a regression expectation in `src/App.test.tsx`.
-- Prefer citing a source in the commit or PR description when the correction comes from an external page.
-
-Important current limitation: `operator-name-overrides.json` is named like an override file, but the importer historically behaved more like "fill missing names" in some cases. If touching the importer, make the intended precedence explicit and test it.
-
-Preferred name precedence for future work:
-
-1. Manually verified Japanese name override.
-2. `ArknightsAssets/ArknightsGamedata` JP name.
-3. English name.
-4. Chinese name with a visible "name uncertain" indication in UI.
-
-Avoid using missing Japanese data as a hard "not implemented in Japan" judgment. Keep the operator included and show uncertainty instead.
-
-## Optimizer Notes
-
-The optimizer is intentionally MVP-level and runs in the browser.
-
-When changing scoring or assignment behavior, check these cases carefully:
-
-- Product-specific factory effects such as gold, battle records, and originium must not be treated as generic percentages.
-- Rotation windows should avoid reusing the same operator between rotation groups unless the feature is explicitly changed.
-- Facility-specific conditions, same-facility operator conditions, named-operator conditions, and affiliation/faction conditions should be covered by tests.
-- Dormitory effects primarily affect morale recovery and should not be assumed to directly boost production unless the skill text says so.
-
-Add focused tests in `src/lib/optimizer.test.ts` for logic changes.
-
-## UI Notes
-
-- The UI is Japanese-first, with language switching for Japanese, Chinese, and English.
-- Keep controls compact and practical; this is a simulator/tool, not a landing page.
-- Clickable cards and choice controls should show pointer cursor and have clear selected states.
-- Facility cards in proposal output use distinct soft colors:
-  - Trading post: blue
-  - Factory: yellow
-  - Power plant: green
-
-## Validation
-
-Before finishing code or data changes, run the smallest relevant validation:
-
-- Name/data-only changes: `pnpm test` and usually `pnpm build`.
-- Optimizer changes: `pnpm test` and `pnpm build`.
-- UI-only changes: `pnpm test`, `pnpm build`, and browser smoke check when practical.
-
-If validation cannot be run, explain why clearly.
-
-## Git Workflow
-
-- Do not commit directly to `main`.
-- Use a feature branch, preferably with the `codex/` prefix.
-- Keep commits focused.
-- Do not revert unrelated user changes.
-- The configured remote is expected to be `origin` at `git@github.com:big-mon/arknights-basement-simulator.git`.
-
-## Encoding Notes
-
-Keep files UTF-8. PowerShell output may display Japanese text as mojibake in some contexts; do not "fix" Japanese strings solely because terminal output looks garbled. Confirm via file diff, tests, or browser output.
+Keep files UTF-8. PowerShell output can display Japanese text as mojibake; confirm the file diff, tests, or browser rendering before changing Japanese strings based on terminal output alone.
