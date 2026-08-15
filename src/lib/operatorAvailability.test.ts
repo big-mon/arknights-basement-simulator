@@ -5,6 +5,7 @@ import {
   availableOperators,
   createRegionalBenchmarkRoster,
   createRegionalBenchmarkStateView,
+  createRegionallyAvailableState,
   isOperatorAvailable,
   operatorAvailabilitySnapshot,
   validateOperatorAvailabilitySnapshot
@@ -117,6 +118,21 @@ describe("regional benchmark views", () => {
     expect(filtered).not.toBe(state);
     expect(filtered.label).toBe("benchmark");
     expect(filtered.roster.char_4228_closur.owned).toBe(false);
+    expect(state.roster.char_4228_closur.owned).toBe(true);
+  });
+
+  it("clears CN-only ownership for JP while keeping it for CN", () => {
+    const state = {
+      roster: {
+        char_4228_closur: { owned: true, elite: 2 as const, level: 90, potential: 1, moduleEnabled: false }
+      }
+    };
+
+    const jpState = createRegionallyAvailableState(state, operatorAvailabilitySnapshot, "JP");
+    const cnState = createRegionallyAvailableState(state, operatorAvailabilitySnapshot, "CN");
+
+    expect(jpState.roster.char_4228_closur.owned).toBe(false);
+    expect(cnState.roster.char_4228_closur.owned).toBe(true);
     expect(state.roster.char_4228_closur.owned).toBe(true);
   });
 });

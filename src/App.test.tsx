@@ -51,8 +51,9 @@ const newlyPinnedCnOnlyOperatorIds = [
   "char_4236_tmslot",
   "char_4237_jcinta"
 ] as const;
+const jpAvailableOperators = availableOperators(operatorAvailabilitySnapshot, "JP", operators);
 const levelLockedOperator = operators.find((operator) => operator.skills.some((skill) => skill.unlockLevel > 1))!;
-const missingEnglishSkillOperator = operators.find((operator) =>
+const missingEnglishSkillOperator = jpAvailableOperators.find((operator) =>
   operator.skills.some((skill) => !skill.name.en || skill.effects.some((effect) => !effect.description.en))
 )!;
 const missingEnglishSkillOperatorName = localizeText(missingEnglishSkillOperator.name, "en");
@@ -123,7 +124,7 @@ describe("App", () => {
   it("starts with no owned operators selected", () => {
     render(<App />);
 
-    expect(screen.getByText(`0/${operators.length}`)).toBeInTheDocument();
+    expect(screen.getByText(`0/${jpAvailableOperators.length}`)).toBeInTheDocument();
     expect(screen.getAllByRole("checkbox").every((checkbox) => !(checkbox as HTMLInputElement).checked)).toBe(true);
   });
 
@@ -210,6 +211,32 @@ describe("App", () => {
     expect(operator.name.zh).toBeTruthy();
     expect(operator.name.ja).toBeUndefined();
     expect(operator.skills.every((skill) => skill.name.zh && skill.effects.every((effect) => effect.description.zh))).toBe(true);
+  });
+
+  it("scopes the default JP roster UI to the JP-available catalog", () => {
+    const jpOperators = availableOperators(operatorAvailabilitySnapshot, "JP", operators);
+    const cnOnlyOperator = operators.find((operator) => operator.id === "char_4230_mcnist")!;
+
+    expect(cnOnlyOperator.name.ja).toBeUndefined();
+    expect(cnOnlyOperator.name.zh).toBe("机械师");
+
+    render(<App />);
+
+    expect(screen.getByText(`0/${jpOperators.length}`)).toBeInTheDocument();
+    expect(screen.queryByText(cnOnlyOperator.name.zh!)).not.toBeInTheDocument();
+  });
+
+  it("uses the explicit CN region for the roster UI", () => {
+    const cnOperators = availableOperators(operatorAvailabilitySnapshot, "CN", operators);
+    const cnOnlyOperator = operators.find((operator) => operator.id === "char_4230_mcnist")!;
+    const state = createDefaultState();
+    state.region = "CN";
+    window.localStorage.setItem("arknights-basement-state-v1", JSON.stringify(state));
+
+    render(<App />);
+
+    expect(screen.getByText(`0/${cnOperators.length}`)).toBeInTheDocument();
+    expect(screen.getByText(cnOnlyOperator.name.zh!)).toBeInTheDocument();
   });
 
   it("includes Japanese names and descriptions for every visible base skill", () => {
@@ -302,12 +329,12 @@ describe("App", () => {
     const amiyaCard = screen.getByText(amiyaName).closest("article")!;
     const checkbox = within(amiyaCard).getByRole("checkbox", { name: amiyaName }) as HTMLInputElement;
     const defaultState = createDefaultState();
-    const professionTotal = operators.filter((operator) => operator.profession === amiya.profession).length;
-    const rarityTotal = operators.filter((operator) => operator.profession === amiya.profession && operator.rarity === amiya.rarity).length;
-    const initialProfessionOwned = operators.filter(
+    const professionTotal = jpAvailableOperators.filter((operator) => operator.profession === amiya.profession).length;
+    const rarityTotal = jpAvailableOperators.filter((operator) => operator.profession === amiya.profession && operator.rarity === amiya.rarity).length;
+    const initialProfessionOwned = jpAvailableOperators.filter(
       (operator) => operator.profession === amiya.profession && defaultState.roster[operator.id]?.owned
     ).length;
-    const initialRarityOwned = operators.filter(
+    const initialRarityOwned = jpAvailableOperators.filter(
       (operator) => operator.profession === amiya.profession && operator.rarity === amiya.rarity && defaultState.roster[operator.id]?.owned
     ).length;
     const expectedOwnedDelta = checkbox.checked ? -1 : 1;
