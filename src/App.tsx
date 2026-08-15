@@ -39,6 +39,12 @@ import { clampEliteForOperator } from "./lib/elite";
 import { languageLocale } from "./lib/localization";
 import { generateAssignmentPlan } from "./lib/optimizer";
 import {
+  availableOperators,
+  createRegionallyAvailableState,
+  operatorAvailabilitySnapshot
+} from "./lib/operatorAvailability";
+import {
+  countOwnedOperators,
   filterOperators,
   getProfessions,
   getRarities,
@@ -153,7 +159,11 @@ export function App() {
   const [isCalculatingPlan, setIsCalculatingPlan] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const calculatedPlanInputKeyRef = useRef<string | undefined>(undefined);
-  const planInputKey = useMemo(() => optimizationInputKey(state), [state]);
+  const optimizationState = useMemo(
+    () => createRegionallyAvailableState(state, operatorAvailabilitySnapshot, state.region),
+    [state]
+  );
+  const planInputKey = useMemo(() => optimizationInputKey(optimizationState), [optimizationState]);
 
   useEffect(() => {
     saveState(state);
@@ -167,7 +177,7 @@ export function App() {
     setIsCalculatingPlan(true);
 
     if (typeof Worker === "undefined") {
-      const nextPlan = generateAssignmentPlan(state);
+      const nextPlan = generateAssignmentPlan(optimizationState);
       calculatedPlanInputKeyRef.current = planInputKey;
       setPlan(nextPlan);
       setIsCalculatingPlan(false);
@@ -184,21 +194,25 @@ export function App() {
       setIsCalculatingPlan(false);
       worker.terminate();
     };
-    worker.postMessage(state);
+    worker.postMessage(optimizationState);
 
     return () => {
       cancelled = true;
       worker.terminate();
     };
-  }, [activeTab, planInputKey]);
+  }, [activeTab, optimizationState, planInputKey]);
   const selectedLayout = isBaseLayout(state.layout) ? state.layout : defaultLayout;
-  const ownedCount = Object.values(state.roster).filter((entry) => entry.owned).length;
+  const regionOperators = useMemo(
+    () => availableOperators(operatorAvailabilitySnapshot, state.region, operators),
+    [state.region]
+  );
+  const ownedCount = countOwnedOperators(regionOperators, state.roster);
   const language = state.language;
   const text = uiText[language];
   const notes = calculationNotes[language];
-  const professions = getProfessions(operators);
-  const rarities = getRarities(operators);
-  const matchingOperators = filterOperators(operators, query, professionFilter, rarityFilter);
+  const professions = getProfessions(regionOperators);
+  const rarities = getRarities(regionOperators);
+  const matchingOperators = filterOperators(regionOperators, query, professionFilter, rarityFilter);
   const filteredOperators = ownedOnly
     ? matchingOperators.filter((operator) => state.roster[operator.id]?.owned)
     : matchingOperators;
@@ -356,7 +370,7 @@ export function App() {
       </header>
 
       <section className="summary-strip" aria-label={text.summaryLabel}>
-        <Stat icon={Users} label={text.stats.owned} value={`${ownedCount}/${operators.length}`} />
+        <Stat icon={Users} label={text.stats.owned} value={`${ownedCount}/${regionOperators.length}`} />
         <label className="summary-control layout-summary-control">
           <span className="summary-control-label">{text.plan.baseLayout}</span>
           <select
