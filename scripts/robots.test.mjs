@@ -37,6 +37,9 @@ describe("robots.txt", () => {
       expect(explicitUserAgentLines.filter((line) => line === userAgentLine)).toEqual([userAgentLine]);
       expect(matchingBlocks).toHaveLength(1);
       expect(matchingBlocks[0]?.match(/^Allow: \/$/gm)).toEqual(["Allow: /"]);
+      expect(matchingBlocks[0]?.match(/^Content-Signal: ai-train=yes, search=yes, ai-input=yes$/gm)).toEqual([
+        "Content-Signal: ai-train=yes, search=yes, ai-input=yes"
+      ]);
     }
   });
 });
