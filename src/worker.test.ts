@@ -55,6 +55,36 @@ describe("Worker Markdown negotiation", () => {
     expect(new URL(env.ASSETS.fetch.mock.calls[0][0].url).pathname).toBe("/site.md");
   });
 
+  it("preserves a 304 Markdown asset response as the selected representation", async () => {
+    const env = {
+      ASSETS: {
+        fetch: vi.fn(async (request: Request) => {
+          if (new URL(request.url).pathname === "/site.md") {
+            return new Response(null, {
+              status: 304,
+              headers: { ETag: "markdown-etag" }
+            });
+          }
+
+          return new Response(html, {
+            status: 200,
+            headers: { "Content-Type": "text/html; charset=UTF-8" }
+          });
+        })
+      }
+    };
+    const request = new Request("https://example.com/", {
+      headers: { Accept: "text/markdown" }
+    });
+
+    const response = await worker.fetch(request, env);
+
+    expect(response.status).toBe(304);
+    expect(response.headers.get("Content-Type")).toBe("text/markdown; charset=utf-8");
+    expect(response.headers.get("ETag")).toBe("markdown-etag");
+    expect(await response.text()).toBe("");
+  });
+
   it("preserves an upstream Vary: * header for Markdown", async () => {
     const env = {
       ASSETS: {
@@ -85,6 +115,46 @@ describe("Worker Markdown negotiation", () => {
     expect(await response.text()).toBe(html);
     expect(env.ASSETS.fetch).toHaveBeenCalledTimes(1);
     expect(env.ASSETS.fetch.mock.calls[0][0]).toBe(request);
+  });
+
+  it("merges Accept into Vary for delegated HTML page responses", async () => {
+    const env = {
+      ASSETS: {
+        fetch: vi.fn(async () => new Response(html, {
+          status: 200,
+          headers: {
+            "Content-Type": "text/html; charset=UTF-8",
+            Vary: "Origin"
+          }
+        }))
+      }
+    };
+    const request = new Request("https://example.com/", {
+      headers: { Accept: "text/markdown;q=0" }
+    });
+
+    const response = await worker.fetch(request, env);
+
+    expect(response.headers.get("Vary")).toBe("Origin, Accept");
+    expect(await response.text()).toBe(html);
+  });
+
+  it.each([
+    ["*", "*"],
+    ["Accept", "Accept"]
+  ])("does not duplicate Accept when delegated HTML has Vary: %s", async (vary, expectedVary) => {
+    const env = {
+      ASSETS: {
+        fetch: vi.fn(async () => new Response(html, { headers: { Vary: vary } }))
+      }
+    };
+    const request = new Request("https://example.com/", {
+      headers: { Accept: "text/markdown;q=0" }
+    });
+
+    const response = await worker.fetch(request, env);
+
+    expect(response.headers.get("Vary")).toBe(expectedVary);
   });
 
   it("serves Markdown headers without a body for HEAD", async () => {
@@ -126,5 +196,29 @@ describe("Worker Markdown negotiation", () => {
 
     expect(response.headers.get("Content-Type")).toBe("text/html; charset=UTF-8");
     expect(env.ASSETS.fetch.mock.calls[0][0]).toBe(request);
+  });
+
+  it("returns a static asset response unchanged", async () => {
+    const assetResponse = new Response("asset", {
+      headers: {
+        "Content-Type": "text/javascript",
+        Vary: "Origin",
+        "X-Asset": "static"
+      }
+    });
+    const env = {
+      ASSETS: {
+        fetch: vi.fn(async () => assetResponse)
+      }
+    };
+    const request = new Request("https://example.com/assets/app.js", {
+      headers: { Accept: "text/markdown" }
+    });
+
+    const response = await worker.fetch(request, env);
+
+    expect(response).toBe(assetResponse);
+    expect(response.headers.get("Vary")).toBe("Origin");
+    expect(response.headers.get("X-Asset")).toBe("static");
   });
 });

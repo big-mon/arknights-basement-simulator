@@ -67,7 +67,7 @@ async function markdownResponse(request: Request, env: WorkerEnv): Promise<Respo
   const markdownRequest = new Request(new URL(MARKDOWN_ASSET_PATH, request.url), request);
   const assetResponse = await env.ASSETS.fetch(markdownRequest);
 
-  if (!assetResponse.ok) {
+  if (!assetResponse.ok && assetResponse.status !== 304) {
     return undefined;
   }
 
@@ -84,14 +84,28 @@ async function markdownResponse(request: Request, env: WorkerEnv): Promise<Respo
 
 const worker = {
   async fetch(request: Request, env: WorkerEnv): Promise<Response> {
-    if (isPageRequest(request) && acceptsMarkdown(request.headers.get("Accept"))) {
+    const pageRequest = isPageRequest(request);
+
+    if (pageRequest && acceptsMarkdown(request.headers.get("Accept"))) {
       const response = await markdownResponse(request, env);
       if (response) {
         return response;
       }
     }
 
-    return env.ASSETS.fetch(request);
+    const response = await env.ASSETS.fetch(request);
+    if (!pageRequest) {
+      return response;
+    }
+
+    const headers = new Headers(response.headers);
+    headers.set("Vary", addAcceptToVary(headers.get("Vary")));
+
+    return new Response(request.method === "HEAD" ? null : response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    });
   }
 };
 
