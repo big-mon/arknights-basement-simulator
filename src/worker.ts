@@ -29,10 +29,34 @@ export function acceptsMarkdown(accept: string | null): boolean {
     return false;
   }
 
-  return accept.split(",").some((range) => {
-    const [mediaType, ...parameters] = range.split(";");
-    return mediaType.trim().toLowerCase() === "text/markdown" && qualityForParameters(parameters) > 0;
-  });
+  const qualityForMediaType = (mediaType: string): number => {
+    const [type, subtype] = mediaType.split("/");
+    let selectedSpecificity = -1;
+    let selectedQuality = 0;
+
+    for (const range of accept.split(",")) {
+      const [rangeMediaType, ...parameters] = range.split(";");
+      const [rangeType, rangeSubtype] = rangeMediaType.trim().toLowerCase().split("/");
+      let specificity = -1;
+
+      if (rangeType === "*" && rangeSubtype === "*") {
+        specificity = 0;
+      } else if (rangeType === type && rangeSubtype === "*") {
+        specificity = 1;
+      } else if (rangeType === type && rangeSubtype === subtype) {
+        specificity = 2;
+      }
+
+      if (specificity > selectedSpecificity) {
+        selectedSpecificity = specificity;
+        selectedQuality = qualityForParameters(parameters);
+      }
+    }
+
+    return selectedQuality;
+  };
+
+  return qualityForMediaType("text/markdown") > qualityForMediaType("text/html");
 }
 
 export function isPageRequest(request: Request): boolean {

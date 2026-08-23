@@ -55,6 +55,20 @@ describe("Worker Markdown negotiation", () => {
     expect(new URL(env.ASSETS.fetch.mock.calls[0][0].url).pathname).toBe("/site.md");
   });
 
+  it("delegates to HTML when HTML has higher quality than Markdown", async () => {
+    const env = createAssets();
+    const request = new Request("https://example.com/", {
+      headers: { Accept: "text/html;q=1, text/markdown;q=0.1" }
+    });
+
+    const response = await worker.fetch(request, env);
+
+    expect(response.headers.get("Content-Type")).toBe("text/html; charset=UTF-8");
+    expect(await response.text()).toBe(html);
+    expect(env.ASSETS.fetch).toHaveBeenCalledTimes(1);
+    expect(env.ASSETS.fetch.mock.calls[0][0]).toBe(request);
+  });
+
   it("preserves a 304 Markdown asset response as the selected representation", async () => {
     const env = {
       ASSETS: {
