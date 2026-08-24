@@ -4,12 +4,15 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes("/src/data/operators.json") || id.includes("\\src\\data\\operators.json")) {
-            return "operators-data";
-          }
+        codeSplitting: {
+          groups: [
+            {
+              name: "operators-data",
+              test: /[\\/]src[\\/]data[\\/]operators\.json$/
+            }
+          ]
         }
       }
     }
