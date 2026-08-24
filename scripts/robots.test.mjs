@@ -19,4 +19,27 @@ describe("robots.txt", () => {
     ]);
     expect(block.match(/^Allow: \/$/gm)).toEqual(["Allow: /"]);
   });
+
+  it("explicitly allows the required AI crawlers", async () => {
+    const robotsSource = await readFile(path.join(process.cwd(), "public", "robots.txt"), "utf8");
+    const blocks = robotsSource.replaceAll("\r\n", "\n").split(/\n\s*\n/);
+    const requiredUserAgents = ["GPTBot", "OAI-SearchBot", "Claude-Web", "Google-Extended"];
+    const explicitUserAgentLines = blocks.flatMap(
+      (block) => block.match(/^User-agent: (?!\*$).+$/gm) ?? []
+    );
+
+    expect(explicitUserAgentLines).toHaveLength(requiredUserAgents.length);
+
+    for (const userAgent of requiredUserAgents) {
+      const userAgentLine = `User-agent: ${userAgent}`;
+      const matchingBlocks = blocks.filter((block) => block.split("\n").includes(userAgentLine));
+
+      expect(explicitUserAgentLines.filter((line) => line === userAgentLine)).toEqual([userAgentLine]);
+      expect(matchingBlocks).toHaveLength(1);
+      expect(matchingBlocks[0]?.match(/^Allow: \/$/gm)).toEqual(["Allow: /"]);
+      expect(matchingBlocks[0]?.match(/^Content-Signal: ai-train=yes, search=yes, ai-input=yes$/gm)).toEqual([
+        "Content-Signal: ai-train=yes, search=yes, ai-input=yes"
+      ]);
+    }
+  });
 });
