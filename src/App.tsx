@@ -6,8 +6,8 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  Code,
   Download,
-  Github,
   Languages,
   RotateCcw,
   Search,
@@ -699,7 +699,7 @@ export function App() {
         <div className="app-footer-content">
           <p className="app-footer-notice">{fanMadeNotices[language]}</p>
           <a href="https://github.com/big-mon/arknights-basement-simulator" target="_blank" rel="noreferrer">
-            <Github size={16} />
+            <Code size={16} />
             <span>big-mon/arknights-basement-simulator</span>
           </a>
           <a href="https://x.com/BIG_MON" target="_blank" rel="noreferrer">
