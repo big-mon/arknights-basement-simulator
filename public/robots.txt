@@ -17,3 +17,4 @@ Allow: /
 User-agent: *
 Content-Signal: ai-train=yes, search=yes, ai-input=yes
 Allow: /
+Sitemap: https://arknights.damonge.com/sitemap.xml
