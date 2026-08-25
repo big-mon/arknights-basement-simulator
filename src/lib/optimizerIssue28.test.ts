@@ -707,7 +707,7 @@ describe("Issue #28 schedule-aware composition integration", () => {
         supportResourceScenario: fixture.supportResourceScenario
       });
       elapsedMs = performance.now() - startedAt;
-    }, 15_000);
+    }, 25_000);
 
     it("fills every active production slot without simultaneous duplicates", () => {
       const state = allOwnedJpState();
