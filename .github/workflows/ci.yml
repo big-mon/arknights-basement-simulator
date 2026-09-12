@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        with:
+          cache: true
+          install: false
+      - name: Verify tool versions
+        run: |
+          node --version
+          pnpm exec node --version
+          pnpm --version
+          test "$(node --version)" = "v$(cat .node-version)"
+          test "$(pnpm exec node --version)" = "v$(cat .node-version)"
+          test "pnpm@$(pnpm --version)" = "$(node -p "require('./package.json').packageManager")"
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies
+      - name: Test
+        # CPU-heavy optimizer fixtures must not contend with other test files.
+        run: pnpm test --no-file-parallelism --testTimeout=30000
+      - name: Build
+        run: pnpm build
+      - name: Audit base skills
+        run: pnpm audit:base-skills
+      - name: Audit dependencies
+        run: pnpm audit

@@ -4,6 +4,7 @@
 
 ## 開発環境
 
+- Node.jsは24 LTSを使用し、ローカルとCIの実行版を [`.node-version`](./.node-version) に揃えます。対応範囲は `package.json` の `engines.node` を正とし、EOLを迎える前に次のLTSへの移行を検証します。
 - [`package.json`](./package.json) が指定するバージョンの `pnpm` を使います。利用可能なスクリプトも `package.json` を正とします。
 - グローバルインストールや管理者権限は不要です。
 
@@ -54,6 +55,8 @@ pnpm import:game-data
 | docsのみ | ローカルMarkdownリンクの解決、記載したpackage scriptの存在、変更要件に関する禁止・必須文言を確認。`pnpm test` と `pnpm build` は不要 |
 
 すべての変更で最後に `git diff --check` を実行してください。結果報告には、実行した各コマンドとブラウザ確認の成否を正確に記載します。実行できなかった項目は `未実行` とし、具体的な阻害要因を記載してください。
+
+GitHub Actionsの `CI / validate` はPRとmainへのpushで、実行版の一致、frozen install、全テスト、build、`pnpm audit:base-skills`、`pnpm audit` を検証します。ローカルと同じarm64の標準macOS 15 runnerを使用し、計算量の多いoptimizerテスト同士のCPU競合を避けるため、CIでは `pnpm test --no-file-parallelism --testTimeout=30000` を使用します。共有runnerでの機能テストの待機時間を30秒とし、明示的な計算時間上限のassertionは維持します。
 
 `package.json` の複合スクリプトを使う場合も、上表で追加指定された監査、ブラウザ確認、差分確認は別途実施してください。
 
