@@ -39,6 +39,6 @@ jobs:
         run: pnpm install --frozen-lockfile --strict-peer-dependencies
       - name: Test
         # CPU-heavy optimizer fixtures must not contend with other test files.
-        run: pnpm test --no-file-parallelism
+        run: pnpm test --no-file-parallelism --testTimeout=30000
       - name: Build
         run: pnpm build

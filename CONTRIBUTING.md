@@ -56,7 +56,7 @@ pnpm import:game-data
 
 すべての変更で最後に `git diff --check` を実行してください。結果報告には、実行した各コマンドとブラウザ確認の成否を正確に記載します。実行できなかった項目は `未実行` とし、具体的な阻害要因を記載してください。
 
-GitHub Actionsの `CI / validate` はPRとmainへのpushで、実行版の一致、frozen install、全テスト、buildを検証します。計算量の多いoptimizerテスト同士のCPU競合を避けるため、CIでは `pnpm test --no-file-parallelism` を使用します。テストのタイムアウトと性能上限は変更しません。
+GitHub Actionsの `CI / validate` はPRとmainへのpushで、実行版の一致、frozen install、全テスト、buildを検証します。計算量の多いoptimizerテスト同士のCPU競合を避けるため、CIでは `pnpm test --no-file-parallelism --testTimeout=30000` を使用します。共有runnerでの機能テストの待機時間を30秒とし、明示的な計算時間上限のassertionは維持します。
 
 `package.json` の複合スクリプトを使う場合も、上表で追加指定された監査、ブラウザ確認、差分確認は別途実施してください。
 

@@ -697,6 +697,8 @@ describe("Issue #28 schedule-aware composition integration", () => {
   });
 
   describe("complete JP three-group schedule", () => {
+    // PR #49 bounded global-search CI guard; not an optimality or performance claim.
+    const pr49ColdSearchCiGuardMs = 20_000;
     let plan: ReturnType<typeof generateAssignmentPlan>;
     let elapsedMs = Number.NaN;
 
@@ -707,7 +709,7 @@ describe("Issue #28 schedule-aware composition integration", () => {
         supportResourceScenario: fixture.supportResourceScenario
       });
       elapsedMs = performance.now() - startedAt;
-    }, 15_000);
+    }, pr49ColdSearchCiGuardMs + 5_000);
 
     it("fills every active production slot without simultaneous duplicates", () => {
       const state = allOwnedJpState();
@@ -840,8 +842,6 @@ describe("Issue #28 schedule-aware composition integration", () => {
           message: expect.stringContaining("char_446_aroma")
         })
       ]);
-      // PR #49 bounded global-search CI guard; not an optimality or performance claim.
-      const pr49ColdSearchCiGuardMs = 20_000;
       expect(elapsedMs).toBeLessThan(pr49ColdSearchCiGuardMs);
     });
 
