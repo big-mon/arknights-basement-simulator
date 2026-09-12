@@ -1485,6 +1485,27 @@ describe("optimizer", () => {
     ]);
   });
 
+  it("preserves recovery phases when a conditional source is excluded or working", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) entry.owned = false;
+    ownOperators(state, [fang.id, perfumerDistilled.id, ambriel.id]);
+    state.roster[ambriel.id].elite = 0;
+    const context = { facilities: state.facilities, assignments: [], roster: state.roster, shiftHours: 12 };
+    const excluded = new Set([perfumerDistilled.id]);
+    const provenance = bestDormitoryRecoveryProvenance(fang.id, state, context, undefined, excluded);
+    expect(provenance.conditionalModifiers).toEqual([]);
+    expect(provenance.phases!.map((phase) => [phase.moraleAbove, phase.moraleAtMost, phase.recoveryRatePerHour]))
+      .toEqual([[20, 24, 4.2], [0, 20, 4.2]]);
+    const workingContext = {
+      ...context,
+      assignments: [contextAssignment(state.facilities.find((facility) => facility.type === "control")!, perfumerDistilled.id)]
+    };
+    expect(bestDormitoryRecoveryProvenance(fang.id, state, workingContext)).toEqual(provenance);
+    excluded.clear();
+    expect(bestDormitoryRecoveryProvenance(fang.id, state, context, undefined, excluded).phases![1].recoveryRatePerHour)
+      .toBeCloseTo(4.25);
+  });
+
   it("keeps recovery rates and sources unchanged when owning operators without dormitory recovery skills", () => {
     const state = createDefaultState();
     for (const entry of Object.values(state.roster)) entry.owned = false;

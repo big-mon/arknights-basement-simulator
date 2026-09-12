@@ -2793,7 +2793,7 @@ export function inspectExplicitFacilityTeams(
       } else {
         operatorPaths.set(operatorId, path);
       }
-      const operator = operators.find((candidate) => candidate.id === operatorId);
+      const operator = operatorById.get(operatorId);
       if (!operator) {
         diagnostics.push({
           code: "operator-not-found",
@@ -3972,7 +3972,7 @@ function reevaluateFacilityTeam(
     ) {
       return assignment;
     }
-    const operator = operators.find((candidate) => candidate.id === assignment.operatorId);
+    const operator = operatorById.get(assignment.operatorId);
     const rosterEntry = state.roster[assignment.operatorId];
     if (!operator || !rosterEntry) {
       return assignment;
@@ -4835,9 +4835,14 @@ export function bestDormitoryRecoveryProvenance(
   const conditionalModifiers = sortedThresholds
     .flatMap((moraleAtMost, index) => {
       const atThreshold = thresholdProfiles[index];
-      const aboveThreshold = calculateDormitoryRecovery(
-        targetOperatorId, state, workingContext, moraleAtMost + 1e-9, excludedRecoveryOperatorIds
-      );
+      const aboveMorale = moraleAtMost + 1e-9;
+      const nextThresholdIndex = sortedThresholds.findIndex((threshold) => threshold >= aboveMorale);
+      // Recovery changes only at targetMoraleAtMost boundaries; reuse that interval's profile.
+      const aboveThreshold = nextThresholdIndex >= 0
+        ? thresholdProfiles[nextThresholdIndex]
+        : aboveMorale <= moraleCapacity ? baseProfile : calculateDormitoryRecovery(
+          targetOperatorId, state, workingContext, aboveMorale, excludedRecoveryOperatorIds
+        );
       const additionalRatePerHour = atThreshold.ratePerHour - aboveThreshold.ratePerHour;
       if (additionalRatePerHour <= 1e-12) return [];
       const aboveAmounts = new Map(aboveThreshold.components.map((component) => [component.key, component.amount]));
@@ -5104,6 +5109,9 @@ function activeMoraleEffects(
   facility: FacilitySlot,
   context: AssignmentEvaluationContext
 ) {
+  if (!operator.skills.some((skill) => skill.effects.some((effect) =>
+    effect.facility === facility.type && effect.moraleEffects?.length
+  ))) return [];
   const elite = clampEliteForOperator(operator, rosterEntry.elite);
   const seen = new Set<string>();
   return activeBaseSkills(operator, elite, rosterEntry.level).flatMap((skill) =>
@@ -5555,7 +5563,7 @@ function skillFamilyCount(
     if (assignment.operatorId === candidateOperator.id || assignment.facilityId !== facility.id) {
       return sum;
     }
-    const operator = operators.find((candidate) => candidate.id === assignment.operatorId);
+    const operator = operatorById.get(assignment.operatorId);
     return sum + (operator ? countForOperator(operator) : 0);
   }, 0);
   return assignedCount + (includeSelf ? countForOperator(candidateOperator) : 0);
@@ -5565,7 +5573,7 @@ function activeSkillFamilyConversions(facility: FacilitySlot, context: Assignmen
   return context.assignments
     .filter((assignment) => assignment.facilityId === facility.id)
     .flatMap((assignment) => {
-      const operator = operators.find((candidate) => candidate.id === assignment.operatorId);
+      const operator = operatorById.get(assignment.operatorId);
       if (!operator) {
         return [];
       }
@@ -5999,7 +6007,7 @@ function resourceAmount(
     if (context.excludedOrdinaryResourceOperatorIds?.has(assignment.operatorId)) {
       return sum;
     }
-    const operator = operators.find((candidate) => candidate.id === assignment.operatorId);
+    const operator = operatorById.get(assignment.operatorId);
     const facility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
     if (!operator || !facility) {
       return sum;
@@ -6221,12 +6229,12 @@ export function conditionsSatisfied(
 }
 
 function operatorHasAnyAffiliation(operatorId: string, affiliations: string[]) {
-  const operator = operators.find((candidate) => candidate.id === operatorId);
+  const operator = operatorById.get(operatorId);
   return Boolean(operator?.affiliations?.some((affiliation) => affiliations.includes(affiliation)));
 }
 
 function operatorIsSkillless(operatorId: string) {
-  return operators.find((candidate) => candidate.id === operatorId)?.skills.length === 0;
+  return operatorById.get(operatorId)?.skills.length === 0;
 }
 
 function hasOwnedSkilllessPrerequisite(operatorIds: string[], context: AssignmentEvaluationContext) {
@@ -6330,7 +6338,7 @@ function calculateGlobalBonus(state: AppState, facility: FacilitySlot, context: 
   const buckets: GlobalBonusBucket[] = [];
 
   for (const assignment of context.assignments) {
-    const operator = operators.find((candidate) => candidate.id === assignment.operatorId);
+    const operator = operatorById.get(assignment.operatorId);
     const assignedFacility = context.facilities.find((candidate) => candidate.id === assignment.facilityId);
     const rosterEntry = operator ? state.roster[operator.id] : undefined;
     if (!operator || !assignedFacility || assignedFacility.type !== "control" || !rosterEntry?.owned) {
