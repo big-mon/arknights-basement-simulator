@@ -42,3 +42,7 @@ jobs:
         run: pnpm test --no-file-parallelism --testTimeout=30000
       - name: Build
         run: pnpm build
+      - name: Audit base skills
+        run: pnpm audit:base-skills
+      - name: Audit dependencies
+        run: pnpm audit
