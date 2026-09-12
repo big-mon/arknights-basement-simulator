@@ -1485,6 +1485,23 @@ describe("optimizer", () => {
     ]);
   });
 
+  it("keeps recovery rates and sources unchanged when owning operators without dormitory recovery skills", () => {
+    const state = createDefaultState();
+    for (const entry of Object.values(state.roster)) entry.owned = false;
+    ownOperators(state, [fang.id, perfumerDistilled.id]);
+    const context = { facilities: state.facilities, assignments: [], roster: state.roster, shiftHours: 12 };
+    const before = bestDormitoryRecoveryProvenance(fang.id, state, context);
+
+    ownOperators(state, operators.filter((operator) => operator.skills.every((skill) =>
+      skill.effects.every((effect) => effect.facility !== "dormitory" ||
+        !effect.moraleEffects?.some((morale) => morale.type === "recovery"))
+    )).map((operator) => operator.id));
+
+    expect(bestDormitoryRecoveryPerHour(fang.id, state, context, 20)).toBeCloseTo(4.25);
+    expect(bestDormitoryRecoveryPerHour(fang.id, state, context, 21)).toBeCloseTo(4.15);
+    expect(bestDormitoryRecoveryProvenance(fang.id, state, context)).toEqual(before);
+  });
+
   it("selects one deterministic owned source when strongest room recovery is tied", () => {
     const state = createDefaultState();
     for (const entry of Object.values(state.roster)) entry.owned = false;
