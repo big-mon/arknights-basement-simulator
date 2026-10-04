@@ -6,7 +6,7 @@ import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 
 const PUBLIC_ROOT = path.join(process.cwd(), "public");
-const CANONICAL_URL = "https://arknights.damonge.com/";
+const CANONICAL_URL = "https://big-mon.github.io/arknights-basement-simulator/";
 const SITEMAP_NAMESPACE = "http://www.sitemaps.org/schemas/sitemap/0.9";
 
 async function readPublicFile(fileName) {
@@ -58,7 +58,7 @@ describe("sitemap.xml", () => {
     const robotsSource = (await readPublicFile("robots.txt")).replaceAll("\r\n", "\n");
 
     expect(robotsSource.match(/^Sitemap: .*$/gm)).toEqual([
-      "Sitemap: https://arknights.damonge.com/sitemap.xml"
+      "Sitemap: https://big-mon.github.io/arknights-basement-simulator/sitemap.xml"
     ]);
   });
 });

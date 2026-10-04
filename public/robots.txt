@@ -18,4 +18,4 @@ Disallow: /
 User-agent: *
 Content-Signal: ai-train=no, search=yes, ai-input=yes
 Allow: /
-Sitemap: https://arknights.damonge.com/sitemap.xml
+Sitemap: https://big-mon.github.io/arknights-basement-simulator/sitemap.xml

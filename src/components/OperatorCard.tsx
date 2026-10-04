@@ -39,7 +39,7 @@ export const OperatorCard = memo(function OperatorCard({
         <div className="operator-identity">
           <img
             className="operator-avatar"
-            src={`/operator-avatars/${operator.id}.png`}
+            src={`${import.meta.env.BASE_URL}operator-avatars/${operator.id}.png`}
             alt={`${operatorName} icon`}
             loading="lazy"
             onError={(event) => {
