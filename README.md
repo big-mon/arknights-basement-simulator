@@ -2,7 +2,7 @@
 
 アークナイツの所持オペレーターと基地構成から、貿易所・製造所・発電所などの配置案とローテーション案を確認するためのブラウザ向けシミュレーターです。
 
-- 公開URL: https://arknights.damonge.com/
+- 公開URL: https://big-mon.github.io/arknights-basement-simulator/
 - Repository: https://github.com/big-mon/arknights-basement-simulator
 - Author: https://x.com/BIG_MON
 
@@ -74,16 +74,6 @@ pnpm import:game-data
 - 想定外の形状のJSONは拒否
 - 範囲外の数値や型違いの値はデフォルトへフォールバック
 - アップロードされたJSONはサーバーへ送信されず、ブラウザ内で処理
-
-## Deployment
-
-このリポジトリには Cloudflare Workers / Pages の静的アセット配信用 `wrangler.jsonc` が含まれます。
-
-```console
-pnpm build
-```
-
-ビルド成果物は `dist/` に生成されます。
 
 ## Contributing
 

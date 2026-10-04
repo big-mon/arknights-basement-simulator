@@ -38,7 +38,7 @@ export function FacilityPlanCard({
               <Check size={16} />
               <img
                 className="assignment-avatar"
-                src={`/operator-avatars/${assignment.operatorId}.png`}
+                src={`${import.meta.env.BASE_URL}operator-avatars/${assignment.operatorId}.png`}
                 alt={`${operatorNameById(assignment.operatorId)} icon`}
                 loading="lazy"
                 onError={(event) => {

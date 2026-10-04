@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Arknights base rotation simulator",
   "private": true,
-  "homepage": "https://arknights.damonge.com/",
+  "homepage": "https://big-mon.github.io/arknights-basement-simulator/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/big-mon/arknights-basement-simulator.git"
