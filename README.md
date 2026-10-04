@@ -75,16 +75,6 @@ pnpm import:game-data
 - 範囲外の数値や型違いの値はデフォルトへフォールバック
 - アップロードされたJSONはサーバーへ送信されず、ブラウザ内で処理
 
-## Deployment
-
-GitHub Pages の Source を **GitHub Actions** に設定します。`main` の CI が成功すると `dist/` を公開します。
-
-```console
-pnpm build --base=/arknights-basement-simulator/
-```
-
-Markdown の説明は `site.md` で参照できます。
-
 ## Contributing
 
 不具合報告、名称修正、基地スキルの改善は歓迎です。詳しくは [CONTRIBUTING.md](./CONTRIBUTING.md) を参照してください。
