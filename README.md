@@ -83,7 +83,7 @@ GitHub Pages の Source を **GitHub Actions** に設定します。`main` の C
 pnpm build --base=/arknights-basement-simulator/
 ```
 
-公開先が変わると保存データは引き継がれないため、旧サイトで JSON をエクスポートし、新サイトでインポートしてください。Markdown の説明は `site.md` で参照できます。
+Markdown の説明は `site.md` で参照できます。
 
 ## Contributing
 
